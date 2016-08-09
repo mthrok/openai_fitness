@@ -1,0 +1,69 @@
+name: DQNAgent
+args:
+  recorder_config:
+    memory_size: 1000000
+    state_width: &state_width 84
+    state_height: &state_height 84
+    state_length: &state_length 4
+    batch_size: &batch_size 32
+
+  q_network_config:
+    network_name: 'vanilla_dqn'
+    state_width: *state_width
+    state_height: *state_height
+    state_length: *state_length
+    discount_rate: 0.99
+    # reward is clipped between the following min and max
+    min_reward: -1.0
+    max_reward: 1.0
+    # error between predicted Q value and target Q value is clipped by the following min and max
+    min_delta: -1.0
+    max_delta: 1.0
+
+  optimizer_config:
+    name: 'NeonRMSProp'
+    params:
+      decay: 0.95
+      epsilon: 0.000001
+      learning_rate: 0.00025
+
+  action_config:
+    # Exploration period in which exploration rate is annealed.
+    exploration_period: 500
+    # exploration_period: 1000000  # ***** For debug *****************************
+    initial_exploration_rate: 1.0
+    terminal_exploration_rate: 0.1
+
+  training_config:
+    # Trainig starts after this number of frames are recorded
+    # start: 50000
+    train_start: 400  # ***** For debug ************************************************
+
+    # Train network every this number of observations are made
+    train_frequency: 4
+
+    # Sync networks every this number of observationa are made
+    # sync_frequency: 10000
+    sync_frequency: 20  # ***** For debug ****************************************
+    n_samples: *batch_size
+
+old:
+  summary_config:
+    # Summarize network every once after this #episodes
+    test_summary_interval: 200
+    training_summary_interval: 200
+  summary_writer_config:
+    # Default to save training summary at the same dir as gym
+    output_dir: null
+  save_config:
+    # Save trained model every once at this #episodes
+    interval: 100
+  saver_config:
+    # Default to save training summary at the same dir as gym
+    output_dir: null
+    # File name prefix
+    prefix: 'DQN'
+    # The maximum #files to retain from the recent save
+    max_to_keep: 5
+    # Keep the model every once at this interval
+    checkpoint_interval: 1  # [hour]

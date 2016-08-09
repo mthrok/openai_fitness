@@ -94,6 +94,7 @@ setuptools.setup(
         'luchador': [
             'nn/data/*.yml',
             '{}/*.bin'.format(ALE_ROM_DIR),
+            'agent/*.yml',
         ],
     },
 )
