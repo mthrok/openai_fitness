@@ -111,12 +111,25 @@ class Session(BaseSession):
         pass
 
     ###########################################################################
-    def load_dataset(self, dataset):
+    def load_dataset(self, dataset, cast=True):
+        """Set the value of Variables with the given values
+
+        Args:
+          dataset(Dict): The keys are the names of Variables to be set, values
+            are the NumPy arrays with which value are used.
+
+          cast (Bool): If True, values are casted to the dtype of Variables.
+            When False and if dtypes of Variables and dataset do not match,
+            It raise TypeError.
+        """
         op = OrderedDict()
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
-            for name, _value in dataset.items():
-                _LG.info('  Loading data {}'.format(name))
-                variable = scope.get_variable(name=name, shape=_value.shape)
-                value = np.array(_value, dtype=variable.dtype)
+            for name, value in dataset.items():
+                _LG.info('  Loading: {:10} {:24} {}'
+                         .format(value.dtype, value.shape, name))
+
+                variable = scope.get_variable(name=name)
+                if cast:
+                    value = np.array(value, dtype=variable.dtype)
                 op[variable.get()] = value
         self.run(name=None, updates=Operation(op=op))

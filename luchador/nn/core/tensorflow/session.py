@@ -7,8 +7,6 @@ from tensorflow import (
     Session as TFSession,
 )
 
-import numpy as np
-
 from luchador.common import is_iteratable
 from ..base import Session as BaseSession
 from . import scope
@@ -137,12 +135,22 @@ class Session(BaseSession):
         self.session.run(tf.initialize_all_variables())
 
     ###########################################################################
-    def load_dataset(self, dataset):
+    def load_dataset(self, dataset, cast=True):
+        """Set the value of Variables with the given values
+
+        Args:
+          dataset(Dict): The keys are the names of Variables to be set, values
+            are the NumPy arrays with which value are used.
+
+          cast (Bool): Not used in Tensorflow backend as it casts dtype
+            internally.
+        """
         op = []
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
-            for name, _value in dataset.items():
-                _LG.info('  Loading data {}'.format(name))
-                variable = scope.get_variable(name=name, shape=_value.shape)
-                value = np.array(_value, dtype=variable.dtype)
+            for name, value in dataset.items():
+                _LG.info('  Loading: {:10} {:24} {}'
+                         .format(value.dtype, value.shape, name))
+
+                variable = scope.get_variable(name=name)
                 op.append(variable.get().assign(value))
         self.run(name=None, updates=Operation(tf.group(*op)))

@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
+from collections import OrderedDict
+
 import h5py
+import numpy as np
 
 __all__ = ['Session']
 
@@ -12,7 +15,7 @@ def _parse_dataset(h5group, prefix=''):
         if isinstance(value, h5py.Group):
             ret.update(_parse_dataset(value, prefix=path))
         else:
-            ret[path] = value
+            ret[path] = np.asarray(value)
     return ret
 
 
@@ -43,15 +46,30 @@ class Session(object):
         )
 
     ###########################################################################
-    def load_from_file(self, filepath):
+    def load_from_file(self, filepath, var_names=None, cast=True):
+        """Load variable values from HDF5 file.
+
+        Args:
+          filepath (str): File path
+          var_names (None or list of str): List of variable names to retrieve
+            from file. If None, it tries to retrieve and assign all variables
+            in the file.
+          cast (Bool): If True, cast dtype automatically.
+        """
         f = h5py.File(filepath, 'r')
         try:
-            self.load_dataset(_parse_dataset(f))
+            data_set = _parse_dataset(f)
         except Exception:
-            f.close()
             raise
+        finally:
+            f.close()
 
-    def load_dataset(self, dataset):
+        if var_names is not None:
+            data_set = OrderedDict([(n, data_set[n]) for n in var_names])
+
+        self.load_dataset(data_set, cast=cast)
+
+    def load_dataset(self, dataset, cast=True):
         raise NotImplementedError(
             '`load_dataset` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)
