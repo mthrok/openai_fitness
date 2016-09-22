@@ -40,6 +40,10 @@ training_config:
 
   n_samples: *batch_size
 
+save_config:
+  # Save network parameter every once after this #episodes
+  interval: 200
+  output_dir: null
 
 legacy:  # Not used for now, TODO: reimplement them
   summary_config:

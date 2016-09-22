@@ -11,8 +11,9 @@ from luchador.util import load_config
 from luchador.nn import (
     Session,
     Input,
+    Saver,
     DeepQLearning,
-    get_optimizer,
+    make_optimizer,
 )
 from luchador.nn.util import (
     make_model,
@@ -39,6 +40,7 @@ class DQNAgent(BaseAgent):
             optimizer_config=_DEFAULT_CONFIG['optimizer_config'],
             action_config=_DEFAULT_CONFIG['action_config'],
             training_config=_DEFAULT_CONFIG['training_config'],
+            save_config=_DEFAULT_CONFIG['save_config'],
     ):
         super(DQNAgent, self).__init__()
         self.recorder_config = recorder_config
@@ -46,6 +48,7 @@ class DQNAgent(BaseAgent):
         self.optimizer_config = optimizer_config
         self.action_config = action_config
         self.training_config = training_config
+        self.save_config = save_config
 
     def set_env_info(self, env):
         self._n_actions = env.n_actions
@@ -56,6 +59,7 @@ class DQNAgent(BaseAgent):
         self._init_recorder()
         self._init_counter()
         self._init_network()
+        self._init_saver()
         warnings.warn('Not completed yet.')
 
     def _init_recorder(self):
@@ -63,12 +67,13 @@ class DQNAgent(BaseAgent):
 
     def _init_counter(self):
         self.n_total_observations = 0
+        self.n_episodes = 0
 
     def _init_network(self):
         self._build_network()
         self._build_optimization()
         self._init_session()
-        self._sync()
+        self._sync_network()
 
     def _build_network(self):
         cfg = self.q_network_config
@@ -94,21 +99,24 @@ class DQNAgent(BaseAgent):
         self.ql.build(model_maker)
 
     def _build_optimization(self):
-        Optimizer = get_optimizer(self.optimizer_config['name'])
-        self.optimizer = Optimizer(**self.optimizer_config['params'])
-
-        wrt = self.ql.pre_trans_net.get_parameter_variables().values()
+        self.optimizer = make_optimizer(self.optimizer_config)
+        wrt = self.ql.pre_trans_net.get_parameter_variables()
         self.minimize_op = self.optimizer.minimize(self.ql.error, wrt=wrt)
 
     def _init_session(self):
         self.session = Session()
         self.session.initialize()
 
+    def _init_saver(self):
+        cfg = self.save_config
+        self.saver = Saver(cfg['output_dir'])
+
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
         warnings.warn('Not completed yet.')
         self.recorder.reset(initial_observation)
+        self.n_episodes += 1
 
     ###########################################################################
     # Methods for `act`
@@ -155,14 +163,14 @@ class DQNAgent(BaseAgent):
         n_obs = self.n_total_observations
 
         if sync_freq and n_obs % sync_freq == 1:
-            self._sync()
+            self._sync_network()
 
         if n_obs > train_start and n_obs % train_freq == 0:
             self._train(cfg['n_samples'])
 
         warnings.warn('Not completed yet.')
 
-    def _sync(self):
+    def _sync_networkg(self):
         self.session.run(name='sync', updates=self.ql.sync_op)
 
     def _train(self, n_samples):
@@ -185,3 +193,9 @@ class DQNAgent(BaseAgent):
     # Methods for post_episode_action
     def perform_post_episode_task(self):
         self.recorder.truncate()
+        save_interval = self.save_config['interval']
+        if save_interval and self.n_episodes % save_interval == 0:
+            self.save()
+
+    def save(self):
+        raise NotImplementedError('`save` is not implemented')
