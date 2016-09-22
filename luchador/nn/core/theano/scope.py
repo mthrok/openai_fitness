@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
 import logging
+import warnings
 
+import numpy as np
 import theano
 from theano import config
 
@@ -102,12 +104,13 @@ def get_variable_scope():
     return VariableScope(_get_flag(), _get_scope())
 
 
-def get_variable(name, shape=None, dtype=config.floatX,
+def get_variable(name, shape=None, dtype=None,
                  initializer=None, regularizer=None, trainable=None, **kwargs):
     if trainable:
-        raise NotImplementedError('trainable option is not yet implemented.')
+        warnings.warn('`trainable` is not implemented in Theano backend.')
+
     if regularizer:
-        raise NotImplementedError('regularizer option is not yet implemented.')
+        warnings.warn('`regularizer` is not implemented in Theano backend.')
 
     # 1. Check the current variable scope
     scope = _get_scope()
@@ -130,6 +133,9 @@ def get_variable(name, shape=None, dtype=config.floatX,
             raise ValueError(
                 'Shape of a new variable ({}) must be fully defined, '
                 'but instead was {}.'.format(name, shape))
+
+        dtype = dtype or config.floatX
+
         if not initializer:
             initializer = Normal(dtype=dtype)
 
@@ -139,7 +145,7 @@ def get_variable(name, shape=None, dtype=config.floatX,
 
         _VARIABLES[name] = Variable(
             theano.shared(
-                value=initializer.sample(shape),
+                value=np.array(initializer.sample(shape), dtype=dtype),
                 name=name, allow_downcast=True, **kwargs)
         )
 
