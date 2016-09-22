@@ -21,6 +21,7 @@ test:
   pre:
     - pip install --upgrade flake8
     - pip install --upgrade coverage
+    - mkdir -p tmp
   override:
     # Unit test
     - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --source luchador    setup.py test
@@ -28,6 +29,9 @@ test:
     # Integration test
     - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --source luchador -a tests/integration/run_dqn.py
     - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --source luchador -a tests/integration/run_dqn.py
+    # Serialization test
+    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ./tests/compatibility/run_serialization_tests.sh
+    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ./tests/compatibility/run_serialization_tests.sh
     # Optimizer compatibility test
     - ./tests/compatibility/run_optimizer_numerical_compatibility_tests.sh
     # Style check

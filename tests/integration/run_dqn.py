@@ -89,6 +89,7 @@ if conv_format == 'NHWC':
 sync_time = []
 summary_time = []
 run_time = []
+filepaths = set()
 for i in range(100):
     if i % 10 == 0:
         #######################################################################
