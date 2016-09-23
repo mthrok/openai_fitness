@@ -3,8 +3,9 @@ dependencies:
     - "luchador/env/rom"
     - "Arcade-Learning-Environment"
   pre:
+    - sudo apt-get update && sudo apt-get autoremove
+    - ./script/install_dependencies.sh
     - ./script/fix_urllib_sni.sh
-    - sudo apt-get update && sudo apt-get install -y libhdf5-serial-dev g++ libopenblas-dev
   override:
     - ./script/install_ale.sh
     - ./script/download_atari_roms.sh luchador/env/rom/atari
