@@ -29,7 +29,7 @@ test:
     - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --source luchador -a tests/integration/run_dqn.py
     - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --source luchador -a tests/integration/run_dqn.py
     # Optimizer compatibility test
-    - ./tests/compatibility/test_optimizer_numerical_compatibility/run_optimizer_compatibility_tests.sh
+    - ./tests/compatibility/run_optimizer_numerical_compatibility_tests.sh
     # Style check
     - flake8 luchador
     - flake8 tests
