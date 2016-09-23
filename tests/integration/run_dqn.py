@@ -1,7 +1,6 @@
 import os
 import time
 import logging
-from collections import OrderedDict
 
 import numpy as np
 
@@ -13,21 +12,17 @@ theano.config.exception_verbosity = 'high'
 
 import luchador
 from luchador.nn import (
-    Session,
     Input,
+    Session,
     DeepQLearning,
-    GravesRMSProp,
     SummaryWriter,
-    Saver,
+    GravesRMSProp,
 )
 from luchador.nn.util import get_model_config, make_model
 
 logger = logging.getLogger('luchador')
-logging.getLogger('luchador.nn.saver').setLevel(logging.DEBUG)
 
 conv_format = luchador.get_nn_conv_format()
-filepath = './tmp/param.dat'
-
 min_delta, min_reward = -1.0, -1.0
 max_delta, max_reward = 1.0, 1.0
 
@@ -63,10 +58,10 @@ ql = DeepQLearning(
 ql.build(model_maker)
 
 logger.info('Building Optimization')
-rmsprop = GravesRMSProp(
+optimizer = GravesRMSProp(
     learning_rate=learning_rate, decay1=decay1, decay2=decay2)
 params = ql.pre_trans_net.get_parameter_variables()
-minimize_op = rmsprop.minimize(ql.error, wrt=params)
+minimize_op = optimizer.minimize(ql.error, wrt=params)
 
 logger.info('Initializing Session')
 session = Session()
@@ -80,9 +75,6 @@ writer.register('pre_trans_network_params',
                 'histogram', [v.name for v in params])
 writer.register('pre_trans_network_outputs',
                 'histogram', [v.name for v in outputs])
-
-logger.info('Initializing Saver')
-saver = Saver(filepath)
 
 logger.info('Running computation')
 data = np.load(os.path.join(os.path.dirname(__file__), batchfile))
@@ -118,13 +110,6 @@ for i in range(100):
         writer.summarize('pre_trans_network_outputs', i, output_vals)
         summary_time.append(time.time() - t0)
 
-        #######################################################################
-        logger.info('Saving: {}'.format(i))
-        data = OrderedDict()
-        for var, value in zip(params, params_vals):
-            data[var.name] = value
-        saver.save(data)
-
     ###########################################################################
     t0 = time.time()
     e, target_qs, future_rewards, post_qs, pre_qs = session.run(
@@ -149,5 +134,3 @@ for i in range(100):
 logger.info('Sync   : {} ({})'.format(np.mean(sync_time), sync_time[0]))
 logger.info('Summary: {} ({})'.format(np.mean(summary_time), summary_time[0]))
 logger.info('Run    : {} ({})'.format(np.mean(run_time), run_time[0]))
-
-os.remove(filepath)
