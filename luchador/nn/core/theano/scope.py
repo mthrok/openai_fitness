@@ -8,11 +8,11 @@ import theano
 from theano import config
 
 from .initializer import Normal
+from . import wrapper
 from .wrapper import Variable
 
 _LG = logging.getLogger(__name__)
 
-_VARIABLES = {}
 _CURRENT_REUSE_FLAG = False
 _CURRENT_VARIABLE_SCOPE = ''
 
@@ -36,11 +36,10 @@ def _get_scope():
 
 
 def _reset():
-    """Reset variable scope. For testing"""
+    """Reset variable scope and remove cached variables. For Testing"""
     _set_flag(False)
     _set_scope('')
-    global _VARIABLES
-    _VARIABLES = {}
+    wrapper._VARIABLES = {}
 
 
 class NameScope(object):
@@ -115,15 +114,18 @@ def get_variable(name, shape=None, dtype=None,
     # 1. Check the current variable scope
     scope = _get_scope()
     name = '{}/{}'.format(scope, name) if scope else name
+
+    var = wrapper.retrieve_variable(name)
     if _get_flag():  # Search for an existing variable
-        if name not in _VARIABLES:
+        if var is None:
             raise ValueError(
                 'Variable {} does not exist, disallowed. '
                 'Did you mean to set reuse=None in VarScope?'
                 .format(name)
             )
+        return var
     else:  # Create new variable
-        if name in _VARIABLES:
+        if var is not None:
             raise ValueError(
                 'Variable {} already exists, disallowed. '
                 'Did you mean to set reuse=True in VarScope?'
@@ -143,10 +145,8 @@ def get_variable(name, shape=None, dtype=None,
         if not shape and 'broadcastable' in kwargs:
             del kwargs['broadcastable']
 
-        _VARIABLES[name] = Variable(
+        return Variable(
             theano.shared(
                 value=np.array(initializer.sample(shape), dtype=dtype),
                 name=name, allow_downcast=True, **kwargs)
         )
-
-    return _VARIABLES[name]

@@ -11,6 +11,17 @@ from ..base import (
 __all__ = ['Tensor', 'Input', 'Operation']
 
 
+_VARIABLES = {}
+
+
+def _register_variable(name, var):
+    _VARIABLES[name] = var
+
+
+def retrieve_variable(name):
+    return _VARIABLES.get(name)
+
+
 class Variable(BaseWrapper):
     """Wrap SharedVariable object for storing network parameters"""
     def __init__(self, variable, name=None):
@@ -26,6 +37,7 @@ class Variable(BaseWrapper):
         val = variable.get_value()
         super(Variable, self).__init__(
             tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
+        _register_variable(name, self)
 
 
 class Tensor(BaseWrapper):

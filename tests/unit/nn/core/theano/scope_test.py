@@ -4,13 +4,7 @@ import unittest
 
 import luchador
 from luchador.nn.core.theano import scope as scp
-
-
-def _reset():
-    """Reset global state of scope and related objects"""
-    scp._set_flag(False)
-    scp._set_scope('')
-    scp._VARIABLES = {}
+reset_scope = scp._reset
 
 
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
@@ -19,7 +13,7 @@ class TestVariableScopeClass(unittest.TestCase):
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        _reset()
+        reset_scope()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
@@ -201,7 +195,7 @@ class TestVariableScopeFuncs(unittest.TestCase):
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        _reset()
+        reset_scope()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
@@ -380,7 +374,7 @@ class TestGetVariable(unittest.TestCase):
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        _reset()
+        reset_scope()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
