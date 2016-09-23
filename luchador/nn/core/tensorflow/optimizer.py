@@ -65,7 +65,7 @@ class BaseOptimizer(Optimizer):
             for slot_name in self.optimizer.get_slot_names():
                 slot = self.optimizer.get_slot(var, slot_name)
                 name = '{}/{}/{}'.format(
-                    self.args['name'],  var.name, slot_name)
+                    self.args['name'],  var.op.name, slot_name)
                 self.slot.append(Variable(slot, name=name))
 
     def _create_slot_var(self, var, slot_name):
