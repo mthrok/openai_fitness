@@ -33,5 +33,4 @@ test:
     - flake8 tests
   post:
     # Report test coverage
-    - pip install --upgrade codeclimate-test-reporter
-    - CODECLIMATE_REPO_TOKEN="${CODECLIMATE_REPO_TOKEN}" codeclimate-test-reporter
+    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./script/report_codeclimate_test_coverage.sh; fi
