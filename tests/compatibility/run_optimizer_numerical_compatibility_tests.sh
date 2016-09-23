@@ -17,7 +17,6 @@ for FORMULA in ${FORMULAE}
 do
     for OPTIMIZER in "${OPTIMIZERS[@]}"
     do
-        echo "${FORMULA} - ${OPTIMIZER}"
-        ${TEST_DIR}/test_optimizer_compatibility.sh --optimizer ${OPTIMIZER} --formula ${FORMULA}
+        ${TEST_DIR}/test_optimizer_numerical_compatibility.sh --optimizer ${OPTIMIZER} --formula ${FORMULA}
     done
 done

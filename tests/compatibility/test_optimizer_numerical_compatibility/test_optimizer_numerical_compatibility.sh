@@ -44,16 +44,19 @@ ITERATIONS=${ITERATIONS-1000}
 THRESHOLD=${THRESHOLD-0.005}
 
 OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
-FILE1="tmp/${FORMULA}_${OPTIMIZER_FILENAME%.*}_theano.csv"
-FILE2="tmp/${FORMULA}_${OPTIMIZER_FILENAME%.*}_tensorflow.csv"
+FILE1="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_theano.csv"
+FILE2="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_tensorflow.csv"
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="python ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
 COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
+echo "*** Checking numerical compatibility of ${OPTIMIZER} on ${FORMULA} ***"
 cat ${OPTIMIZER}
+echo "* Running $(basename ${OPTIMIZER}) with Theano backend"
 LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --output ${FILE1} --iterations ${ITERATIONS}
+echo "* Running $(basename ${OPTIMIZER}) with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2} --iterations ${ITERATIONS}
+echo "* Comparing results"
 ${COMPARE_COMMAND} $FILE1 $FILE2 --threshold ${THRESHOLD}
-
-rm $FILE1 $FILE2
+echo ""
