@@ -10,6 +10,22 @@ from ..base import (
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
+###############################################################################
+# Mechanism for enabling reusing variable without explicitly giving dtype or
+# shape. When creating Variable with get_variable and reuse=False, we store
+# mapping from name to the resulting Variable wrapper.
+# When retrieving a Variable under reuse=True, we return the stored variable.
+_VARIABLES = {}
+
+
+def _register_variable(name, var):
+    _VARIABLES[name] = var
+
+
+def retrieve_variable(name):
+    return _VARIABLES.get(name)
+###############################################################################
+
 
 class Variable(BaseWrapper):
     """Wrap tf.Variable object for storing network parameters"""
@@ -26,6 +42,7 @@ class Variable(BaseWrapper):
         dtype = variable.dtype.as_numpy_dtype
         super(Variable, self).__init__(
             tensor=variable, shape=shape, name=name, dtype=dtype)
+        _register_variable(name, self)
 
 
 class Tensor(BaseWrapper):

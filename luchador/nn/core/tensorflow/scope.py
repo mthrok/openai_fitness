@@ -10,30 +10,14 @@ from tensorflow import (
 )
 
 from luchador import get_nn_dtype
-from .wrapper import Variable
+from .wrapper import (
+    Variable,
+    retrieve_variable,
+)
 from .initializer import TFInitializer
 
 __all__ = ['name_scope', 'get_variable', 'variable_scope',
            'VariableScope', 'get_variable_scope']
-
-###############################################################################
-# Mechanism for enabling reusing variable without explicitly giving dtype or
-# shape. When creating Variable with get_variable and reuse=False, we store
-# mapping from name to (dtype, shape). When retrieving the same Variable with
-# get_variable and reuse=True, we use the stored dtype corresponding the given
-# name and shape.
-
-_DTYPES = {}
-
-
-def _register(name, shape, dtype):
-    _DTYPES[name] = {'dtype': dtype, 'shape': shape}
-
-
-def _retrieve(name):
-    info = _DTYPES[name]
-    return info['dtype'], info['shape']
-###############################################################################
 
 
 def get_variable(name, shape=None, dtype=None,
@@ -43,7 +27,7 @@ def get_variable(name, shape=None, dtype=None,
     This function works mostly same as tf.get_variable, except when retrieving
     existing Variable, you only need name and need not to give shape and dtype.
 
-    Mapping from name to shape and dtype is internally cached so that you can
+    Mapping from name to VariableWrapper is internally cached so that you can
     retrieve variable with only name.
 
     Args:
@@ -63,15 +47,22 @@ def get_variable(name, shape=None, dtype=None,
     if isinstance(initializer, TFInitializer):
         initializer = initializer.get()
 
-    if tf.get_variable_scope().reuse:
-        dtype, shape = _retrieve(name)
+    scope = tf.get_variable_scope()
+    if scope.reuse:
+        name = '{}/{}'.format(scope.name, name) if scope.name else name
+        var = retrieve_variable(name)
+        if var is None:
+            raise ValueError(
+                'Variable {} does not exist, disallowed. '
+                'Did you mean to set reuse=None in VarScope?'
+                .format(name)
+            )
+        return var
     else:
         dtype = dtype or get_nn_dtype()
 
-    variable = _get_variable(
-        name, shape=shape, dtype=dtype, initializer=initializer,
-        regularizer=regularizer, trainable=trainable, **kwargs)
+        variable = _get_variable(
+            name, shape=shape, dtype=dtype, initializer=initializer,
+            regularizer=regularizer, trainable=trainable, **kwargs)
 
-    ret = Variable(variable)
-    _register(name, ret.shape, ret.dtype)
-    return ret
+        return Variable(variable)
