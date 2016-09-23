@@ -44,7 +44,7 @@ class DeepQLearning(BaseQLI):
         max_reward = self.args['max_reward']
         discount_rate = self.args['discount_rate']
 
-        self.actions = Input(dtype='uint8', shape=(None,), name='actions')
+        self.actions = Input(dtype='uint16', shape=(None,), name='actions')
         self.rewards = Input(dtype='float64', shape=(None,), name='rewards')
         self.terminals = Input(shape=(None,), name='continuations')
 
