@@ -86,6 +86,7 @@ setuptools.setup(
     },
     test_suite='tests.unit',
     install_requires=[
+        'Pillow',  # For scipy.misc.imresize
         'h5py',
         'pyyaml',
     ],
