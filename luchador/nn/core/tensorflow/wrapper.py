@@ -20,7 +20,7 @@ _VARIABLES = {}
 
 def _register_variable(name, var):
     if name in _VARIABLES:
-        raise ValueError('Variable with name `{}` already exists.')
+        raise ValueError('Variable `{}` already exists.'.format(name))
     _VARIABLES[name] = var
 
 

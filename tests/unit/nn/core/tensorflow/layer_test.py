@@ -6,8 +6,9 @@ import tensorflow as tf
 
 import luchador
 from luchador.nn.core.tensorflow.wrapper import Input
-from luchador.nn.core.tensorflow.layer import Dense
+from luchador.nn.core.tensorflow.layer import Dense, Conv2D
 from luchador.nn.core.tensorflow.layer import _map_padding
+import luchador.nn.core.tensorflow.scope as scp
 
 
 @unittest.skipUnless(luchador.get_nn_backend() == 'tensorflow',
@@ -35,22 +36,16 @@ class TestDense(unittest.TestCase):
         self.session.close()
         self.session = None
 
-    def test_init(self):
-        """Dense layer does not crash"""
-        n_nodes = 256
-        dense = Dense(n_nodes)
-        input = Input(shape=(None, n_nodes), name='foo', dtype=tf.float32)
-        dense(input())
-
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
         input = Input(shape=(None, n_nodes), name='foo')()
-        dense1 = Dense(n_nodes)
-        dense1(input)
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
-            dense2 = Dense(**dense1.serialize()['args'])
-            dense2(input)
+        with scp.variable_scope('test_recreate_with_reuse', reuse=False):
+            dense1 = Dense(n_nodes)
+            dense1(input)
+            with scp.variable_scope(tf.get_variable_scope(), reuse=True):
+                dense2 = Dense(**dense1.serialize()['args'])
+                dense2(input)
 
         vars1 = dense1.parameter_variables
         vars2 = dense2.parameter_variables
@@ -72,20 +67,22 @@ class TestDense(unittest.TestCase):
 
     def test_copy_fail_without_reuse(self):
         """Copied layer fails to create node when reuse is not True"""
-        n_nodes = 256
-        input = Input(shape=(None, n_nodes), name='foo')()
-        dense1 = Dense(n_nodes)
-        dense1(input)
-        try:
-            dense3 = Dense(**dense1.serialize()['args'])
-            dense3(input)
-            self.fail('Copied layer should raise ValueError when '
-                      'reuse is not enabled in variable scope.')
-        except ValueError:
-            pass
-        except Exception as e:
-            self.fail(
-                'Expected ValueError when copied layer tries to '
-                'create node without reuse enabled in variable scope. '
-                'Found "{}"'.format(e)
-            )
+        fmt = luchador.get_nn_conv_format()
+        shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
+        input = Input(shape=shape, name='foo')()
+        with scp.variable_scope('test_recreate_without_reuse', reuse=False):
+            conv = Conv2D(84, 84, 4, 4)
+            conv(input)
+            try:
+                conv2 = Conv2D(**conv.serialize()['args'])
+                conv2(input)
+                self.fail('Copied layer should raise ValueError when '
+                          'reuse is not enabled in variable scope.')
+            except ValueError:
+                pass
+            except Exception as e:
+                self.fail(
+                    'Expected ValueError when copied layer tries to '
+                    'create node without reuse enabled in variable scope. '
+                    'Found "{}"'.format(e)
+                )
