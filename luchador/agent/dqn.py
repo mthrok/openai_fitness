@@ -1,6 +1,5 @@
 from __future__ import division
 
-import os
 import logging
 from collections import OrderedDict
 
@@ -270,17 +269,17 @@ class DQNAgent(BaseAgent):
 
         self.summary_writer.summarize(
             'training_summary_min', self.n_episodes,
-            [np.min(v) if v else [] for v in values],
+            [np.min(v) if v else 0 for v in values],
         )
 
         self.summary_writer.summarize(
             'training_summary_ave', self.n_episodes,
-            [np.mean(v) if v else [] for v in values],
+            [np.mean(v) if v else 0 for v in values],
         )
 
         self.summary_writer.summarize(
             'training_summary_max', self.n_episodes,
-            [np.max(v) if v else [] for v in values],
+            [np.max(v) if v else 0 for v in values],
         )
 
     def __repr__(self):
