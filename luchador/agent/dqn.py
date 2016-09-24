@@ -77,7 +77,7 @@ class DQNAgent(BaseAgent):
 
     def _init_summary(self):
         cfg = self.summary_config
-        self.summary_writer = SummaryWriter(*cfg['writer_config'])
+        self.summary_writer = SummaryWriter(**cfg['writer_config'])
         self.summary_writer.add_graph(self.session.graph)
         params = self.ql.pre_trans_net.get_parameter_variables()
         outputs = self.ql.pre_trans_net.get_output_tensors()
@@ -85,6 +85,30 @@ class DQNAgent(BaseAgent):
             'pre_trans_net_params', 'histogram', [v.name for v in params])
         self.summary_writer.register(
             'pre_trans_net_outputs', 'histogram', [v.name for v in outputs])
+        self.summary_writer.register(
+            'training_summary', 'histogram',
+            ['Training/Error', 'Training/Reward', 'Training/Steps']
+        )
+
+        self.summary_writer.register(
+            'training_summary_ave', 'scalar',
+            ['Error/Average', 'Reward/Average', 'Steps/Average']
+        )
+
+        self.summary_writer.register(
+            'training_summary_min', 'scalar',
+            ['Error/Min', 'Reward/Min', 'Steps/Min']
+        )
+
+        self.summary_writer.register(
+            'training_summary_max', 'scalar',
+            ['Error/Max', 'Reward/Max', 'Steps/Max']
+        )
+        self.summary_values = {
+            'error': [],
+            'rewards': [],
+            'steps': [],
+        }
 
     def _init_network(self):
         self._build_network()
@@ -177,7 +201,8 @@ class DQNAgent(BaseAgent):
             self._sync_network()
 
         if n_obs > train_start and n_obs % train_freq == 0:
-            self._train(cfg['n_samples'])
+            error = self._train(cfg['n_samples'])
+            self.summary_values['error'].append(error)
 
     def _sync_network(self):
         self.session.run(updates=self.ql.sync_op, name='sync')
@@ -200,8 +225,10 @@ class DQNAgent(BaseAgent):
 
     ###########################################################################
     # Methods for post_episode_action
-    def perform_post_episode_task(self):
+    def perform_post_episode_task(self, stats):
         self.recorder.truncate()
+        self.summary_values['rewards'].append(stats['rewards'])
+        self.summary_values['steps'].append(stats['steps'])
 
         save_interval = self.save_config['interval']
         if save_interval and self.n_episodes % save_interval == 0:
@@ -237,6 +264,27 @@ class DQNAgent(BaseAgent):
             'pre_trans_net_params', self.n_episodes, params_vals)
         self.summary_writer.summarize(
             'pre_trans_net_outputs', self.n_episodes, output_vals)
+
+        summary = self.summary_values
+        values = [summary['error'], summary['rewards'], summary['steps']]
+        self.summary_writer.summarize(
+            'training_summary', self.n_episodes, values,
+        )
+
+        self.summary_writer.summarize(
+            'training_summary_min', self.n_episodes,
+            [np.min(v) for v in values],
+        )
+
+        self.summary_writer.summarize(
+            'training_summary_ave', self.n_episodes,
+            [np.mean(v) for v in values],
+        )
+
+        self.summary_writer.summarize(
+            'training_summary_max', self.n_episodes,
+            [np.max(v) for v in values],
+        )
 
     def __repr__(self):
         ret = '[DQNAgent]\n'
