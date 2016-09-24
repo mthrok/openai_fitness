@@ -2,7 +2,7 @@ from __future__ import division
 
 import os
 import logging
-import warnings
+from collections import OrderedDict
 
 import numpy as np
 
@@ -19,7 +19,7 @@ from luchador.nn.util import (
     make_model,
     get_model_config,
 )
-# from luchador.nn import SummaryWriter
+from luchador.nn import SummaryWriter
 
 from .base import BaseAgent
 from .recorder import TransitionRecorder
@@ -41,6 +41,7 @@ class DQNAgent(BaseAgent):
             action_config=_DEFAULT_CONFIG['action_config'],
             training_config=_DEFAULT_CONFIG['training_config'],
             save_config=_DEFAULT_CONFIG['save_config'],
+            summary_config=_DEFAULT_CONFIG['summary_config'],
     ):
         super(DQNAgent, self).__init__()
         self.recorder_config = recorder_config
@@ -49,6 +50,7 @@ class DQNAgent(BaseAgent):
         self.action_config = action_config
         self.training_config = training_config
         self.save_config = save_config
+        self.summary_config = summary_config
 
     def set_env_info(self, env):
         self._n_actions = env.n_actions
@@ -59,8 +61,8 @@ class DQNAgent(BaseAgent):
         self._init_recorder()
         self._init_counter()
         self._init_network()
+        self._init_summary()
         self._init_saver()
-        warnings.warn('Not completed yet.')
 
     def _init_recorder(self):
         self.recorder = TransitionRecorder(**self.recorder_config)
@@ -68,6 +70,21 @@ class DQNAgent(BaseAgent):
     def _init_counter(self):
         self.n_total_observations = 0
         self.n_episodes = 0
+
+    def _init_saver(self):
+        cfg = self.save_config
+        self.saver = Saver(**cfg['saver_config'])
+
+    def _init_summary(self):
+        cfg = self.summary_config
+        self.summary_writer = SummaryWriter(*cfg['writer_config'])
+        self.summary_writer.add_graph(self.session.graph)
+        params = self.ql.pre_trans_net.get_parameter_variables()
+        outputs = self.ql.pre_trans_net.get_output_tensors()
+        self.summary_writer.register(
+            'pre_trans_net_params', 'histogram', [v.name for v in params])
+        self.summary_writer.register(
+            'pre_trans_net_outputs', 'histogram', [v.name for v in outputs])
 
     def _init_network(self):
         self._build_network()
@@ -107,21 +124,15 @@ class DQNAgent(BaseAgent):
         self.session = Session()
         self.session.initialize()
 
-    def _init_saver(self):
-        cfg = self.save_config
-        self.saver = Saver(cfg['output_dir'])
-
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
-        warnings.warn('Not completed yet.')
         self.recorder.reset(initial_observation)
         self.n_episodes += 1
 
     ###########################################################################
     # Methods for `act`
     def act(self):
-        warnings.warn('Not completed yet.')
         if (
                 not self.recorder.is_ready() or
                 np.random.rand() < self._get_exploration_probability()
@@ -144,9 +155,9 @@ class DQNAgent(BaseAgent):
         # _LG.debug('Predicting Q value from NN')
         state = self.recorder.get_current_state()
         q_val = self.session.run(
-            name='action_value',
             outputs=self.ql.predicted_q,
             inputs={self.ql.pre_states: state},
+            name='action_value',
         )
         return q_val[0]
 
@@ -168,15 +179,12 @@ class DQNAgent(BaseAgent):
         if n_obs > train_start and n_obs % train_freq == 0:
             self._train(cfg['n_samples'])
 
-        warnings.warn('Not completed yet.')
-
-    def _sync_networkg(self):
-        self.session.run(name='sync', updates=self.ql.sync_op)
+    def _sync_network(self):
+        self.session.run(updates=self.ql.sync_op, name='sync')
 
     def _train(self, n_samples):
         samples = self.recorder.sample(n_samples)
         error = self.session.run(
-            name='minibatch',
             outputs=self.ql.error,
             inputs={
                 self.ql.pre_states: samples['pre_states'],
@@ -185,7 +193,8 @@ class DQNAgent(BaseAgent):
                 self.ql.post_states: samples['post_states'],
                 self.ql.terminals: samples['terminals'],
             },
-            updates=self.minimize_op
+            updates=self.minimize_op,
+            name='minibatch_training',
         )
         return error
 
@@ -193,9 +202,63 @@ class DQNAgent(BaseAgent):
     # Methods for post_episode_action
     def perform_post_episode_task(self):
         self.recorder.truncate()
+
         save_interval = self.save_config['interval']
         if save_interval and self.n_episodes % save_interval == 0:
+            _LG.info('Saving parameters')
             self.save()
 
+        summary_interval = self.summary_config['interval']
+        if summary_interval and self.n_episodes % summary_interval == 0:
+            _LG.info('Summarizing Network')
+            self.summarize()
+
     def save(self):
-        raise NotImplementedError('`save` is not implemented')
+        params = (self.ql.pre_trans_net.get_parameter_variables() +
+                  self.optimizer.get_parameter_variables())
+        params_val = self.session.run(outputs=params, name='pre_trans_params')
+        self.saver.save(OrderedDict([
+            (var.name, val) for var, val in zip(params, params_val)
+        ]), global_step=self.n_episodes)
+
+    def summarize(self):
+        sample = self.recorder.sample(32)
+
+        params = self.ql.pre_trans_net.get_parameter_variables()
+        outputs = self.ql.pre_trans_net.get_output_tensors()
+
+        params_vals = self.session.run(outputs=params, name='pre_trans_params')
+        output_vals = self.session.run(
+            outputs=outputs,
+            inputs={self.ql.pre_states: sample['pre_states']},
+            name='pre_trans_outputs'
+        )
+        self.summary_writer.summarize(
+            'pre_trans_net_params', self.n_episodes, params_vals)
+        self.summary_writer.summarize(
+            'pre_trans_net_outputs', self.n_episodes, output_vals)
+
+    def __repr__(self):
+        ret = '[DQNAgent]\n'
+        ret += '  [Recorder]\n'
+        for key, value in self.recorder_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Q Network]\n'
+        for key, value in self.q_network_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Optimizer]\n'
+        for key, value in self.optimizer_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Action]\n'
+        for key, value in self.action_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Training]\n'
+        for key, value in self.training_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Save]\n'
+        for key, value in self.save_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        ret += '  [Summary]\n'
+        for key, value in self.summary_config.items():
+            ret += '    {}: {}\n'.format(key, value)
+        return ret

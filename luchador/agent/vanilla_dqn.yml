@@ -37,31 +37,19 @@ training_config:
   train_frequency: 4
   # Sync networks every this number of observations are made
   sync_frequency: 10000
-
   n_samples: *batch_size
 
 save_config:
   # Save network parameter every once after this #episodes
   interval: 200
-  output_dir: null
-
-legacy:  # Not used for now, TODO: reimplement them
-  summary_config:
-    # Summarize network every once after this #episodes
-    test_summary_interval: 200
-    training_summary_interval: 200
-  summary_writer_config:
-    # Default to save training summary at the same dir as gym
-    output_dir: null
-  save_config:
-    # Save trained model every once at this #episodes
-    interval: 100
   saver_config:
-    # Default to save training summary at the same dir as gym
-    output_dir: null
-    # File name prefix
+    output_dir: &output_dir results
+    max_to_keep: 10
+    keep_every_n_hours: 1.0
     prefix: 'DQN'
-    # The maximum #files to retain from the recent save
-    max_to_keep: 5
-    # Keep the model every once at this interval
-    checkpoint_interval: 1  # [hour]
+
+summary_config:
+  # Summarize network every once after this #episodes
+  interval: 200
+  writer_config:
+    output_dir: *output_dir
