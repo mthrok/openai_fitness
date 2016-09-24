@@ -270,17 +270,17 @@ class DQNAgent(BaseAgent):
 
         self.summary_writer.summarize(
             'training_summary_min', self.n_episodes,
-            [np.min(v) for v in values],
+            [np.min(v) if v else [] for v in values],
         )
 
         self.summary_writer.summarize(
             'training_summary_ave', self.n_episodes,
-            [np.mean(v) for v in values],
+            [np.mean(v) if v else [] for v in values],
         )
 
         self.summary_writer.summarize(
             'training_summary_max', self.n_episodes,
-            [np.max(v) for v in values],
+            [np.max(v) if v else [] for v in values],
         )
 
     def __repr__(self):
