@@ -7,7 +7,6 @@ from collections import OrderedDict
 import numpy as np
 
 import luchador
-from luchador.util import load_config
 from luchador.nn import (
     Session,
     Input,
@@ -28,20 +27,18 @@ __all__ = ['DQNAgent']
 
 
 _LG = logging.getLogger(__name__)
-_DEFAULT_CONFIG = load_config(
-    os.path.join(os.path.dirname(__file__), 'vanilla_dqn.yml'))
 
 
 class DQNAgent(BaseAgent):
     def __init__(
             self,
-            recorder_config=_DEFAULT_CONFIG['recorder_config'],
-            q_network_config=_DEFAULT_CONFIG['q_network_config'],
-            optimizer_config=_DEFAULT_CONFIG['optimizer_config'],
-            action_config=_DEFAULT_CONFIG['action_config'],
-            training_config=_DEFAULT_CONFIG['training_config'],
-            save_config=_DEFAULT_CONFIG['save_config'],
-            summary_config=_DEFAULT_CONFIG['summary_config'],
+            recorder_config,
+            q_network_config,
+            optimizer_config,
+            action_config,
+            training_config,
+            save_config,
+            summary_config,
     ):
         super(DQNAgent, self).__init__()
         self.recorder_config = recorder_config

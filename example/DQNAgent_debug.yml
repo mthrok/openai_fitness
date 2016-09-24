@@ -28,22 +28,25 @@ args:
       learning_rate: 0.00025
 
   action_config:
-    exploration_period: 1000000
+    # Exploration period in which exploration rate is annealed.
+    exploration_period: 500
     initial_exploration_rate: 1.0
     terminal_exploration_rate: 0.1
 
   training_config:
-    # Training starts after this number of transitions are recorded
-    train_start: 50000
+    # Trainig starts after this number of frames are recorded
+    train_start: 400
+
     # Train network every this number of observations are made
     train_frequency: 4
-    # Sync networks every this number of observations are made
-    sync_frequency: 10000
+
+    # Sync networks every this number of observationa are made
+    sync_frequency: 20
     n_samples: *batch_size
 
   save_config:
     # Save network parameter every once after this #episodes
-    interval: 200
+    interval: 5
     saver_config:
       output_dir: &output_dir results
       max_to_keep: 10
@@ -52,6 +55,6 @@ args:
 
   summary_config:
     # Summarize network every once after this #episodes
-    interval: 200
+    interval: 5
     writer_config:
       output_dir: *output_dir
