@@ -78,9 +78,13 @@ class DQNAgent(BaseAgent):
         params = self.ql.pre_trans_net.get_parameter_variables()
         outputs = self.ql.pre_trans_net.get_output_tensors()
         self.summary_writer.register(
-            'pre_trans_net_params', 'histogram', [v.name for v in params])
+            'pre_trans_net_params', 'histogram',
+            ['/'.join(v.name.split('/')[1:]) for v in params]
+        )
         self.summary_writer.register(
-            'pre_trans_net_outputs', 'histogram', [v.name for v in outputs])
+            'pre_trans_net_outputs', 'histogram',
+            ['/'.join(v.name.split('/')[1:]) for v in outputs]
+        )
         self.summary_writer.register(
             'training_summary', 'histogram',
             ['Training/Error', 'Training/Reward', 'Training/Steps']
