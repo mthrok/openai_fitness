@@ -8,7 +8,8 @@ args:
     batch_size: &batch_size 32
 
   q_network_config:
-    network_name: 'vanilla_dqn'
+    model_name: 'vanilla_dqn'
+    parameter_file: null
     state_width: *state_width
     state_height: *state_height
     state_length: *state_length

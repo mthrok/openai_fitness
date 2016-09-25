@@ -119,12 +119,12 @@ class DQNAgent(BaseAgent):
     def _build_network(self):
         cfg = self.q_network_config
         w, h, c = cfg['state_width'], cfg['state_height'], cfg['state_length']
-        network_name = cfg['network_name']
+        model_name = cfg['model_name']
 
         fmt = luchador.get_nn_conv_format()
         shape = (None, h, w, c) if fmt == 'NHWC' else (None, c, h, w)
 
-        model_def = get_model_config(network_name, n_actions=self._n_actions)
+        model_def = get_model_config(model_name, n_actions=self._n_actions)
 
         def model_maker():
             dqn = make_model(model_def)
@@ -145,8 +145,12 @@ class DQNAgent(BaseAgent):
         self.minimize_op = self.optimizer.minimize(self.ql.error, wrt=wrt)
 
     def _init_session(self):
+        cfg = self.q_network_config
         self.session = Session()
-        self.session.initialize()
+        if cfg.get('parameter_file'):
+            self.session.load_from_file(cfg['parameter_file'])
+        else:
+            self.session.initialize()
 
     ###########################################################################
     # Methods for `reset`
