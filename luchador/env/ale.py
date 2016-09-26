@@ -9,7 +9,7 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
-from .base import BaseEnvironment
+from .base import BaseEnvironment, Outcome
 
 _LG = logging.getLogger(__name__)
 
@@ -161,8 +161,6 @@ class ALEEnvironment(BaseEnvironment):
         self.repeat_action = repeat_action
         self.random_start = random_start
 
-        self.n_episodes = 0
-
     def _init_ale(self):
         ale = ALEInterface()
         ale.setBool('sound', self.play_sound)
@@ -287,7 +285,6 @@ class ALEEnvironment(BaseEnvironment):
     ###########################################################################
     def _get_state(self):
         return {
-            'episode': self.n_episodes,
             'lives': self._ale.lives(),
             'total_frame_number': self._ale.getFrameNumber(),
             'episode_frame_number': self._ale.getEpisodeFrameNumber(),
@@ -301,23 +298,25 @@ class ALEEnvironment(BaseEnvironment):
         then only life loss flag is reset so that the next game starts from
         the current state. Otherwise, the game is simply initialized.
         """
+        reward = 0
         if (
                 self.mode == 'test' or
                 not self.life_lost or  # `reset` called in a middle of episode
                 self._ale.game_over()  # all lives are lost
         ):
             self._ale.reset_game()
-            self.n_episodes += 1
             rand = self.random_start
             repeat = 1 + (np.random.randint(rand) if rand else 0)
             for _ in range(repeat):
-                self._step(0)
+                reward += self._step(0)
 
         self.life_lost = False
-        return {
-            'observation': self._get_observation(),
-            'state': self._get_state()
-        }
+        return Outcome(
+            reward=reward,
+            observation=self._get_observation(),
+            terminal=self._is_terminal(),
+            state=self._get_state(),
+        )
 
     ###########################################################################
     # methods for `step` function
@@ -337,12 +336,12 @@ class ALEEnvironment(BaseEnvironment):
             if terminal:
                 break
 
-        return {
-            'reward': reward,
-            'observation': self._get_observation(),
-            'terminal': terminal,
-            'state': self._get_state(),
-        }
+        return Outcome(
+            reward=reward,
+            observation=self._get_observation(),
+            terminal=terminal,
+            state=self._get_state(),
+        )
 
     def _step(self, action):
         reward = self._ale.act(action)
