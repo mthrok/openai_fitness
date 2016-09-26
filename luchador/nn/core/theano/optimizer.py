@@ -172,8 +172,8 @@ class AdamOptimizer(BaseOptimizer):
         beta1, beta2 = args['beta1'], args['beta2']
         ep, lr = args['epsilon'], args['learning_rate']
 
-        beta1_power = self._create_slot(beta1, name='beta1_power')
-        beta2_power = self._create_slot(beta2, name='beta2_power')
+        beta1_power = self._create_slot(beta1, 'beta1_power')
+        beta2_power = self._create_slot(beta2, 'beta2_power')
 
         alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
 
