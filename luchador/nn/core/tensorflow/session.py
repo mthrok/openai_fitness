@@ -165,6 +165,8 @@ class Session(BaseSession):
                             src_shape[2:4] == tgt_shape[:2] and  # h, w
                             src_shape[:2] == tgt_shape[:1:-1]  # channels
                     ):
+                        _LG.info('    Reshaping variable: {} -> {}'
+                                 .format(src_shape, tgt_shape))
                         value = value.transpose((2, 3, 1, 0))
                     else:
                         raise ValueError(
