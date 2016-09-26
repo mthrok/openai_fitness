@@ -46,7 +46,7 @@ def _parse_command_line_arguments():
         'agent_config',
         help='YAML file contains agent configuration')
     ap.add_argument('--episodes', '-ep', type=int, default=1000)
-    ap.add_argument('--steps', '-ts', type=int, default=1000)
+    ap.add_argument('--steps', '-ts', type=int, default=10000)
     ap.add_argument('--debug', action='store_true')
     return ap.parse_args()
 
