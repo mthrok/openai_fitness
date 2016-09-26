@@ -30,7 +30,7 @@ class BaseAgent(object):
         """Reset agent with the initial state of the environment."""
         raise NotImplementedError('reset method is not implemented.')
 
-    def perform_post_episode_task(self):
+    def perform_post_episode_task(self, stats):
         """Perform post episode task"""
         pass
 

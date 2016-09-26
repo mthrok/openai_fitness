@@ -12,7 +12,10 @@ _LG = logging.getLogger(__name__)
 
 
 ###############################################################################
-def main(env, agent, n_episodes, n_timesteps):
+def main(env, agent, episodes, steps, debug=False):
+    if debug:
+        logging.getLogger('luchador').setLevel(logging.DEBUG)
+
     Environment = get_env(env['name'])
     env = Environment(**env['args'])
     _LG.info('\n{}'.format(env))
@@ -24,8 +27,10 @@ def main(env, agent, n_episodes, n_timesteps):
     _LG.info('\n{}'.format(agent))
 
     runner = EpisodeRunner(env, agent)
-    for i in range(n_episodes):
-        runner.run_episode(n_timesteps)
+    for i in range(episodes):
+        _LG.debug('Running episode: {}'.format(i))
+        runner.run_episode(steps)
+    _LG.info('Done')
 
 
 ###############################################################################
@@ -41,7 +46,8 @@ def _parse_command_line_arguments():
         'agent_config',
         help='YAML file contains agent configuration')
     ap.add_argument('--episodes', '-ep', type=int, default=1000)
-    ap.add_argument('--timesteps', '-ts', type=int, default=1000)
+    ap.add_argument('--steps', '-ts', type=int, default=1000)
+    ap.add_argument('--debug', action='store_true')
     return ap.parse_args()
 
 
@@ -54,8 +60,9 @@ def _parse_config():
     config = {
         'env': load_config(args.env_config),
         'agent': load_config(args.agent_config),
-        'n_episodes': args.episodes,
-        'n_timesteps': args.timesteps,
+        'episodes': args.episodes,
+        'steps': args.steps,
+        'debug': args.debug,
     }
     return config
 

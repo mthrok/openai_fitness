@@ -10,10 +10,10 @@ __all__ = ['EpisodeRunner']
 
 class EpisodeRunner(object):
     """Class for runnig episode"""
-    def __init__(self, env, agent, max_timesteps=1000):
+    def __init__(self, env, agent, max_steps=1000):
         self.env = env
         self.agent = agent
-        self.max_timesteps = max_timesteps
+        self.max_steps = max_steps
         self.n_episodes = 0
 
     def _reset(self):
@@ -21,17 +21,17 @@ class EpisodeRunner(object):
         outcome = self.env.reset()
         self.agent.reset(outcome.observation)
 
-    def _perform_post_episode_task(self):
+    def _perform_post_episode_task(self, stats):
         """Perform post episode task"""
-        self.agent.perform_post_episode_task()
+        self.agent.perform_post_episode_task(stats)
 
-    def run_episode(self, max_timesteps=None):
+    def run_episode(self, max_steps=None):
         """Run one episode"""
-        max_timesteps = max_timesteps or self.max_timesteps
+        max_steps = max_steps or self.max_steps
         self._reset()
 
         total_rewards = 0
-        for t in range(1, max_timesteps+1):
+        for steps in range(1, max_steps+1):
             action = self.agent.act()
             outcome = self.env.step(action)
 
@@ -40,7 +40,9 @@ class EpisodeRunner(object):
 
             if outcome.terminal:
                 break
-        else:
-            t = -1
-        self._perform_post_episode_task()
-        return t, total_rewards
+
+        self._perform_post_episode_task({
+            'rewards': total_rewards,
+            'steps': steps,
+        })
+        return steps, total_rewards
