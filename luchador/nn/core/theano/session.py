@@ -131,5 +131,28 @@ class Session(BaseSession):
                 variable = scope.get_variable(name=name)
                 if cast:
                     value = np.array(value, dtype=variable.dtype)
+
+                src_shape, tgt_shape = value.shape, variable.shape
+                if not tgt_shape == src_shape:
+                    # Theano's Conv2D Filter shape is
+                    #  [#out-channel, #in-channel, height, width]
+                    # while, that of Tensorflow is
+                    #  [height, width, #in-channel, #out-channel]
+                    # we reshape the variable only when this condition is met
+
+                    if (
+                            len(tgt_shape) == len(src_shape) == 4 and
+                            src_shape[:2] == tgt_shape[2:4] and  # h, w
+                            src_shape[2:4] == tgt_shape[-3::-1]  # channels
+                    ):
+                        _LG.info('    Reshaping variable: {} -> {}'
+                                 .format(src_shape, tgt_shape))
+                        value = value.transpose((3, 2, 0, 1))
+                    else:
+                        raise ValueError(
+                            'Shapes are not incompatible. '
+                            'Model shape: {}, Value shape: {}'
+                            .format(src_shape, tgt_shape)
+                        )
                 op[variable.get()] = value
         self.run(name=None, updates=Operation(op=op))

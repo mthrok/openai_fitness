@@ -32,20 +32,38 @@ if [[ -z "${MODEL}" || -z "${OPTIMIZER}" ]]; then
     exit 1
 fi
 
-if [[ -z "${LUCHADOR_NN_BACKEND}" ]]; then
-    echo "Environmental variable LUCHADOR_NN_BACKEND must be set"
-    exit 1
-fi
-    
-OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
-
-OUTPUT_DIR="tmp/test_serialization_${MODEL}_${OPTIMIZER_FILENAME%.*}_${LUCHADOR_NN_BACKEND}"
-INPUT_FILE="${OUTPUT_DIR}/save_0.h5"
-
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="python ${BASE_DIR}/serialize_model.py ${MODEL} ${OPTIMIZER}"
 
-echo "* Serializing ${MODEL} + $( basename "${OPTIMIZER}")"
-${TEST_COMMAND} --output ${OUTPUT_DIR}
-echo "* Deserializing ${MODEL} + $( basename "${OPTIMIZER}")"
-${TEST_COMMAND} --input ${INPUT_FILE}
+OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
+
+BACKENDS=( "theano" "tensorflow" )
+CONV_FORMATS=( "NCHW" "NHWC" )
+BASE_OUTPUT_DIR="tmp/test_serialization_${MODEL}_${OPTIMIZER_FILENAME%.*}"
+for i in {0..1}
+do
+    BACKEND="${BACKENDS[${i}]}"
+    CONV_FORMAT="${CONV_FORMATS[${i}]}"
+
+    OUTPUT_DIR="${BASE_OUTPUT_DIR}_${BACKEND}"
+    INPUT_FILE="${OUTPUT_DIR}/save_0.h5"
+
+    echo "* Serializing ${MODEL} + $( basename "${OPTIMIZER}") on ${BACKEND} ${CONV_FORMAT}"
+    LUCHADOR_NN_BACKEND=${BACKEND} LUCHADOR_NN_CONV_FORMAT=${CONV_FORMAT} ${TEST_COMMAND} --output ${OUTPUT_DIR}
+done
+
+THEANO_PARAM="${BASE_OUTPUT_DIR}_theano/save_0.h5"
+TENSORFLOW_PARAM="${BASE_OUTPUT_DIR}_tensorflow/save_0.h5"
+
+echo "* Deserializing Theano param on Theano backend"
+LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --input ${THEANO_PARAM}
+echo "* Deserializing Tensorflow param on Theano backend"
+LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --input ${TENSORFLOW_PARAM}
+
+echo "* Deserializing Theano param on Tensorflow backend"
+LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${THEANO_PARAM}
+echo "* Deserializing Tensorflow param on Tensorflow backend"
+LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${TENSORFLOW_PARAM}
+
+
+
