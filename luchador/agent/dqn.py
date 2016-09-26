@@ -289,7 +289,13 @@ class DQNAgent(BaseAgent):
             'training_summary_max', self.n_episodes,
             [np.max(v) if v else 0 for v in values],
         )
+        self.summary_values = {
+            'error': [],
+            'rewards': [],
+            'steps': [],
+        }
 
+    ###########################################################################
     def __repr__(self):
         ret = '[DQNAgent]\n'
         ret += '  [Recorder]\n'
