@@ -19,7 +19,7 @@ class EpisodeRunner(object):
     def _reset(self):
         """Reset environment and agent"""
         outcome = self.env.reset()
-        self.agent.reset(outcome['observation'])
+        self.agent.reset(outcome.observation)
 
     def _perform_post_episode_task(self):
         """Perform post episode task"""
@@ -35,15 +35,10 @@ class EpisodeRunner(object):
             action = self.agent.act()
             outcome = self.env.step(action)
 
-            self.agent.observe(
-                action=action,
-                observation=outcome['observation'],
-                reward=outcome['reward'],
-                terminal=outcome['terminal'],
-                env_state=outcome['state'])
-            total_rewards += outcome['reward']
+            self.agent.observe(action, outcome)
+            total_rewards += outcome.reward
 
-            if outcome['terminal']:
+            if outcome.terminal:
                 break
         else:
             t = -1

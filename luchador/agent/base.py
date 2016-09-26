@@ -13,18 +13,12 @@ class BaseAgent(object):
     def init(self):
         pass
 
-    def observe(self, action, observation, reward, terminal, env_state):
+    def observe(self, action, outcome):
         """Observe the action and it's outcome.
 
         Args:
           action: The action that this agent previously took.
-          observation: Observation (of environment) caused by the action.
-          reward: Reward acquired by the action.
-          done (bool): Indicates if a task is complete or not.
-          env_state (dict): Infomation related to environment.
-
-        observation, reward, done, info are variables returned by
-          environment. See gym.core:Env.step.
+          oucome (Outome): Outcome of taking the action
         """
         raise NotImplementedError('observe method is not implemented.')
 
