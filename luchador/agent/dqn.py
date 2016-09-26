@@ -65,7 +65,6 @@ class DQNAgent(BaseAgent):
 
     def _init_counter(self):
         self.n_total_observations = 0
-        self.n_episodes = 0
 
     def _init_saver(self):
         cfg = self.save_config
@@ -152,7 +151,6 @@ class DQNAgent(BaseAgent):
     # Methods for `reset`
     def reset(self, initial_observation):
         self.recorder.reset(initial_observation)
-        self.n_episodes += 1
 
     ###########################################################################
     # Methods for `act`
@@ -227,29 +225,30 @@ class DQNAgent(BaseAgent):
     # Methods for post_episode_action
     def perform_post_episode_task(self, stats):
         self.recorder.truncate()
+        episode = stats['episode']
         self.summary_values['rewards'].append(stats['rewards'])
         self.summary_values['steps'].append(stats['steps'])
 
         save_interval = self.save_config['interval']
-        if save_interval > 0 and self.n_episodes % save_interval == 0:
+        if save_interval > 0 and episode % save_interval == 0:
             _LG.info('Saving parameters')
-            self._save()
+            self._save(episode)
 
         summary_interval = self.summary_config['interval']
-        if summary_interval > 0 and self.n_episodes % summary_interval == 0:
+        if summary_interval > 0 and episode % summary_interval == 0:
             _LG.info('Summarizing Network')
-            self.summarize()
+            self._summarize(episode)
 
-    def _save(self):
+    def _save(self, episode):
         """Save network parameter to file"""
         params = (self.ql.pre_trans_net.get_parameter_variables() +
                   self.optimizer.get_parameter_variables())
         params_val = self.session.run(outputs=params, name='pre_trans_params')
         self.saver.save(OrderedDict([
             (var.name, val) for var, val in zip(params, params_val)
-        ]), global_step=self.n_episodes)
+        ]), global_step=episode)
 
-    def _summarize(self):
+    def _summarize(self, episode):
         """Summarize network parameter, output and training history"""
         sample = self.recorder.sample(32)
 
@@ -263,28 +262,28 @@ class DQNAgent(BaseAgent):
             name='pre_trans_outputs'
         )
         self.summary_writer.summarize(
-            'pre_trans_net_params', self.n_episodes, params_vals)
+            'pre_trans_net_params', episode, params_vals)
         self.summary_writer.summarize(
-            'pre_trans_net_outputs', self.n_episodes, output_vals)
+            'pre_trans_net_outputs', episode, output_vals)
 
         summary = self.summary_values
         values = [summary['error'], summary['rewards'], summary['steps']]
         self.summary_writer.summarize(
-            'training_summary', self.n_episodes, values,
+            'training_summary', episode, values,
         )
 
         self.summary_writer.summarize(
-            'training_summary_min', self.n_episodes,
+            'training_summary_min', episode,
             [np.min(v) if v else 0 for v in values],
         )
 
         self.summary_writer.summarize(
-            'training_summary_ave', self.n_episodes,
+            'training_summary_ave', episode,
             [np.mean(v) if v else 0 for v in values],
         )
 
         self.summary_writer.summarize(
-            'training_summary_max', self.n_episodes,
+            'training_summary_max', episode,
             [np.max(v) if v else 0 for v in values],
         )
         self.summary_values = {
