@@ -17,7 +17,7 @@ from .wrapper import Operation
 
 __all__ = [
     'BaseOptimizer', 'make_optimizer', 'get_optimizer',
-    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
+    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'AdamOptimizer',
 ]
 
 
@@ -44,6 +44,15 @@ class BaseOptimizer(Optimizer):
         slot_var = get_variable(
             name=name, shape=value.shape, dtype=value.dtype,
             initializer=Constant(0), broadcastable=var.broadcastable)
+        self.slot.append(slot_var)
+        return slot_var
+
+    def _create_slot(self, initial_value, slot_name, dtype=None):
+        """Create scalar slot variable common to variables"""
+        name = '{}/{}'.format(self.args['name'], slot_name)
+        slot_var = get_variable(
+            name=name, shape=[], dtype=dtype,
+            initializer=Constant(initial_value), broadcastable=True)
         self.slot.append(slot_var)
         return slot_var
 
@@ -146,5 +155,38 @@ class GravesRMSProp(BaseOptimizer):
 
             updates[mean_grad1] = new_mean_grad1
             updates[mean_grad2] = new_mean_grad2
+            updates[var] = new_var
+        return Operation(op=updates)
+
+
+class AdamOptimizer(BaseOptimizer):
+    def __init__(self, learning_rate,
+                 beta1=0.9, beta2=0.999,
+                 epsilon=1e-08, name='Adam', **kwargs):
+        super(AdamOptimizer, self).__init__(
+            learning_rate=learning_rate,
+            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
+
+    def apply_gradients(self, grads_and_vars):
+        args = self.args
+        beta1, beta2 = args['beta1'], args['beta2']
+        ep, lr = args['epsilon'], args['learning_rate']
+
+        beta1_power = self._create_slot(beta1, name='beta1_power')
+        beta2_power = self._create_slot(beta2, name='beta2_power')
+
+        alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
+
+        updates = OrderedDict()
+        for grad, var in grads_and_vars:
+            m = self._create_slot_var(var, 'm').get()
+            v = self._create_slot_var(var, 'v').get()
+
+            new_m = m + (grad - m) * (1.0 - beta1)
+            new_v = v + (T.sqrt(grad) - v) * (1.0 - beta2)
+            new_var = var - (new_m * alpha) / (T.sqrt(new_v) + ep)
+
+            updates[m] = new_m
+            updates[v] = new_v
             updates[var] = new_var
         return Operation(op=updates)
