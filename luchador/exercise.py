@@ -27,7 +27,8 @@ def main(env, agent, episodes, steps, debug=False):
 
     runner = EpisodeRunner(env, agent)
     for i in range(episodes):
-        _LG.debug('Running episode: {}'.format(i))
+        if i % 1000 == 0:
+            _LG.info('Running episode: {}'.format(i))
         runner.run_episode(steps)
     _LG.info('Done')
 
