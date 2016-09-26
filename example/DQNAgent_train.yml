@@ -44,7 +44,7 @@ args:
 
   save_config:
     # Save network parameter every once after this #episodes
-    interval: 200
+    interval: 1000
     saver_config:
       output_dir: &output_dir results
       max_to_keep: 10
@@ -53,6 +53,6 @@ args:
 
   summary_config:
     # Summarize network every once after this #episodes
-    interval: 200
+    interval: 1000
     writer_config:
       output_dir: *output_dir
