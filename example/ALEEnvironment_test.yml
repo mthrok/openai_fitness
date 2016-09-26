@@ -1,6 +1,6 @@
 name: ALEEnvironment
 args:
-  rom: breakout
+  rom: space_invaders
 
   # Each time `step` function is called, this number of frames are played with the same action
   repeat_action: 4
