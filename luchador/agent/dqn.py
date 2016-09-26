@@ -187,9 +187,10 @@ class DQNAgent(BaseAgent):
 
     ###########################################################################
     # Methods for `observe`
-    def observe(self, action, observation, reward, terminal, env_state):
-        self.recorder.record(action=action, reward=reward,
-                             observation=observation, terminal=terminal)
+    def observe(self, action, outcome):
+        self.recorder.record(
+            action=action, reward=outcome.reward,
+            observation=outcome.observation, terminal=outcome.terminal)
         self.n_total_observations += 1
 
         cfg, n_obs = self.training_config, self.n_total_observations
