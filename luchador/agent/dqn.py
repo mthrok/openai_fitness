@@ -48,12 +48,10 @@ class DQNAgent(BaseAgent):
         self.save_config = save_config
         self.summary_config = summary_config
 
-    def set_env_info(self, env):
-        self._n_actions = env.n_actions
-
     ###########################################################################
     # Methods for initialization
-    def init(self):
+    def init(self, env):
+        self._n_actions = env.n_actions
         self._init_recorder()
         self._init_counter()
         self._init_network()
