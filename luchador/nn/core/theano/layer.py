@@ -261,7 +261,7 @@ class ReLU(BaseReLU):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output_tensor = T.nnet.relu(input.get())
         _LG.debug('    input_shape: {}'.format(input.shape))
-        return Tensor(output_tensor, input.shape, name='output')
+        return _wrap_output(output_tensor, input.shape, name='output')
 
 
 class Flatten(BaseFlatten):
