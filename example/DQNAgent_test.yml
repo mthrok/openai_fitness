@@ -36,7 +36,8 @@ args:
 
   training_config:
     # Training starts after this number of transitions are recorded
-    train_start: 5000000000000
+    # Giving negative value effectively disable training and network sync
+    train_start: -1
     # Train network every this number of observations are made
     train_frequency: 4
     # Sync networks every this number of observations are made
@@ -45,7 +46,8 @@ args:
 
   save_config:
     # Save network parameter every once after this #episodes
-    interval: 2000000000
+    # Giving non-positive value effectively disable save functionality
+    interval: -1
     saver_config:
       output_dir: &output_dir results
       max_to_keep: 10
@@ -54,6 +56,7 @@ args:
 
   summary_config:
     # Summarize network every once after this #episodes
-    interval: 2000000000000
+    # Giving non-positive value effectively disable save functionality
+    interval: -1
     writer_config:
       output_dir: *output_dir

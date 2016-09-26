@@ -193,13 +193,13 @@ class DQNAgent(BaseAgent):
         self.n_total_observations += 1
 
         cfg, n_obs = self.training_config, self.n_total_observations
-        if (n_obs < cfg['train_start']):
+        if cfg['train_start'] < 0 or n_obs < cfg['train_start']:
             return
 
-        if cfg['sync_frequency'] and n_obs % cfg['sync_frequency'] == 0:
+        if n_obs % cfg['sync_frequency'] == 0:
             self._sync_network()
 
-        if cfg['train_frequency'] and n_obs % cfg['train_frequency'] == 0:
+        if n_obs % cfg['train_frequency'] == 0:
             error = self._train(cfg['n_samples'])
             self.summary_values['error'].append(error)
 
@@ -230,16 +230,17 @@ class DQNAgent(BaseAgent):
         self.summary_values['steps'].append(stats['steps'])
 
         save_interval = self.save_config['interval']
-        if save_interval and self.n_episodes % save_interval == 0:
+        if save_interval > 0 and self.n_episodes % save_interval == 0:
             _LG.info('Saving parameters')
-            self.save()
+            self._save()
 
         summary_interval = self.summary_config['interval']
-        if summary_interval and self.n_episodes % summary_interval == 0:
+        if summary_interval > 0 and self.n_episodes % summary_interval == 0:
             _LG.info('Summarizing Network')
             self.summarize()
 
-    def save(self):
+    def _save(self):
+        """Save network parameter to file"""
         params = (self.ql.pre_trans_net.get_parameter_variables() +
                   self.optimizer.get_parameter_variables())
         params_val = self.session.run(outputs=params, name='pre_trans_params')
@@ -247,7 +248,8 @@ class DQNAgent(BaseAgent):
             (var.name, val) for var, val in zip(params, params_val)
         ]), global_step=self.n_episodes)
 
-    def summarize(self):
+    def _summarize(self):
+        """Summarize network parameter, output and training history"""
         sample = self.recorder.sample(32)
 
         params = self.ql.pre_trans_net.get_parameter_variables()
