@@ -132,11 +132,7 @@ class DQNAgent(BaseAgent):
             dqn(input())
             return dqn
 
-        self.ql = DeepQLearning(discount_rate=cfg['discount_rate'],
-                                min_delta=cfg['min_delta'],
-                                max_delta=cfg['max_delta'],
-                                min_reward=cfg['min_reward'],
-                                max_reward=cfg['max_reward'])
+        self.ql = DeepQLearning(**cfg['args'])
         self.ql.build(model_maker)
 
     def _build_optimization(self):
@@ -196,15 +192,14 @@ class DQNAgent(BaseAgent):
                              observation=observation, terminal=terminal)
         self.n_total_observations += 1
 
-        cfg = self.training_config
-        train_start = cfg['train_start']
-        train_freq, sync_freq = cfg['train_frequency'], cfg['sync_frequency']
-        n_obs = self.n_total_observations
+        cfg, n_obs = self.training_config, self.n_total_observations
+        if (n_obs < cfg['train_start']):
+            return
 
-        if sync_freq and n_obs % sync_freq == 1:
+        if cfg['sync_frequency'] and n_obs % cfg['sync_frequency'] == 0:
             self._sync_network()
 
-        if n_obs > train_start and n_obs % train_freq == 0:
+        if cfg['train_frequency'] and n_obs % cfg['train_frequency'] == 0:
             error = self._train(cfg['n_samples'])
             self.summary_values['error'].append(error)
 
