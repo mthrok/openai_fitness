@@ -80,16 +80,20 @@ class SaverTest(unittest.TestCase):
         saver = Saver(OUTPUT_DIR, prefix=prefix)
 
         key = 'foo'
-        value = gen_random_value()
+        value1 = gen_random_value()
+        value2 = value1 + 1
 
-        saver.save({key: value}, global_step=global_step)
-        try:
-            saver.save({key: value}, global_step=global_step)
-        except Exception:
-            return
+        filepath1 = saver.save({key: value1}, global_step=global_step)
+        filepath2 = saver.save({key: value2}, global_step=global_step)
 
-        self.fail(
-            'Saver must raises Error if key exists in the file.'
+        self.assertEqual(
+            filepath1, filepath2, 'Data must be written to the same file.'
+        )
+        f = h5py.File(filepath1)
+        self.assertTrue(
+            np.all(value2 == f[key]),
+            'Saved value do not match. '
+            'Expected: {}. Found: {}'.format(value1, f[key])
         )
 
     def test_max_to_keep(self):

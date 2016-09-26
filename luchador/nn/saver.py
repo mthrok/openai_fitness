@@ -16,16 +16,16 @@ __all__ = ['Saver']
 
 
 class Saver(object):
-    def __init__(self, save_dir, max_to_keep=5,
+    def __init__(self, output_dir, max_to_keep=5,
                  keep_every_n_hours=1.0, prefix='save'):
         try:
-            os.makedirs(save_dir)
+            os.makedirs(output_dir)
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
 
         self.prefix = prefix
-        self.save_dir = save_dir
+        self.output_dir = output_dir
         self.max_to_keep = max_to_keep
         self.keep_every_n_hours = keep_every_n_hours
 
@@ -36,12 +36,14 @@ class Saver(object):
         for key, value in data.items():
             _LG.debug('  Saving: {:10} {:24} {}'.format(
                 value.dtype, value.shape, key))
+            if key in f:
+                del f[key]
             f.create_dataset(key, data=value, chunks=True)
         f.flush()
 
     def save(self, data, global_step):
         filename = '{}_{}.h5'.format(self.prefix, global_step)
-        filepath = os.path.join(self.save_dir, filename)
+        filepath = os.path.join(self.output_dir, filename)
 
         _LG.info('Saving data to {}'.format(filepath))
         f = h5py.File(filepath, 'a')
