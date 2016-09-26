@@ -24,7 +24,6 @@ for MODEL in ${MODELS}
 do
     for OPTIMIZER in "${OPTIMIZERS[@]}"
     do
-        echo "${MODEL} - ${OPTIMIZER}"
         ${TEST_DIR}/test_serialization.sh --model ${MODEL} --optimizer ${OPTIMIZER}
     done
 done

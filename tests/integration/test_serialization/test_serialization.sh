@@ -40,6 +40,7 @@ OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
 BACKENDS=( "theano" "tensorflow" )
 CONV_FORMATS=( "NCHW" "NHWC" )
 BASE_OUTPUT_DIR="tmp/test_serialization_${MODEL}_${OPTIMIZER_FILENAME%.*}"
+echo "*** Checking serialization compatiblity of ${MODEL} + $( basename "${OPTIMIZER}")"
 for i in {0..1}
 do
     BACKEND="${BACKENDS[${i}]}"
@@ -48,7 +49,7 @@ do
     OUTPUT_DIR="${BASE_OUTPUT_DIR}_${BACKEND}"
     INPUT_FILE="${OUTPUT_DIR}/save_0.h5"
 
-    echo "* Serializing ${MODEL} + $( basename "${OPTIMIZER}") on ${BACKEND} ${CONV_FORMAT}"
+    echo "* Serializing on ${BACKEND} ${CONV_FORMAT}"
     LUCHADOR_NN_BACKEND=${BACKEND} LUCHADOR_NN_CONV_FORMAT=${CONV_FORMAT} ${TEST_COMMAND} --output ${OUTPUT_DIR}
 done
 
@@ -64,6 +65,4 @@ echo "* Deserializing Theano param on Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${THEANO_PARAM}
 echo "* Deserializing Tensorflow param on Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${TENSORFLOW_PARAM}
-
-
-
+echo ""
