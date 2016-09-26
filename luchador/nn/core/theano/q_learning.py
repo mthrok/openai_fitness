@@ -42,6 +42,7 @@ class DeepQLearning(BaseQLI):
     def _build_target_q_value(self):
         min_reward = self.args['min_reward']
         max_reward = self.args['max_reward']
+        scale_reward = self.args['scale_reward']
         discount_rate = self.args['discount_rate']
 
         self.actions = Input(dtype='uint16', shape=(None,), name='actions')
@@ -57,6 +58,8 @@ class DeepQLearning(BaseQLI):
         post_q = post_q * discount_rate
         post_q = post_q * (1.0 - terminals)
 
+        if scale_reward:
+            rewards = rewards / scale_reward
         if min_reward and max_reward:
             rewards = rewards.clip(min_reward, max_reward)
         future = rewards + post_q

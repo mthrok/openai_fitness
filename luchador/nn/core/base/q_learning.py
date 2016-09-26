@@ -10,12 +10,27 @@ _LG = logging.getLogger(__name__)
 
 
 class DeepQLearning(StoreMixin, object):
-    """Build Q-learning network and optimization operations"""
-    def __init__(self, discount_rate,
+    """Build Q-learning network and optimization operations
+
+    Args:
+      discout_rate (float): Discount rate for computing future reward.
+                            Valid value range is (0.0, 1.0)
+
+      scale_reward (number or None): When given, reward is divided by this
+                                     number before applying min/max threashold
+      min_reward(number or None): When given, clip reward after scaling.
+      max_reward(number or None): See `min_reward`.
+
+      min_delta(number or None): When given, error between predicted Q and
+                                 target Q is clipped with this value.
+      max_delta(number or None): See `max_reward`
+    """
+    def __init__(self, discount_rate, scale_reward=None,
                  min_reward=None, max_reward=None,
                  min_delta=None, max_delta=None):
         self._store_args(
             discount_rate=discount_rate,
+            scale_reward=scale_reward,
             min_reward=min_reward,
             max_reward=max_reward,
             min_delta=min_delta,
@@ -47,6 +62,13 @@ class DeepQLearning(StoreMixin, object):
             raise ValueError(
                 'When clipping reward, both `min_reward` '
                 'and `max_reward` must be provided.')
+        if (
+                (args['min_delta'] or args['max_delta']) and
+                (not args['max_delta'] or not args['min_delta'])
+        ):
+            raise ValueError(
+                'When clipping reward, both `min_delta` '
+                'and `max_delta` must be provided.')
 
     def __call__(self, q_network_maker):
         """Build computation graph (error and sync ops) for Q learning

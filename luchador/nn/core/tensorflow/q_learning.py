@@ -42,6 +42,7 @@ class DeepQLearning(BaseQLI):
         dtype = get_nn_dtype()
         min_reward = self.args['min_reward']
         max_reward = self.args['max_reward']
+        scale_reward = self.args['scale_reward']
         discount_rate = self.args['discount_rate']
 
         self.actions = Input(dtype='int32', shape=(None,), name='actions')
@@ -61,6 +62,9 @@ class DeepQLearning(BaseQLI):
                 post_q = tf.mul(
                     post_q, 1.0 - terminals, name='masked_max_post_q')
 
+            if scale_reward:
+                rewards = tf.truediv(
+                    rewards, scale_reward, name='scaled_reward')
             if min_reward and max_reward:
                 with tf.name_scope('clipped_reward'):
                     rewards = tf.clip_by_value(rewards, min_reward, max_reward)
