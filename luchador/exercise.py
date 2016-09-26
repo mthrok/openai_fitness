@@ -22,8 +22,7 @@ def main(env, agent, episodes, steps, debug=False):
 
     Agent = get_agent(agent['name'])
     agent = Agent(**agent['args'])
-    agent.set_env_info(env)
-    agent.init()
+    agent.init(env)
     _LG.info('\n{}'.format(agent))
 
     runner = EpisodeRunner(env, agent)
