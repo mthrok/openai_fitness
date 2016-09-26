@@ -52,23 +52,14 @@ class DQNAgent(BaseAgent):
     # Methods for initialization
     def init(self, env):
         self._n_actions = env.n_actions
-        self._init_recorder()
-        self._init_counter()
-        self._init_network()
-        self._init_summary()
-        self._init_saver()
-
-    def _init_recorder(self):
+        self.n_total_observations = 0
         self.recorder = TransitionRecorder(**self.recorder_config)
 
-    def _init_counter(self):
-        self.n_total_observations = 0
+        self._init_network()
+        self._init_summary_writer()
+        self.saver = Saver(**self.save_config['saver_config'])
 
-    def _init_saver(self):
-        cfg = self.save_config
-        self.saver = Saver(**cfg['saver_config'])
-
-    def _init_summary(self):
+    def _init_summary_writer(self):
         cfg = self.summary_config
         self.summary_writer = SummaryWriter(**cfg['writer_config'])
         self.summary_writer.add_graph(self.session.graph)
