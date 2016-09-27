@@ -47,11 +47,11 @@ class BaseOptimizer(Optimizer):
         self.slot.append(slot_var)
         return slot_var
 
-    def _create_slot(self, initial_value, slot_name, dtype=None):
+    def _create_slot(self, initial_value, slot_name):
         """Create scalar slot variable common to variables"""
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = get_variable(
-            name=name, shape=[], dtype=dtype,
+            name=name, shape=[],
             initializer=Constant(initial_value), broadcastable=True)
         self.slot.append(slot_var)
         return slot_var
@@ -130,10 +130,6 @@ class GravesRMSProp(BaseOptimizer):
         super(GravesRMSProp, self).__init__(
             learning_rate=learning_rate,
             decay1=decay1, decay2=decay2, epsilon=epsilon, name=name)
-        self.decay1 = decay1
-        self.decay2 = decay2
-        self.epsilon = epsilon
-        self.learning_rate = learning_rate
 
     def apply_gradients(self, grads_and_vars):
         updates = OrderedDict()

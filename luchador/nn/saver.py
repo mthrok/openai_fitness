@@ -38,7 +38,9 @@ class Saver(object):
                 value.dtype, value.shape, key))
             if key in f:
                 del f[key]
-            f.create_dataset(key, data=value, chunks=True)
+
+            chunks = False if value.size == 1 else True
+            f.create_dataset(key, data=value, chunks=chunks)
         f.flush()
 
     def save(self, data, global_step):

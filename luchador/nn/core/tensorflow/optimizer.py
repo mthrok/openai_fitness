@@ -172,3 +172,10 @@ class AdamOptimizer(BaseOptimizer):
         self.optimizer = tf.train.AdamOptimizer(
             learning_rate, beta1=beta1, beta2=beta2,
             epsilon=epsilon, **kwargs)
+
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        ret = super(self, AdamOptimizer).apply_gradients(
+            grads_and_vars, **kwargs)
+        # 
+        raise NotImplementedError('register beta1_power and beta2_power here')
+        return ret
