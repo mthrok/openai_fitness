@@ -171,19 +171,25 @@ class AdamOptimizer(BaseOptimizer):
         args = self.args
         beta1, beta2 = args['beta1'], args['beta2']
         ep, lr = args['epsilon'], args['learning_rate']
+        updates = OrderedDict()
 
-        beta1_power = self._create_slot(beta1, 'beta1_power')
-        beta2_power = self._create_slot(beta2, 'beta2_power')
+        beta1_power = self._create_slot(beta1, 'beta1_power').get()
+        beta2_power = self._create_slot(beta2, 'beta2_power').get()
+
+        new_beta1_power = beta1_power * beta1
+        new_beta2_power = beta2_power * beta2
 
         alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
 
-        updates = OrderedDict()
+        updates[beta1_power] = new_beta1_power
+        updates[beta2_power] = new_beta2_power
+
         for grad, var in grads_and_vars:
             m = self._create_slot_var(var, 'm').get()
             v = self._create_slot_var(var, 'v').get()
 
-            new_m = m + (grad - m) * (1.0 - beta1)
-            new_v = v + (T.sqrt(grad) - v) * (1.0 - beta2)
+            new_m = m + (1.0 - beta1) * (grad - m)
+            new_v = v + (1.0 - beta2) * (T.square(grad) - v)
             new_var = var - (new_m * alpha) / (T.sqrt(new_v) + ep)
 
             updates[m] = new_m
