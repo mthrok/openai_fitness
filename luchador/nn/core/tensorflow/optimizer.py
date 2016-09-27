@@ -174,8 +174,10 @@ class AdamOptimizer(BaseOptimizer):
             epsilon=epsilon, **kwargs)
 
     def apply_gradients(self, grads_and_vars, **kwargs):
-        ret = super(self, AdamOptimizer).apply_gradients(
+        ret = super(AdamOptimizer, self).apply_gradients(
             grads_and_vars, **kwargs)
-        # 
-        raise NotImplementedError('register beta1_power and beta2_power here')
+        name = '{}/{}'.format(self.args['name'], 'beta1_power')
+        self.slot.append(Variable(self.optimizer._beta1_power, name=name))
+        name = '{}/{}'.format(self.args['name'], 'beta2_power')
+        self.slot.append(Variable(self.optimizer._beta2_power, name=name))
         return ret

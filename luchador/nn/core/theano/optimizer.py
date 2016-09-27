@@ -177,9 +177,6 @@ class AdamOptimizer(BaseOptimizer):
 
         alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
 
-        updates[beta1_power] = new_beta1_power
-        updates[beta2_power] = new_beta2_power
-
         for grad, var in grads_and_vars:
             m = self._create_slot_var(var, 'm').get()
             v = self._create_slot_var(var, 'v').get()
@@ -191,4 +188,7 @@ class AdamOptimizer(BaseOptimizer):
             updates[m] = new_m
             updates[v] = new_v
             updates[var] = new_var
+
+        updates[beta1_power] = new_beta1_power
+        updates[beta2_power] = new_beta2_power
         return Operation(op=updates)
