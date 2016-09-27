@@ -93,7 +93,6 @@ def _load_additional_sources(*files):
 
 def _parse_config():
     args = _parse_command_line_arguments()
-
     _load_additional_sources(*args.sources)
     config = {
         'env': load_config(args.environment),

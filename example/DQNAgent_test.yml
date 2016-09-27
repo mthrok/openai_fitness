@@ -8,8 +8,8 @@ args:
     batch_size: &batch_size 32
 
   q_network_config:
-    model_name: vanilla_dqn
-    parameter_file: null
+    model_name: example/vanilla_dqn.yml
+    parameter_file: example/space_invaders_vanilla_dqn_99000.h5
     state_width: *state_width
     state_height: *state_height
     state_length: *state_length
