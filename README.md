@@ -145,7 +145,7 @@ Network architecture can be described using a set of layer configurations, and w
 ```yaml
 model_type: Sequential
 layer_configs:
-  - scope: conv2D
+  - scope: layer1
     layer:
       name: Conv2D
       args:
@@ -154,11 +154,11 @@ layer_configs:
         filter_height: 8
         strides: 4
         padding: valid
-  - scope: ReLU
+  - scope: layer2
     layer:
-      args: {}
       name: ReLU
-  - scope: dense
+      args: {}
+  - scope: layer3
     layer:
       name: Dense
       args:
@@ -172,7 +172,7 @@ But having static parameters is sometimes inconvenient. For example, although th
 ```yaml
 model_type: Sequential
 layer_configs:
-  - scope: conv2D
+  - scope: layer1
     layer:
       name: Conv2D
       args:
@@ -181,11 +181,11 @@ layer_configs:
         filter_height: 8
         strides: 4
         padding: valid
-  - scope: ReLU
+  - scope: layer2
     layer:
-      args: {{}}
       name: ReLU
-  - scope: dense
+      args: {{}}
+  - scope: layer3
     layer:
       name: Dense
       args:
@@ -201,7 +201,7 @@ NN module has other components such as Optimizer, Cost functions and Q-learning.
 ## Installation
 
 ### Note on backend
-Luchador has `luchador.nn.summary.SummaryWriter` class which wraps Tensorflow's SummaryWriter class so that not only `Tensorflow` backend but also `Thenao` backend can produce summary data which can be visualized with `tensorboard`. However, when using `Theano` backend and if Tensorflow is installed with GPU enabled, Tensorflow detects that other library is using GPU and fail the program at import. Therefore it is strongly advised to setup a new python environment when you use Theano and Tensorflow (SummaryWriter) at the same time.
+Luchador has `luchador.nn.summary.SummaryWriter` class which wraps Tensorflow's SummaryWriter class so that not only `Tensorflow` backend but also `Thenao` backend can produce summary data which can be visualized with `tensorboard`. However, when using `Theano` backend and if Tensorflow is installed with GPU enabled, Tensorflow detects that other library is using GPU and fail the program. Therefore it is strongly advised to setup a new python environment when you use Theano and Tensorflow (SummaryWriter) at the same time.
 
 ### Dependencies
 
@@ -228,6 +228,10 @@ luchador.set_nn_backend('tensorflow')
 
 import luchador.nn
 ```
+
+Additionally you can configure default `dtype` and convolution format used in Tensorflow backend with `LUCHADOR_NN_DTYPE` and `LUCHADOR_NN_CONV_FORMAT`. These values are only used in Tensorflow backend.
+
+To configure Theano, make `.theanorc` file in hme directory and follow the instruction found at Theano documentation..
 
 ## Development Plan
 
