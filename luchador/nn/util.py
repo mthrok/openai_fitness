@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 
 import os
-import inspect
 import StringIO
 
 import yaml
 
+from luchador.common import get_subclasses
 import luchador.nn
 
 _DATA_DIR = os.path.join(
@@ -14,11 +14,8 @@ _DATA_DIR = os.path.join(
 
 def get_model(name):
     from . import model
-    for name_, Class in inspect.getmembers(model, inspect.isclass):
-        if (
-                name == name_ and
-                issubclass(Class, model.Model)
-        ):
+    for Class in get_subclasses(model.BaseModel):
+        if Class.__name__ == name:
             return Class
     raise ValueError('Unknown model: {}'.format(name))
 

@@ -5,7 +5,7 @@ from .core import scope as scp
 __all__ = ['Sequential']
 
 
-class Model(object):
+class BaseModel(object):
     pass
 
 
@@ -29,7 +29,7 @@ class LayerConfig(object):
                 .format(self.scope, self.layer, self.input, self.output))
 
 
-class Sequential(Model):
+class Sequential(BaseModel):
     def __init__(self):
         super(Sequential, self).__init__()
         # Layer configurations

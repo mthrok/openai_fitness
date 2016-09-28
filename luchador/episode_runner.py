@@ -42,9 +42,10 @@ class EpisodeRunner(object):
             if outcome.terminal:
                 break
 
-        self._perform_post_episode_task({
+        stats = {
             'episode': self.episode,
             'rewards': total_rewards,
             'steps': steps,
-        })
-        return steps, total_rewards
+        }
+        self._perform_post_episode_task(stats)
+        return stats
