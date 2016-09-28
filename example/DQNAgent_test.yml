@@ -8,7 +8,7 @@ args:
     batch_size: &batch_size 32
 
   q_network_config:
-    model_name: 'vanilla_dqn'
+    model_name: vanilla_dqn
     parameter_file: null
     state_width: *state_width
     state_height: *state_height
@@ -23,7 +23,7 @@ args:
       max_delta: 1.0
 
   optimizer_config:
-    name: 'NeonRMSProp'
+    name: NeonRMSProp
     args:
       decay: 0.95
       epsilon: 0.000001
@@ -52,7 +52,7 @@ args:
       output_dir: &output_dir results
       max_to_keep: 10
       keep_every_n_hours: 1.0
-      prefix: 'DQN'
+      prefix: DQN
 
   summary_config:
     # Summarize network every once after this #episodes
