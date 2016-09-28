@@ -60,7 +60,7 @@ def _parse_command_line_arguments():
         description='Run environment with agents.',
     )
     ap.add_argument(
-        '--environment',
+        'environment',
         help='YAML file contains environment configuration')
     ap.add_argument(
         '--agent',
@@ -93,10 +93,12 @@ def _load_additional_sources(*files):
 
 def _parse_config():
     args = _parse_command_line_arguments()
+
     _load_additional_sources(*args.sources)
     config = {
         'env': load_config(args.environment),
-        'agent': load_config(args.agent),
+        'agent': (load_config(args.agent) if args.agent else
+                  {'name': 'NoOpAgent', 'args': {}}),
         'episodes': args.episodes,
         'steps': args.steps,
         'report_every': args.report,

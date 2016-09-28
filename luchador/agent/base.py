@@ -1,10 +1,8 @@
 from __future__ import absolute_import
 
-import numpy as np
-
 from luchador.common import get_subclasses
 
-__all__ = ['BaseAgent', 'RandomAgent', 'get_agent']
+__all__ = ['BaseAgent', 'NoOpAgent', 'get_agent']
 
 
 class BaseAgent(object):
@@ -33,12 +31,12 @@ class BaseAgent(object):
         pass
 
 
-class RandomAgent(BaseAgent):
+class NoOpAgent(BaseAgent):
     def __init__(self):
-        super(RandomAgent, self).__init__()
+        super(NoOpAgent, self).__init__()
 
     def init(self, env):
-        self.n_actions = env.n_actions
+        pass
 
     def reset(self, observation):
         pass
@@ -47,13 +45,7 @@ class RandomAgent(BaseAgent):
         pass
 
     def act(self):
-        return np.random.randint(self.n_actions)
-
-    def __repr__(self):
-        return (
-            '[RandomAgent]'
-            '    n_actions: {}\n'.format(self.n_actions)
-        )
+        return 0
 
 
 def get_agent(name):
