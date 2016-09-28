@@ -36,24 +36,23 @@ class SummaryWriter(object):
         self.summary_ops = {}
         self.placeholders = []
         self.writer = tf.train.SummaryWriter(self.output_dir)
-
-    def init(self, **kwargs):
-        pass
+        self.graph = tf.Graph()
+        self.session = tf.Session(graph=self.graph)
 
     def add_graph(self, graph=None, global_step=None):
         if graph:
             self.writer.add_graph(graph, global_step=global_step)
 
     def register(self, key, summary_type, names):
-        with tf.device('/cpu:0'):
-            self.summary_ops[key] = SummaryOperation(summary_type, names)
+        with self.graph.as_default():
+            with self.graph.device('/cpu:0'):
+                self.summary_ops[key] = SummaryOperation(summary_type, names)
 
     def summarize(self, key, global_step, values):
         cfg = self.summary_ops[key]
         feed_dict = {pf: value for pf, value in zip(cfg.pfs, values)}
 
-        with tf.Session() as session:
-            summaries = session.run(cfg.ops, feed_dict=feed_dict)
-            for summary in summaries:
-                self.writer.add_summary(summary, global_step)
-            self.writer.flush()
+        summaries = self.session.run(cfg.ops, feed_dict=feed_dict)
+        for summary in summaries:
+            self.writer.add_summary(summary, global_step)
+        self.writer.flush()
