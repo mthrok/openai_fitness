@@ -184,6 +184,9 @@ class DQNAgent(BaseAgent):
         if cfg['train_start'] < 0 or n_obs < cfg['train_start']:
             return
 
+        if n_obs == cfg['train_start']:
+            _LG.info('Starting DQN training')
+
         if n_obs % cfg['sync_frequency'] == 0:
             self._sync_network()
 
