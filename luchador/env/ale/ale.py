@@ -9,14 +9,14 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
-from .base import BaseEnvironment, Outcome
+from ..base import BaseEnvironment, Outcome
 
 _LG = logging.getLogger(__name__)
 
 __all__ = ['ALEEnvironment']
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
-_ROM_DIR = os.path.join(_DIR, 'rom', 'atari')
+_ROM_DIR = os.path.join(_DIR, 'rom')
 
 
 class ALEEnvironment(BaseEnvironment):

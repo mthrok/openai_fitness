@@ -1,6 +1,6 @@
 dependencies:
   cache_directories:
-    - "luchador/env/rom"
+    - "luchador/env/ale/rom"
     - "Arcade-Learning-Environment"
   pre:
     - sudo apt-get update && sudo apt-get autoremove
@@ -8,7 +8,7 @@ dependencies:
     - ./script/fix_urllib_sni.sh
   override:
     - ./script/install_ale.sh
-    - ./script/download_atari_roms.sh luchador/env/rom/atari
+    - ./script/download_atari_roms.sh luchador/env/ale/rom
     - pip install --upgrade numpy
     - pip install --upgrade scipy
     - pip install --upgrade git+git://github.com/Theano/Theano.git
