@@ -78,6 +78,7 @@ setuptools.setup(
         'luchador.nn.core.tensorflow',
         'luchador.agent',
         'luchador.env.ale',
+        'luchador.env.flappy_bird',
     ],
     entry_points={
         'console_scripts': [
