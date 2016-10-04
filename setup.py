@@ -90,6 +90,7 @@ setuptools.setup(
         'Pillow',  # For scipy.misc.imresize
         'h5py',
         'pyyaml',
+        'pygame',
     ],
     package_data={
         'luchador': [

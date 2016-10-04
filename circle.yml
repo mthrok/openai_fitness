@@ -3,7 +3,7 @@ dependencies:
     - "luchador/env/ale/rom"
     - "Arcade-Learning-Environment"
   pre:
-    - sudo apt-get update && sudo apt-get autoremove
+    - sudo apt-get update
     - ./script/install_dependencies.sh
     - ./script/fix_urllib_sni.sh
   override:
@@ -15,6 +15,7 @@ dependencies:
     - pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl
     - pip install --upgrade .
   post:
+    - sudo apt-get autoremove
     - ./script/print_version.sh
 
 test:
