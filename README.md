@@ -220,7 +220,12 @@ Luchador has `luchador.nn.summary.SummaryWriter` class which wraps Tensorflow's 
 
 - Luchador uses Thensorflow or Theano as neural network backend, so you need to install them. Refer to the installation instruction for each project.
 - [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) is required to run Atari environments.
-- `h5py` (for saving neural network parameters) and `pyyaml` for parsing YAML files. These are automatically installed during the installation.
+
+The following dependencies are automatically installed during the installation.
+
+- `h5py` for saving neural network parameters
+- `pyyaml` for parsing YAML files.
+- `pygame` for FlappyBird environment.
 
 ### Installation
 
