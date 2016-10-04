@@ -51,7 +51,7 @@ def load_images():
             _load_sprite('{digit:1d}.png'.format(digit=d)).convert_alpha()
             for d in range(10)
         ],
-        'base': _load_sprite('base.png').convert_alpha(),
+        'ground': _load_sprite('ground.png').convert_alpha(),
         'backgrounds': [_load_sprite(f).convert() for f in bgs],
         'players': [
             [_load_sprite(f).convert_alpha() for f in player]
