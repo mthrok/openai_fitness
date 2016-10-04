@@ -39,9 +39,6 @@ class Background(object):
     def reset(self):
         self.index = self.game.rng.randint(len(self.images))
 
-    def draw(self):
-        self.game.draw_screen(self.image, 0, 0)
-
     @property
     def image(self):
         return self.images[self.index]
@@ -63,9 +60,6 @@ class Ground(object):
 
     def update(self):
         self.x = (self.x - 100) % (-self.x_shift)
-
-    def draw(self):
-        self.game.draw_screen(self.image, self.x, self.y)
 
     @property
     def width(self):
@@ -102,9 +96,6 @@ class Player(object):
 
         self.y += self.v
         self.y = min(self.y, self.game.ground.y - self.height)
-
-    def draw(self):
-        self.game.draw_screen(self.image, self.x, self.y)
 
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.width, self.height)
@@ -175,11 +166,6 @@ class Pipes(object):
         if self.upper[0]['x'] < -self.width:
             self.upper.pop(0)
             self.lower.pop(0)
-
-    def draw(self):
-        for u, l in zip(self.upper, self.lower):
-            self.game.draw_screen(self.images[0], u['x'], u['y'])
-            self.game.draw_screen(self.images[1], l['x'], l['y'])
 
     @property
     def images(self):
@@ -292,8 +278,22 @@ class FlappyBird(BaseEnvironment):
         return False
 
     ###########################################################################
-    def draw_screen(self, image, x, y):
+    def _draw_bg(self):
+        self._draw_screen(self.bg.image, 0, 0)
+
+    def _draw_screen(self, image, x, y):
         self.screen.blit(image, (x, y))
+
+    def _draw_pipes(self):
+        for u, l in zip(self.pipes.upper, self.pipes.lower):
+            self._draw_screen(self.pipes.images[0], u['x'], u['y'])
+            self._draw_screen(self.pipes.images[1], l['x'], l['y'])
+
+    def _draw_ground(self):
+        self._draw_screen(self.ground.image, self.ground.x, self.ground.y)
+
+    def _draw_player(self):
+        self._draw_screen(self.player.image, self.player.x, self.player.y)
 
     def _draw_score(self):
         digits = [int(x) for x in list(str(self.score))]
@@ -302,7 +302,7 @@ class FlappyBird(BaseEnvironment):
         x = (self.screen_width - sum(widths)) / 2
         y = self.screen_height * 0.1
         for d, width in zip(digits, widths):
-            self.draw_screen(self._digits[d], x, y)
+            self._draw_screen(self._digits[d], x, y)
             x += width
 
     def _update_display(self):
@@ -310,11 +310,11 @@ class FlappyBird(BaseEnvironment):
         self.fps_clock.tick(self.fps)
 
     def _draw(self):
-        self.bg.draw()
-        self.pipes.draw()
-        self.ground.draw()
+        self._draw_bg()
+        self._draw_pipes()
+        self._draw_ground()
         self._draw_score()
-        self.player.draw()
+        self._draw_player()
         self._update_display()
 
     def _get_screen(self):

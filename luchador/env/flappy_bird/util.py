@@ -4,7 +4,6 @@ import os
 import sys
 import pygame
 
-
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _ASSET_DIR = os.path.join(_DIR, 'assets')
 _SPRITE_DIR = os.path.join(_ASSET_DIR, 'sprites')
@@ -22,7 +21,6 @@ def _load_sprite(filename):
 
 
 def _gen_hitmask(image):
-    """returns a hitmask using an image's alpha."""
     mask = []
     for x in range(image.get_width()):
         mask.append([])
