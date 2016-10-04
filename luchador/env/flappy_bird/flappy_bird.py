@@ -85,17 +85,19 @@ class Player(object):
         self.v = -9
         self.y = int((self.game.screen_height - self.height) / 2)
 
-    def update(self, flapped):
+    def update(self, tapped):
         self.motion_index = self.motion_indices.next()
-        if flapped:
+        flapped = False
+        if tapped:
             if self.y >= 0:
                 self.v = self.v_flapped
-                self.game.play_sound('wing')
+                flapped = True
         elif self.v < self.v_max:
             self.v += self.g
 
         self.y += self.v
         self.y = min(self.y, self.game.ground.y - self.height)
+        return flapped
 
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.width, self.height)
@@ -185,12 +187,13 @@ class Pipes(object):
 
 
 class FlappyBird(BaseEnvironment):
-    def __init__(self, random_seed=None):
+    def __init__(self, random_seed=None, play_sound=False):
         # Constants
         self.fps = 30
         self.screen_width = 288
         self.screen_height = 512
         self.rng = np.random.RandomState(seed=random_seed)
+        self.sound_enabled = play_sound
 
         self._init_pygame()
         self._load_assets()
@@ -207,8 +210,9 @@ class FlappyBird(BaseEnvironment):
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption('Flappy Bird')
 
-    def play_sound(self, key):
-        self._sounds[key].play()
+    def _play_sound(self, key):
+        if self.sound_enabled:
+            self._sounds[key].play()
 
     def _load_assets(self):
         self._digits = util.load_digits()
@@ -230,20 +234,23 @@ class FlappyBird(BaseEnvironment):
         return Outcome(observation=obs, terminal=False, reward=0)
 
     ###########################################################################
-    def step(self, flapped):
+    def step(self, tapped):
         self.ground.update()
         self.pipes.update()
-        self.player.update(flapped)
+        flapped = self.player.update(tapped)
+
+        if flapped:
+            self._play_sound('wing')
 
         if self._crashed():
-            self.play_sound('hit')
+            self._play_sound('hit')
             reward = 0
             terminal = True
         else:
             reward = self._get_reward()
             terminal = False
         if reward:
-            self.play_sound('point')
+            self._play_sound('point')
         self.score += reward
 
         self._draw()

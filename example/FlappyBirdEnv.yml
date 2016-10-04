@@ -1,2 +1,4 @@
 name: FlappyBird
-args: {}
+args:
+  random_seed: null
+  play_sound: False
