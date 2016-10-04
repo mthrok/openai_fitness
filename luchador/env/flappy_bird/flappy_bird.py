@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
-import random
 from itertools import cycle
 
 import pygame
+import numpy as np
 
 from . import util
 from ..base import BaseEnvironment, Outcome
@@ -42,10 +42,8 @@ def get_index_generator(repeat=5, pattern=[0, 1, 2, 1]):
     return cycle(indices)
 
 
-def pixelCollision(rect1, rect2, hitmask1, hitmask2):
-    """Checks if two objects collide and not just their rects"""
+def pixel_collides(rect1, rect2, hitmask1, hitmask2):
     rect = rect1.clip(rect2)
-
     if rect.width == 0 or rect.height == 0:
         return False
 
@@ -60,12 +58,14 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
 
 
 class FlappyBird(BaseEnvironment):
-    def __init__(self):
+    def __init__(self, random_seed=None):
         _init_pygame()
+        self._rng = np.random.RandomState(seed=random_seed)
+        self._load_assets()
+
+    def _load_assets(self):
         self._images, self._hitmasks = util.load_images()
         self._sounds = util.load_sounds()
-
-        self.ground_y = screen_height * 0.79
 
     @property
     def n_actions(self):
@@ -75,18 +75,17 @@ class FlappyBird(BaseEnvironment):
     def reset(self):
         self.score = 0
         self._reset_background()
+        self._reset_ground()
         self._reset_player()
         self._reset_pipe()
-        self._reset_ground()
-
         self._draw()
         return Outcome(observation=_get_screen(), terminal=False, reward=0)
 
     def _get_new_pipe(self):
         """returns a randomly generated pipe"""
         x = screen_width + 10
-        max_y = int(self.ground_y * 0.6 - self.pipe_gap_size)
-        base_y = random.randrange(0, max_y)
+        max_y = int(self.ground_y * 0.6 - self.pipe_gap_size) + 1
+        base_y = self._rng.randint(0, max_y)
         base_y += int(self.ground_y * 0.2)
 
         upper_pipe = {'x': x, 'y': base_y - self.pipe_h}
@@ -94,18 +93,18 @@ class FlappyBird(BaseEnvironment):
         return upper_pipe, lower_pipe
 
     def _reset_background(self):
-        index = random.randint(1, len(self._images['backgrounds'])) - 1
+        index = self._rng.randint(1, len(self._images['backgrounds'])) - 1
         self._images['background'] = self._images['backgrounds'][index]
 
     def _reset_player(self):
-        index = random.randint(1, len(self._images['players'])) - 1
+        index = self._rng.randint(1, len(self._images['players'])) - 1
         self._images['player'] = self._images['players'][index]
         self._hitmasks['player'] = self._hitmasks['players'][index]
 
-        self.player_a = -9   # players speed on flapping
         self.player_g = 1   # players downward accleration
         self.player_v = -9
         self.player_v_max = 10   # max vel along Y, max descend speed
+        self.player_v_flapped = -9   # players speed on flapping
         self.player_w = self._images['player'][0].get_width()
         self.player_h = self._images['player'][0].get_height()
         self.player_x = int(screen_width * 0.2)
@@ -115,7 +114,7 @@ class FlappyBird(BaseEnvironment):
         self.motion_index = self.motion_indices.next()
 
     def _reset_pipe(self):
-        index = random.randint(1, len(self._images['pipes'])) - 1
+        index = self._rng.randint(1, len(self._images['pipes'])) - 1
         self._images['pipe'] = self._images['pipes'][index]
         self._hitmasks['pipe'] = self._hitmasks['pipes'][index]
 
@@ -134,8 +133,9 @@ class FlappyBird(BaseEnvironment):
     def _reset_ground(self):
         ground_w = self._images['ground'].get_width()
         bg_w = self._images['background'].get_width()
-        self.ground_shift = ground_w - bg_w
         self.ground_x = 0
+        self.ground_y = screen_height * 0.79
+        self.ground_x_shift = ground_w - bg_w
 
     ###########################################################################
     def step(self, flapped):
@@ -175,12 +175,12 @@ class FlappyBird(BaseEnvironment):
             self.lowerPipes.pop(0)
 
     def _move_ground(self):
-        self.ground_x = (self.ground_x - 100) % (-self.ground_shift)
+        self.ground_x = (self.ground_x - 100) % (-self.ground_x_shift)
 
     def _move_player(self, flapped):
         if flapped:
             if self.player_y >= 0:
-                self.player_v = self.player_a
+                self.player_v = self.player_v_flapped
                 self._sounds['wing'].play()
         elif self.player_v < self.player_v_max:
             self.player_v += self.player_g
@@ -208,8 +208,8 @@ class FlappyBird(BaseEnvironment):
             u_pipe = pygame.Rect(u['x'], u['y'], self.pipe_w, self.pipe_h)
             l_pipe = pygame.Rect(l['x'], l['y'], self.pipe_w, self.pipe_h)
             if(
-                    pixelCollision(player, u_pipe, p_mask, u_mask) or
-                    pixelCollision(player, l_pipe, p_mask, l_mask)
+                    pixel_collides(player, u_pipe, p_mask, u_mask) or
+                    pixel_collides(player, l_pipe, p_mask, l_mask)
             ):
                 return True
         return False
