@@ -21,7 +21,7 @@ def _load_sprite(filename):
     return pygame.image.load(os.path.join(_SPRITE_DIR, filename))
 
 
-def get_hitmask(image):
+def _gen_hitmask(image):
     """returns a hitmask using an image's alpha."""
     mask = []
     for x in range(image.get_width()):
@@ -36,38 +36,43 @@ def load_sounds():
             for key in ['die', 'hit', 'point', 'wing']}
 
 
-def load_images():
-    bgs = ['background-day.png', 'background-night.png']
-    pipes = ['pipe-green.png', 'pipe-red.png']
-    players = [
+def load_digits():
+    return [
+            _load_sprite('{digit:1d}.png'.format(digit=d)).convert_alpha()
+            for d in range(10)
+    ]
+
+
+def load_backgrounds():
+    return [_load_sprite('background-{}.png'.format(s)).convert()
+            for s in ['day', 'night']]
+
+
+def load_ground():
+    return _load_sprite('ground.png').convert_alpha()
+
+
+def load_player():
+    images = [
         [
-            '{color}bird-{direction}flap.png'.format(color=c, direction=d)
+            _load_sprite('{color}bird-{direction}flap.png'
+                         .format(color=c, direction=d)).convert_alpha()
             for d in ['up', 'mid', 'down']
         ] for c in ['red', 'blue', 'yellow']
     ]
+    hitmasks = [
+        [_gen_hitmask(img) for img in imgs] for imgs in images
+    ]
+    return images, hitmasks
 
-    images = {
-        'numbers': [
-            _load_sprite('{digit:1d}.png'.format(digit=d)).convert_alpha()
-            for d in range(10)
-        ],
-        'ground': _load_sprite('ground.png').convert_alpha(),
-        'backgrounds': [_load_sprite(f).convert() for f in bgs],
-        'players': [
-            [_load_sprite(f).convert_alpha() for f in player]
-            for player in players
-        ],
-        'pipes': [
-            [pygame.transform.rotate(pipe, 180), pipe]
-            for pipe in map(lambda f: _load_sprite(f).convert_alpha(), pipes)
-        ],
-    }
-    hitmasks = {
-        'pipes': [
-            [get_hitmask(img) for img in imgs] for imgs in images['pipes']
-        ],
-        'players': [
-            [get_hitmask(img) for img in imgs] for imgs in images['players']
-        ],
-    }
+
+def load_pipes():
+    files = ['pipe-green.png', 'pipe-red.png']
+    images = [
+        [pygame.transform.rotate(pipe, 180), pipe]
+        for pipe in map(lambda f: _load_sprite(f).convert_alpha(), files)
+    ]
+    hitmasks = [
+        [_gen_hitmask(img) for img in imgs] for imgs in images
+    ]
     return images, hitmasks
