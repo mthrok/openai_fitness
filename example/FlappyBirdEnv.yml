@@ -1,6 +1,13 @@
 name: FlappyBird
 args:
   random_seed: null
+
+  # Get screen in grayscale NumPy array with shape (height, width) or (color, height, width)
   grayscale: True
-  fast_forward: 3
+
+  # Resize the observation
+  width: 64
+  height: 96
+
+  fastforward: True
   play_sound: False

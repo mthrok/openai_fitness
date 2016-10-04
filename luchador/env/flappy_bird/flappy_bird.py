@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 from itertools import cycle
+import warnings
 
 import pygame
 import numpy as np
+from scipy.misc import imresize
 
 from . import util
 from ..base import BaseEnvironment, Outcome
@@ -187,20 +189,27 @@ class Pipes(object):
 
 
 class FlappyBird(BaseEnvironment):
-    def __init__(self, random_seed=None, grayscale=False, fast_forward=1, play_sound=False):
-        # Constants
-        self.fps = 30 * fast_forward
+    def __init__(self, random_seed=None, grayscale=False,
+                 width=288, height=512, fastforward=False,
+                 play_sound=True):
+        self.random_seed = random_seed
+        warnings.warn('width and height are not used yet')
+        self.grayscale = grayscale
+        self.width = width
+        self.height = height
+        self.play_sound = play_sound
+        self.fastforward = fastforward
+
+        # Constant properties
+        self.fps = 30
         self.screen_width = 288
         self.screen_height = 512
         self.rng = np.random.RandomState(seed=random_seed)
 
-        self.grayscale = grayscale
-        self.fast_forward = fast_forward
-        self.sound_enabled = play_sound
-
         self._init_pygame()
         self._load_assets()
 
+        # Init components
         self.bg = Background(self)
         self.ground = Ground(self)
         self.pipes = Pipes(self)
@@ -208,6 +217,11 @@ class FlappyBird(BaseEnvironment):
 
         self._get_screen = (self._get_screen_grayscale if self.grayscale else
                             self._get_screen_rgb)
+        if height == self.screen_height and width == self.screen_width:
+            self.resize = None
+        else:
+            self.resize = ((height, width) if self.grayscale else
+                           (height, width, 3))
 
     def _init_pygame(self):
         screen_size = (self.screen_width, self.screen_height)
@@ -217,7 +231,7 @@ class FlappyBird(BaseEnvironment):
         pygame.display.set_caption('Flappy Bird')
 
     def _play_sound(self, key):
-        if self.sound_enabled:
+        if self.play_sound:
             self._sounds[key].play()
 
     def _load_assets(self):
@@ -236,8 +250,8 @@ class FlappyBird(BaseEnvironment):
         self.pipes.reset()
         self.player.reset()
         self._draw()
-        obs = self._get_screen()
-        return Outcome(observation=obs, terminal=False, reward=0)
+        return Outcome(observation=self._get_observation(),
+                       terminal=False, reward=0)
 
     ###########################################################################
     def step(self, tapped):
@@ -260,7 +274,7 @@ class FlappyBird(BaseEnvironment):
         self.score += reward
 
         self._draw()
-        return Outcome(observation=self._get_screen(),
+        return Outcome(observation=self._get_observation(),
                        terminal=terminal, reward=reward)
 
     def _get_reward(self):
@@ -291,11 +305,19 @@ class FlappyBird(BaseEnvironment):
         return False
 
     ###########################################################################
-    def _draw_bg(self):
-        self._draw_screen(self.bg.image, 0, 0)
+    def _draw(self):
+        self._draw_bg()
+        self._draw_pipes()
+        self._draw_ground()
+        self._draw_score()
+        self._draw_player()
+        self._update_display()
 
     def _draw_screen(self, image, x, y):
         self.screen.blit(image, (x, y))
+
+    def _draw_bg(self):
+        self._draw_screen(self.bg.image, 0, 0)
 
     def _draw_pipes(self):
         for u, l in zip(self.pipes.upper, self.pipes.lower):
@@ -320,18 +342,19 @@ class FlappyBird(BaseEnvironment):
 
     def _update_display(self):
         pygame.display.update()
-        self.fps_clock.tick(self.fps)
+        if not self.fastforward:
+            self.fps_clock.tick(self.fps)
 
-    def _draw(self):
-        self._draw_bg()
-        self._draw_pipes()
-        self._draw_ground()
-        self._draw_score()
-        self._draw_player()
-        self._update_display()
-
+    ###########################################################################
     def _get_screen_rgb(self):
-        return pygame.surfarray.array3d(pygame.display.get_surface())
+        # (w, h, c) => (h, w, c)
+        return pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
 
     def _get_screen_grayscale(self):
-        return pygame.surfarray.array2d(pygame.display.get_surface())
+        return pygame.surfarray.array3d(self.screen).mean(axis=2).transpose(1, 0)
+
+    def _get_observation(self):
+        screen = self._get_screen()
+        if self.resize:
+            return imresize(screen, self.resize)
+        return screen
