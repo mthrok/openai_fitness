@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from itertools import cycle
-import warnings
 
 import pygame
 import numpy as np
@@ -190,21 +189,20 @@ class Pipes(object):
 
 class FlappyBird(BaseEnvironment):
     def __init__(self, random_seed=None, grayscale=False,
+                 repeat_action=4,
                  width=288, height=512, fastforward=False,
                  play_sound=True):
         self.random_seed = random_seed
-        warnings.warn('width and height are not used yet')
         self.grayscale = grayscale
         self.width = width
         self.height = height
+        self.repeat_action = repeat_action
         self.play_sound = play_sound
         self.fastforward = fastforward
 
         # Constant properties
-        self.fps = 30
         self.screen_width = 288
         self.screen_height = 512
-        self.rng = np.random.RandomState(seed=random_seed)
 
         self._init_pygame()
         self._load_assets()
@@ -215,6 +213,7 @@ class FlappyBird(BaseEnvironment):
         self.pipes = Pipes(self)
         self.player = Player(self)
 
+        self.rng = np.random.RandomState(seed=random_seed)
         self._get_screen = (self._get_screen_grayscale if self.grayscale else
                             self._get_screen_rgb)
         if height == self.screen_height and width == self.screen_width:
@@ -226,6 +225,7 @@ class FlappyBird(BaseEnvironment):
     def _init_pygame(self):
         screen_size = (self.screen_width, self.screen_height)
         pygame.init()
+        self.fps = 1000 if self.fastforward else 30
         self.fps_clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption('Flappy Bird')
@@ -255,6 +255,17 @@ class FlappyBird(BaseEnvironment):
 
     ###########################################################################
     def step(self, tapped):
+        reward, terminal = 0, False
+        for _ in range(self.repeat_action):
+            r, t = self._step(tapped)
+            reward += r
+            terminal = terminal or t
+            if terminal:
+                break
+        return Outcome(observation=self._get_observation(),
+                       terminal=terminal, reward=reward)
+
+    def _step(self, tapped):
         self.ground.update()
         self.pipes.update()
         flapped = self.player.update(tapped)
@@ -274,8 +285,7 @@ class FlappyBird(BaseEnvironment):
         self.score += reward
 
         self._draw()
-        return Outcome(observation=self._get_observation(),
-                       terminal=terminal, reward=reward)
+        return reward, terminal
 
     def _get_reward(self):
         pipe_w = self.pipes.width
@@ -342,8 +352,7 @@ class FlappyBird(BaseEnvironment):
 
     def _update_display(self):
         pygame.display.update()
-        if not self.fastforward:
-            self.fps_clock.tick(self.fps)
+        self.fps_clock.tick(self.fps)
 
     ###########################################################################
     def _get_screen_rgb(self):
@@ -351,7 +360,7 @@ class FlappyBird(BaseEnvironment):
         return pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
 
     def _get_screen_grayscale(self):
-        return pygame.surfarray.array3d(self.screen).mean(axis=2).transpose(1, 0)
+        return self._get_screen_rgb().mean(axis=2)
 
     def _get_observation(self):
         screen = self._get_screen()
