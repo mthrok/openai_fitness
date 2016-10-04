@@ -187,12 +187,15 @@ class Pipes(object):
 
 
 class FlappyBird(BaseEnvironment):
-    def __init__(self, random_seed=None, play_sound=False):
+    def __init__(self, random_seed=None, grayscale=False, fast_forward=1, play_sound=False):
         # Constants
-        self.fps = 30
+        self.fps = 30 * fast_forward
         self.screen_width = 288
         self.screen_height = 512
         self.rng = np.random.RandomState(seed=random_seed)
+
+        self.grayscale = grayscale
+        self.fast_forward = fast_forward
         self.sound_enabled = play_sound
 
         self._init_pygame()
@@ -202,6 +205,9 @@ class FlappyBird(BaseEnvironment):
         self.ground = Ground(self)
         self.pipes = Pipes(self)
         self.player = Player(self)
+
+        self._get_screen = (self._get_screen_grayscale if self.grayscale else
+                            self._get_screen_rgb)
 
     def _init_pygame(self):
         screen_size = (self.screen_width, self.screen_height)
@@ -324,5 +330,8 @@ class FlappyBird(BaseEnvironment):
         self._draw_player()
         self._update_display()
 
-    def _get_screen(self):
+    def _get_screen_rgb(self):
         return pygame.surfarray.array3d(pygame.display.get_surface())
+
+    def _get_screen_grayscale(self):
+        return pygame.surfarray.array2d(pygame.display.get_surface())

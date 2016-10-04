@@ -1,4 +1,6 @@
 name: FlappyBird
 args:
   random_seed: null
+  grayscale: True
+  fast_forward: 3
   play_sound: False
