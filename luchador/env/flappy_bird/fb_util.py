@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 import os
 import sys
+
 import pygame
+import numpy as np
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _ASSET_DIR = os.path.join(_DIR, 'assets')
@@ -21,14 +23,15 @@ def _load_sprite(filename):
 
 
 def _gen_hitmask(image):
-    mask = []
-    for x in range(image.get_width()):
-        mask.append([])
-        for y in range(image.get_height()):
-            mask[x].append(bool(image.get_at((x, y))[3]))
+    w, h = image.get_size()
+    mask = np.zeros((w, h), dtype=np.bool)
+    for x in range(w):
+        for y in range(h):
+            mask[x, y] = (bool(image.get_at((x, y))[3]))
     return mask
 
 
+###############################################################################
 def load_sounds():
     return {key: _load_sound(key)
             for key in ['die', 'hit', 'point', 'wing']}
@@ -50,27 +53,34 @@ def load_ground():
     return _load_sprite('ground.png').convert_alpha()
 
 
-def load_player():
-    images = [
-        [
+def load_players():
+    ret = []
+    for c in ['red', 'blue', 'yellow']:
+        images = [
             _load_sprite('{color}bird-{direction}flap.png'
                          .format(color=c, direction=d)).convert_alpha()
             for d in ['up', 'mid', 'down']
-        ] for c in ['red', 'blue', 'yellow']
-    ]
-    hitmasks = [
-        [_gen_hitmask(img) for img in imgs] for imgs in images
-    ]
-    return images, hitmasks
+        ]
+        hitmasks = [_gen_hitmask(image) for image in images]
+        ret.append({'images': images, 'hitmasks': hitmasks})
+    return ret
 
 
 def load_pipes():
-    files = ['pipe-green.png', 'pipe-red.png']
-    images = [
-        [pygame.transform.rotate(pipe, 180), pipe]
-        for pipe in map(lambda f: _load_sprite(f).convert_alpha(), files)
-    ]
-    hitmasks = [
-        [_gen_hitmask(img) for img in imgs] for imgs in images
-    ]
-    return images, hitmasks
+    ret = []
+    for f in ['pipe-green.png', 'pipe-red.png']:
+        pipe = _load_sprite(f).convert_alpha()
+        images = [pygame.transform.rotate(pipe, 180), pipe]
+        hitmasks = [_gen_hitmask(image) for image in images]
+        ret.append({'images': images, 'hitmasks': hitmasks})
+    return ret
+
+
+def load_sprites():
+    return {
+        'bgs': load_backgrounds(),
+        'ground': load_ground(),
+        'pipes': load_pipes(),
+        'players': load_players(),
+        'digits': load_digits(),
+    }

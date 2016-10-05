@@ -6,7 +6,8 @@ import pygame
 import numpy as np
 from scipy.misc import imresize
 
-from . import util
+from . import fb_util as util
+from .fb_component import Ground, Background, Pipes, Player
 from ..base import BaseEnvironment, Outcome
 
 
@@ -17,7 +18,10 @@ def get_index_generator(repeat=5, pattern=[0, 1, 2, 1]):
     return cycle(indices)
 
 
-def pixel_collides(rect1, rect2, hitmask1, hitmask2):
+def pixel_collides(comp1, comp2, hitmask1, hitmask2):
+    rect1 = pygame.Rect(comp1.x, comp1.y, comp1.w, comp1.h)
+    rect2 = pygame.Rect(comp2.x, comp2.y, comp2.w, comp2.h)
+
     rect = rect1.clip(rect2)
     if rect.width == 0 or rect.height == 0:
         return False
@@ -32,188 +36,28 @@ def pixel_collides(rect1, rect2, hitmask1, hitmask2):
     return False
 
 
-class Background(object):
-    def __init__(self, game):
-        self.game = game
-        self.images = util.load_backgrounds()
-
-    def reset(self):
-        self.index = self.game.rng.randint(len(self.images))
-
-    @property
-    def image(self):
-        return self.images[self.index]
-
-    @property
-    def width(self):
-        return self.image.get_width()
-
-
-class Ground(object):
-    def __init__(self, game):
-        self.game = game
-        self.image = util.load_ground()
-
-    def reset(self):
-        self.x = 0
-        self.y = self.game.screen_height * 0.79
-        self.x_shift = self.width - self.game.bg.width
-
-    def update(self):
-        self.x = (self.x - 100) % (-self.x_shift)
-
-    @property
-    def width(self):
-        return self.image.get_width()
-
-
-class Player(object):
-    def __init__(self, game):
-        self.game = game
-        self._images, self._hitmasks = util.load_player()
-
-        # Constants
-        self.g = 1            # Downward accleration
-        self.v_max = 10       # Max downward velocity
-        self.v_flapped = -9   # Velosity when flapped
-        self.x = int(0.2 * self.game.screen_width)
-
-    def reset(self):
-        self.motion_indices = get_index_generator(repeat=3)
-        self.motion_index = self.motion_indices.next()
-        self.color_index = self.game.rng.randint(len(self._images))
-
-        self.v = -9
-        self.y = int((self.game.screen_height - self.height) / 2)
-
-    def update(self, tapped):
-        self.motion_index = self.motion_indices.next()
-        flapped = False
-        if tapped:
-            if self.y >= 0:
-                self.v = self.v_flapped
-                flapped = True
-        elif self.v < self.v_max:
-            self.v += self.g
-
-        self.y += self.v
-        self.y = min(self.y, self.game.ground.y - self.height)
-        return flapped
-
-    def get_rect(self):
-        return pygame.Rect(self.x, self.y, self.width, self.height)
-
-    @property
-    def images(self):
-        return self._images[self.color_index]
-
-    @property
-    def image(self):
-        return self.images[self.motion_index]
-
-    @property
-    def hitmask(self):
-        return self._hitmasks[self.color_index][self.motion_index]
-
-    @property
-    def width(self):
-        return self.image.get_width()
-
-    @property
-    def height(self):
-        return self.image.get_height()
-
-
-class Pipes(object):
-    def __init__(self, game):
-        self.game = game
-        self._images, self._hitmasks = util.load_pipes()
-
-        # Constants
-        self.v = -4     # Pipe moving speed
-        self.gap = 100  # Gap between upper and lower pipes
-
-    def reset(self):
-        self.color_index = self.game.rng.randint(1, len(self._images)) - 1
-
-        screen_width = self.game.screen_width
-        self.upper, self.lower = [], []
-        for i in range(2):
-            upper, lower = self._get_new_pipe_position()
-            x = screen_width + 200 + (i * screen_width / 2)
-            self.upper.append({'x': x, 'y': upper['y']})
-            self.lower.append({'x': x, 'y': lower['y']})
-
-    def _get_new_pipe_position(self):
-        ground_y = self.game.ground.y
-        x = self.game.screen_width + 10
-        min_y = int(ground_y * 0.2)
-        max_y = int(ground_y * 0.8 - self.gap)
-        base_y = self.game.rng.randint(min_y, max_y)  # Top of gap
-
-        upper_pipe = {'x': x, 'y': base_y - self.height}
-        lower_pipe = {'x': x, 'y': base_y + self.gap}
-        return upper_pipe, lower_pipe
-
-    def update(self):
-        # move pipes to left
-        for upper, lower in zip(self.upper, self.lower):
-            upper['x'] += self.v
-            lower['x'] += self.v
-        # add new pipe when first pipe is about to touch left of screen
-        if 0 < self.upper[0]['x'] < 5:
-            upper, lower = self._get_new_pipe_position()
-            self.upper.append(upper)
-            self.lower.append(lower)
-        # remove first pipe if its out of the screen
-        if self.upper[0]['x'] < -self.width:
-            self.upper.pop(0)
-            self.lower.pop(0)
-
-    @property
-    def images(self):
-        return self._images[self.color_index]
-
-    @property
-    def hitmasks(self):
-        return self._hitmasks[self.color_index]
-
-    @property
-    def width(self):
-        return self.images[0].get_width()
-
-    @property
-    def height(self):
-        return self.images[0].get_height()
-
-
 class FlappyBird(BaseEnvironment):
-    def __init__(self, random_seed=None, grayscale=False,
-                 repeat_action=4,
-                 width=288, height=512, fastforward=False,
-                 play_sound=True):
+    def __init__(
+            self, repeat_action=4, random_seed=None,
+            width=288, height=512, grayscale=False,
+            fastforward=False, play_sound=True):
+        self.repeat_action = repeat_action
         self.random_seed = random_seed
-        self.grayscale = grayscale
         self.width = width
         self.height = height
-        self.repeat_action = repeat_action
+        self.grayscale = grayscale
         self.play_sound = play_sound
         self.fastforward = fastforward
 
-        # Constant properties
         self.screen_width = 288
         self.screen_height = 512
+        self.rng = np.random.RandomState(seed=random_seed)
+        self.player_motion_index = 0
 
         self._init_pygame()
         self._load_assets()
+        self._init_components()
 
-        # Init components
-        self.bg = Background(self)
-        self.ground = Ground(self)
-        self.pipes = Pipes(self)
-        self.player = Player(self)
-
-        self.rng = np.random.RandomState(seed=random_seed)
         self._get_screen = (self._get_screen_grayscale if self.grayscale else
                             self._get_screen_rgb)
         if height == self.screen_height and width == self.screen_width:
@@ -230,13 +74,41 @@ class FlappyBird(BaseEnvironment):
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption('Flappy Bird')
 
-    def _play_sound(self, key):
-        if self.play_sound:
-            self._sounds[key].play()
-
     def _load_assets(self):
-        self._digits = util.load_digits()
         self._sounds = util.load_sounds()
+        self._sprites = util.load_sprites()
+
+    def _init_components(self):
+        self.bg = Background(w=self.screen_width, h=self.screen_height)
+        self._init_ground()
+        self._init_pipes()
+        self._init_player()
+
+    def _init_ground(self):
+        w, h = self._sprites['ground'].get_size()
+        y = self.screen_height * 0.79
+        vx = -100
+        shift = - w + self.screen_width
+        self.ground = Ground(w, h, y, vx, shift)
+
+    def _init_pipes(self):
+        vx, y_gap = -4, 100
+        w, h = self._sprites['pipes'][0]['images'][0].get_size()
+        x_gap = self.screen_width / 2
+        y_min = int(0.2 * self.ground.y - h)
+        y_max = int(0.8 * self.ground.y - h - y_gap)
+        y_max = y_min + 1
+        self.pipes = Pipes(w, h, vx, y_min, y_max, y_gap, x_gap, n_pipes=3, rng=self.rng)
+
+    def _init_player(self):
+        w, h = self._sprites['players'][0]['images'][0].get_size()
+        x = int(0.2 * self.screen_width)
+        y = int((self.screen_height - h)/2)
+        y_max = self.ground.y - h
+        vy_flap = vy = -9
+        vy_max = 10
+        ay = 1
+        self.player = Player(w, h, x, y, y_max, vy, vy_flap, vy_max, ay)
 
     @property
     def n_actions(self):
@@ -245,6 +117,8 @@ class FlappyBird(BaseEnvironment):
     ###########################################################################
     def reset(self):
         self.score = 0
+        self.player_motion_indices = get_index_generator()
+        self.reset_color()
         self.bg.reset()
         self.ground.reset()
         self.pipes.reset()
@@ -252,6 +126,15 @@ class FlappyBird(BaseEnvironment):
         self._draw()
         return Outcome(observation=self._get_observation(),
                        terminal=False, reward=0)
+
+    def reset_color(self):
+        sprites = self._sprites
+        i = self.rng.randint(len(sprites['bgs']))
+        sprites['bg'] = sprites['bgs'][i]
+        i = self.rng.randint(len(sprites['pipes']))
+        sprites['pipe'] = sprites['pipes'][i]
+        i = self.rng.randint(len(sprites['players']))
+        sprites['player'] = sprites['players'][i]
 
     ###########################################################################
     def step(self, tapped):
@@ -266,6 +149,7 @@ class FlappyBird(BaseEnvironment):
                        terminal=terminal, reward=reward)
 
     def _step(self, tapped):
+        self.player_motion_index = self.player_motion_indices.next()
         self.ground.update()
         self.pipes.update()
         flapped = self.player.update(tapped)
@@ -278,8 +162,9 @@ class FlappyBird(BaseEnvironment):
             reward = 0
             terminal = True
         else:
-            reward = self._get_reward()
+            reward = 1 if self._passed() else 0
             terminal = False
+
         if reward:
             self._play_sound('point')
         self.score += reward
@@ -287,29 +172,29 @@ class FlappyBird(BaseEnvironment):
         self._draw()
         return reward, terminal
 
-    def _get_reward(self):
-        pipe_w = self.pipes.width
-        player_x = self.player.x + self.player.width / 2
-        for pipe in self.pipes.upper:
-            pipe_x = pipe['x'] + pipe_w / 2
-            if pipe_x <= player_x < pipe_x + 4:
-                return 1
-        return 0
+    def _passed(self):
+        player_cx = self.player.cx
+        player_cy = self.player.cy
+        for t, b in self.pipes.pipes:
+            pipe_cx = t.cx
+            gap_top, gap_bottom = t.y + t.h, b.h
+            if (
+                    pipe_cx <= player_cx < pipe_cx + 4 and
+                    gap_top <= player_cy < gap_bottom
+            ):
+                return True
+        return False
 
     def _crashed(self):
-        if self.player.y + self.player.height + 1 >= self.ground.y:
+        if self.player.b >= self.ground.y:
             return True  # crashed into the ground
 
-        p_width, p_height = self.pipes.width, self.pipes.height
-        u_mask, l_mask = self.pipes.hitmasks
-        p_mask = self.player.hitmask
-        p_rect = self.player.get_rect()
-        for u, l in zip(self.pipes.upper, self.pipes.lower):
-            u_pipe = pygame.Rect(u['x'], u['y'], p_width, p_height)
-            l_pipe = pygame.Rect(l['x'], l['y'], p_width, p_height)
+        p_mask = self._sprites['player']['hitmasks'][self.player_motion_index]
+        t_mask, b_mask = self._sprites['pipe']['hitmasks']
+        for t, b in self.pipes.pipes:
             if(
-                    pixel_collides(p_rect, u_pipe, p_mask, u_mask) or
-                    pixel_collides(p_rect, l_pipe, p_mask, l_mask)
+                    pixel_collides(self.player, t, p_mask, t_mask) or
+                    pixel_collides(self.player, b, p_mask, b_mask)
             ):
                 return True
         return False
@@ -327,32 +212,41 @@ class FlappyBird(BaseEnvironment):
         self.screen.blit(image, (x, y))
 
     def _draw_bg(self):
-        self._draw_screen(self.bg.image, 0, 0)
+        self._draw_screen(self._sprites['bg'], 0, 0)
 
     def _draw_pipes(self):
-        for u, l in zip(self.pipes.upper, self.pipes.lower):
-            self._draw_screen(self.pipes.images[0], u['x'], u['y'])
-            self._draw_screen(self.pipes.images[1], l['x'], l['y'])
+        t_image, b_image = self._sprites['pipe']['images']
+        for u, l in self.pipes.pipes:
+            self._draw_screen(t_image, u.x, u.y)
+            self._draw_screen(b_image, l.x, l.y)
 
     def _draw_ground(self):
-        self._draw_screen(self.ground.image, self.ground.x, self.ground.y)
-
-    def _draw_player(self):
-        self._draw_screen(self.player.image, self.player.x, self.player.y)
+        ground = self._sprites['ground']
+        self._draw_screen(ground, self.ground.x, self.ground.y)
 
     def _draw_score(self):
+        digit_images = self._sprites['digits']
         digits = [int(x) for x in list(str(self.score))]
-        widths = [self._digits[d].get_width() for d in digits]
+        widths = [digit_images[d].get_width() for d in digits]
 
         x = (self.screen_width - sum(widths)) / 2
         y = self.screen_height * 0.1
         for d, width in zip(digits, widths):
-            self._draw_screen(self._digits[d], x, y)
+            self._draw_screen(digit_images[d], x, y)
             x += width
+
+    def _draw_player(self):
+        image = self._sprites['player']['images'][self.player_motion_index]
+        self._draw_screen(image, self.player.x, self.player.y)
 
     def _update_display(self):
         pygame.display.update()
         self.fps_clock.tick(self.fps)
+
+    ###########################################################################
+    def _play_sound(self, key):
+        if self.play_sound:
+            self._sounds[key].play()
 
     ###########################################################################
     def _get_screen_rgb(self):
