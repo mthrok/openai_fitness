@@ -248,9 +248,7 @@ class FlappyBird(BaseEnvironment):
         if self.play_sound:
             self._sounds[key].play()
 
-    ###########################################################################
     def _get_screen_rgb(self):
-        # (w, h, c) => (h, w, c)
         return pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
 
     def _get_screen_grayscale(self):
