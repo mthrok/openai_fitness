@@ -53,6 +53,8 @@ class FlappyBird(BaseEnvironment):
         self.screen_height = 512
         self.rng = np.random.RandomState(seed=random_seed)
         self.player_motion_index = 0
+        self.total_frame_number = 0
+        self.episode_frame_number = 0
 
         self._init_pygame()
         self._load_assets()
@@ -97,8 +99,8 @@ class FlappyBird(BaseEnvironment):
         x_gap = self.screen_width / 2
         y_min = int(0.2 * self.ground.y - h)
         y_max = int(0.8 * self.ground.y - h - y_gap)
-        y_max = y_min + 1
-        self.pipes = Pipes(w, h, vx, y_min, y_max, y_gap, x_gap, n_pipes=3, rng=self.rng)
+        self.pipes = Pipes(w, h, vx, y_min, y_max, y_gap, x_gap,
+                           n_pipes=3, rng=self.rng)
 
     def _init_player(self):
         w, h = self._sprites['players'][0]['images'][0].get_size()
@@ -117,6 +119,7 @@ class FlappyBird(BaseEnvironment):
     ###########################################################################
     def reset(self):
         self.score = 0
+        self.episode_frame_number = 0
         self.player_motion_indices = get_index_generator()
         self.reset_color()
         self.bg.reset()
@@ -125,7 +128,7 @@ class FlappyBird(BaseEnvironment):
         self.player.reset()
         self._draw()
         return Outcome(observation=self._get_observation(),
-                       terminal=False, reward=0)
+                       terminal=False, reward=0, state=self._get_state())
 
     def reset_color(self):
         sprites = self._sprites
@@ -136,6 +139,12 @@ class FlappyBird(BaseEnvironment):
         i = self.rng.randint(len(sprites['players']))
         sprites['player'] = sprites['players'][i]
 
+    def _get_state(self):
+        return {
+            'total_frame_number': self.total_frame_number,
+            'episode_frame_number': self.episode_frame_number,
+        }
+
     ###########################################################################
     def step(self, tapped):
         reward, terminal = 0, False
@@ -145,11 +154,14 @@ class FlappyBird(BaseEnvironment):
             terminal = terminal or t
             if terminal:
                 break
-        return Outcome(observation=self._get_observation(),
-                       terminal=terminal, reward=reward)
+        return Outcome(observation=self._get_observation(), terminal=terminal,
+                       reward=reward, state=self._get_state())
 
     def _step(self, tapped):
         self.player_motion_index = self.player_motion_indices.next()
+        self.total_frame_number += 1
+        self.episode_frame_number += 1
+
         self.ground.update()
         self.pipes.update()
         flapped = self.player.update(tapped)
