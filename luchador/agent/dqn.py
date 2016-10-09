@@ -200,6 +200,8 @@ class DQNAgent(BaseAgent):
 
     def _train(self, n_samples):
         samples = self.recorder.sample(n_samples)
+        updates = self.ql.pre_trans_net.get_update_operations() + [
+            self.minimize_op]
         error = self.session.run(
             outputs=self.ql.error,
             inputs={
@@ -209,7 +211,7 @@ class DQNAgent(BaseAgent):
                 self.ql.post_states: samples['post_states'],
                 self.ql.terminals: samples['terminals'],
             },
-            updates=self.minimize_op,
+            updates=updates,
             name='minibatch_training',
         )
         return error

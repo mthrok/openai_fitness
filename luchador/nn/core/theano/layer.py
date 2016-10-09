@@ -27,7 +27,7 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv',
+    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization'
 ]
 
 
@@ -359,3 +359,67 @@ class TrueDiv(TheanoLayer):
             self._instantiate_denominator()
         output_tensor = input_tensor.unwrap() / self.args['denom']
         return _wrap_output(output_tensor, input_tensor.get_shape(), 'output')
+
+
+class BatchNormalization(TheanoLayer):
+    """Applies batch normalization
+
+    Ioffe, Sergey and Szegedy, Christian (2015):
+           Batch Normalization: Accelerating Deep Network Training by Reducing
+           Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
+    """
+    def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
+                 learn=True, decay=0.999):
+        super(BatchNormalization, self).__init__(
+            decay=decay, epsilon=epsilon,
+            scale=scale, center=center, learn=learn)
+
+    def _instantiate_parameter_variables(self, input_shape):
+        """Instantiate variable for mean and standard diviation"""
+        dim = len(input_shape)
+        self.axes = tuple(i for i in range(dim) if not i == 1)
+        self.shape = tuple(input_shape[i] for i in range(dim) if i == 1)
+        self.pattern = tuple((0 if i == 1 else 'x') for i in range(dim))
+
+        _LG.debug('    Shape: {}'.format(self.shape))
+        _LG.debug('     Axes: {}'.format(self.axes))
+        _LG.debug('  Pattern: {}'.format(self.pattern))
+
+        mean = scp.get_variable(name='mean', shape=self.shape,
+                                initializer=Constant(0), trainable=False)
+        inv_std = scp.get_variable(name='inv_std', shape=self.shape,
+                                   initializer=Constant(1), trainable=False)
+
+        self._add_parameter('mean', mean)
+        self._add_parameter('inv_std', inv_std)
+
+    def build(self, input_tensor):
+        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+        if not self.parameter_variables:
+            self._instantiate_parameter_variables(input_tensor.get_shape())
+
+        input_tensor_ = input_tensor.unwrap()
+        decay, ep = self.args['decay'], self.args['epsilon']
+        scale, center = self.args['scale'], self.args['center']
+
+        mean_acc = self._get_parameter('mean').unwrap()
+        stdi_acc = self._get_parameter('inv_std').unwrap()
+
+        if self.args['learn']:
+            mean_in = input_tensor_.mean(axis=self.axes)
+            stdi_in = T.inv(T.sqrt(input_tensor_.var(self.axes) + ep))
+
+            new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
+            new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
+
+            self._add_update(mean_acc, new_mean_acc)
+            self._add_update(stdi_acc, new_stdi_acc)
+
+            mean_acc = new_mean_acc
+            stdi_acc = new_stdi_acc
+
+        mean_acc = mean_acc.dimshuffle(self.pattern)
+        stdi_acc = stdi_acc.dimshuffle(self.pattern)
+
+        output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
+        return _wrap_output(output, input_tensor.shape, 'output')

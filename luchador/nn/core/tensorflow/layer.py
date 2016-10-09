@@ -28,7 +28,7 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv',
+    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization',
 ]
 
 
@@ -312,4 +312,72 @@ class TrueDiv(TFLayer):
         if self.denom is None:
             self._instantiate_denominator()
         output = tf.truediv(input_tensor.unwrap(), self.denom, 'ouptut')
+        return _wrap_output(output)
+
+
+class BatchNormalization(TFLayer):
+    """Applies batch normalization
+
+    Ioffe, Sergey and Szegedy, Christian (2015):
+           Batch Normalization: Accelerating Deep Network Training by Reducing
+           Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
+    """
+    def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
+                 learn=True, decay=0.999):
+        super(BatchNormalization, self).__init__(
+            decay=decay, epsilon=epsilon,
+            scale=scale, center=center, learn=learn)
+
+    def _instantiate_parameter_variables(self, input_shape):
+        """Instantiate variable for mean and standard diviation"""
+        dim, fmt = len(input_shape), luchador.get_nn_conv_format()
+        channel = 1 if dim == 2 or fmt == 'NCHW' else 3
+
+        self.axes = tuple(i for i in range(dim) if not i == channel)
+        self.shape = tuple(input_shape[i] for i in range(dim) if i == channel)
+
+        mean = get_variable(name='mean', shape=self.shape,
+                            initializer=Constant(0), trainable=False)
+        inv_std = get_variable(name='inv_std', shape=self.shape,
+                               initializer=Constant(1), trainable=False)
+
+        self._add_parameter('mean', mean)
+        self._add_parameter('inv_std', inv_std)
+
+    def build(self, input_tensor):
+        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+        input_shape = input_tensor.get_shape()
+        if not self.parameter_variables:
+            self._instantiate_parameter_variables(input_shape)
+
+        input_tensor_ = input_tensor.unwrap()
+        decay, ep = self.args['decay'], self.args['epsilon']
+        scale, center = self.args['scale'], self.args['center']
+
+        mean_acc = self._get_parameter('mean').unwrap()
+        stdi_acc = self._get_parameter('inv_std').unwrap()
+
+        if self.args['learn']:
+            mean_in, var_in = tf.nn.moments(input_tensor_, self.axes)
+            stdi_in = tf.inv(tf.sqrt(var_in + ep))
+
+            new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
+            new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
+
+            self._add_update('mean', tf.assign(mean_acc, new_mean_acc))
+            self._add_update('stdi', tf.assign(stdi_acc, new_stdi_acc))
+
+            mean_acc = new_mean_acc
+            stdi_acc = new_stdi_acc
+
+        fmt = luchador.get_nn_conv_format()
+        if len(input_shape) == 2:
+            output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
+        else:
+            centered = tf.nn.bias_add(
+                input_tensor_, -mean_acc, data_format=fmt)
+            pattern = [1, -1, 1, 1] if fmt == 'NCHW' else [1, 1, 1, -1]
+            stdi_acc = tf.reshape(stdi_acc, pattern)
+            normalized = centered * stdi_acc
+            output = scale * normalized + center
         return _wrap_output(output)

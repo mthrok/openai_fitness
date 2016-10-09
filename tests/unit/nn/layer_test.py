@@ -9,12 +9,14 @@ from luchador.nn import (
     ReLU,
     Flatten,
     TrueDiv,
+    BatchNormalization,
 )
 
 PARAMETERIZED_LAYER_CLASSES = (
     Dense,
     Conv2D,
     TrueDiv,
+    BatchNormalization,
 )
 
 FIXED_LAYER_CLASSES = (
@@ -24,7 +26,7 @@ FIXED_LAYER_CLASSES = (
 
 
 LAYERS = PARAMETERIZED_LAYER_CLASSES + FIXED_LAYER_CLASSES
-N_LAYERS = 5
+N_LAYERS = 6
 
 ARGS1 = {
     'Dense': {
@@ -39,7 +41,11 @@ ARGS1 = {
     },
     'TrueDiv': {
         'denom': 1,
-    }
+    },
+    'BatchNormalization': {
+        'center': 0.0,
+        'scale': 1.0,
+    },
 }
 
 ARGS2 = {
@@ -55,7 +61,11 @@ ARGS2 = {
     },
     'TrueDiv': {
         'denom': 255
-    }
+    },
+    'BatchNormalization': {
+        'center': 0.5,
+        'scale': 1.0,
+    },
 }
 
 
