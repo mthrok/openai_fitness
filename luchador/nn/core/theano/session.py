@@ -134,7 +134,7 @@ class Session(BaseSession):
 
                 src_shape, tgt_shape = value.shape, variable.shape
                 if not tgt_shape == src_shape:
-                    # Theano's Conv2D Filter shape is
+                    # Theano's convolution filter shape is
                     #  [#out-channel, #in-channel, height, width]
                     # while, that of Tensorflow is
                     #  [height, width, #in-channel, #out-channel]
@@ -148,6 +148,7 @@ class Session(BaseSession):
                         _LG.info('    Reshaping variable: {} -> {}'
                                  .format(src_shape, tgt_shape))
                         value = value.transpose((3, 2, 0, 1))
+                        value = value[:, :, ::-1, ::-1]
                     else:
                         raise ValueError(
                             'Shapes are not incompatible. '

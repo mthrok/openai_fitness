@@ -155,9 +155,9 @@ class Session(BaseSession):
                 src_shape = tuple(value.shape)
                 tgt_shape = tuple(variable.shape)
                 if not tgt_shape == src_shape:
-                    # Tensorflow is
+                    # Tensorflow's convolution filter shape is
                     #  [height, width, #in-channel, #out-channel]
-                    # while Theano's Conv2D Filter shape is
+                    # while that of Theano is
                     #  [#out-channel, #in-channel, height, width]
                     # we reshape the variable only when this condition is met
                     if (
@@ -168,6 +168,7 @@ class Session(BaseSession):
                         _LG.info('    Reshaping variable: {} -> {}'
                                  .format(src_shape, tgt_shape))
                         value = value.transpose((2, 3, 1, 0))
+                        value = value[::-1, ::-1, :, :]
                     else:
                         raise ValueError(
                             'Shapes are not incompatible. '
