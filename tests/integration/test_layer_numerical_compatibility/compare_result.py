@@ -27,6 +27,13 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
+def load_result(filepath):
+    f = h5py.File(filepath, 'r')
+    ret = np.asarray(f['output'])
+    f.close()
+    return ret
+
+
 def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
     abs_diff = np.absolute(arr1 - arr2)
     rel_diff = abs_diff / (arr1 + arr2 + 1)
@@ -42,13 +49,6 @@ def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
     )
 
 
-def load_result(filepath):
-    f = h5py.File(filepath, 'r')
-    ret = np.asarray(f['result'])
-    f.close()
-    return ret
-
-
 def main():
     args = parse_command_line_args()
     _LG.info('Comparing {} and {}. (Threshold: {} [%])'
@@ -56,8 +56,7 @@ def main():
     data1 = load_result(args.input1)
     data2 = load_result(args.input2)
 
-    res = check(data1, data2, relative_threshold=args.threshold)
-    if res:
+    if check(data1, data2, relative_threshold=args.threshold):
         raise ValueError('Data are different')
     _LG.info('Okay')
 
