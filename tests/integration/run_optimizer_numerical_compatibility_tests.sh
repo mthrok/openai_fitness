@@ -1,17 +1,17 @@
 #!/bin/bash
-set -e
+set -eu
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_DIR="${BASE_DIR}/test_optimizer_numerical_compatibility"
 
 # Get the list of optimizers in optimizer directory
 OPTIMIZERS=()
-for FILE in ${BASE_DIR}/optimizer/*.yml
+for FILE in ${BASE_DIR}/data/optimizer/*.yml
 do
     OPTIMIZERS+=(${FILE})
 done
 
-
+# Run each optimizer on formulae
 FORMULAE="$(python ${TEST_DIR}/formula.py)"
 for FORMULA in ${FORMULAE}
 do

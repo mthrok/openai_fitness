@@ -6,7 +6,7 @@
 # --formula: Name of formula (curve) on which optimization is run. See formula.py for the list of valid formulas.
 # --optimizer: Name of optimizer configurations. See optimizer directory for the list of valid configurations.
 
-set -e
+set -eu
 
 while [[ $# -gt 0 ]]
 do

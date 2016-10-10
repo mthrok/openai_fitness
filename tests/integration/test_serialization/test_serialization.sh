@@ -5,7 +5,7 @@
 # --model: Name of model to tests [de]serialization.
 # --optimizer: Name of optimizer to test [de]serialization.
 
-set -e
+set -eu
 
 while [[ $# -gt 0 ]]
 do
