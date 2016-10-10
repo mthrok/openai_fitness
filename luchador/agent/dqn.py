@@ -132,6 +132,7 @@ class DQNAgent(BaseAgent):
         cfg = self.q_network_config
         self.session = Session()
         if cfg.get('parameter_file'):
+            _LG.info('Loading paramter from {}'.format(cfg['parameter_file']))
             self.session.load_from_file(cfg['parameter_file'])
         else:
             self.session.initialize()

@@ -1,0 +1,62 @@
+name: DQNAgent
+args:
+  recorder_config:
+    memory_size: 100
+    state_width: &state_width 84
+    state_height: &state_height 84
+    state_length: &state_length 4
+    batch_size: &batch_size 32
+
+  q_network_config:
+    model_name: vanilla_dqn
+    parameter_file: tests/integration/data/dqn/dqn_integration_test_initial.h5
+    state_width: *state_width
+    state_height: *state_height
+    state_length: *state_length
+    args:
+      discount_rate: 0.99
+      # reward is clipped between the following min and max
+      min_reward: -1.0
+      max_reward: 1.0
+      # error between predicted Q value and target Q value is clipped by the following min and max
+      min_delta: -1.0
+      max_delta: 1.0
+
+  optimizer_config:
+    name: RMSProp
+    args:
+      decay: 0.95
+      epsilon: 0.000001
+      learning_rate: 0.00025
+
+  action_config:
+    exploration_period: 1000
+    initial_exploration_rate: 1.0
+    terminal_exploration_rate: 1.0
+
+  training_config:
+    # Training starts after this number of transitions are recorded
+    # Giving negative value effectively disable training and network sync
+    train_start: 1000
+    # Train network every this number of observations are made
+    train_frequency: 4
+    # Sync networks every this number of observations are made
+    sync_frequency: 4
+    n_samples: *batch_size
+
+  save_config:
+    # Save network parameter every once after this #episodes
+    # Giving non-positive value effectively disable save functionality
+    interval: 10
+    saver_config:
+      output_dir: &output_dir tmp
+      max_to_keep: 10
+      keep_every_n_hours: 1.0
+      prefix: DQN_integration_test
+
+  summary_config:
+    # Summarize network every once after this #episodes
+    # Giving non-positive value effectively disable save functionality
+    interval: 10
+    writer_config:
+      output_dir: *output_dir
