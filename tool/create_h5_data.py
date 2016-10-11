@@ -33,8 +33,7 @@ def save(data, output_file, key='data'):
 
 def main():
     args = parse_command_line_args()
-    data = None
-    exec('data = {}'.format(args.expression))
+    data = eval('{}'.format(args.expression))
     save(data, args.output, args.key)
 
 

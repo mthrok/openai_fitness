@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 import time
 import logging
-import datetime
 
 from .env import get_env
 from .agent import get_agent
@@ -14,10 +13,7 @@ _LG = logging.getLogger(__name__)
 
 
 ###############################################################################
-def main(env, agent, episodes, steps, report_every=1000, debug=False):
-    if debug:
-        logging.getLogger('luchador').setLevel(logging.DEBUG)
-
+def main(env, agent, episodes, steps, report_every=1000):
     Environment = get_env(env['name'])
     env = Environment(**env['args'])
     _LG.info('\n{}'.format(env))
@@ -81,8 +77,9 @@ def _parse_command_line_arguments():
     return ap.parse_args()
 
 
-def _get_current_time():
-    return datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+def _set_logging_level(debug):
+    logging.getLogger('luchador').setLevel(
+        logging.DEBUG if debug else logging.INFO)
 
 
 def _load_additional_sources(*files):
@@ -94,7 +91,9 @@ def _load_additional_sources(*files):
 def _parse_config():
     args = _parse_command_line_arguments()
 
+    _set_logging_level(args.debug)
     _load_additional_sources(*args.sources)
+
     config = {
         'env': load_config(args.environment),
         'agent': (load_config(args.agent) if args.agent else
@@ -102,7 +101,6 @@ def _parse_config():
         'episodes': args.episodes,
         'steps': args.steps,
         'report_every': args.report,
-        'debug': args.debug,
     }
     return config
 
