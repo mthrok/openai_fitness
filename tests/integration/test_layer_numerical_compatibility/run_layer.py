@@ -53,7 +53,9 @@ def forward_prop(layer, input_value, parameter_file):
     if parameter_file:
         _LG.info('Loading parameter values from {}'.format(parameter_file))
         sess.load_from_file(parameter_file)
-    return sess.run(outputs=output, inputs={input: input_value})
+    ret = sess.run(outputs=output, inputs={input: input_value})
+    _LG.info('Run forward path. Output shape: {}'.format(ret.shape))
+    return ret
 
 
 def transpose_needed(layer):
