@@ -4,7 +4,7 @@
 #
 # Arguments:
 # --dir: Path to the layer configuration directory. "config.yml", "parameter.h5", "input.h5" must be present
-set -eu
+set -e
 
 LAYER_DIR=
 while [[ $# -gt 0 ]]
