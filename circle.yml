@@ -27,9 +27,11 @@ test:
     # Unit test
     - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --source luchador    setup.py test
     - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --source luchador -a setup.py test
-    # Integration test
-    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW tests/integration/run_dqn.sh
-    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC tests/integration/run_dqn.sh
+    # DQN Integration test
+    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ./tests/integration/run_dqn.sh
+    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ./tests/integration/run_dqn.sh
+    # Neural Network Optimizer compatibility test
+    - ./tests/integration/run_layer_numerical_compatibility_tests.sh
     # Neural Network Serialization compatibility test
     - ./tests/integration/run_serialization_tests.sh
     # Neural Network Optimizer compatibility test

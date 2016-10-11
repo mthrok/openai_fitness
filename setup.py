@@ -77,6 +77,7 @@ setuptools.setup(
         'luchador.nn.core.theano',
         'luchador.nn.core.tensorflow',
         'luchador.agent',
+        'luchador.env',
         'luchador.env.ale',
         'luchador.env.flappy_bird',
     ],
