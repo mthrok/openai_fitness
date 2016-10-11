@@ -47,7 +47,7 @@ args:
   save_config:
     # Save network parameter every once after this #episodes
     # Giving non-positive value effectively disable save functionality
-    interval: 10
+    interval: 3
     saver_config:
       output_dir: &output_dir tmp
       max_to_keep: 10
@@ -57,6 +57,6 @@ args:
   summary_config:
     # Summarize network every once after this #episodes
     # Giving non-positive value effectively disable save functionality
-    interval: 10
+    interval: 3
     writer_config:
       output_dir: *output_dir
