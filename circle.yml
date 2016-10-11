@@ -8,11 +8,11 @@ dependencies:
     - "Arcade-Learning-Environment"
   pre:
     - sudo apt-get update
-    - ./script/install_dependencies.sh
-    - ./script/fix_urllib_sni.sh
+    - ./cci_script/install_dependencies.sh
+    - ./cci_script/fix_urllib_sni.sh
   override:
-    - ./script/install_ale.sh
-    - ./script/download_atari_roms.sh luchador/env/ale/rom
+    - ./cci_script/install_ale.sh
+    - ./cci_script/download_atari_roms.sh luchador/env/ale/rom
     - pip install --upgrade numpy
     - pip install --upgrade scipy
     - pip install --upgrade git+git://github.com/Theano/Theano.git
@@ -21,7 +21,7 @@ dependencies:
     - pip install --upgrade -e .
   post:
     - sudo apt-get autoremove
-    - ./script/print_version.sh
+    - ./cci_script/print_version.sh
 
 test:
   pre:
@@ -45,4 +45,4 @@ test:
   post:
     # Report test coverage
     - coverage html -d "${CIRCLE_ARTIFACTS}/coverage"
-    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./script/report_codeclimate_test_coverage.sh; fi
+    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./cci_script/report_codeclimate_test_coverage.sh; fi
