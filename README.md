@@ -1,6 +1,10 @@
 ## Overview
 
-Luchador is a library for Reinforcement Learning with forcus on Deep Reinforcement Learning. It contains environment, agent and runner implementation. Luchador's design principle is easy configuration and customization. In Reinforcement Learning, we need to set a lot of parameters for environment behavior, agent behavior, learning behavior, experiment setting and so on. In case of Deep Reinforcement Learning, we also need to define network architecture and hyper parameters for optimization. When conducting research on RL, it is helpful to be able to run experiments with just simple modifications in configuration file so that not only a new experiment can be started quickly but also keeping the results organized with configuration file. If the library does not meet your requirement, you can add the missing component and you only need to update the necessary configuration part to use it. For example, you can reuse an agent implementation while adding new neural network module, or you can add new agent while using an existing network architecture. Let's see this by following examples. 
+Luchador is a library for Reinforcement Learning with forcus on Deep Reinforcement Learning. It contains environment, agent and runner implementation.
+
+In Reinforcement Learning, we need to set a lot of parameters for environment behavior, agent behavior, learning behavior, experiment setting and so on. In case of Deep Reinforcement Learning, we also need to define network architecture and hyper parameters for optimization. When conducting research on RL, it is helpful to be able to run experiments with just simple modifications in configuration file so that not only a new experiment can be started quickly but also keeping the results organized with configuration file.
+
+Luchador's design principle is easy configuration and customization. If the library does not meet your requirement, you can add the missing component and you only need to update the necessary configuration part to use it. For example, you can reuse an agent implementation while adding new neural network module, or you can add new agent while using an existing network architecture. Let's see this by following examples. 
 
 ### 1. Running Predefined Agent and Env
 For the installation instruction, please refere to [Installation](## Installation). Once you installed Luchador, you have command called `luchador`. `luchador` is a simple script which invokes single agent episode runner, similar to the following snipet.
@@ -54,7 +58,6 @@ You can use Tensorboard to visualize the training.
 tensorboard --logdir results
 ```
 <img src="readme/space_invadors_training_model.png">
-
 
 <img src="readme/space_invadors_training_history.png">
 
