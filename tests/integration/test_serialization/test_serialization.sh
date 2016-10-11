@@ -33,7 +33,13 @@ if [[ -z "${MODEL}" || -z "${OPTIMIZER}" ]]; then
 fi
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TEST_COMMAND="python ${BASE_DIR}/serialize_model.py ${MODEL} ${OPTIMIZER}"
+
+if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
+    TEST_COMMAND="coverage run --source luchador -a"
+else
+    TEST_COMMAND="python"
+fi
+TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/serialize_model.py ${MODEL} ${OPTIMIZER}"
 
 OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
 

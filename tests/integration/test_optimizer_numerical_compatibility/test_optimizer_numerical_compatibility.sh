@@ -48,7 +48,7 @@ FILE1="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENA
 FILE2="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_tensorflow.csv"
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ "${CIRCLECI}" = true ]; then
+if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
     TEST_COMMAND="coverage run --source luchador -a"
 else
     TEST_COMMAND="python"

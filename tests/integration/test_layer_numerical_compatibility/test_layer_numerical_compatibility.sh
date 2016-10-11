@@ -34,7 +34,13 @@ LAYER_PARAM="${LAYER_DIR}/parameter.h5"
 LAYER_INPUT="${LAYER_DIR}/input.h5"
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TEST_COMMAND="python ${BASE_DIR}/run_layer.py ${LAYER_CONFIG} ${LAYER_INPUT}"
+
+if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
+    TEST_COMMAND="coverage run --source luchador -a"
+else
+    TEST_COMMAND="python"
+fi
+TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_layer.py ${LAYER_CONFIG} ${LAYER_INPUT}"
 if [ -f "${LAYER_PARAM}" ]; then
     TEST_COMMAND="${TEST_COMMAND}  --parameter ${LAYER_PARAM}"
 fi
