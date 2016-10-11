@@ -6,7 +6,7 @@
 # --formula: Name of formula (curve) on which optimization is run. See formula.py for the list of valid formulas.
 # --optimizer: Name of optimizer configurations. See optimizer directory for the list of valid configurations.
 
-set -eu
+set -e
 
 while [[ $# -gt 0 ]]
 do
@@ -48,7 +48,13 @@ FILE1="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENA
 FILE2="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_tensorflow.csv"
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TEST_COMMAND="python ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
+if [ "${CIRCLECI}" = true ]; then
+    TEST_COMMAND="coverage run --source luchador -a"
+else
+    TEST_COMMAND="python"
+fi
+
+TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
 COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
 echo "*** Checking numerical compatibility of ${OPTIMIZER} on ${FORMULA} ***"
