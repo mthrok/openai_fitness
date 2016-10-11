@@ -43,4 +43,5 @@ test:
     - flake8 tests
   post:
     # Report test coverage
+    - coverage html -d "${CIRCLE_ARTIFACTS}/coverage"
     - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./script/report_codeclimate_test_coverage.sh; fi
