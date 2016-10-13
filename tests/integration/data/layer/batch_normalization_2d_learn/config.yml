@@ -1,0 +1,10 @@
+run:
+  iteration: 10
+
+layer:
+  name: BatchNormalization
+  args:
+    scale: 2.0
+    center: 0.5
+    learn: True
+    decay: 0.999

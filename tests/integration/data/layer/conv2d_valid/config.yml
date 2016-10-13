@@ -1,7 +1,10 @@
-name: Conv2D
-args:
-  filter_height: 7
-  filter_width: 5
-  n_filters: 3
-  strides: 3
-  padding: 'VALID'
+run: {}
+
+layer:
+  name: Conv2D
+  args:
+    filter_height: 7
+    filter_width: 5
+    n_filters: 3
+    strides: 3
+    padding: 'VALID'

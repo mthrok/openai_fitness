@@ -1,3 +1,6 @@
-name: Dense
-args:
-  n_nodes: 12
+run: {}
+
+layer:
+  name: Dense
+  args:
+    n_nodes: 12

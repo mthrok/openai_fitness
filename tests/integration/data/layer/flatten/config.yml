@@ -1,2 +1,5 @@
-name: Flatten
-args: {}
+run: {}
+
+layer:
+  name: Flatten
+  args: {}

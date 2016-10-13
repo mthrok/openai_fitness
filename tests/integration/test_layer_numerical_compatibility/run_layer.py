@@ -24,8 +24,8 @@ def parse_command_line_args():
         description='Feed batch data to layer and save the output to file'
     )
     ap.add_argument(
-        'layer',
-        help='Layer configuration file.'
+        'config',
+        help='File contains layer and run config.'
     )
     ap.add_argument(
         'input',
@@ -46,14 +46,19 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def forward_prop(layer, input_value, parameter_file):
+def forward_prop(layer, input_value, parameter_file, n_ite):
     sess = Session()
     input = Input(shape=input_value.shape, dtype=input_value.dtype)
     output = layer(input.build())
     if parameter_file:
         _LG.info('Loading parameter values from {}'.format(parameter_file))
         sess.load_from_file(parameter_file)
-    ret = sess.run(outputs=output, inputs={input: input_value})
+
+    _LG.info('Running forward path for {} times'.format(n_ite))
+    for _ in range(n_ite):
+        ret = sess.run(
+            outputs=output, inputs={input: input_value},
+            updates=layer.get_update_operation())
     _LG.info('Run forward path. Output shape: {}'.format(ret.shape))
     return ret
 
@@ -76,7 +81,7 @@ def transpose_needed(layer, input_shape):
     return _is_convolution() or _is_batch_normalization_4d()
 
 
-def run_forward_prop(layer, input_value, parameter_file):
+def run_forward_prop(layer, input_value, parameter_file, iteration=1):
     if transpose_needed(layer, input_value.shape):
         # All the test data is created floowing the Theano format, which
         # is NCHW for input data. So when running this test in Tensorflow
@@ -87,7 +92,7 @@ def run_forward_prop(layer, input_value, parameter_file):
             .format(input_value.shape, input_value_.shape))
         input_value = input_value_
 
-    output = forward_prop(layer, input_value, parameter_file)
+    output = forward_prop(layer, input_value, parameter_file, iteration)
 
     if transpose_needed(layer, input_value.shape):
         # So as to make the output comarison easy, we revert the oreder
@@ -100,8 +105,7 @@ def run_forward_prop(layer, input_value, parameter_file):
     return output
 
 
-def load_layer(filepath):
-    cfg = load_config(filepath)
+def load_layer(cfg):
     Layer = get_layer(cfg['name'])
     return Layer(**cfg['args'])
 
@@ -131,10 +135,12 @@ def main():
     if args.debug:
         _LG.setLevel(logging.DEBUG)
 
+    cfg = load_config(args.config)
     output = run_forward_prop(
-        layer=load_layer(args.layer),
+        layer=load_layer(cfg['layer']),
         input_value=load_input_value(args.input),
-        parameter_file=args.parameter
+        parameter_file=args.parameter,
+        **cfg.get('run')
     )
 
     if args.output:

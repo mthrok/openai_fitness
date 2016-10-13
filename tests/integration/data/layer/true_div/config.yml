@@ -1,3 +1,6 @@
-name: TrueDiv
-args:
-  denom: 255
+run: {}
+
+layer:
+  name: TrueDiv
+  args:
+    denom: 255

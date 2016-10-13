@@ -1,2 +1,5 @@
-name: ReLU
-args: {}
+run: {}
+
+layer:
+  name: ReLU
+  args: {}
