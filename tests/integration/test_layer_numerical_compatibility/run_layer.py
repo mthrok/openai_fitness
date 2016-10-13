@@ -58,16 +58,26 @@ def forward_prop(layer, input_value, parameter_file):
     return ret
 
 
-def transpose_needed(layer):
-    return (
-        layer.__class__.__name__ == 'Conv2D' and
-        get_nn_backend() == 'tensorflow' and
-        get_nn_conv_format() == 'NHWC'
-    )
+def transpose_needed(layer, input_shape):
+    def _is_convolution():
+        return (
+            layer.__class__.__name__ == 'Conv2D' and
+            get_nn_backend() == 'tensorflow' and
+            get_nn_conv_format() == 'NHWC'
+        )
+
+    def _is_batch_normalization_4d():
+        return (
+            layer.__class__.__name__ == 'BatchNormalization' and
+            len(input_shape) > 2 and
+            get_nn_backend() == 'tensorflow' and
+            get_nn_conv_format() == 'NHWC'
+        )
+    return _is_convolution() or _is_batch_normalization_4d()
 
 
 def run_forward_prop(layer, input_value, parameter_file):
-    if transpose_needed(layer):
+    if transpose_needed(layer, input_value.shape):
         # All the test data is created floowing the Theano format, which
         # is NCHW for input data. So when running this test in Tensorflow
         # backend, we reorder the input data to NHWC
@@ -79,7 +89,7 @@ def run_forward_prop(layer, input_value, parameter_file):
 
     output = forward_prop(layer, input_value, parameter_file)
 
-    if transpose_needed(layer):
+    if transpose_needed(layer, input_value.shape):
         # So as to make the output comarison easy, we revert the oreder
         # from NHWC to NCHW.
         output_ = output.transpose((0, 3, 1, 2))

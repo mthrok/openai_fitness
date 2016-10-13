@@ -34,9 +34,20 @@ def load_result(filepath):
     return ret
 
 
+def print_stats(*arrs):
+    _LG.info('{sum:>10}  {max:>10}  {min:>10}  {mean:>10}'
+             .format(sum='sum', max='max', min='min', mean='mean'))
+    for arr in arrs:
+        sum_, max_, min_, mean = arr.sum(), arr.max(), arr.min(), arr.mean()
+        _LG.info('{sum:10.3E}  {max:10.3E}  {min:10.3E}  {mean:10.3E}'
+                 .format(sum=sum_, max=max_, min=min_, mean=mean))
+    _LG.info('')
+
+
 def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
+    print_stats(arr1, arr2)
     abs_diff = np.absolute(arr1 - arr2)
-    rel_diff = abs_diff / (arr1 + arr2 + 1)
+    rel_diff = abs(abs_diff / (arr1 + arr2 + 1))
     _LG.info('  Ave absolute diff: {}'.format(abs_diff.mean()))
     _LG.info('  Max absolute diff: {}'.format(abs_diff.max()))
     _LG.info('  Min absolute diff: {}'.format(abs_diff.min()))
