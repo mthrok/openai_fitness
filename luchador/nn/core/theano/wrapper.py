@@ -26,7 +26,7 @@ def retrieve_variable(name):
 
 class Variable(BaseWrapper):
     """Wrap SharedVariable object for storing network parameters"""
-    def __init__(self, variable, name=None):
+    def __init__(self, variable, name=None, trainable=True):
         """Wrap SharedVariable object.
 
         Args:
@@ -38,7 +38,8 @@ class Variable(BaseWrapper):
         name = name or variable.name
         val = variable.get_value()
         super(Variable, self).__init__(
-            tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
+            tensor=variable, shape=val.shape, name=name,
+            dtype=val.dtype, trainable=trainable)
         _register_variable(name, self)
 
 

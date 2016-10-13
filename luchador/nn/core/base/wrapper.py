@@ -10,11 +10,12 @@ class TensorWrapper(object):
     while having the common interface for both Theano and Tensorflow.
     `get` method provides access to the underlying object.
     """
-    def __init__(self, tensor, shape, name, dtype):
+    def __init__(self, tensor, shape, name, dtype, trainable=None):
         self._tensor = tensor
         self.shape = shape
         self.name = name
         self.dtype = dtype
+        self.trainable = trainable
 
     def get_shape(self):
         return self.shape

@@ -29,7 +29,7 @@ class BaseOptimizer(Optimizer):
     def compute_gradients(self, loss, wrt, **kwargs):
         if not is_iteratable(wrt):
             wrt = [wrt]
-        loss, wrt = loss.get(), [v.get() for v in wrt]
+        loss, wrt = loss.get(), [v.get() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]
 

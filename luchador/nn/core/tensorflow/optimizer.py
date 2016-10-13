@@ -49,7 +49,7 @@ class BaseOptimizer(Optimizer):
         loss = loss.get()
         if wrt is not None and not is_iteratable(wrt):
             wrt = [wrt]
-        var_list = [v.get() for v in wrt] if wrt else None
+        var_list = [v.get() for v in wrt if v.trainable] if wrt else None
         grads_and_vars = self.optimizer.compute_gradients(
             loss, var_list=var_list, **kwargs)
         return grads_and_vars

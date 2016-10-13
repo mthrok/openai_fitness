@@ -104,10 +104,7 @@ def get_variable_scope():
 
 
 def get_variable(name, shape=None, dtype=None,
-                 initializer=None, regularizer=None, trainable=None, **kwargs):
-    if trainable:
-        warnings.warn('`trainable` is not implemented in Theano backend.')
-
+                 initializer=None, regularizer=None, trainable=True, **kwargs):
     if regularizer:
         warnings.warn('`regularizer` is not implemented in Theano backend.')
 
@@ -148,5 +145,6 @@ def get_variable(name, shape=None, dtype=None,
         return Variable(
             theano.shared(
                 value=np.array(initializer.sample(shape), dtype=dtype),
-                name=name, allow_downcast=True, **kwargs)
+                name=name, allow_downcast=True, **kwargs
+            ), trainable=trainable,
         )

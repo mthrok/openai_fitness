@@ -65,4 +65,4 @@ def get_variable(name, shape=None, dtype=None,
             name, shape=shape, dtype=dtype, initializer=initializer,
             regularizer=regularizer, trainable=trainable, **kwargs)
 
-        return Variable(variable)
+        return Variable(variable, trainable=trainable)
