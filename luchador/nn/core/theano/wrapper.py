@@ -38,9 +38,9 @@ class Variable(BaseWrapper):
         name = name or variable.name
         val = variable.get_value()
         super(Variable, self).__init__(
-            tensor=variable, shape=val.shape, name=name,
-            dtype=val.dtype, trainable=trainable)
+            tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
         _register_variable(name, self)
+        self.trainable = trainable
 
 
 class Tensor(BaseWrapper):

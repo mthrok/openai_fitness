@@ -43,9 +43,9 @@ class Variable(BaseWrapper):
         shape = variable.get_shape().as_list()
         dtype = variable.dtype.as_numpy_dtype
         super(Variable, self).__init__(
-            tensor=variable, shape=shape, name=name,
-            dtype=dtype, trainable=trainable)
+            tensor=variable, shape=shape, name=name, dtype=dtype)
         _register_variable(name, self)
+        self.trainable = trainable
 
 
 class Tensor(BaseWrapper):
