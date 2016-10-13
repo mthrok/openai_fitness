@@ -49,12 +49,12 @@ class DeepQLearning(BaseQLI):
         self.rewards = Input(dtype=dtype, shape=(None,), name='rewards')
         self.terminals = Input(dtype=dtype, shape=(None,), name='terminals')
 
-        actions = self.actions().get()
-        rewards = self.rewards().get()
-        terminals = self.terminals().get()
+        actions = self.actions().unwrap()
+        rewards = self.rewards().unwrap()
+        terminals = self.terminals().unwrap()
         with tf.name_scope('future_reward'):
             with tf.name_scope('future_q_value'):
-                post_q = self.post_trans_net.output.get()
+                post_q = self.post_trans_net.output.unwrap()
                 post_q = tf.reduce_max(
                     post_q, reduction_indices=1, name='max_post_q')
                 post_q = tf.mul(
@@ -76,7 +76,7 @@ class DeepQLearning(BaseQLI):
             with tf.name_scope('reshape_current_q_value'):
                 mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
                                       off_value=1., name='actions_not_taken')
-                current = tf.identity(self.pre_trans_net.output.get())
+                current = tf.identity(self.pre_trans_net.output.unwrap())
                 current = current * mask_off
 
             with tf.name_scope('reshape_future_q_value'):
@@ -95,7 +95,7 @@ class DeepQLearning(BaseQLI):
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
         tgt_vars = self.post_trans_net.get_parameter_variables()
-        ops = [tgt.get().assign(src.get())
+        ops = [tgt.unwrap().assign(src.unwrap())
                for src, tgt in zip(src_vars, tgt_vars)]
         self.sync_op = Operation(op=tf.group(*ops, name='sync'))
 

@@ -45,7 +45,7 @@ def get_variable(name, shape=None, dtype=None,
       https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
     if isinstance(initializer, TFInitializer):
-        initializer = initializer.get()
+        initializer = initializer.unwrap()
 
     scope = tf.get_variable_scope()
     if scope.reuse:

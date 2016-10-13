@@ -19,7 +19,7 @@ class TensorWrapper(object):
     def get_shape(self):
         return self.shape
 
-    def get(self):
+    def unwrap(self):
         """Get the underlying tensor object"""
         return self._tensor
 
@@ -37,5 +37,5 @@ class OperationWrapper(object):
     def __init__(self, op):
         self.op = op
 
-    def get(self):
+    def unwrap(self):
         return self.op

@@ -37,10 +37,10 @@ def _parse_inputs(inputs):
 
     if isinstance(inputs, dict):
         for key, value in inputs.items():
-            inputs_.append(key.get())
+            inputs_.append(key.unwrap())
     elif isinstance(inputs, list):
         for key, value in inputs:
-            inputs_.append(key.get())
+            inputs_.append(key.unwrap())
     else:
         raise ValueError(
             '`inputs` must be either dict or list of Tensor-value pair. '
@@ -53,7 +53,7 @@ def _parse_outputs(outputs):
         return []
     if not is_iteratable(outputs):
         outputs = [outputs]
-    return [o.get() for o in outputs]
+    return [o.unwrap() for o in outputs]
 
 
 def _parse_updates(updates):
@@ -69,7 +69,7 @@ def _parse_updates(updates):
             raise ValueError(
                 '`updates` must be [list of] {}. Given: {}'
                 .format(_OP_CLASS_STR, _get_full_class(type(update))))
-        for shared_variable, new_expression in update.get().items():
+        for shared_variable, new_expression in update.unwrap().items():
             ret[shared_variable] = new_expression
     return ret
 
@@ -155,5 +155,5 @@ class Session(BaseSession):
                             'Model shape: {}, Value shape: {}'
                             .format(src_shape, tgt_shape)
                         )
-                op[variable.get()] = value
+                op[variable.unwrap()] = value
         self.run(name=None, updates=Operation(op=op))

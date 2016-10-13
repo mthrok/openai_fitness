@@ -391,7 +391,7 @@ class TestGetVariable(unittest.TestCase):
         scp._set_flag(True)
         var2 = scp.get_variable(name)
         self.assertIs(
-            var1.get(), var2.get(),
+            var1.unwrap(), var2.unwrap(),
             'Reused variable should be identical to the original variable')
 
     def test_get_variable_raises_when_reuseing_non_existent_variable(self):

@@ -89,7 +89,7 @@ class Input(BaseWrapper):
         return self.build()
 
     def build(self):
-        if self.get() is None:
+        if self.unwrap() is None:
             dtype = self.dtype or get_nn_dtype()
             pf = tf.placeholder(dtype=dtype, shape=self.shape, name=self.name)
             self.set(pf)

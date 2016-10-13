@@ -49,11 +49,11 @@ class DeepQLearning(BaseQLI):
         self.rewards = Input(dtype='float64', shape=(None,), name='rewards')
         self.terminals = Input(shape=(None,), name='continuations')
 
-        actions = self.actions().get()
-        rewards = self.rewards().get()
-        terminals = self.terminals().get()
+        actions = self.actions().unwrap()
+        rewards = self.rewards().unwrap()
+        terminals = self.terminals().unwrap()
 
-        post_q = self.post_trans_net.output.get()
+        post_q = self.post_trans_net.output.unwrap()
         post_q = T.max(post_q, axis=1)
         post_q = post_q * discount_rate
         post_q = post_q * (1.0 - terminals)
@@ -67,7 +67,7 @@ class DeepQLearning(BaseQLI):
         n_actions = self.pre_trans_net.output.get_shape()[1]
         mask_on = T.extra_ops.to_one_hot(actions, n_actions)
         mask_off = 1.0 - mask_on
-        current = self.pre_trans_net.output.get()
+        current = self.pre_trans_net.output.unwrap()
         current = current * mask_off
 
         future = T.reshape(future, (-1, 1))
@@ -85,7 +85,7 @@ class DeepQLearning(BaseQLI):
         src_vars = self.pre_trans_net.get_parameter_variables()
         tgt_vars = self.post_trans_net.get_parameter_variables()
         for src, tgt in zip(src_vars, tgt_vars):
-            sync_op[tgt.get()] = src.get()
+            sync_op[tgt.unwrap()] = src.unwrap()
         self.sync_op = Operation(op=sync_op)
 
     def _build_error(self):

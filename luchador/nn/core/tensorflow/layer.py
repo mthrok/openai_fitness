@@ -6,18 +6,16 @@ import warnings
 
 import tensorflow as tf
 
-from luchador import get_nn_conv_format, get_nn_dtype
+import luchador
 from ..base import (
     get_layer,
     get_initializer,
     Layer as BaseLayer,
-    ReLU as BaseReLU,
-    Dense as BaseDense,
-    Conv2D as BaseConv2D,
-    Flatten as BaseFlatten,
-    TrueDiv as BaseTrueDiv,
 )
-from .wrapper import Tensor
+from .wrapper import (
+    Tensor,
+    Operation
+)
 from .scope import get_variable
 from .initializer import (
     Constant,
@@ -30,7 +28,7 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv'
+    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv',
 ]
 
 
@@ -39,7 +37,22 @@ def _wrap_output(tensor, name='output'):
     return Tensor(tensor, name=name)
 
 
-class Dense(BaseDense):
+class TFLayer(BaseLayer):
+    def get_update_operation(self):
+        return Operation(tf.group(*self.update_operations.values()))
+
+
+class Dense(TFLayer):
+    def __init__(self, n_nodes, initializers={}):
+        """Initialize dense layer.
+        Activation function, such as ReLU is not included.
+        Also called fully connected, affine, linear or inner product.
+
+        Args:
+          n_nodes (int): The number of internal neurons.
+        """
+        super(Dense, self).__init__(n_nodes=n_nodes, initializers=initializers)
+
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
         if 'weight' not in self.initializers:
@@ -58,27 +71,28 @@ class Dense(BaseDense):
     def _instantiate_parameter_variables(self, n_inputs):
         self._instantiate_initializers()
 
-        dtype = get_nn_dtype()
+        dtype = luchador.get_nn_dtype()
 
         b_shape = (self.args['n_nodes'],)
         w_shape = (n_inputs, self.args['n_nodes'])
 
-        b_init = self.initializers['bias'].get()
-        w_init = self.initializers['weight'].get()
+        b_init = self.initializers['bias'].unwrap()
+        w_init = self.initializers['weight'].unwrap()
 
-        self.parameter_variables['weight'] = get_variable(
-            name='weight', shape=w_shape, initializer=w_init, dtype=dtype)
-        self.parameter_variables['bias'] = get_variable(
-            name='bias', shape=b_shape, initializer=b_init, dtype=dtype)
+        self._add_parameter('weight', get_variable(
+            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
+        self._add_parameter('bias', get_variable(
+            name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
 
-    def build(self, input):
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input.get_shape()[1])
+            self._instantiate_parameter_variables(input_tensor.get_shape()[1])
 
-        params = self.parameter_variables
-        prod = tf.matmul(input.get(), params['weight'].get())
-        output = tf.add(prod, params['bias'].get(), name='output')
+        weight = self._get_parameter('weight')
+        bias = self._get_parameter('bias')
+        prod = tf.matmul(input_tensor.unwrap(), weight.unwrap())
+        output = tf.add(prod, bias.unwrap(), name='output')
         return _wrap_output(output)
 
 
@@ -89,7 +103,37 @@ def _map_padding(padding):
         return 'VALID'
 
 
-class Conv2D(BaseConv2D):
+class Conv2D(TFLayer):
+    """Apply convolution to input"""
+    def __init__(self, filter_height, filter_width, n_filters, strides,
+                 padding='VALID', initializers={}, **kwargs):
+        """Initialize 2D convolution layer.
+        Args:
+          filter_height (int): filter height (== row)
+          filter_weight (int): filter weight (== column)
+          n_filters (int): #filters (== #output channels)
+          strides (int, tuple of two int, or tuple of four int): stride
+            - When given type is int, the output is subsampled by this factor
+              in both width and height direction.
+            - When given type is tuple of two int, the output is subsapmled
+              `strides[0]` in height direction and `striders[1]` in width
+              direction.
+            - [Tensorflow only] When given type is tuple of four int, it must
+              be consistent with the input data format. That is:
+              - data_format=='NHWC' (default): [batch, height, width, channel]
+              - data_format=='NCHW': [batch, channel, height, width]
+          padding:
+            - [tensorflow] (str): Either 'SAME' or 'VALID'
+            - [theano] (str or int or tuple of two int): See Theano doc
+          kwargs:
+            - Tensorflow: Arguments passed to tf.nn.conv2d.
+              'use_cudnn_on_gpu' and 'name'
+        """
+        super(Conv2D, self).__init__(
+            filter_height=filter_height, filter_width=filter_width,
+            n_filters=n_filters, strides=strides, padding=padding,
+            initializers=initializers, **kwargs)
+
     def _validate_padding(self, padding):
         msg = '`padding` must be either "SAME", "VALID", "full" or "half"'
         if not isinstance(padding, str):
@@ -126,7 +170,7 @@ class Conv2D(BaseConv2D):
 
     ###########################################################################
     def _get_format(self):
-        return self.args.get('data_format', get_nn_conv_format())
+        return self.args.get('data_format', luchador.get_nn_conv_format())
 
     def _get_strides(self):
         s, fmt = self.args['strides'], self._get_format()
@@ -197,61 +241,75 @@ class Conv2D(BaseConv2D):
 
         self._check_filter_shape(input_shape, w_shape)
 
-        b_init = self.initializers['bias'].get()
-        w_init = self.initializers['weight'].get()
+        b_init = self.initializers['bias'].unwrap()
+        w_init = self.initializers['weight'].unwrap()
 
-        dtype = get_nn_dtype()
-        self.parameter_variables['weight'] = get_variable(
-            name='weight', shape=w_shape, initializer=w_init, dtype=dtype)
-        self.parameter_variables['bias'] = get_variable(
-            name='bias', shape=b_shape, initializer=b_init, dtype=dtype)
+        dtype = luchador.get_nn_dtype()
+        self._add_parameter('weight', get_variable(
+            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
+        self._add_parameter('bias', get_variable(
+            name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
 
-    def build(self, input):
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input.get_shape())
+            self._instantiate_parameter_variables(input_tensor.get_shape())
 
         strides = self._get_strides()
-        params = self.parameter_variables
+        weight = self._get_parameter('weight')
+        bias = self._get_parameter('bias')
         name = self.args.get('name')
         cudnn = self.args.get('use_cudnn_on_gpu', True)
         fmt = self._get_format()
         padding = self._get_padding()
         conv = tf.nn.conv2d(
-            input.get(), params['weight'].get(), strides=strides,
+            input_tensor.unwrap(), weight.unwrap(), strides=strides,
             padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=fmt, name=name)
-        output = tf.nn.bias_add(conv, params['bias'].get(),
-                                data_format=fmt, name='output')
+        output = tf.nn.bias_add(
+            conv, bias.unwrap(), data_format=fmt, name='output')
         return _wrap_output(output)
 
 
-class ReLU(BaseReLU):
-    def build(self, input):
+class ReLU(TFLayer):
+    """Applies Rectified Linear Unit"""
+    def __init__(self):
+        super(ReLU, self).__init__()
+
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        output = tf.nn.relu(input.get(), 'ouptut')
+        output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
         return _wrap_output(output)
 
 
-class Flatten(BaseFlatten):
-    def build(self, input):
+class Flatten(TFLayer):
+    """Reshape batch into 2D (batch_size, n_features)"""
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        in_shape = input.get_shape()
+        in_shape = input_tensor.get_shape()
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
         out_shape = (-1, n_nodes)
-        output = tf.reshape(input.get(), out_shape, 'output')
+        output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
         return _wrap_output(output)
 
 
-class TrueDiv(BaseTrueDiv):
+class TrueDiv(TFLayer):
+    """Applies element wise division"""
+    def __init__(self, denom, dtype=None):
+        super(TrueDiv, self).__init__(denom=denom, dtype=None)
+        self.denom = None
+
     def _instantiate_denominator(self):
-        dtype = self.args['dtype'] or get_nn_dtype()
+        dtype = self.args['dtype'] or luchador.get_nn_dtype()
         self.denom = tf.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
-    def build(self, input):
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if self.denom is None:
             self._instantiate_denominator()
-        output = tf.truediv(input.get(), self.denom, 'ouptut')
+        output = tf.truediv(input_tensor.unwrap(), self.denom, 'ouptut')
         return _wrap_output(output)

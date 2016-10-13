@@ -24,7 +24,7 @@ __all__ = [
 
 
 class TFInitializer(BaseInitializer):
-    def get(self):
+    def unwrap(self):
         return self._initializer
 
 

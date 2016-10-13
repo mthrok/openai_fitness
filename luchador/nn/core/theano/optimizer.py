@@ -29,7 +29,7 @@ class BaseOptimizer(Optimizer):
     def compute_gradients(self, loss, wrt, **kwargs):
         if not is_iteratable(wrt):
             wrt = [wrt]
-        loss, wrt = loss.get(), [v.get() for v in wrt if v.trainable]
+        loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]
 
@@ -83,8 +83,8 @@ class RMSProp(BaseOptimizer):
         decay, momentum = args['decay'], args['momentum']
         ep, lr = args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
-            mom = self._create_slot_var(var, 'momentum').get()
-            rms = self._create_slot_var(var, 'rms').get()
+            mom = self._create_slot_var(var, 'momentum').unwrap()
+            rms = self._create_slot_var(var, 'rms').unwrap()
 
             new_rms = rms + (1.0 - decay) * (T.square(grad) - rms)
             new_mom = mom * momentum + lr * grad / (T.sqrt(new_rms + ep))
@@ -108,7 +108,7 @@ class NeonRMSProp(BaseOptimizer):
         args = self.args
         decay, ep, lr = args['decay'], args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
-            rms = self._create_slot_var(var, 'rms').get()
+            rms = self._create_slot_var(var, 'rms').unwrap()
 
             new_rms = rms + (1.0 - decay) * (T.square(grad) - rms)
             new_var = var - lr * grad / (T.sqrt(new_rms + ep) + ep)
@@ -137,20 +137,20 @@ class GravesRMSProp(BaseOptimizer):
         d1, d2 = args['decay1'], args['decay2']
         ep, lr = args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
-            mean_grad1 = self._create_slot_var(var, 'grad_mean').get()
-            mean_grad2 = self._create_slot_var(var, 'grad_squared_mean').get()
+            mean_g1 = self._create_slot_var(var, 'grad_mean').unwrap()
+            mean_g2 = self._create_slot_var(var, 'grad_squared_mean').unwrap()
 
-            new_mean_grad1 = d1 * mean_grad1 + (1.0 - d1) * grad
-            new_mean_grad2 = d2 * mean_grad2 + (1.0 - d2) * T.square(grad)
+            new_mean_g1 = d1 * mean_g1 + (1.0 - d1) * grad
+            new_mean_g2 = d2 * mean_g2 + (1.0 - d2) * T.square(grad)
 
-            rms = T.sqrt(new_mean_grad2 - T.square(new_mean_grad1) + ep)
+            rms = T.sqrt(new_mean_g2 - T.square(new_mean_g1) + ep)
             new_grad = grad / rms
 
             delta_var = -lr * new_grad
             new_var = var + delta_var
 
-            updates[mean_grad1] = new_mean_grad1
-            updates[mean_grad2] = new_mean_grad2
+            updates[mean_g1] = new_mean_g1
+            updates[mean_g2] = new_mean_g2
             updates[var] = new_var
         return Operation(op=updates)
 
@@ -169,8 +169,8 @@ class AdamOptimizer(BaseOptimizer):
         ep, lr = args['epsilon'], args['learning_rate']
         updates = OrderedDict()
 
-        beta1_power = self._create_slot(beta1, 'beta1_power').get()
-        beta2_power = self._create_slot(beta2, 'beta2_power').get()
+        beta1_power = self._create_slot(beta1, 'beta1_power').unwrap()
+        beta2_power = self._create_slot(beta2, 'beta2_power').unwrap()
 
         new_beta1_power = beta1_power * beta1
         new_beta2_power = beta2_power * beta2
@@ -178,8 +178,8 @@ class AdamOptimizer(BaseOptimizer):
         alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
 
         for grad, var in grads_and_vars:
-            m = self._create_slot_var(var, 'm').get()
-            v = self._create_slot_var(var, 'v').get()
+            m = self._create_slot_var(var, 'm').unwrap()
+            v = self._create_slot_var(var, 'v').unwrap()
 
             new_m = m + (1.0 - beta1) * (grad - m)
             new_v = v + (1.0 - beta2) * (T.square(grad) - v)

@@ -46,10 +46,10 @@ class BaseOptimizer(Optimizer):
         return self.apply_gradients(grads_and_vars, **kws2)
 
     def compute_gradients(self, loss, wrt, **kwargs):
-        loss = loss.get()
+        loss = loss.unwrap()
         if wrt is not None and not is_iteratable(wrt):
             wrt = [wrt]
-        var_list = [v.get() for v in wrt if v.trainable] if wrt else None
+        var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
         grads_and_vars = self.optimizer.compute_gradients(
             loss, var_list=var_list, **kwargs)
         return grads_and_vars
@@ -76,7 +76,7 @@ class BaseOptimizer(Optimizer):
             name=name, shape=var.get_shape(), dtype=var.dtype,
             initializer=tf.constant_initializer(0))
         self.slot.append(slot_var)
-        return slot_var
+        return slot_var.unwrap()
 
 
 class SGD(BaseOptimizer):
@@ -115,7 +115,7 @@ class NeonRMSProp(BaseOptimizer):
         args = self.args
         decay, ep = args['decay'], args['epsilon']
         for grad, var in grads_and_vars:
-            rms = self._create_slot_var(var, 'rms').get()
+            rms = self._create_slot_var(var, 'rms')
 
             new_rms = rms + (1. - decay) * (tf.square(grad) - rms)
             new_grad = tf.truediv(grad, tf.sqrt(new_rms + ep) + ep)
@@ -145,8 +145,8 @@ class GravesRMSProp(BaseOptimizer):
         args = self.args
         d1, d2, ep = args['decay1'], args['decay2'], args['epsilon']
         for grad, var in grads_and_vars:
-            mean_grad1 = self._create_slot_var(var, 'grad_mean').get()
-            mean_grad2 = self._create_slot_var(var, 'grad_squared_mean').get()
+            mean_grad1 = self._create_slot_var(var, 'grad_mean')
+            mean_grad2 = self._create_slot_var(var, 'grad_squared_mean')
 
             new_mean_grad1 = d1 * mean_grad1 + (1.0 - d1) * grad
             new_mean_grad2 = d2 * mean_grad2 + (1.0 - d2) * tf.square(grad)

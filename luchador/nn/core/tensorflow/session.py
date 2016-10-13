@@ -41,7 +41,7 @@ def _parse_outputs(outputs):
             raise ValueError(
                 '`outputs` must be [list of] {}. Given: {}'
                 .format(_TENSOR_CLASS_STR, _get_full_class(type(output))))
-        outputs_.append(output.get())
+        outputs_.append(output.unwrap())
     return outputs_
 
 
@@ -59,7 +59,7 @@ def _parse_updates(updates):
                 '`updates` must be [list of] {}. Given: {}'
                 .format(_OP_CLASS_STR, _get_full_class(type(update))))
 
-        ret.append(update.get())
+        ret.append(update.unwrap())
     return ret
 
 
@@ -73,10 +73,10 @@ def _construct_feed_dict(inputs, givens):
         pass
     elif isinstance(inputs, dict):
         for key, value in inputs.items():
-            feed_dict[key.get()] = value
+            feed_dict[key.unwrap()] = value
     elif isinstance(inputs, list):
         for key, value in inputs:
-            feed_dict[key.get()] = value
+            feed_dict[key.unwrap()] = value
     else:
         raise ValueError(
             '`inputs` must be either dict or list of Tensor-value pair. '
@@ -86,10 +86,10 @@ def _construct_feed_dict(inputs, givens):
         pass
     elif isinstance(givens, dict):
         for key, value in givens.items():
-            feed_dict[key.get()] = value
+            feed_dict[key.unwrap()] = value
     elif isinstance(givens, list):
         for key, value in givens:
-            feed_dict[key.get()] = value
+            feed_dict[key.unwrap()] = value
     else:
         raise ValueError(
             '`givens` must be either dict or list of Tensor-value pair. '
@@ -175,5 +175,5 @@ class Session(BaseSession):
                             'Model shape: {}, Value shape: {}'
                             .format(src_shape, tgt_shape)
                         )
-                op.append(variable.get().assign(value))
+                op.append(variable.unwrap().assign(value))
         self.run(name=None, updates=Operation(tf.group(*op)))

@@ -19,7 +19,7 @@ class x2(Formula):
     @staticmethod
     def get():
         x = scope.get_variable(name='x', shape=[], initializer=Constant(3))
-        x_ = x.get()
+        x_ = x.unwrap()
         y = Tensor(x_ * x_, shape=[])
         return {
             'loss': y,
@@ -37,7 +37,7 @@ class x6(Formula):
         Local minimum: (x, y) = (+- 1.354, -0.29)
         '''
         x_ = scope.get_variable(name='x', shape=[], initializer=Constant(2.0))
-        x = x_.get()
+        x = x_.unwrap()
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
         y_ = Tensor(y, shape=[])
         return {

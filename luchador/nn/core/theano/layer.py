@@ -10,14 +10,12 @@ from ..base import (
     get_layer,
     get_initializer,
     Layer as BaseLayer,
-    ReLU as BaseReLU,
-    Dense as BaseDense,
-    Conv2D as BaseConv2D,
-    Flatten as BaseFlatten,
-    TrueDiv as BaseTrueDiv,
 )
 from . import scope as scp
-from .wrapper import Tensor
+from .wrapper import (
+    Tensor,
+    Operation,
+)
 from .initializer import (
     Constant,
     Xavier,
@@ -34,11 +32,27 @@ __all__ = [
 
 
 def _wrap_output(tensor, shape, name='output'):
+    """Add scope prefix to the name of ouptut Tenaor"""
     name = '{}/{}'.format(scp.get_variable_scope().name, name)
     return Tensor(tensor, shape=shape, name=name)
 
 
-class Dense(BaseDense):
+class TheanoLayer(BaseLayer):
+    def get_update_operation(self):
+        return Operation(self.update_operations)
+
+
+class Dense(TheanoLayer):
+    def __init__(self, n_nodes, initializers={}):
+        """Initialize dense layer.
+        Activation function, such as ReLU is not included.
+        Also called fully connected, affine, linear or inner product.
+
+        Args:
+          n_nodes (int): The number of internal neurons.
+        """
+        super(Dense, self).__init__(n_nodes=n_nodes, initializers=initializers)
+
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
         if 'weight' not in self.initializers:
@@ -64,30 +78,35 @@ class Dense(BaseDense):
         b_init = self.initializers['bias']
         w_init = self.initializers['weight']
 
-        self.parameter_variables['weight'] = scp.get_variable(
-            name='weight', shape=w_shape, initializer=w_init)
-        self.parameter_variables['bias'] = scp.get_variable(
-            name='bias', shape=b_shape, initializer=b_init)
+        self._add_parameter('weight', scp.get_variable(
+            name='weight', shape=w_shape, initializer=w_init))
+        self._add_parameter('bias', scp.get_variable(
+            name='bias', shape=b_shape, initializer=b_init))
 
-    def build(self, input):
+    def build(self, input_tensor):
         """
         Args:
-          input (TensorWrapper): 2D tensor
+          input_tensor (TensorWrapper): 2D tensor
 
         Returns:
           TensorWrapper: 2D tensor wrapper
         """
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        if not len(input.shape) == 2:
+        input_shape = input_tensor.get_shape()
+
+        if not len(input_shape) == 2:
             raise ValueError('Input tensor must be 2D. '
-                             'Insted of {}'.format(len(input.shape)))
+                             'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input.shape[1])
+            self._instantiate_parameter_variables(input_shape[1])
 
-        prod = T.dot(input.get(), self.parameter_variables['weight'].get())
-        output_tensor = prod + self.parameter_variables['bias'].get()
-        output_shape = (input.shape[0], self.args['n_nodes'])
+        weight = self._get_parameter('weight').unwrap()
+        bias = self._get_parameter('bias').unwrap()
+
+        prod = T.dot(input_tensor.unwrap(), weight)
+        output_tensor = prod + bias
+        output_shape = (input_shape[0], self.args['n_nodes'])
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
@@ -98,7 +117,37 @@ def _map_border_mode(padding):
     return padding
 
 
-class Conv2D(BaseConv2D):
+class Conv2D(TheanoLayer):
+    """Apply convolution to input"""
+    def __init__(self, filter_height, filter_width, n_filters, strides,
+                 padding='VALID', initializers={}, **kwargs):
+        """Initialize 2D convolution layer.
+        Args:
+          filter_height (int): filter height (== row)
+          filter_weight (int): filter weight (== column)
+          n_filters (int): #filters (== #output channels)
+          strides (int, tuple of two int, or tuple of four int): stride
+            - When given type is int, the output is subsampled by this factor
+              in both width and height direction.
+            - When given type is tuple of two int, the output is subsapmled
+              `strides[0]` in height direction and `striders[1]` in width
+              direction.
+            - [Tensorflow only] When given type is tuple of four int, it must
+              be consistent with the input data format. That is:
+              - data_format=='NHWC' (default): [batch, height, width, channel]
+              - data_format=='NCHW': [batch, channel, height, width]
+          padding:
+            - [tensorflow] (str): Either 'SAME' or 'VALID'
+            - [theano] (str or int or tuple of two int): See Theano doc
+          kwargs:
+            - Tensorflow: Arguments passed to tf.nn.conv2d.
+              'use_cudnn_on_gpu' and 'name'
+        """
+        super(Conv2D, self).__init__(
+            filter_height=filter_height, filter_width=filter_width,
+            n_filters=n_filters, strides=strides, padding=padding,
+            initializers=initializers, **kwargs)
+
     ###########################################################################
     # Parameter validation
     def _validate_padding(self, padding):
@@ -165,10 +214,10 @@ class Conv2D(BaseConv2D):
         b_init = self.initializers['bias']
         w_init = self.initializers['weight']
 
-        self.parameter_variables['weight'] = scp.get_variable(
-            name='weight', shape=w_shape, initializer=w_init)
-        self.parameter_variables['bias'] = scp.get_variable(
-            name='bias', shape=b_shape, initializer=b_init)
+        self._add_parameter('weight', scp.get_variable(
+            name='weight', shape=w_shape, initializer=w_init))
+        self._add_parameter('bias', scp.get_variable(
+            name='bias', shape=b_shape, initializer=b_init))
 
     def _get_subsample(self):
         if isinstance(self.args['strides'], int):
@@ -215,76 +264,98 @@ class Conv2D(BaseConv2D):
         output_shape = (n_batches, n_filters, out_row, out_col)
         return output_shape
 
-    def build(self, input):
+    def build(self, input_tensor):
         """Build 2D conolution on top of the input tensor
         Args:
-          input (TensorWrapper): 4D Tensor with shape (batch, stack, row, col).
+          input_tensor (TensorWrapper):
+            4D Tensor with shape (batch, channel, row, col).
 
         Returns:
           TensorWrapper: 4D Tensor with shape (batch, stack, row, col)
         """
+        input_shape = input_tensor.get_shape()
+
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        _LG.debug('    input_shape: {}'.format(input.shape))
+        _LG.debug('    input_shape: {}'.format(input_shape))
         _LG.debug('    border_mode: {}'.format(self._get_border_mode()))
-        if not len(input.shape) == 4:
+
+        if not len(input_shape) == 4:
             raise ValueError('Input tensor must be 4D. '
-                             'Insted of {}'.format(len(input.shape)))
+                             'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input.shape[1])
+            self._instantiate_parameter_variables(input_shape[1])
 
-        filters = self.parameter_variables['weight'].get()
+        filters = self._get_parameter('weight').unwrap()
         filter_shape = filters.get_value().shape
         subsample = self._get_subsample()
         border_mode = self._get_border_mode()
 
         conv = T.nnet.conv2d(
-            input.get(), filters=filters,
-            input_shape=input.shape, filter_shape=filter_shape,
+            input_tensor.unwrap(), filters=filters,
+            input_shape=input_shape, filter_shape=filter_shape,
             border_mode=border_mode, subsample=subsample)
 
-        bias = self.parameter_variables['bias'].get()
+        bias = self._get_parameter('bias').unwrap()
         bias = bias.dimshuffle(('x', 0, 'x', 'x'))
         output_tensor = bias + conv
-        output_shape = self._get_output_shape(input.shape, filter_shape)
+        output_shape = self._get_output_shape(input_shape, filter_shape)
         _LG.debug('    output_shape: {}'.format(output_shape))
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class ReLU(BaseReLU):
-    def build(self, input):
+class ReLU(TheanoLayer):
+    """Applies Rectified Linear Unit"""
+    def __init__(self):
+        super(ReLU, self).__init__()
+
+    def build(self, input_tensor):
         """
         Args:
-          input (ShapedTensor): Placeholder object.
+          input_tensor (ShapedTensor): Placeholder object.
           Output: Output object
         """
+        input_shape = input_tensor.get_shape()
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        output_tensor = T.nnet.relu(input.get())
-        _LG.debug('    input_shape: {}'.format(input.shape))
-        return _wrap_output(output_tensor, input.shape, name='output')
+        _LG.debug('    input_shape: {}'.format(input_shape))
+
+        output_tensor = T.nnet.relu(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Flatten(BaseFlatten):
-    def build(self, input):
+class Flatten(TheanoLayer):
+    """Reshape batch into 2D (batch_size, n_features)"""
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def build(self, input_tensor):
+        input_shape = input_tensor.get_shape()
+        n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
+
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        _LG.debug('    Input shape: {}'.format(input.shape))
-        n_nodes = int(reduce(lambda r, d: r*d, input.shape[1:], 1))
+        _LG.debug('    Input shape: {}'.format(input_shape))
         _LG.debug('    #Nodes     : {}'.format(n_nodes))
-        output_shape = (input.shape[0] or -1, n_nodes)
-        output_tensor = T.reshape(input.get(), output_shape)
+
+        output_shape = (input_shape[0] or -1, n_nodes)
+        output_tensor = T.reshape(input_tensor.unwrap(), output_shape)
         _LG.debug('    output_shape: {}'.format(output_shape))
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class TrueDiv(BaseTrueDiv):
+class TrueDiv(TheanoLayer):
+    """Applies element wise division"""
+    def __init__(self, denom, dtype=None):
+        super(TrueDiv, self).__init__(denom=denom, dtype=None)
+        self.denom = None
+
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or theano.config.floatX
         self.denom = T.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
-    def build(self, input):
+    def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if self.denom is None:
             self._instantiate_denominator()
-        output_tensor = input.get() / self.args['denom']
-        return _wrap_output(output_tensor, input.shape, 'output')
+        output_tensor = input_tensor.unwrap() / self.args['denom']
+        return _wrap_output(output_tensor, input_tensor.get_shape(), 'output')

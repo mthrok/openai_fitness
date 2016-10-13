@@ -108,7 +108,7 @@ class Sequential(BaseModel):
         return self.output
 
     ###########################################################################
-    # Functions for retrieving variables and tensors
+    # Functions for retrieving variables, tensors and operations
     def get_parameter_variables(self):
         """Get Variable objects consisting the parameters of this model"""
         ret = []
@@ -119,6 +119,10 @@ class Sequential(BaseModel):
     def get_output_tensors(self):
         """Get Tensor objects which represent the output of each layer"""
         return [cfg.output for cfg in self.layer_configs]
+
+    def get_update_operations(self):
+        """Get Update opretaions from each layer"""
+        return [cfg.layer.get_update_operation() for cfg in self.layer_configs]
 
     ###########################################################################
     def serialize(self):
