@@ -341,8 +341,16 @@ class BatchNormalization(TFLayer):
         inv_std = get_variable(name='inv_std', shape=self.shape,
                                initializer=Constant(1), trainable=False)
 
+        scale_, center_ = self.args['scale'], self.args['center']
+        scale = get_variable(name='scale', shape=(),
+                             initializer=Constant(scale_), trainable=True)
+        center = get_variable(name='center', shape=(),
+                              initializer=Constant(center_), trainable=True)
+
         self._add_parameter('mean', mean)
         self._add_parameter('inv_std', inv_std)
+        self._add_parameter('scale', scale)
+        self._add_parameter('center', center)
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
@@ -352,10 +360,11 @@ class BatchNormalization(TFLayer):
 
         input_tensor_ = input_tensor.unwrap()
         decay, ep = self.args['decay'], self.args['epsilon']
-        scale, center = self.args['scale'], self.args['center']
 
         mean_acc = self._get_parameter('mean').unwrap()
         stdi_acc = self._get_parameter('inv_std').unwrap()
+        scale = self._get_parameter('scale').unwrap()
+        center = self._get_parameter('center').unwrap()
 
         if self.args['learn']:
             mean_in, var_in = tf.nn.moments(input_tensor_, self.axes)
