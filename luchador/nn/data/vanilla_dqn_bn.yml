@@ -1,0 +1,117 @@
+model_type: Sequential
+layer_configs:
+- scope: layer0/preprocessing
+  layer:
+    name: TrueDiv
+    args:
+      denom: 255
+- scope: layer1/conv2D
+  layer:
+    name: Conv2D
+    args:
+      n_filters: 32
+      filter_width: 8
+      filter_height: 8
+      strides: 4
+      padding: valid
+      initializers:
+        weight:
+          name: Uniform
+          args:
+            # 1 / sqrt(8 * 8 * 32) = 0.022097
+            maxval: 0.022
+            minval: -0.022
+      with_bias: False
+- scope: layer1/BN
+  layer: &BN
+    args:
+      learn: True
+      decay: 0.999
+    name: BatchNormalization
+- scope: layer1/ReLU
+  layer:
+    args: {{}}
+    name: ReLU
+- scope: layer2/conv2D
+  layer:
+    name: Conv2D
+    args:
+      n_filters: 64
+      filter_width: 4
+      filter_height: 4
+      strides: 2
+      padding: valid
+      initializers:
+        weight:
+          name: Uniform
+          args:
+            # 1 / sqrt(4 * 4 * 64) = 0.03125
+            maxval: 0.031
+            minval: -0.031
+      with_bias: False
+- scope: layer2/BN
+  layer: *BN
+- scope: layer2/ReLU
+  layer:
+    name: ReLU
+    args: {{}}
+- scope: layer3/conv2D
+  layer:
+    name: Conv2D
+    args:
+      filter_width: 3
+      filter_height: 3
+      n_filters: 64
+      strides: 1
+      padding: valid
+      initializers:
+        weight:
+          name: Uniform
+          args:
+            # 1 / sqrt(3 * 3 * 64) = 0.04166
+            maxval: 0.042
+            minval: -0.042
+      with_bias: False
+- scope: layer3/BN
+  layer: *BN
+- scope: layer3/ReLU
+  layer:
+    name: ReLU
+    args: {{}}
+- scope: layer4/flatten
+  layer:
+    name: Flatten
+    args: {{}}
+- scope: layer5/dense
+  layer:
+    name: Dense
+    args:
+      n_nodes: 512
+      initializers:
+        weight:
+          name: Uniform
+          args:
+            # 1 / sqrt(3136) = 0.01785
+            # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
+            maxval: 0.018
+            minval: -0.018
+      with_bias: False
+- scope: layer5/BN
+  layer: *BN
+- scope: layer5/ReLU
+  layer:
+    name: ReLU
+    args: {{}}
+- scope: layer6/dense
+  layer:
+    name: Dense
+    args:
+      n_nodes: {n_actions}
+      initializers:
+        bias: &initializer6
+          name: Uniform
+          args:
+            # 1 / sqrt(512) = 0.04419
+            maxval: 0.044
+            minval: -0.044
+        weight: *initializer6
