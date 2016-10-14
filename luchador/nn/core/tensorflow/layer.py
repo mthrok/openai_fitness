@@ -43,25 +43,28 @@ class TFLayer(BaseLayer):
 
 
 class Dense(TFLayer):
-    def __init__(self, n_nodes, initializers={}):
+    def __init__(self, n_nodes, initializers={}, with_bias=True):
         """Initialize dense layer.
         Activation function, such as ReLU is not included.
         Also called fully connected, affine, linear or inner product.
 
         Args:
           n_nodes (int): The number of internal neurons.
+          initializers (dict): Dictionary containing configuration.
+          with_bias (bool): When True bias term is added to graph
         """
-        super(Dense, self).__init__(n_nodes=n_nodes, initializers=initializers)
+        super(Dense, self).__init__(
+            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
 
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
-        if 'weight' not in self.initializers:
-            cfg = init_cfg.get('weight')
-            self.initializers['weight'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else Xavier()
-            )
-        if 'bias' not in self.initializers:
+
+        cfg = init_cfg.get('weight')
+        self.initializers['weight'] = (
+            get_initializer(cfg['name'])(**cfg['args'])
+            if cfg else Xavier()
+        )
+        if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
@@ -71,28 +74,28 @@ class Dense(TFLayer):
     def _instantiate_parameter_variables(self, n_inputs):
         self._instantiate_initializers()
 
-        dtype = luchador.get_nn_dtype()
-
-        b_shape = (self.args['n_nodes'],)
         w_shape = (n_inputs, self.args['n_nodes'])
-
-        b_init = self.initializers['bias'].unwrap()
-        w_init = self.initializers['weight'].unwrap()
-
+        w_init = self.initializers['weight']
         self._add_parameter('weight', get_variable(
-            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
-        self._add_parameter('bias', get_variable(
-            name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
+            name='weight', shape=w_shape, initializer=w_init))
+
+        if self.args['with_bias']:
+            b_shape = (self.args['n_nodes'],)
+            b_init = self.initializers['bias']
+            self._add_parameter('bias', get_variable(
+                name='bias', shape=b_shape, initializer=b_init))
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_tensor.get_shape()[1])
 
-        weight = self._get_parameter('weight')
-        bias = self._get_parameter('bias')
-        prod = tf.matmul(input_tensor.unwrap(), weight.unwrap())
-        output = tf.add(prod, bias.unwrap(), name='output')
+        weight = self._get_parameter('weight').unwrap()
+        output = tf.matmul(input_tensor.unwrap(), weight)
+
+        if self.args['with_bias']:
+            bias = self._get_parameter('bias').unwrap()
+            output = tf.add(output, bias, name='output')
         return _wrap_output(output)
 
 
@@ -106,7 +109,7 @@ def _map_padding(padding):
 class Conv2D(TFLayer):
     """Apply convolution to input"""
     def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers={}, **kwargs):
+                 padding='VALID', initializers={}, with_bias=True, **kwargs):
         """Initialize 2D convolution layer.
         Args:
           filter_height (int): filter height (== row)
@@ -132,7 +135,7 @@ class Conv2D(TFLayer):
         super(Conv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
-            initializers=initializers, **kwargs)
+            initializers=initializers, with_bias=with_bias, **kwargs)
 
     def _validate_padding(self, padding):
         msg = '`padding` must be either "SAME", "VALID", "full" or "half"'
@@ -219,13 +222,14 @@ class Conv2D(TFLayer):
 
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
-        if 'weight' not in self.initializers:
-            cfg = init_cfg.get('weight')
-            self.initializers['weight'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else XavierConv2D()
-            )
-        if 'bias' not in self.initializers:
+
+        cfg = init_cfg.get('weight')
+        self.initializers['weight'] = (
+            get_initializer(cfg['name'])(**cfg['args'])
+            if cfg else XavierConv2D()
+        )
+
+        if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
@@ -236,39 +240,39 @@ class Conv2D(TFLayer):
         _LG.debug('    Input shape: {}'.format(input_shape))
         self._instantiate_initializers()
 
-        b_shape = (self.args['n_filters'],)
         w_shape = self._get_weight_shape(input_shape)
-
         self._check_filter_shape(input_shape, w_shape)
-
-        b_init = self.initializers['bias'].unwrap()
         w_init = self.initializers['weight'].unwrap()
-
-        dtype = luchador.get_nn_dtype()
         self._add_parameter('weight', get_variable(
-            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
-        self._add_parameter('bias', get_variable(
-            name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
+            name='weight', shape=w_shape, initializer=w_init))
+
+        if self.args['with_bias']:
+            b_shape = (self.args['n_filters'],)
+            b_init = self.initializers['bias'].unwrap()
+            self._add_parameter('bias', get_variable(
+                name='bias', shape=b_shape, initializer=b_init))
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_tensor.get_shape())
 
+        weight = self._get_parameter('weight').unwrap()
         strides = self._get_strides()
-        weight = self._get_parameter('weight')
-        bias = self._get_parameter('bias')
         name = self.args.get('name')
         cudnn = self.args.get('use_cudnn_on_gpu', True)
         fmt = self._get_format()
         padding = self._get_padding()
-        conv = tf.nn.conv2d(
-            input_tensor.unwrap(), weight.unwrap(), strides=strides,
+        output_tensor = tf.nn.conv2d(
+            input_tensor.unwrap(), weight, strides=strides,
             padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=fmt, name=name)
-        output = tf.nn.bias_add(
-            conv, bias.unwrap(), data_format=fmt, name='output')
-        return _wrap_output(output)
+
+        if self.args['with_bias']:
+            bias = self._get_parameter('bias').unwrap()
+            output_tensor = tf.nn.bias_add(
+                output_tensor, bias, data_format=fmt, name='output')
+        return _wrap_output(output_tensor)
 
 
 class ReLU(TFLayer):

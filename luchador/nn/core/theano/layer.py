@@ -43,25 +43,29 @@ class TheanoLayer(BaseLayer):
 
 
 class Dense(TheanoLayer):
-    def __init__(self, n_nodes, initializers={}):
+    def __init__(self, n_nodes, initializers={}, with_bias=True):
         """Initialize dense layer.
         Activation function, such as ReLU is not included.
         Also called fully connected, affine, linear or inner product.
 
         Args:
           n_nodes (int): The number of internal neurons.
+          initializers (dict): Dictionary containing configuration.
+          with_bias (bool): When True bias term is added to graph
         """
-        super(Dense, self).__init__(n_nodes=n_nodes, initializers=initializers)
+        super(Dense, self).__init__(
+            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
 
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
-        if 'weight' not in self.initializers:
-            cfg = init_cfg.get('weight')
-            self.initializers['weight'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else Xavier()
-            )
-        if 'bias' not in self.initializers:
+
+        cfg = init_cfg.get('weight')
+        self.initializers['weight'] = (
+            get_initializer(cfg['name'])(**cfg['args'])
+            if cfg else Xavier()
+        )
+
+        if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
@@ -71,17 +75,16 @@ class Dense(TheanoLayer):
     def _instantiate_parameter_variables(self, n_inputs):
         self._instantiate_initializers()
 
-        args = self.args
-        b_shape = (args['n_nodes'], )
-        w_shape = (n_inputs, args['n_nodes'])
-
-        b_init = self.initializers['bias']
+        w_shape = (n_inputs, self.args['n_nodes'])
         w_init = self.initializers['weight']
-
         self._add_parameter('weight', scp.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
-        self._add_parameter('bias', scp.get_variable(
-            name='bias', shape=b_shape, initializer=b_init))
+
+        if self.args['with_bias']:
+            b_shape = (self.args['n_nodes'],)
+            b_init = self.initializers['bias']
+            self._add_parameter('bias', scp.get_variable(
+                name='bias', shape=b_shape, initializer=b_init))
 
     def build(self, input_tensor):
         """
@@ -102,10 +105,11 @@ class Dense(TheanoLayer):
             self._instantiate_parameter_variables(input_shape[1])
 
         weight = self._get_parameter('weight').unwrap()
-        bias = self._get_parameter('bias').unwrap()
+        output_tensor = T.dot(input_tensor.unwrap(), weight)
 
-        prod = T.dot(input_tensor.unwrap(), weight)
-        output_tensor = prod + bias
+        if self.args['with_bias']:
+            bias = self._get_parameter('bias').unwrap()
+            output_tensor = output_tensor + bias
         output_shape = (input_shape[0], self.args['n_nodes'])
         return _wrap_output(output_tensor, output_shape, 'output')
 
@@ -120,12 +124,14 @@ def _map_border_mode(padding):
 class Conv2D(TheanoLayer):
     """Apply convolution to input"""
     def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers={}, **kwargs):
+                 padding='VALID', initializers={}, with_bias=True, **kwargs):
         """Initialize 2D convolution layer.
         Args:
           filter_height (int): filter height (== row)
           filter_weight (int): filter weight (== column)
+
           n_filters (int): #filters (== #output channels)
+
           strides (int, tuple of two int, or tuple of four int): stride
             - When given type is int, the output is subsampled by this factor
               in both width and height direction.
@@ -136,9 +142,15 @@ class Conv2D(TheanoLayer):
               be consistent with the input data format. That is:
               - data_format=='NHWC' (default): [batch, height, width, channel]
               - data_format=='NCHW': [batch, channel, height, width]
+
           padding:
             - [tensorflow] (str): Either 'SAME' or 'VALID'
             - [theano] (str or int or tuple of two int): See Theano doc
+
+          initializers (dict): Dictionary containing configuration.
+
+          with_bias (bool): When True bias term is added to graph
+
           kwargs:
             - Tensorflow: Arguments passed to tf.nn.conv2d.
               'use_cudnn_on_gpu' and 'name'
@@ -146,7 +158,7 @@ class Conv2D(TheanoLayer):
         super(Conv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
-            initializers=initializers, **kwargs)
+            initializers=initializers, with_bias=with_bias, **kwargs)
 
     ###########################################################################
     # Parameter validation
@@ -190,13 +202,14 @@ class Conv2D(TheanoLayer):
     ###########################################################################
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
-        if 'weight' not in self.initializers:
-            cfg = init_cfg.get('weight')
-            self.initializers['weight'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else XavierConv2D()
-            )
-        if 'bias' not in self.initializers:
+
+        cfg = init_cfg.get('weight')
+        self.initializers['weight'] = (
+            get_initializer(cfg['name'])(**cfg['args'])
+            if cfg else XavierConv2D()
+        )
+
+        if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
@@ -206,18 +219,17 @@ class Conv2D(TheanoLayer):
     def _instantiate_parameter_variables(self, n_inputs):
         self._instantiate_initializers()
 
-        args = self.args
-        b_shape = (args['n_filters'],)
-        w_shape = (args['n_filters'], n_inputs,
-                   args['filter_height'], args['filter_width'])
-
-        b_init = self.initializers['bias']
+        w_shape = (self.args['n_filters'], n_inputs,
+                   self.args['filter_height'], self.args['filter_width'])
         w_init = self.initializers['weight']
-
         self._add_parameter('weight', scp.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
-        self._add_parameter('bias', scp.get_variable(
-            name='bias', shape=b_shape, initializer=b_init))
+
+        if self.args['with_bias']:
+            b_shape = (self.args['n_filters'],)
+            b_init = self.initializers['bias']
+            self._add_parameter('bias', scp.get_variable(
+                name='bias', shape=b_shape, initializer=b_init))
 
     def _get_subsample(self):
         if isinstance(self.args['strides'], int):
@@ -291,14 +303,16 @@ class Conv2D(TheanoLayer):
         subsample = self._get_subsample()
         border_mode = self._get_border_mode()
 
-        conv = T.nnet.conv2d(
+        output_tensor = T.nnet.conv2d(
             input_tensor.unwrap(), filters=filters,
             input_shape=input_shape, filter_shape=filter_shape,
             border_mode=border_mode, subsample=subsample)
 
-        bias = self._get_parameter('bias').unwrap()
-        bias = bias.dimshuffle(('x', 0, 'x', 'x'))
-        output_tensor = bias + conv
+        if self.args['with_bias']:
+            bias = self._get_parameter('bias').unwrap()
+            bias = bias.dimshuffle(('x', 0, 'x', 'x'))
+            output_tensor = bias + output_tensor
+
         output_shape = self._get_output_shape(input_shape, filter_shape)
         _LG.debug('    output_shape: {}'.format(output_shape))
         return _wrap_output(output_tensor, output_shape, 'output')
