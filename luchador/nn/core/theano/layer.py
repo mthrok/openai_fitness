@@ -392,10 +392,10 @@ class BatchNormalization(TheanoLayer):
 
         scale_, center_ = self.args['scale'], self.args['center']
         scale = scp.get_variable(
-            name='scale', shape=(),
+            name='scale', shape=self.shape,
             initializer=Constant(scale_), trainable=True)
         center = scp.get_variable(
-            name='center', shape=(),
+            name='center', shape=self.shape,
             initializer=Constant(center_), trainable=True)
 
         self._add_parameter('mean', mean)
@@ -431,6 +431,8 @@ class BatchNormalization(TheanoLayer):
 
         mean_acc = mean_acc.dimshuffle(self.pattern)
         stdi_acc = stdi_acc.dimshuffle(self.pattern)
+        scale = scale.dimshuffle(self.pattern)
+        center = center.dimshuffle(self.pattern)
 
         output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
         return _wrap_output(output, input_tensor.shape, 'output')

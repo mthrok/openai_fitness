@@ -342,9 +342,9 @@ class BatchNormalization(TFLayer):
                                initializer=Constant(1), trainable=False)
 
         scale_, center_ = self.args['scale'], self.args['center']
-        scale = get_variable(name='scale', shape=(),
+        scale = get_variable(name='scale', shape=self.shape,
                              initializer=Constant(scale_), trainable=True)
-        center = get_variable(name='center', shape=(),
+        center = get_variable(name='center', shape=self.shape,
                               initializer=Constant(center_), trainable=True)
 
         self._add_parameter('mean', mean)
@@ -358,7 +358,7 @@ class BatchNormalization(TFLayer):
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_shape)
 
-        input_tensor_ = input_tensor.unwrap()
+        input_ = input_tensor.unwrap()
         decay, ep = self.args['decay'], self.args['epsilon']
 
         mean_acc = self._get_parameter('mean').unwrap()
@@ -367,7 +367,7 @@ class BatchNormalization(TFLayer):
         center = self._get_parameter('center').unwrap()
 
         if self.args['learn']:
-            mean_in, var_in = tf.nn.moments(input_tensor_, self.axes)
+            mean_in, var_in = tf.nn.moments(input_, self.axes)
             stdi_in = tf.inv(tf.sqrt(var_in + ep))
 
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
@@ -379,14 +379,16 @@ class BatchNormalization(TFLayer):
             mean_acc = new_mean_acc
             stdi_acc = new_stdi_acc
 
-        fmt = luchador.get_nn_conv_format()
         if len(input_shape) == 2:
-            output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
+            output = scale * (input_ - mean_acc) * stdi_acc + center
         else:
-            centered = tf.nn.bias_add(
-                input_tensor_, -mean_acc, data_format=fmt)
+            fmt = luchador.get_nn_conv_format()
             pattern = [1, -1, 1, 1] if fmt == 'NCHW' else [1, 1, 1, -1]
+
             stdi_acc = tf.reshape(stdi_acc, pattern)
-            normalized = centered * stdi_acc
-            output = scale * normalized + center
+            scale = tf.reshape(scale, pattern)
+
+            centered = tf.nn.bias_add(input_, -mean_acc, data_format=fmt)
+            scaled = scale * centered * stdi_acc
+            output = tf.nn.bias_add(scaled, center, data_format=fmt)
         return _wrap_output(output)
