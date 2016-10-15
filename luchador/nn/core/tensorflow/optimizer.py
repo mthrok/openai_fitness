@@ -109,22 +109,24 @@ class NeonRMSProp(BaseOptimizer):
         self.decay = decay
         self.epsilon = epsilon
 
-    def apply_gradients(self, grads_and_vars, **kwargs):
+    def _apply_gradients(self, grads_and_vars, **kwargs):
         rms_updates = []
         new_grads_and_vars = []
         args = self.args
         decay, ep = args['decay'], args['epsilon']
         for grad, var in grads_and_vars:
             rms = self._create_slot_var(var, 'rms')
-
             new_rms = rms + (1. - decay) * (tf.square(grad) - rms)
             new_grad = tf.truediv(grad, tf.sqrt(new_rms + ep) + ep)
-
             rms_updates.append(rms.assign(new_rms))
             new_grads_and_vars.append((new_grad, var))
         train_op = self.optimizer.apply_gradients(new_grads_and_vars)
         updates = [train_op] + rms_updates
         return Operation(tf.group(*updates))
+
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        with tf.name_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)
 
 
 class GravesRMSProp(BaseOptimizer):
@@ -140,7 +142,7 @@ class GravesRMSProp(BaseOptimizer):
         self.optimizer = tf.train.GradientDescentOptimizer(
             learning_rate, name=name)
 
-    def apply_gradients(self, grads_and_vars, **kwargs):
+    def _apply_gradients(self, grads_and_vars, **kwargs):
         updates, new_grads_and_vars = [], []
         args = self.args
         d1, d2, ep = args['decay1'], args['decay2'], args['epsilon']
@@ -160,6 +162,10 @@ class GravesRMSProp(BaseOptimizer):
 
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
         return Operation(tf.group(*updates))
+
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        with tf.name_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)
 
 
 class AdamOptimizer(BaseOptimizer):
