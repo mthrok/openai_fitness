@@ -33,6 +33,7 @@ layer_configs:
     name: BatchNormalization
     args:
       learn: True
+      mean_only: True
 - scope: layer2/ReLU
   layer:
     name: ReLU
@@ -56,14 +57,15 @@ layer_configs:
   layer:
     name: ReLU
     args: {{}}
-- scope: layer5/dense
+- scope: layer5/normalized_dense
+  layer:
+    name: NormalizedDense
+    args:
+      n_nodes: 512
+      with_bias: True
+- scope: layer6/dense
   layer:
     name: Dense
     args:
       n_nodes: {n_actions}
       with_bias: False
-- scope: layer5/BatchNormalization
-  layer:
-    name: BatchNormalization
-    args:
-      learn: True

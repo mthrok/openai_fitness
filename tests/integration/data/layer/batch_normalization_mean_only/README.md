@@ -1,0 +1,1 @@
+Parameters for `batch_normalization_mean_only` (`parameter.h5` and `input.h5`) are exact copy of `batch_normalization_2d_learn`. Please refer `README.md` of `batch_normalization_2d_learn` for its creation.

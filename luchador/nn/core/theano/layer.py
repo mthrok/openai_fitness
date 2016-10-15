@@ -18,6 +18,7 @@ from .wrapper import (
 )
 from .initializer import (
     Constant,
+    Normal,
     Xavier,
     XavierConv2D,
 )
@@ -27,7 +28,8 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization'
+    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv',
+    'BatchNormalization', 'NormalizedDense',
 ]
 
 
@@ -383,10 +385,10 @@ class BatchNormalization(TheanoLayer):
            Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
     """
     def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
-                 learn=True, decay=0.999):
+                 learn=True, decay=0.999, mean_only=False):
         super(BatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
-            scale=scale, center=center, learn=learn)
+            scale=scale, center=center, learn=learn, mean_only=mean_only)
 
     def _instantiate_parameter_variables(self, input_shape):
         """Instantiate variable for mean and standard diviation"""
@@ -401,21 +403,25 @@ class BatchNormalization(TheanoLayer):
 
         mean = scp.get_variable(name='mean', shape=self.shape,
                                 initializer=Constant(0), trainable=False)
-        inv_std = scp.get_variable(name='inv_std', shape=self.shape,
-                                   initializer=Constant(1), trainable=False)
 
-        scale_, center_ = self.args['scale'], self.args['center']
-        scale = scp.get_variable(
-            name='scale', shape=self.shape,
-            initializer=Constant(scale_), trainable=True)
         center = scp.get_variable(
             name='center', shape=self.shape,
-            initializer=Constant(center_), trainable=True)
+            initializer=Constant(self.args['center']), trainable=True)
 
         self._add_parameter('mean', mean)
-        self._add_parameter('inv_std', inv_std)
-        self._add_parameter('scale', scale)
         self._add_parameter('center', center)
+
+        if not self.args['mean_only']:
+            inv_std = scp.get_variable(
+                name='inv_std', shape=self.shape,
+                initializer=Constant(1), trainable=False)
+
+            scale = scp.get_variable(
+                name='scale', shape=self.shape,
+                initializer=Constant(self.args['scale']), trainable=True)
+
+            self._add_parameter('inv_std', inv_std)
+            self._add_parameter('scale', scale)
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
@@ -426,27 +432,111 @@ class BatchNormalization(TheanoLayer):
         decay, ep = self.args['decay'], self.args['epsilon']
 
         mean_acc = self._get_parameter('mean').unwrap()
-        stdi_acc = self._get_parameter('inv_std').unwrap()
-        scale = self._get_parameter('scale').unwrap()
         center = self._get_parameter('center').unwrap()
+
+        if not self.args['mean_only']:
+            stdi_acc = self._get_parameter('inv_std').unwrap()
+            scale = self._get_parameter('scale').unwrap()
 
         if self.args['learn']:
             mean_in = input_tensor_.mean(axis=self.axes)
-            stdi_in = T.inv(T.sqrt(input_tensor_.var(self.axes) + ep))
-
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
-            new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
-
             self._add_update(mean_acc, new_mean_acc)
-            self._add_update(stdi_acc, new_stdi_acc)
-
             mean_acc = new_mean_acc
-            stdi_acc = new_stdi_acc
 
-        mean_acc = mean_acc.dimshuffle(self.pattern)
-        stdi_acc = stdi_acc.dimshuffle(self.pattern)
-        scale = scale.dimshuffle(self.pattern)
-        center = center.dimshuffle(self.pattern)
+            if not self.args['mean_only']:
+                stdi_in = T.inv(T.sqrt(input_tensor_.var(self.axes) + ep))
+                new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
+                self._add_update(stdi_acc, new_stdi_acc)
+                stdi_acc = new_stdi_acc
 
-        output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
+        if self.args['mean_only']:
+            mean_acc = mean_acc.dimshuffle(self.pattern)
+            center = center.dimshuffle(self.pattern)
+            output = input_tensor_ - mean_acc + center
+        else:
+            mean_acc = mean_acc.dimshuffle(self.pattern)
+            stdi_acc = stdi_acc.dimshuffle(self.pattern)
+            scale = scale.dimshuffle(self.pattern)
+            center = center.dimshuffle(self.pattern)
+            output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
         return _wrap_output(output, input_tensor.shape, 'output')
+
+
+class NormalizedDense(Dense):
+    """Dense layer in parameterized in norm and direction
+
+    Tim Salimans, Diederik P. Kingma (2016)
+           Weight Normalization: A Simple Reparameterization to Accelerate
+           Training of Deep Neural Networks
+    """
+    def __init__(self, n_nodes, initializers={}, with_bias=True):
+        super(NormalizedDense, self).__init__(
+            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
+
+    def _instantiate_initializers(self, n_inputs):
+        init_cfg = self.args.get('initializers', {})
+
+        cfg = init_cfg.get('dir')
+        self.initializers['dir'] = (
+            get_initializer(cfg['name'])(**cfg['args'])
+            if cfg else Normal(mean=0.0, stddev=1.0)
+        )
+
+        if self.args['with_bias']:
+            cfg = init_cfg.get('bias')
+            self.initializers['bias'] = (
+                get_initializer(cfg['name'])(**cfg['args'])
+                if cfg else Constant(0.1)
+            )
+
+    def _instantiate_parameter_variables(self, n_inputs):
+        self._instantiate_initializers(n_inputs)
+
+        shape = (self.args['n_nodes'],)
+        self._add_parameter('norm', scp.get_variable(
+            name='norm', shape=shape, initializer=Constant(1)))
+
+        shape = (n_inputs, self.args['n_nodes'])
+        d_init = self.initializers['dir']
+        self._add_parameter('dir', scp.get_variable(
+            name='dir', shape=shape, initializer=d_init))
+
+        if self.args['with_bias']:
+            b_shape = (self.args['n_nodes'],)
+            b_init = self.initializers['bias']
+            self._add_parameter('bias', scp.get_variable(
+                name='bias', shape=b_shape, initializer=b_init))
+
+    def build(self, input_tensor):
+        """
+        Args:
+          input_tensor (TensorWrapper): 2D tensor
+
+        Returns:
+          TensorWrapper: 2D tensor wrapper
+        """
+        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+        input_shape = input_tensor.get_shape()
+
+        if not len(input_shape) == 2:
+            raise ValueError('Input tensor must be 2D. '
+                             'Insted of {}'.format(len(input_shape)))
+
+        if not self.parameter_variables:
+            self._instantiate_parameter_variables(input_shape[1])
+
+        norm = self._get_parameter('norm').unwrap()
+        dire = self._get_parameter('dir').unwrap()
+
+        dire_norm = T.sqrt(T.sum(T.square(dire), axis=(0,)))
+        normalized_dire = dire / dire_norm.dimshuffle('x', 0)
+
+        weight = norm * normalized_dire
+        output_tensor = T.dot(input_tensor.unwrap(), weight)
+
+        if self.args['with_bias']:
+            bias = self._get_parameter('bias').unwrap()
+            output_tensor = output_tensor + bias
+        output_shape = (input_shape[0], self.args['n_nodes'])
+        return _wrap_output(output_tensor, output_shape, 'output')
