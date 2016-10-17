@@ -16,7 +16,7 @@ from .wrapper import (
 
 __all__ = [
     'BaseOptimizer', 'make_optimizer', 'get_optimizer',
-    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'AdamOptimizer',
+    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'Adam',
 ]
 
 
@@ -168,11 +168,11 @@ class GravesRMSProp(BaseOptimizer):
             return self._apply_gradients(grads_and_vars, **kwargs)
 
 
-class AdamOptimizer(BaseOptimizer):
+class Adam(BaseOptimizer):
     def __init__(self, learning_rate,
                  beta1=0.9, beta2=0.999,
                  epsilon=1e-08, name='Adam', **kwargs):
-        super(AdamOptimizer, self).__init__(
+        super(Adam, self).__init__(
             learning_rate=learning_rate,
             beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
         self.optimizer = tf.train.AdamOptimizer(
@@ -180,7 +180,7 @@ class AdamOptimizer(BaseOptimizer):
             epsilon=epsilon, **kwargs)
 
     def apply_gradients(self, grads_and_vars, **kwargs):
-        ret = super(AdamOptimizer, self).apply_gradients(
+        ret = super(Adam, self).apply_gradients(
             grads_and_vars, **kwargs)
         name = '{}/{}'.format(self.args['name'], 'beta1_power')
         self.slot.append(Variable(self.optimizer._beta1_power, name=name))

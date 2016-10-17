@@ -17,7 +17,7 @@ from .wrapper import Operation
 
 __all__ = [
     'BaseOptimizer', 'make_optimizer', 'get_optimizer',
-    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'AdamOptimizer',
+    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'Adam',
 ]
 
 
@@ -155,11 +155,11 @@ class GravesRMSProp(BaseOptimizer):
         return Operation(op=updates)
 
 
-class AdamOptimizer(BaseOptimizer):
+class Adam(BaseOptimizer):
     def __init__(self, learning_rate,
                  beta1=0.9, beta2=0.999,
                  epsilon=1e-08, name='Adam', **kwargs):
-        super(AdamOptimizer, self).__init__(
+        super(Adam, self).__init__(
             learning_rate=learning_rate,
             beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
 
