@@ -1,0 +1,7 @@
+run: {}
+
+layer:
+  name: NormalizedDense
+  args:
+    n_nodes: 12
+    with_bias: True
