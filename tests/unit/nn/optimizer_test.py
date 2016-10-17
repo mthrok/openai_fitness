@@ -6,7 +6,7 @@ from tests.unit.fixture import get_optimizers
 from luchador.nn import get_optimizer
 
 OPTIMIZERS = get_optimizers()
-N_OPTIMIZERS = 5
+N_OPTIMIZERS = 6
 
 ARGS1 = {
     'SGD': {
@@ -39,7 +39,14 @@ ARGS1 = {
         'beta2': 0.99,
         'epsilon': 1e-6,
         'name': 'Adam',
-    }
+    },
+    'Adamax': {
+        'learning_rate': 0.01,
+        'beta1': 0.9,
+        'beta2': 0.99,
+        'epsilon': 1e-6,
+        'name': 'Adamax',
+    },
 }
 
 ARGS2 = {
@@ -73,7 +80,14 @@ ARGS2 = {
         'beta2': 0.999,
         'epsilon': 1e-08,
         'name': 'Adam',
-    }
+    },
+    'Adamax': {
+        'learning_rate': 0.01,
+        'beta1': 0.9,
+        'beta2': 0.3,
+        'epsilon': 1e-6,
+        'name': 'Adamax',
+    },
 }
 
 
