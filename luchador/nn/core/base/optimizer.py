@@ -63,7 +63,7 @@ class Optimizer(SerializeMixin):
         )
 
     def get_parameter_variables(self):
-        """Get the intermediate variables used by optimizers"""
+        """Get the list of parameter variables used by optimizers"""
         return self.slot
 
 

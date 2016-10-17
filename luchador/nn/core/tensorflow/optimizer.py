@@ -9,6 +9,7 @@ from ..base import (
     Optimizer,
 )
 from .scope import get_variable
+from .initializer import Constant
 from .wrapper import (
     Variable,
     Operation,
@@ -16,7 +17,9 @@ from .wrapper import (
 
 __all__ = [
     'BaseOptimizer', 'make_optimizer', 'get_optimizer',
-    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'Adam',
+    'SGD',
+    'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
+    'Adam', 'Adamax',
 ]
 
 
@@ -78,6 +81,19 @@ class BaseOptimizer(Optimizer):
         self.slot.append(slot_var)
         return slot_var.unwrap()
 
+    def _create_slot(self, initial_value, slot_name):
+        """Create slot variable independant to gradients and parameters
+
+        Example use is beta parameter in Adamax optimizer.
+        Only scalar type is supported.
+        """
+        name = '{}/{}'.format(self.args['name'], slot_name)
+        slot_var = get_variable(
+            name=name, shape=[],
+            initializer=Constant(initial_value))
+        self.slot.append(slot_var)
+        return slot_var.unwrap()
+
 
 class SGD(BaseOptimizer):
     def __init__(self, learning_rate, name='SGD', **kwargs):
@@ -106,8 +122,6 @@ class NeonRMSProp(BaseOptimizer):
             decay=decay, epsilon=epsilon, name=name)
         self.optimizer = tf.train.GradientDescentOptimizer(
             learning_rate, name=name)
-        self.decay = decay
-        self.epsilon = epsilon
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
         rms_updates = []
@@ -136,9 +150,6 @@ class GravesRMSProp(BaseOptimizer):
         super(GravesRMSProp, self).__init__(
             learning_rate=learning_rate,
             decay1=decay1, decay2=decay2, epsilon=epsilon, name=name)
-        self.decay1 = decay1
-        self.decay2 = decay2
-        self.epsilon = epsilon
         self.optimizer = tf.train.GradientDescentOptimizer(
             learning_rate, name=name)
 
@@ -187,3 +198,44 @@ class Adam(BaseOptimizer):
         name = '{}/{}'.format(self.args['name'], 'beta2_power')
         self.slot.append(Variable(self.optimizer._beta2_power, name=name))
         return ret
+
+
+class Adamax(BaseOptimizer):
+    def __init__(self, learning_rate,
+                 beta1=0.9, beta2=0.999,
+                 epsilon=1e-08, name='Adamax', **kwargs):
+        super(Adamax, self).__init__(
+            learning_rate=learning_rate,
+            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
+        self.optimizer = tf.train.GradientDescentOptimizer(
+            learning_rate, name=name, **kwargs)
+
+    def _apply_gradients(self, grads_and_vars, **kwargs):
+        args = self.args
+        beta1, beta2, ep = args['beta1'], args['beta2'], args['epsilon']
+        updates, new_grads_and_vars = [], []
+
+        beta1_power = self._create_slot(beta1, 'beta1_power')
+        new_beta1_power = beta1_power * beta1
+
+        alpha = 1.0 / (1.0 - beta1_power)
+
+        for grad, var in grads_and_vars:
+            m = self._create_slot_var(var, 'm')
+            u = self._create_slot_var(var, 'u')
+
+            new_m = m + (1.0 - beta1) * (grad - m)
+            new_u = tf.maximum(beta2 * u, tf.abs(grad))
+            new_grad = (new_m * alpha) / (new_u + ep)
+
+            updates.append(m.assign(new_m))
+            updates.append(u.assign(new_u))
+            new_grads_and_vars.append((new_grad, var))
+
+        updates.append(beta1_power.assign(new_beta1_power))
+        updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
+        return Operation(tf.group(*updates))
+
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        with tf.name_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)

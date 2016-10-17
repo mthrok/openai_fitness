@@ -17,7 +17,9 @@ from .wrapper import Operation
 
 __all__ = [
     'BaseOptimizer', 'make_optimizer', 'get_optimizer',
-    'SGD', 'RMSProp', 'GravesRMSProp', 'NeonRMSProp', 'Adam',
+    'SGD',
+    'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
+    'Adam', 'Adamax',
 ]
 
 
@@ -33,9 +35,6 @@ class BaseOptimizer(Optimizer):
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]
 
-    def get_parameter_variables(self):
-        return self.slot
-
     def _create_slot_var(self, var, slot_name):
         """Create slot variable for the given Variable and store it"""
         value = var.get_value(borrow=True)
@@ -48,7 +47,11 @@ class BaseOptimizer(Optimizer):
         return slot_var
 
     def _create_slot(self, initial_value, slot_name):
-        """Create scalar slot variable common to variables"""
+        """Create slot variable independant to gradients and parameters
+
+        Example use is beta parameter in Adam and Adamax optimizer.
+        Only scalar type is supported.
+        """
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = get_variable(
             name=name, shape=[],
@@ -126,7 +129,7 @@ class GravesRMSProp(BaseOptimizer):
     """
     def __init__(self, learning_rate,
                  decay1=0.95, decay2=0.95,
-                 epsilon=1e-2, name='GravesRMSProp'):
+                 epsilon=1e-2, name='GravesRMSProp', **kwargs):
         super(GravesRMSProp, self).__init__(
             learning_rate=learning_rate,
             decay1=decay1, decay2=decay2, epsilon=epsilon, name=name)
@@ -191,4 +194,38 @@ class Adam(BaseOptimizer):
 
         updates[beta1_power] = new_beta1_power
         updates[beta2_power] = new_beta2_power
+        return Operation(op=updates)
+
+
+class Adamax(BaseOptimizer):
+    def __init__(self, learning_rate,
+                 beta1=0.9, beta2=0.999,
+                 epsilon=1e-8, name='Adamax', **kwargs):
+        super(Adamax, self).__init__(
+            learning_rate=learning_rate,
+            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
+
+    def apply_gradients(self, grads_and_vars):
+        beta1, beta2 = self.args['beta1'], self.args['beta2']
+        ep, lr = self.args['epsilon'], self.args['learning_rate']
+        updates = OrderedDict()
+
+        beta1_power = self._create_slot(beta1, 'beta1_power').unwrap()
+        new_beta1_power = beta1_power * beta1
+
+        alpha = lr / (1.0 - beta1_power)
+
+        for grad, var in grads_and_vars:
+            m = self._create_slot_var(var, 'm').unwrap()
+            u = self._create_slot_var(var, 'u').unwrap()
+
+            new_m = m + (1.0 - beta1) * (grad - m)
+            new_u = T.maximum(beta2 * u,  abs(grad))
+            new_var = var - (new_m * alpha) / (new_u + ep)
+
+            updates[m] = new_m
+            updates[u] = new_u
+            updates[var] = new_var
+
+        updates[beta1_power] = new_beta1_power
         return Operation(op=updates)
