@@ -12,11 +12,13 @@ from luchador.nn.core.theano.layer import (
 from luchador.nn.core.theano.scope import _reset as reset_scope
 from luchador.nn.core.theano.wrapper import Input
 
-# import logging
-# logging.getLogger('luchador.nn.core.theano.layer').setLevel(logging.DEBUG)
-
-
+'''
+import logging
+import theano
 theano.config.optimizer = 'None'
+theano.config.exception_verbosity = 'high'
+logging.getLogger('luchador').setLevel(logging.DEBUG)
+'''
 
 
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
