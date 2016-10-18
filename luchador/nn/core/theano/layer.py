@@ -9,7 +9,13 @@ import theano.tensor as T
 from ..base import (
     get_layer,
     get_initializer,
-    Layer as BaseLayer,
+    BaseLayer,
+    BaseDense,
+    BaseConv2D,
+    BaseReLU,
+    BaseFlatten,
+    BaseTrueDiv,
+    BaseBatchNormalization,
 )
 from . import scope as scp
 from .wrapper import (
@@ -37,25 +43,12 @@ def _wrap_output(tensor, shape, name='output'):
     return Tensor(tensor, shape=shape, name=name)
 
 
-class TheanoLayer(BaseLayer):
+class TheanoLayerMixin(object):
     def get_update_operation(self):
         return Operation(self.update_operations)
 
 
-class Dense(TheanoLayer):
-    def __init__(self, n_nodes, initializers={}, with_bias=True):
-        """Initialize dense layer.
-        Activation function, such as ReLU is not included.
-        Also called fully connected, affine, linear or inner product.
-
-        Args:
-          n_nodes (int): The number of internal neurons.
-          initializers (dict): Dictionary containing configuration.
-          with_bias (bool): When True bias term is added to graph
-        """
-        super(Dense, self).__init__(
-            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
-
+class Dense(TheanoLayerMixin, BaseDense):
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
 
@@ -121,47 +114,7 @@ def _map_border_mode(padding):
     return padding
 
 
-class Conv2D(TheanoLayer):
-    """Apply convolution to input"""
-    def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers={}, with_bias=True, **kwargs):
-        """Initialize 2D convolution layer.
-        Args:
-          filter_height (int): filter height (== row)
-          filter_weight (int): filter weight (== column)
-
-          n_filters (int): #filters (== #output channels)
-
-          strides (int, tuple of two int, or tuple of four int): stride
-            - When given type is int, the output is subsampled by this factor
-              in both width and height direction.
-            - When given type is tuple of two int, the output is subsapmled
-              `strides[0]` in height direction and `striders[1]` in width
-              direction.
-            - [Tensorflow only] When given type is tuple of four int, it must
-              be consistent with the input data format. That is:
-              - data_format=='NHWC' (default): [batch, height, width, channel]
-              - data_format=='NCHW': [batch, channel, height, width]
-
-          padding:
-            - [tensorflow] (str): Either 'SAME' or 'VALID'
-            - [theano] (str or int or tuple of two int): See Theano doc
-
-          initializers (dict): Dictionary containing configuration.
-
-          with_bias (bool): When True bias term is added to graph
-
-          kwargs:
-            - Tensorflow: Arguments passed to tf.nn.conv2d.
-              'use_cudnn_on_gpu' and 'name'
-        """
-        super(Conv2D, self).__init__(
-            filter_height=filter_height, filter_width=filter_width,
-            n_filters=n_filters, strides=strides, padding=padding,
-            initializers=initializers, with_bias=with_bias, **kwargs)
-
-    ###########################################################################
-    # Parameter validation
+class Conv2D(TheanoLayerMixin, BaseConv2D):
     def _validate_padding(self, padding):
         msg = ('`padding` must be either str ("valid", "full", "half" or '
                '"same"), int or tuple of two int')
@@ -318,11 +271,7 @@ class Conv2D(TheanoLayer):
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class ReLU(TheanoLayer):
-    """Applies Rectified Linear Unit"""
-    def __init__(self):
-        super(ReLU, self).__init__()
-
+class ReLU(TheanoLayerMixin, BaseReLU):
     def build(self, input_tensor):
         """
         Args:
@@ -337,11 +286,7 @@ class ReLU(TheanoLayer):
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Flatten(TheanoLayer):
-    """Reshape batch into 2D (batch_size, n_features)"""
-    def __init__(self):
-        super(Flatten, self).__init__()
-
+class Flatten(TheanoLayerMixin, BaseFlatten):
     def build(self, input_tensor):
         input_shape = input_tensor.get_shape()
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
@@ -356,12 +301,7 @@ class Flatten(TheanoLayer):
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class TrueDiv(TheanoLayer):
-    """Applies element wise division"""
-    def __init__(self, denom, dtype=None):
-        super(TrueDiv, self).__init__(denom=denom, dtype=None)
-        self.denom = None
-
+class TrueDiv(TheanoLayerMixin, BaseTrueDiv):
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or theano.config.floatX
         self.denom = T.constant(
@@ -375,19 +315,7 @@ class TrueDiv(TheanoLayer):
         return _wrap_output(output_tensor, input_tensor.get_shape(), 'output')
 
 
-class BatchNormalization(TheanoLayer):
-    """Applies batch normalization
-
-    Ioffe, Sergey and Szegedy, Christian (2015):
-           Batch Normalization: Accelerating Deep Network Training by Reducing
-           Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
-    """
-    def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
-                 learn=True, decay=0.999):
-        super(BatchNormalization, self).__init__(
-            decay=decay, epsilon=epsilon,
-            scale=scale, center=center, learn=learn)
-
+class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
     def _instantiate_parameter_variables(self, input_shape):
         """Instantiate variable for mean and standard diviation"""
         dim = len(input_shape)

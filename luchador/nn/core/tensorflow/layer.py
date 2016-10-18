@@ -10,7 +10,13 @@ import luchador
 from ..base import (
     get_layer,
     get_initializer,
-    Layer as BaseLayer,
+    BaseLayer,
+    BaseDense,
+    BaseConv2D,
+    BaseReLU,
+    BaseFlatten,
+    BaseTrueDiv,
+    BaseBatchNormalization,
 )
 from .wrapper import (
     Tensor,
@@ -37,25 +43,12 @@ def _wrap_output(tensor, name='output'):
     return Tensor(tensor, name=name)
 
 
-class TFLayer(BaseLayer):
+class TFLayerMixin(BaseLayer):
     def get_update_operation(self):
         return Operation(tf.group(*self.update_operations.values()))
 
 
-class Dense(TFLayer):
-    def __init__(self, n_nodes, initializers={}, with_bias=True):
-        """Initialize dense layer.
-        Activation function, such as ReLU is not included.
-        Also called fully connected, affine, linear or inner product.
-
-        Args:
-          n_nodes (int): The number of internal neurons.
-          initializers (dict): Dictionary containing configuration.
-          with_bias (bool): When True bias term is added to graph
-        """
-        super(Dense, self).__init__(
-            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
-
+class Dense(TFLayerMixin, BaseDense):
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
 
@@ -106,37 +99,7 @@ def _map_padding(padding):
         return 'VALID'
 
 
-class Conv2D(TFLayer):
-    """Apply convolution to input"""
-    def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers={}, with_bias=True, **kwargs):
-        """Initialize 2D convolution layer.
-        Args:
-          filter_height (int): filter height (== row)
-          filter_weight (int): filter weight (== column)
-          n_filters (int): #filters (== #output channels)
-          strides (int, tuple of two int, or tuple of four int): stride
-            - When given type is int, the output is subsampled by this factor
-              in both width and height direction.
-            - When given type is tuple of two int, the output is subsapmled
-              `strides[0]` in height direction and `striders[1]` in width
-              direction.
-            - [Tensorflow only] When given type is tuple of four int, it must
-              be consistent with the input data format. That is:
-              - data_format=='NHWC' (default): [batch, height, width, channel]
-              - data_format=='NCHW': [batch, channel, height, width]
-          padding:
-            - [tensorflow] (str): Either 'SAME' or 'VALID'
-            - [theano] (str or int or tuple of two int): See Theano doc
-          kwargs:
-            - Tensorflow: Arguments passed to tf.nn.conv2d.
-              'use_cudnn_on_gpu' and 'name'
-        """
-        super(Conv2D, self).__init__(
-            filter_height=filter_height, filter_width=filter_width,
-            n_filters=n_filters, strides=strides, padding=padding,
-            initializers=initializers, with_bias=with_bias, **kwargs)
-
+class Conv2D(TFLayerMixin, BaseConv2D):
     def _validate_padding(self, padding):
         msg = '`padding` must be either "SAME", "VALID", "full" or "half"'
         if not isinstance(padding, str):
@@ -220,6 +183,7 @@ class Conv2D(TFLayer):
                 RuntimeWarning
             )
 
+    ###########################################################################
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers', {})
 
@@ -275,22 +239,14 @@ class Conv2D(TFLayer):
         return _wrap_output(output_tensor)
 
 
-class ReLU(TFLayer):
-    """Applies Rectified Linear Unit"""
-    def __init__(self):
-        super(ReLU, self).__init__()
-
+class ReLU(TFLayerMixin, BaseReLU):
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
         return _wrap_output(output)
 
 
-class Flatten(TFLayer):
-    """Reshape batch into 2D (batch_size, n_features)"""
-    def __init__(self):
-        super(Flatten, self).__init__()
-
+class Flatten(TFLayerMixin, BaseFlatten):
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         in_shape = input_tensor.get_shape()
@@ -300,12 +256,7 @@ class Flatten(TFLayer):
         return _wrap_output(output)
 
 
-class TrueDiv(TFLayer):
-    """Applies element wise division"""
-    def __init__(self, denom, dtype=None):
-        super(TrueDiv, self).__init__(denom=denom, dtype=None)
-        self.denom = None
-
+class TrueDiv(TFLayerMixin, BaseTrueDiv):
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or luchador.get_nn_dtype()
         self.denom = tf.constant(
@@ -319,19 +270,7 @@ class TrueDiv(TFLayer):
         return _wrap_output(output)
 
 
-class BatchNormalization(TFLayer):
-    """Applies batch normalization
-
-    Ioffe, Sergey and Szegedy, Christian (2015):
-           Batch Normalization: Accelerating Deep Network Training by Reducing
-           Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
-    """
-    def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
-                 learn=True, decay=0.999):
-        super(BatchNormalization, self).__init__(
-            decay=decay, epsilon=epsilon,
-            scale=scale, center=center, learn=learn)
-
+class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
     def _instantiate_parameter_variables(self, input_shape):
         """Instantiate variable for mean and standard diviation"""
         dim, fmt = len(input_shape), luchador.get_nn_conv_format()
