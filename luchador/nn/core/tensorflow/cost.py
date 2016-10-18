@@ -38,7 +38,7 @@ class SSE2(BaseSSE):
             target = tf.stop_gradient(target.unwrap())
             delta = _clipped_delta(
                 target, prediction.unwrap(), min_delta, max_delta)
-            err = tf.square(delta, name='squared_delta')
+            err = tf.square(delta)
             err = tf.reduce_sum(err/2, reduction_indices=1, name='SSE2')
             # TODO: Remove this?
             err = tf.reduce_mean(err, name='SSE_over_batch')

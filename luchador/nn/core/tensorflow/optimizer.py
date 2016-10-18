@@ -191,8 +191,7 @@ class Adam(BaseOptimizer):
             epsilon=epsilon, **kwargs)
 
     def apply_gradients(self, grads_and_vars, **kwargs):
-        ret = super(Adam, self).apply_gradients(
-            grads_and_vars, **kwargs)
+        ret = super(Adam, self).apply_gradients(grads_and_vars, **kwargs)
         name = '{}/{}'.format(self.args['name'], 'beta1_power')
         self.slot.append(Variable(self.optimizer._beta1_power, name=name))
         name = '{}/{}'.format(self.args['name'], 'beta2_power')
