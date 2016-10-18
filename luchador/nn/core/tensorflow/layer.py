@@ -16,7 +16,7 @@ from .wrapper import (
     Tensor,
     Operation
 )
-from .scope import get_variable
+from . import scope as scp
 from .initializer import (
     Constant,
     Xavier,
@@ -76,13 +76,13 @@ class Dense(TFLayer):
 
         w_shape = (n_inputs, self.args['n_nodes'])
         w_init = self.initializers['weight']
-        self._add_parameter('weight', get_variable(
+        self._add_parameter('weight', scp.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_nodes'],)
             b_init = self.initializers['bias']
-            self._add_parameter('bias', get_variable(
+            self._add_parameter('bias', scp.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
     def build(self, input_tensor):
@@ -243,13 +243,13 @@ class Conv2D(TFLayer):
         w_shape = self._get_weight_shape(input_shape)
         self._check_filter_shape(input_shape, w_shape)
         w_init = self.initializers['weight'].unwrap()
-        self._add_parameter('weight', get_variable(
+        self._add_parameter('weight', scp.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
             b_init = self.initializers['bias'].unwrap()
-            self._add_parameter('bias', get_variable(
+            self._add_parameter('bias', scp.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
     def build(self, input_tensor):
@@ -340,16 +340,18 @@ class BatchNormalization(TFLayer):
         self.axes = tuple(i for i in range(dim) if not i == channel)
         self.shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
-        mean = get_variable(name='mean', shape=self.shape,
-                            initializer=Constant(0), trainable=False)
-        inv_std = get_variable(name='inv_std', shape=self.shape,
-                               initializer=Constant(1), trainable=False)
+        mean = scp.get_variable(name='mean', shape=self.shape,
+                                initializer=Constant(0), trainable=False)
+        inv_std = scp.get_variable(name='inv_std', shape=self.shape,
+                                   initializer=Constant(1), trainable=False)
 
         scale_, center_ = self.args['scale'], self.args['center']
-        scale = get_variable(name='scale', shape=self.shape,
-                             initializer=Constant(scale_), trainable=True)
-        center = get_variable(name='center', shape=self.shape,
-                              initializer=Constant(center_), trainable=True)
+        scale = scp.get_variable(
+            name='scale', shape=self.shape,
+            initializer=Constant(scale_), trainable=True)
+        center = scp.get_variable(
+            name='center', shape=self.shape,
+            initializer=Constant(center_), trainable=True)
 
         self._add_parameter('mean', mean)
         self._add_parameter('inv_std', inv_std)
