@@ -1,5 +1,11 @@
 from __future__ import absolute_import
 
+import yaml
+
+
+def pprint_dict(dictionary):
+    return yaml.dump(dictionary, default_flow_style=False)
+
 
 def is_iteratable(l):
     try:
@@ -49,8 +55,7 @@ class StoreMixin(object):
         pass
 
     def __repr__(self):
-        return "{{'name': '{}', 'args': {}}}".format(
-            self.__class__.__name__, self.args)
+        return repr({'name': self.__class__.__name__, 'args':  self.args})
 
 
 class CompareMixin(StoreMixin):

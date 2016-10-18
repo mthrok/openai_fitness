@@ -6,6 +6,7 @@ import pygame
 import numpy as np
 from scipy.misc import imresize
 
+from luchador.common import pprint_dict
 from . import fb_util as util
 from .fb_component import Ground, Background, Pipes, Player
 from ..base import BaseEnvironment, Outcome
@@ -271,3 +272,17 @@ class FlappyBird(BaseEnvironment):
         if self.resize:
             return imresize(screen, self.resize)
         return screen
+
+    ###########################################################################
+    def __repr__(self):
+        return pprint_dict({
+            self.__class__.__name__: {
+                'repeat_action': self.repeat_action,
+                'random_seed': self.random_seed,
+                'width': self.width,
+                'height': self.height,
+                'grayscale': self.grayscale,
+                'play_sound': self.play_sound,
+                'fastforward': self.fastforward,
+            }
+        })

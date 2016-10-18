@@ -289,26 +289,14 @@ class DQNAgent(BaseAgent):
 
     ###########################################################################
     def __repr__(self):
-        ret = '[DQNAgent]\n'
-        ret += '  [Recorder]\n'
-        for key, value in self.recorder_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Q Network]\n'
-        for key, value in self.q_network_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Optimizer]\n'
-        for key, value in self.optimizer_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Action]\n'
-        for key, value in self.action_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Training]\n'
-        for key, value in self.training_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Save]\n'
-        for key, value in self.save_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        ret += '  [Summary]\n'
-        for key, value in self.summary_config.items():
-            ret += '    {}: {}\n'.format(key, value)
-        return ret
+        return luchador.common.pprint_dict({
+            self.__class__.__name__: {
+                'Recorder': self.recorder_config,
+                'Q Network': self.q_network_config,
+                'Optimizer': self.optimizer_config,
+                'Action': self.action_config,
+                'Training': self.training_config,
+                'Save': self.save_config,
+                'Summary': self.summary_config,
+                }
+        })

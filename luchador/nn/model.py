@@ -25,8 +25,12 @@ class LayerConfig(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return ("{{'scope': '{}', 'layer': {}, 'input': {}, 'output': {}}}"
-                .format(self.scope, self.layer, self.input, self.output))
+        return repr({
+            'scope': self.scope,
+            'layer': self.layer,
+            'input': self.input,
+            'output': self.output,
+        })
 
 
 class Sequential(BaseModel):
@@ -137,4 +141,7 @@ class Sequential(BaseModel):
 
     ###########################################################################
     def __repr__(self):
-        return "{{'layer_configs': {}}}".format(self.layer_configs)
+        return repr({
+            'model_type': self.__class__.__name__,
+            'layer_configs': self.layer_configs,
+        })

@@ -9,6 +9,7 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
+from luchador.common import pprint_dict
 from ..base import BaseEnvironment, Outcome
 
 _LG = logging.getLogger(__name__)
@@ -101,7 +102,6 @@ class ALEEnvironment(BaseEnvironment):
           record_screen_filename (str): Passed to ALE. Save sound to a file.
 
         """
-        # TODO: Add individual unittest
         if mode not in ['test', 'train']:
             raise ValueError('`mode` must be either `test` or `train`')
 
@@ -240,42 +240,24 @@ class ALEEnvironment(BaseEnvironment):
 
     ###########################################################################
     def __repr__(self):
-        ale = self._ale
-        return (
-            '[Atari Env]\n'
-            '    ROM: {}\n'
-            '    display_screen           : {}\n'
-            '    sound                    : {}\n'
-            '    resize                   : {}\n'
-            '    grayscale                : {}\n'
-            '    repeat_action            : {}\n'
-            '    buffer_frames            : {}\n'
-            '    preprocess_mode          : {}\n'
-            '    random_seed              : {}\n'
-            '    random_start             : {}\n'
-            '    record_screen_path       : {}\n'
-            '    record_sound_filename    : {}\n'
-            '    minimal_action_set       : {}\n'
-            '    mode                     : {}\n'
-            '    n_actions                : {}\n'
-            .format(
-                self.rom_path,
-                ale.getBool('display_screen'),
-                ale.getBool('sound'),
-                self.resize,
-                self.grayscale,
-                self.repeat_action,
-                self.buffer_frames,
-                self.preprocess_mode,
-                ale.getInt('random_seed'),
-                self.random_start,
-                ale.getString('record_screen_path') or None,
-                ale.getString('record_sound_filename') or None,
-                self.minimal_action_set,
-                self.mode,
-                self.n_actions,
-            )
-        )
+        return pprint_dict({self.__class__.__name__: {
+            'rom': self.rom_path,
+            'mode': self.mode,
+            'resize': self.resize,
+            'grayscale': self.grayscale,
+            'buffer_frames': self.buffer_frames,
+            'preprocess_mode': self.preprocess_mode,
+            'random_seed': self._ale.getInt('random_seed'),
+            'random_start': self.random_start,
+            'n_actions': self.n_actions,
+            'repeat_action': self.repeat_action,
+            'minmal_action_set': self.minimal_action_set,
+            'record_screen_path': self._ale.getString('record_screen_path'),
+            'display_screen': self._ale.getBool('display_screen'),
+            'sound': self._ale.getBool('sound'),
+            'record_sound_filename':
+            self._ale.getString('record_sound_filename'),
+        }})
 
     ###########################################################################
     @property

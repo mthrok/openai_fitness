@@ -28,8 +28,8 @@ class TensorWrapper(object):
         self._tensor = obj
 
     def __repr__(self):
-        return "{{'name': {}, 'shape': {}, 'dtype': {}}}".format(
-            self.name, self.shape, self.dtype)
+        return repr({
+            'name': self.name, 'shape': self.shape, 'dtype': self.dtype})
 
 
 class OperationWrapper(object):
