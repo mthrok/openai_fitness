@@ -279,23 +279,24 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         self.axes = tuple(i for i in range(dim) if not i == channel)
         self.shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
-        mean = scp.get_variable(name='mean', shape=self.shape,
-                                initializer=Constant(0), trainable=False)
-        inv_std = scp.get_variable(name='inv_std', shape=self.shape,
-                                   initializer=Constant(1), trainable=False)
+        mean = scp.get_variable(
+            name='mean', shape=self.shape,
+            initializer=Constant(0), trainable=False)
+        var = scp.get_variable(
+            name='var', shape=self.shape,
+            initializer=Constant(1), trainable=False)
 
-        scale_, center_ = self.args['scale'], self.args['center']
         scale = scp.get_variable(
             name='scale', shape=self.shape,
-            initializer=Constant(scale_), trainable=True)
-        center = scp.get_variable(
-            name='center', shape=self.shape,
-            initializer=Constant(center_), trainable=True)
+            initializer=Constant(self.args['scale']), trainable=True)
+        offset = scp.get_variable(
+            name='offset', shape=self.shape,
+            initializer=Constant(self.args['offset']), trainable=True)
 
         self._add_parameter('mean', mean)
-        self._add_parameter('inv_std', inv_std)
+        self._add_parameter('var', var)
         self._add_parameter('scale', scale)
-        self._add_parameter('center', center)
+        self._add_parameter('offset', offset)
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
@@ -307,33 +308,23 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         decay, ep = self.args['decay'], self.args['epsilon']
 
         mean_acc = self._get_parameter('mean').unwrap()
-        stdi_acc = self._get_parameter('inv_std').unwrap()
+        var_acc = self._get_parameter('var').unwrap()
         scale = self._get_parameter('scale').unwrap()
-        center = self._get_parameter('center').unwrap()
+        offset = self._get_parameter('offset').unwrap()
 
         if self.args['learn']:
             mean_in, var_in = tf.nn.moments(input_, self.axes)
-            stdi_in = tf.inv(tf.sqrt(var_in + ep))
 
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
-            new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
+            new_var_acc = decay * var_acc + (1 - decay) * var_in
 
             self._add_update('mean', tf.assign(mean_acc, new_mean_acc))
-            self._add_update('stdi', tf.assign(stdi_acc, new_stdi_acc))
+            self._add_update('var', tf.assign(var_acc, new_var_acc))
 
             mean_acc = new_mean_acc
-            stdi_acc = new_stdi_acc
+            var_acc = new_var_acc
 
-        if len(input_shape) == 2:
-            output = scale * (input_ - mean_acc) * stdi_acc + center
-        else:
-            fmt = luchador.get_nn_conv_format()
-            pattern = [1, -1, 1, 1] if fmt == 'NCHW' else [1, 1, 1, -1]
-
-            stdi_acc = tf.reshape(stdi_acc, pattern)
-            scale = tf.reshape(scale, pattern)
-
-            centered = tf.nn.bias_add(input_, -mean_acc, data_format=fmt)
-            scaled = scale * centered * stdi_acc
-            output = tf.nn.bias_add(scaled, center, data_format=fmt)
+        output = tf.nn.batch_normalization(
+            x=input_, mean=mean_acc, variance=var_acc, offset=offset,
+            scale=scale, variance_epsilon=ep)
         return _wrap_output(output)

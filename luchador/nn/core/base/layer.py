@@ -152,8 +152,8 @@ class BaseBatchNormalization(BaseLayer):
            Batch Normalization: Accelerating Deep Network Training by Reducing
            Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
     """
-    def __init__(self, scale=1.0, center=0.0, epsilon=1e-4,
+    def __init__(self, scale=1.0, offset=0.0, epsilon=1e-4,
                  learn=True, decay=0.999):
         super(BaseBatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
-            scale=scale, center=center, learn=learn)
+            scale=scale, offset=offset, learn=learn)

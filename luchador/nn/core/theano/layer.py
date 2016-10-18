@@ -329,21 +329,20 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
 
         mean = scp.get_variable(name='mean', shape=self.shape,
                                 initializer=Constant(0), trainable=False)
-        inv_std = scp.get_variable(name='inv_std', shape=self.shape,
-                                   initializer=Constant(1), trainable=False)
+        var = scp.get_variable(name='var', shape=self.shape,
+                               initializer=Constant(1), trainable=False)
 
-        scale_, center_ = self.args['scale'], self.args['center']
         scale = scp.get_variable(
             name='scale', shape=self.shape,
-            initializer=Constant(scale_), trainable=True)
-        center = scp.get_variable(
-            name='center', shape=self.shape,
-            initializer=Constant(center_), trainable=True)
+            initializer=Constant(self.args['scale']), trainable=True)
+        offset = scp.get_variable(
+            name='offset', shape=self.shape,
+            initializer=Constant(self.args['offset']), trainable=True)
 
         self._add_parameter('mean', mean)
-        self._add_parameter('inv_std', inv_std)
+        self._add_parameter('var', var)
         self._add_parameter('scale', scale)
-        self._add_parameter('center', center)
+        self._add_parameter('offset', offset)
 
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
@@ -351,30 +350,31 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
             self._instantiate_parameter_variables(input_tensor.get_shape())
 
         input_tensor_ = input_tensor.unwrap()
-        decay, ep = self.args['decay'], self.args['epsilon']
 
         mean_acc = self._get_parameter('mean').unwrap()
-        stdi_acc = self._get_parameter('inv_std').unwrap()
+        var_acc = self._get_parameter('var').unwrap()
         scale = self._get_parameter('scale').unwrap()
-        center = self._get_parameter('center').unwrap()
+        offset = self._get_parameter('offset').unwrap()
 
         if self.args['learn']:
+            decay = self.args['decay']
             mean_in = input_tensor_.mean(axis=self.axes)
-            stdi_in = T.inv(T.sqrt(input_tensor_.var(self.axes) + ep))
+            var_in = input_tensor_.var(self.axes)
 
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
-            new_stdi_acc = decay * stdi_acc + (1 - decay) * stdi_in
+            new_var_acc = decay * var_acc + (1 - decay) * var_in
 
             self._add_update(mean_acc, new_mean_acc)
-            self._add_update(stdi_acc, new_stdi_acc)
+            self._add_update(var_acc, new_var_acc)
 
             mean_acc = new_mean_acc
-            stdi_acc = new_stdi_acc
+            var_acc = new_var_acc
 
         mean_acc = mean_acc.dimshuffle(self.pattern)
-        stdi_acc = stdi_acc.dimshuffle(self.pattern)
+        var_acc = var_acc.dimshuffle(self.pattern)
         scale = scale.dimshuffle(self.pattern)
-        center = center.dimshuffle(self.pattern)
+        offset = offset.dimshuffle(self.pattern)
 
-        output = scale * (input_tensor_ - mean_acc) * stdi_acc + center
+        stdi = T.inv(T.sqrt(var_acc + self.args['epsilon']))
+        output = scale * (input_tensor_ - mean_acc) * stdi + offset
         return _wrap_output(output, input_tensor.shape, 'output')
