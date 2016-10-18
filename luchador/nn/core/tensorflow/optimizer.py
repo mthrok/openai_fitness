@@ -6,7 +6,13 @@ from luchador.common import is_iteratable
 from ..base import (
     make_optimizer,
     get_optimizer,
-    Optimizer,
+    BaseOptimizer,
+    BaseSGD,
+    BaseRMSProp,
+    BaseNeonRMSProp,
+    BaseGravesRMSProp,
+    BaseAdam,
+    BaseAdamax,
 )
 from .scope import get_variable
 from .initializer import Constant
@@ -23,7 +29,37 @@ __all__ = [
 ]
 
 
-class BaseOptimizer(Optimizer):
+class TFOptimizerMixin(object):
+    """Adds TF-specific helper methods to base Optimizer"""
+    def init(self):
+        """Initialize underlying TF optimizer to SGD
+
+        Manually implemented optimizers use SGD as the actual step for
+        updating the paramters after modifyin gradients.
+
+        So for convenience, this mixin initialize underlying optimizer with SGD
+        """
+        self.optimizer = tf.train.GradientDescentOptimizer(
+            self.args['learning_rate'], name=self.args['name'])
+
+    def minimize(self, loss, wrt=None, **kwargs):
+        """Create minimization op which updates parameter variables
+
+        Args:
+          loss (Tensor): Loss Tensor to be minimized
+
+          wrt ([list of] Variables): Variables with which loss is minimzied.
+
+          **kwargs: Other arguments passed to either compute_gradients or
+                    apply_gradients of Tenasorflow native Optimizer.
+
+        Returns:
+          Operation: Minimization operation
+        """
+        kws1, kws2 = self._parse_kwargs(kwargs)
+        grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
+        return self.apply_gradients(grads_and_vars, **kws2)
+
     def _parse_kwargs(self, kwargs):
         keys_and_defaults1 = [
             ('gate_gradients', 1),
@@ -43,21 +79,47 @@ class BaseOptimizer(Optimizer):
             for key, default_value in keys_and_defaults2}
         return [kws_compute_gradients, kws_apply_gradients]
 
-    def minimize(self, loss, wrt=None, **kwargs):
-        kws1, kws2 = self._parse_kwargs(kwargs)
-        grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
-        return self.apply_gradients(grads_and_vars, **kws2)
-
+    ###########################################################################
     def compute_gradients(self, loss, wrt, **kwargs):
-        loss = loss.unwrap()
-        if wrt is not None and not is_iteratable(wrt):
-            wrt = [wrt]
+        """Compute gradient of loss with respect to wrt.
+
+        This method works in similar way as Tensorflow Optimizers'
+        compute_gradient method.
+
+        Args:
+          loss (Tensor): Loss Tensor to be minimized
+
+          wrt ([list of] Variables): Variables with which gradient is computed
+
+          **kwargs: Other arguments passed to compute_gradients of
+                    underlying Tenasorflow native Optimizer.
+
+        Returns:
+          List of Tensor pairs: Gradient and corresponding variable pairs.
+            Unlike other methods, each tensor is not wrapped with Luchador's
+            TensorWrapper so they are Tensorflow's native Tensor objects.
+        """
+        wrt = [wrt] if wrt is not None and not is_iteratable(wrt) else wrt
         var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
-        grads_and_vars = self.optimizer.compute_gradients(
-            loss, var_list=var_list, **kwargs)
-        return grads_and_vars
+        return self.optimizer.compute_gradients(
+            loss=loss.unwrap(), var_list=var_list, **kwargs)
 
     def apply_gradients(self, grads_and_vars, **kwargs):
+        """Apply grads_and_vars to optimizer to create minimization Operation
+
+        This also store slot variables of TF native Optimizers to luchador
+        Optimizer.
+
+        Args:
+          grads_and_vars (list of Tensor pairs): Value returned by
+                                                 compute_gradient method.
+
+          **kwargs: Other arguments passed to apply_gradients of
+                    underlying Tenasorflow native Optimizer.
+
+        Returns:
+          Operation: Operation which updates parmeter variables.
+        """
         minimize_op = self.optimizer.apply_gradients(grads_and_vars, **kwargs)
         self._register_slot(grads_and_vars)
         return Operation(minimize_op)
@@ -72,7 +134,11 @@ class BaseOptimizer(Optimizer):
                 self.slot.append(Variable(slot, name=name))
 
     def _create_slot_var(self, var, slot_name):
-        """Create slot variable for the given Variable and store it"""
+        """Create slot variable for the given Variable
+
+        Typical usage is to create variables to hold moving average
+        of the given Variable
+        """
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
         slot_var = get_variable(
@@ -85,7 +151,7 @@ class BaseOptimizer(Optimizer):
         """Create slot variable independant to gradients and parameters
 
         Example use is beta parameter in Adamax optimizer.
-        Only scalar type is supported.
+        Currently only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = get_variable(
@@ -95,68 +161,54 @@ class BaseOptimizer(Optimizer):
         return slot_var.unwrap()
 
 
-class SGD(BaseOptimizer):
-    def __init__(self, learning_rate, name='SGD', **kwargs):
-        super(SGD, self).__init__(learning_rate=learning_rate, name=name)
+class SGD(TFOptimizerMixin, BaseSGD):
+    def init(self):
         self.optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate, name=name, **kwargs)
+            learning_rate=self.args['learning_rate'], name=self.args['name'],
+            use_locking=self.args.get('use_locking', False))
 
 
-class RMSProp(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 decay=0.95, momentum=0.0,
-                 epsilon=1e-2, name='RMSProp', **kwargs):
-        super(RMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay=decay, momentum=momentum, epsilon=epsilon, name=name)
+class RMSProp(TFOptimizerMixin, BaseRMSProp):
+    def init(self):
         self.optimizer = tf.train.RMSPropOptimizer(
-            learning_rate, decay=decay, momentum=momentum,
-            epsilon=epsilon, **kwargs)
+            learning_rate=self.args['learning_rate'],
+            decay=self.args['decay'], momentum=self.args['momentum'],
+            epsilon=self.args['epsilon'], name=self.args['name'],
+            use_locking=self.args.get('use_locking', False))
 
 
-class NeonRMSProp(BaseOptimizer):
-    def __init__(self, learning_rate, decay=0.95, epsilon=1e-6,
-                 name='NeonRMSProp', **kwargs):
-        super(NeonRMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay=decay, epsilon=epsilon, name=name)
-        self.optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate, name=name)
-
-    def _apply_gradients(self, grads_and_vars, **kwargs):
-        rms_updates = []
-        new_grads_and_vars = []
-        args = self.args
-        decay, ep = args['decay'], args['epsilon']
-        for grad, var in grads_and_vars:
-            rms = self._create_slot_var(var, 'rms')
-            new_rms = rms + (1. - decay) * (tf.square(grad) - rms)
-            new_grad = tf.truediv(grad, tf.sqrt(new_rms + ep) + ep)
-            rms_updates.append(rms.assign(new_rms))
-            new_grads_and_vars.append((new_grad, var))
-        train_op = self.optimizer.apply_gradients(new_grads_and_vars)
-        updates = [train_op] + rms_updates
-        return Operation(tf.group(*updates))
-
+class NeonRMSProp(TFOptimizerMixin, BaseNeonRMSProp):
     def apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients(grads_and_vars, **kwargs)
 
+    def _apply_gradients(self, grads_and_vars, **kwargs):
+        decay, ep = self.args['decay'], self.args['epsilon']
 
-class GravesRMSProp(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 decay1=0.0, decay2=0.95, epsilon=1e-2,
-                 name='GravesRMSProp', **kwargs):
-        super(GravesRMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay1=decay1, decay2=decay2, epsilon=epsilon, name=name)
-        self.optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate, name=name)
+        updates, new_grads_and_vars = [], []
+        for grad, var in grads_and_vars:
+            rms = self._create_slot_var(var, 'rms')
+
+            new_rms = rms + (1. - decay) * (tf.square(grad) - rms)
+            new_grad = tf.truediv(grad, tf.sqrt(new_rms + ep) + ep)
+
+            updates.append(rms.assign(new_rms))
+            new_grads_and_vars.append((new_grad, var))
+
+        updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
+        return Operation(tf.group(*updates))
+
+
+class GravesRMSProp(TFOptimizerMixin, BaseGravesRMSProp):
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        with tf.name_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
+        d1, d2 = self.args['decay1'], self.args['decay2'],
+        ep = self.args['epsilon']
+
         updates, new_grads_and_vars = [], []
-        args = self.args
-        d1, d2, ep = args['decay1'], args['decay2'], args['epsilon']
         for grad, var in grads_and_vars:
             mean_grad1 = self._create_slot_var(var, 'grad_mean')
             mean_grad2 = self._create_slot_var(var, 'grad_squared_mean')
@@ -174,21 +226,15 @@ class GravesRMSProp(BaseOptimizer):
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
         return Operation(tf.group(*updates))
 
-    def apply_gradients(self, grads_and_vars, **kwargs):
-        with tf.name_scope(self.args['name']):
-            return self._apply_gradients(grads_and_vars, **kwargs)
 
-
-class Adam(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-08, name='Adam', **kwargs):
-        super(Adam, self).__init__(
-            learning_rate=learning_rate,
-            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
+class Adam(TFOptimizerMixin, BaseAdam):
+    def init(self):
         self.optimizer = tf.train.AdamOptimizer(
-            learning_rate, beta1=beta1, beta2=beta2,
-            epsilon=epsilon, **kwargs)
+            learning_rate=self.args['learning_rate'],
+            beta1=self.args['beta1'], beta2=self.args['beta2'],
+            epsilon=self.args['epsilon'],
+            use_locking=self.args.get('use_locking', False),
+            name=self.args['name'])
 
     def apply_gradients(self, grads_and_vars, **kwargs):
         ret = super(Adam, self).apply_gradients(grads_and_vars, **kwargs)
@@ -199,42 +245,31 @@ class Adam(BaseOptimizer):
         return ret
 
 
-class Adamax(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-08, name='Adamax', **kwargs):
-        super(Adamax, self).__init__(
-            learning_rate=learning_rate,
-            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
-        self.optimizer = tf.train.GradientDescentOptimizer(
-            learning_rate, name=name, **kwargs)
+class Adamax(TFOptimizerMixin, BaseAdamax):
+    def apply_gradients(self, grads_and_vars, **kwargs):
+        with tf.name_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
-        args = self.args
-        beta1, beta2, ep = args['beta1'], args['beta2'], args['epsilon']
-        updates, new_grads_and_vars = [], []
+        b1, b2 = self.args['beta1'], self.args['beta2']
+        ep = self.args['epsilon']
 
-        beta1_power = self._create_slot(beta1, 'beta1_power')
-        new_beta1_power = beta1_power * beta1
-
+        beta1_power = self._create_slot(b1, 'beta1_power')
         alpha = 1.0 / (1.0 - beta1_power)
 
+        updates, new_grads_and_vars = [], []
         for grad, var in grads_and_vars:
             m = self._create_slot_var(var, 'm')
             u = self._create_slot_var(var, 'u')
 
-            new_m = m + (1.0 - beta1) * (grad - m)
-            new_u = tf.maximum(beta2 * u, tf.abs(grad))
+            new_m = b1 * m + (1.0 - b1) * grad
+            new_u = tf.maximum(b2 * u, tf.abs(grad))
             new_grad = (new_m * alpha) / (new_u + ep)
 
             updates.append(m.assign(new_m))
             updates.append(u.assign(new_u))
             new_grads_and_vars.append((new_grad, var))
 
-        updates.append(beta1_power.assign(new_beta1_power))
+        updates.append(beta1_power.assign(beta1_power * b1))
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
         return Operation(tf.group(*updates))
-
-    def apply_gradients(self, grads_and_vars, **kwargs):
-        with tf.name_scope(self.args['name']):
-            return self._apply_gradients(grads_and_vars, **kwargs)

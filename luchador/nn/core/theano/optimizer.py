@@ -9,9 +9,15 @@ from luchador.common import is_iteratable
 from ..base import (
     make_optimizer,
     get_optimizer,
-    Optimizer,
+    BaseOptimizer,
+    BaseSGD,
+    BaseRMSProp,
+    BaseNeonRMSProp,
+    BaseGravesRMSProp,
+    BaseAdam,
+    BaseAdamax,
 )
-from .scope import get_variable
+from . import scope as scp
 from .initializer import Constant
 from .wrapper import Operation
 
@@ -23,24 +29,58 @@ __all__ = [
 ]
 
 
-class BaseOptimizer(Optimizer):
+class TheanoOptimizerMixin(object):
+    """Adds Theano-specific helper methods to base Optimizer"""
+    def init(self):
+        pass
+
     def minimize(self, loss, wrt, **kwargs):
-        grads_and_vars = self.compute_gradients(loss, wrt, **kwargs)
+        """Create minimization op which updates parameter variables
+
+        Args:
+          loss (Tensor): Loss Tensor to be minimized
+
+          wrt ([list of] Variables): Variables with which loss is minimzied
+
+          **kwargs: Not used. This is for the consistency with TF backend.
+
+        Returns:
+          Operation: Minimization operation
+        """
+
+        grads_and_vars = self.compute_gradients(loss, wrt)
         return self.apply_gradients(grads_and_vars)
 
     def compute_gradients(self, loss, wrt, **kwargs):
-        if not is_iteratable(wrt):
-            wrt = [wrt]
+        """Compute gradient of loss with respect to wrt.
+
+        This method works in similar way as Tensorflow Optimizers'
+        compute_gradient method.
+
+        Args:
+          loss (Tensor): Loss Tensor to be minimized
+          wrt ([list of] Variables): Variables with which gradient is computed
+
+        Returns:
+          List of Tensor pairs: Gradient and corresponding variable pairs.
+            Unlike other methods, each tensor is not wrapped with Luchador's
+            TensorWrapper so they are Theano's native Variable objects.
+        """
+        wrt = wrt if is_iteratable(wrt) else [wrt]
         loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]
 
     def _create_slot_var(self, var, slot_name):
-        """Create slot variable for the given Variable and store it"""
+        """Create slot variable for the given Variable
+
+        Typical usage is to create variables to hold moving average
+        of the given Variable
+        """
         value = var.get_value(borrow=True)
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = get_variable(
+        slot_var = scp.get_variable(
             name=name, shape=value.shape, dtype=value.dtype,
             initializer=Constant(0), broadcastable=var.broadcastable)
         self.slot.append(slot_var)
@@ -49,22 +89,18 @@ class BaseOptimizer(Optimizer):
     def _create_slot(self, initial_value, slot_name):
         """Create slot variable independant to gradients and parameters
 
-        Example use is beta parameter in Adam and Adamax optimizer.
+        Example use is beta parameters in Adam and Adamax optimizer.
         Only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = get_variable(
+        slot_var = scp.get_variable(
             name=name, shape=[],
             initializer=Constant(initial_value), broadcastable=True)
         self.slot.append(slot_var)
         return slot_var
 
 
-class SGD(BaseOptimizer):
-    def __init__(self, learning_rate, name='SGD', **kwargs):
-        super(SGD, self).__init__(
-            learning_rate=learning_rate, name=name)
-
+class SGD(TheanoOptimizerMixin, BaseSGD):
     def apply_gradients(self, grads_and_vars):
         updates = OrderedDict()
         for grad, var in grads_and_vars:
@@ -72,19 +108,12 @@ class SGD(BaseOptimizer):
         return Operation(op=updates)
 
 
-class RMSProp(BaseOptimizer):
-    def __init__(self, learning_rate, decay=0.95, momentum=0.0,
-                 epsilon=1e-2, name='RMSProp', **kwargs):
-        super(RMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay=decay, momentum=momentum,
-            epsilon=epsilon, name=name)
-
+class RMSProp(TheanoOptimizerMixin, BaseRMSProp):
     def apply_gradients(self, grads_and_vars):
+        decay, momentum = self.args['decay'], self.args['momentum']
+        ep, lr = self.args['epsilon'], self.args['learning_rate']
+
         updates = OrderedDict()
-        args = self.args
-        decay, momentum = args['decay'], args['momentum']
-        ep, lr = args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
             mom = self._create_slot_var(var, 'momentum').unwrap()
             rms = self._create_slot_var(var, 'rms').unwrap()
@@ -99,17 +128,12 @@ class RMSProp(BaseOptimizer):
         return Operation(op=updates)
 
 
-class NeonRMSProp(BaseOptimizer):
-    def __init__(self, learning_rate, decay=0.95, epsilon=1e-6,
-                 name='NeonRMSProp', **kwargs):
-        super(NeonRMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay=decay, epsilon=epsilon, name=name)
-
+class NeonRMSProp(TheanoOptimizerMixin, BaseNeonRMSProp):
     def apply_gradients(self, grads_and_vars):
+        decay, ep = self.args['decay'], self.args['epsilon']
+        lr = self.args['learning_rate']
+
         updates = OrderedDict()
-        args = self.args
-        decay, ep, lr = args['decay'], args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
             rms = self._create_slot_var(var, 'rms').unwrap()
 
@@ -121,24 +145,12 @@ class NeonRMSProp(BaseOptimizer):
         return Operation(op=updates)
 
 
-class GravesRMSProp(BaseOptimizer):
-    """RMSProp used in DQN paper[1] and described in A.Graves paper [2]
-
-    [1] https://github.com/kuz/DeepMind-Atari-Deep-Q-Learner/blob/4b9f5a79b03ea0cfc512ed1c11f1b00bc875bc57/dqn/NeuralQLearner.lua#L265  # nopep8
-    [2] http://arxiv.org/pdf/1308.0850v5.pdf
-    """
-    def __init__(self, learning_rate,
-                 decay1=0.95, decay2=0.95,
-                 epsilon=1e-2, name='GravesRMSProp', **kwargs):
-        super(GravesRMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay1=decay1, decay2=decay2, epsilon=epsilon, name=name)
-
+class GravesRMSProp(TheanoOptimizerMixin, BaseGravesRMSProp):
     def apply_gradients(self, grads_and_vars):
+        d1, d2 = self.args['decay1'], self.args['decay2']
+        ep, lr = self.args['epsilon'], self.args['learning_rate']
+
         updates = OrderedDict()
-        args = self.args
-        d1, d2 = args['decay1'], args['decay2']
-        ep, lr = args['epsilon'], args['learning_rate']
         for grad, var in grads_and_vars:
             mean_g1 = self._create_slot_var(var, 'grad_mean').unwrap()
             mean_g2 = self._create_slot_var(var, 'grad_squared_mean').unwrap()
@@ -158,74 +170,53 @@ class GravesRMSProp(BaseOptimizer):
         return Operation(op=updates)
 
 
-class Adam(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-08, name='Adam', **kwargs):
-        super(Adam, self).__init__(
-            learning_rate=learning_rate,
-            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
-
+class Adam(TheanoOptimizerMixin, BaseAdam):
     def apply_gradients(self, grads_and_vars):
-        args = self.args
-        beta1, beta2 = args['beta1'], args['beta2']
-        ep, lr = args['epsilon'], args['learning_rate']
+        b1, b2 = self.args['beta1'], self.args['beta2']
+        ep, lr = self.args['epsilon'], self.args['learning_rate']
+
+        b1_pow = self._create_slot(b1, 'beta1_power').unwrap()
+        b2_pow = self._create_slot(b2, 'beta2_power').unwrap()
+        alpha = lr * T.sqrt(1.0 - b2_pow) / (1.0 - b1_pow)
+
         updates = OrderedDict()
-
-        beta1_power = self._create_slot(beta1, 'beta1_power').unwrap()
-        beta2_power = self._create_slot(beta2, 'beta2_power').unwrap()
-
-        new_beta1_power = beta1_power * beta1
-        new_beta2_power = beta2_power * beta2
-
-        alpha = lr * T.sqrt(1.0 - beta2_power) / (1.0 - beta1_power)
-
         for grad, var in grads_and_vars:
             m = self._create_slot_var(var, 'm').unwrap()
             v = self._create_slot_var(var, 'v').unwrap()
 
-            new_m = m + (1.0 - beta1) * (grad - m)
-            new_v = v + (1.0 - beta2) * (T.square(grad) - v)
+            new_m = m + (1.0 - b1) * (grad - m)
+            new_v = v + (1.0 - b2) * (T.square(grad) - v)
             new_var = var - (new_m * alpha) / (T.sqrt(new_v) + ep)
 
             updates[m] = new_m
             updates[v] = new_v
             updates[var] = new_var
 
-        updates[beta1_power] = new_beta1_power
-        updates[beta2_power] = new_beta2_power
+        updates[b1_pow] = b1_pow * b1
+        updates[b2_pow] = b2_pow * b2
         return Operation(op=updates)
 
 
-class Adamax(BaseOptimizer):
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-8, name='Adamax', **kwargs):
-        super(Adamax, self).__init__(
-            learning_rate=learning_rate,
-            beta1=beta1, beta2=beta2, epsilon=epsilon, name=name)
-
+class Adamax(TheanoOptimizerMixin, BaseAdamax):
     def apply_gradients(self, grads_and_vars):
-        beta1, beta2 = self.args['beta1'], self.args['beta2']
+        b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
+
+        b1_pow = self._create_slot(b1, 'beta1_power').unwrap()
+        alpha = lr / (1.0 - b1_pow)
+
         updates = OrderedDict()
-
-        beta1_power = self._create_slot(beta1, 'beta1_power').unwrap()
-        new_beta1_power = beta1_power * beta1
-
-        alpha = lr / (1.0 - beta1_power)
-
         for grad, var in grads_and_vars:
             m = self._create_slot_var(var, 'm').unwrap()
             u = self._create_slot_var(var, 'u').unwrap()
 
-            new_m = m + (1.0 - beta1) * (grad - m)
-            new_u = T.maximum(beta2 * u,  abs(grad))
+            new_m = m + (1.0 - b1) * (grad - m)
+            new_u = T.maximum(b2 * u,  abs(grad))
             new_var = var - (new_m * alpha) / (new_u + ep)
 
             updates[m] = new_m
             updates[u] = new_u
             updates[var] = new_var
 
-        updates[beta1_power] = new_beta1_power
+        updates[b1_pow] = b1_pow * b1
         return Operation(op=updates)
