@@ -17,6 +17,8 @@ from ..base import (
     BaseFlatten,
     BaseTrueDiv,
     BaseBatchNormalization,
+    BaseNHWC2NCHW,
+    BaseNCHW2NHWC,
 )
 from .wrapper import (
     Tensor,
@@ -35,6 +37,7 @@ _LG = logging.getLogger(__name__)
 __all__ = [
     'BaseLayer', 'get_layer',
     'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization',
+    'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
 
@@ -328,3 +331,17 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
             x=input_, mean=mean_acc, variance=var_acc, offset=offset,
             scale=scale, variance_epsilon=ep)
         return _wrap_output(output)
+
+
+class NHWC2NCHW(TFLayerMixin, BaseNHWC2NCHW):
+    def build(self, input_tensor):
+        input_tensor_ = input_tensor.unwrap()
+        output_tensor_ = tf.transpose(input_tensor_, perm=(0, 3, 1, 2))
+        return _wrap_output(output_tensor_)
+
+
+class NCHW2NHWC(TFLayerMixin, BaseNCHW2NHWC):
+    def build(self, input_tensor):
+        input_tensor_ = input_tensor.unwrap()
+        output_tensor_ = tf.transpose(input_tensor_, perm=(0, 2, 3, 1))
+        return _wrap_output(output_tensor_)

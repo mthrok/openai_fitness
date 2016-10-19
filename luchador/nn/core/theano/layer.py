@@ -16,6 +16,8 @@ from ..base import (
     BaseFlatten,
     BaseTrueDiv,
     BaseBatchNormalization,
+    BaseNHWC2NCHW,
+    BaseNCHW2NHWC,
 )
 from . import scope as scp
 from .wrapper import (
@@ -33,7 +35,8 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization'
+    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization',
+    'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
 
@@ -377,4 +380,24 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
 
         stdi = T.inv(T.sqrt(var_acc + self.args['epsilon']))
         output = scale * (input_tensor_ - mean_acc) * stdi + offset
-        return _wrap_output(output, input_tensor.shape, 'output')
+        return _wrap_output(output, input_tensor.get_shape(), 'output')
+
+
+class NHWC2NCHW(TheanoLayerMixin, BaseNHWC2NCHW):
+    def build(self, input_tensor):
+        input_tensor_ = input_tensor.unwrap()
+        output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
+
+        s = input_tensor.get_shape()
+        output_shape = (s[0], s[3], s[1], s[2])
+        return _wrap_output(output_tensor_, output_shape, 'output')
+
+
+class NCHW2NHWC(TheanoLayerMixin, BaseNCHW2NHWC):
+    def build(self, input_tensor):
+        input_tensor_ = input_tensor.unwrap()
+        output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)
+
+        s = input_tensor.get_shape()
+        output_shape = (s[0], s[2], s[3], s[1])
+        return _wrap_output(output_tensor_, output_shape, 'output')
