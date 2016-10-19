@@ -152,8 +152,7 @@ class Session(BaseSession):
                          .format(value.dtype, value.shape, name))
 
                 variable = scope.get_variable(name=name)
-                src_shape = tuple(value.shape)
-                tgt_shape = tuple(variable.shape)
+                src_shape, tgt_shape = value.shape, variable.shape
                 if not tgt_shape == src_shape:
                     # Tensorflow's convolution filter shape is
                     #  [height, width, #in-channel, #out-channel]

@@ -12,7 +12,7 @@ class TensorWrapper(object):
     """
     def __init__(self, tensor, shape, name, dtype):
         self._tensor = tensor
-        self.shape = shape
+        self.shape = tuple(shape)
         self.name = name
         self.dtype = dtype
 
