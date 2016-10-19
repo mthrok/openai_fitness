@@ -39,13 +39,13 @@ class BatchNormalizationTest(unittest.TestCase):
     def tearDown(self):
         luchador.set_nn_conv_format(self.conv_format)
 
-    def _normalize(self, shape, center, scale):
+    def _normalize(self, shape, offset, scale):
         _shape = (None,) + shape[1:]
         input_tensor = Input(shape=_shape).build()
         input_value = np.random.randn(*shape) - 100
 
         bn = BatchNormalization(
-            scale=scale, center=center, learn=True, decay=0.0)
+            scale=scale, offset=offset, learn=True, decay=0.0)
         normalized = bn(input_tensor)
         updates = bn.get_update_operation()
         session = Session()
@@ -56,24 +56,24 @@ class BatchNormalizationTest(unittest.TestCase):
 
     def test_normalization_2d(self):
         """Output of normalization layer is normalized on 2D array"""
-        center, scale, shape = 10.0, 1.0, (64, 16)
+        offset, scale, shape = 10.0, 1.0, (64, 16)
 
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, center, scale)
+            output_value = self._normalize(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
         for c in range(shape[1]):
             column = output_value[:, c]
 
-            expected = center
+            expected = offset
             found = column.mean()
             diff = abs(expected - found) / expected
             threshold = 0.01
             self.assertTrue(
                 diff < threshold,
                 'The mean value of column {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -84,7 +84,7 @@ class BatchNormalizationTest(unittest.TestCase):
             self.assertTrue(
                 diff < threshold,
                 'The variance of column {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -93,23 +93,23 @@ class BatchNormalizationTest(unittest.TestCase):
     def test_normalization_4d_NCHW(self):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NCHW')
-        center, scale, shape = 3.0, 7.0, (32, 16, 8, 7)
+        offset, scale, shape = 3.0, 7.0, (32, 16, 8, 7)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, center, scale)
+            output_value = self._normalize(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
         for c in range(shape[1]):
             channel = output_value[:, c]
 
-            expected = center
+            expected = offset
             found = channel.mean()
             diff = abs(expected - found) / expected
             threshold = 0.01
             self.assertTrue(
                 diff < threshold,
                 'The mean value of channel {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -120,7 +120,7 @@ class BatchNormalizationTest(unittest.TestCase):
             self.assertTrue(
                 diff < threshold,
                 'The variance of channel {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -128,23 +128,23 @@ class BatchNormalizationTest(unittest.TestCase):
     def test_normalization_4d_NHWC(self):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NHWC')
-        center, scale, shape = 3.0, 7.0, (32, 8, 7, 16)
+        offset, scale, shape = 3.0, 7.0, (32, 8, 7, 16)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, center, scale)
+            output_value = self._normalize(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
         for c in range(shape[3]):
             channel = output_value[:, :, :, c]
 
-            expected = center
+            expected = offset
             found = channel.mean()
             diff = abs(expected - found) / expected
             threshold = 0.01
             self.assertTrue(
                 diff < threshold,
                 'The mean value of channel {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -155,7 +155,7 @@ class BatchNormalizationTest(unittest.TestCase):
             self.assertTrue(
                 diff < threshold,
                 'The variance of channel {} must be close enough to '
-                'the target center value. Expected: {}, Found: {}'
+                'the target offset value. Expected: {}, Found: {}'
                 .format(c, expected, found)
             )
 
@@ -168,34 +168,34 @@ class BatchNormalizationTest(unittest.TestCase):
         normalized = bn(input_tensor)
 
         mean_tensor = bn.parameter_variables['mean']
-        stdi_tensor = bn.parameter_variables['inv_std']
+        var_tensor = bn.parameter_variables['var']
         updates = bn.get_update_operation()
 
         input_value = np.random.randn(*shape) - 100
         true_mean = input_value.mean(axis=0)
-        true_stdi = 1 / input_value.std(axis=0)
+        true_var = input_value.var(axis=0)
 
         session = Session()
         session.initialize()
         mean_diff_prev, stdi_diff_prev = None, None
         for i in range(30):
-            output, mean_val, stdi_val = session.run(
-                outputs=[normalized, mean_tensor, stdi_tensor],
+            output, mean_val, var_val = session.run(
+                outputs=[normalized, mean_tensor, var_tensor],
                 inputs={input_tensor: input_value},
                 updates=updates,
                 name='run'
             )
 
             mean_diff = abs(true_mean - mean_val)
-            stdi_diff = abs(true_stdi - stdi_val)
+            var_diff = abs(true_var - var_val)
 
             if i > 0:
                 self.assertTrue(
                     np.all(mean_diff < mean_diff_prev),
                     'Layer mean value is not regressing to the sample mean')
                 self.assertTrue(
-                    np.all(stdi_diff < stdi_diff_prev),
+                    np.all(var_diff < stdi_diff_prev),
                     'Layer std deviation is not regressing to the batch std')
 
             mean_diff_prev = mean_diff
-            stdi_diff_prev = stdi_diff
+            stdi_diff_prev = var_diff

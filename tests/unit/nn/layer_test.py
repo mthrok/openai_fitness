@@ -43,7 +43,7 @@ ARGS1 = {
         'denom': 1,
     },
     'BatchNormalization': {
-        'center': 0.0,
+        'offset': 0.0,
         'scale': 1.0,
     },
 }
@@ -63,7 +63,7 @@ ARGS2 = {
         'denom': 255
     },
     'BatchNormalization': {
-        'center': 0.5,
+        'offset': 0.5,
         'scale': 1.0,
     },
 }
