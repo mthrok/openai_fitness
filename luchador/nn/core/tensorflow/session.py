@@ -145,9 +145,16 @@ class Session(BaseSession):
           cast (Bool): Not used in Tensorflow backend as it casts dtype
             internally.
         """
+        ignores = ['LUCHADOR_NN_BACKEND',
+                   'LUCHADOR_NN_CONV_FORMAT', 'LUCHADOR_NN_DTYPE']
+
         op = []
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
+                if name in ignores:
+                    _LG.info('  Skipping: {} {}'.format(name, value))
+                    continue
+
                 _LG.info('  Loading: {:10} {:24} {}'
                          .format(value.dtype, value.shape, name))
 
@@ -171,7 +178,7 @@ class Session(BaseSession):
                         value = value[::-1, ::-1, :, :]
                     else:
                         raise ValueError(
-                            'Shapes are not incompatible. '
+                            'Shapes are not compatible. '
                             'Model shape: {}, Value shape: {}'
                             .format(src_shape, tgt_shape)
                         )

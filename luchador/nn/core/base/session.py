@@ -9,7 +9,7 @@ __all__ = ['Session']
 
 
 def _parse_dataset(h5group, prefix=''):
-    ret = {}
+    ret = OrderedDict()
     for key, value in h5group.items():
         path = '{}/{}'.format(prefix, key) if prefix else key
         if isinstance(value, h5py.Group):

@@ -5,10 +5,12 @@ import os
 import time
 import errno
 import logging
-
 from collections import OrderedDict
 
 import h5py
+import numpy as np
+
+import luchador
 
 _LG = logging.getLogger(__name__)
 
@@ -41,6 +43,16 @@ class Saver(object):
 
             chunks = False if value.size == 1 else True
             f.create_dataset(key, data=value, chunks=chunks)
+
+        if 'LUCHADOR_NN_BACKEND' not in f:
+            data = np.string_(luchador.get_nn_backend())
+            f.create_dataset('LUCHADOR_NN_BACKEND', data=data, dtype='S10')
+        if 'LUCHADOR_NN_CONV_FORMAT' not in f:
+            data = np.string_(luchador.get_nn_conv_format())
+            f.create_dataset('LUCHADOR_NN_CONV_FORMAT', data=data, dtype='S4')
+        if 'LUCHADOR_NN_DTYPE' not in f:
+            data = np.string_(luchador.get_nn_dtype())
+            f.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
         f.flush()
 
     def save(self, data, global_step):
