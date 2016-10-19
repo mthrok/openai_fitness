@@ -122,16 +122,9 @@ class Session(BaseSession):
             When False and if dtypes of Variables and dataset do not match,
             It raise TypeError.
         """
-        ignores = ['LUCHADOR_NN_BACKEND',
-                   'LUCHADOR_NN_CONV_FORMAT', 'LUCHADOR_NN_DTYPE']
-
         op = OrderedDict()
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
-                if name in ignores:
-                    _LG.info('  Skipping: {} {}'.format(name, value))
-                    continue
-
                 _LG.info('  Loading: {:10} {:24} {}'
                          .format(value.dtype, value.shape, name))
 

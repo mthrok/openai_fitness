@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import logging
 from collections import OrderedDict
 
 import h5py
@@ -7,10 +8,19 @@ import numpy as np
 
 __all__ = ['Session']
 
+_LG = logging.getLogger(__name__)
+
 
 def _parse_dataset(h5group, prefix=''):
+    ignores = ['LUCHADOR_VERSION', 'LUCHADOR_NN_BACKEND',
+               'LUCHADOR_NN_CONV_FORMAT', 'LUCHADOR_NN_DTYPE']
+
     ret = OrderedDict()
     for key, value in h5group.items():
+        if key in ignores:
+            _LG.info('  Skipping: {:25} {}'.format(key, np.asarray(value)))
+            continue
+
         path = '{}/{}'.format(prefix, key) if prefix else key
         if isinstance(value, h5py.Group):
             ret.update(_parse_dataset(value, prefix=path))
