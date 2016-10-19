@@ -53,6 +53,9 @@ class Saver(object):
         if 'LUCHADOR_NN_DTYPE' not in f:
             data = np.string_(luchador.get_nn_dtype())
             f.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
+        if 'LUCHADOR_VERSION' not in f:
+            data = np.string_(luchador.__version__)
+            f.create_dataset('LUCHADOR_VERSION', data=data)
         f.flush()
 
     def save(self, data, global_step):
