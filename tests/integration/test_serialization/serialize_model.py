@@ -121,29 +121,28 @@ def run(session, ql, minimize_op):
     _LG.info('Running minimization op')
 
     session.run(updates=ql.sync_op)
-    for _ in range(30):
-        pre_states = np.random.randint(
-            low=0, high=256, size=SHAPE, dtype=np.uint8)
-        post_states = np.random.randint(
-            low=0, high=256, size=SHAPE, dtype=np.uint8)
-        actions = np.random.randint(
-            low=0, high=N_ACTIONS, size=(BATCH_SIZE,), dtype=np.uint8)
-        rewards = np.random.randint(
-            low=0, high=2, size=(BATCH_SIZE,), dtype=np.uint8)
-        terminals = np.random.randint(
-            low=0, high=2, size=(BATCH_SIZE,), dtype=np.bool)
+    pre_states = np.random.randint(
+        low=0, high=256, size=SHAPE, dtype=np.uint8)
+    post_states = np.random.randint(
+        low=0, high=256, size=SHAPE, dtype=np.uint8)
+    actions = np.random.randint(
+        low=0, high=N_ACTIONS, size=(BATCH_SIZE,), dtype=np.uint8)
+    rewards = np.random.randint(
+        low=0, high=2, size=(BATCH_SIZE,), dtype=np.uint8)
+    terminals = np.random.randint(
+        low=0, high=2, size=(BATCH_SIZE,), dtype=np.bool)
 
-        session.run(
-            name='minibatch',
-            inputs={
-                ql.pre_states: pre_states,
-                ql.actions: actions,
-                ql.rewards: rewards,
-                ql.post_states: post_states,
-                ql.terminals: terminals,
-            },
-            updates=minimize_op
-        )
+    session.run(
+        name='minibatch',
+        inputs={
+            ql.pre_states: pre_states,
+            ql.actions: actions,
+            ql.rewards: rewards,
+            ql.post_states: post_states,
+            ql.terminals: terminals,
+        },
+        updates=minimize_op
+    )
 
 
 def main():
