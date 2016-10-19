@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import os
 import warnings
 
+import numpy as np
+
 _NN_DTYPE = os.environ.get('LUCHADOR_NN_DTYPE', 'float32')
 _NN_BACKEND = os.environ.get('LUCHADOR_NN_BACKEND', 'theano')
 _NN_CONV_FORMAT = os.environ.get('LUCHADOR_NN_CONV_FORMAT', 'NCHW')
@@ -51,5 +53,5 @@ def set_nn_dtype(dtype):
         )
         warnings.warn(msg)
 
-    # TODO: Add validation
-    _NN_DTYPE = dtype
+    dt = np.dtype(dtype)
+    _NN_DTYPE = dt.name
