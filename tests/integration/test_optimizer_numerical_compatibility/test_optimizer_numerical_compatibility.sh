@@ -5,9 +5,11 @@
 # Arguments:
 # --formula: Name of formula (curve) on which optimization is run. See formula.py for the list of valid formulas.
 # --optimizer: Name of optimizer configurations. See optimizer directory for the list of valid configurations.
+# --iterations: #parameter updates to execute before comparing the parameters. Default: 1000
+# --threshold: Maximum relative diff to allow
+set -eu
 
-set -e
-
+COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -43,9 +45,9 @@ fi
 ITERATIONS=${ITERATIONS-1000}
 THRESHOLD=${THRESHOLD-0.005}
 
-OPTIMIZER_FILENAME=$(basename ${OPTIMIZER})
-FILE1="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_theano.csv"
-FILE2="tmp/test_optimizer_numerical_comparitbility_${FORMULA}_${OPTIMIZER_FILENAME%.*}_tensorflow.csv"
+OPTIMIZER_NAME=$(basename ${OPTIMIZER%.*})
+FILE1="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/theano.csv"
+FILE2="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/tensorflow.csv"
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
@@ -57,7 +59,7 @@ fi
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
 COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
-echo "*** Checking numerical compatibility of ${OPTIMIZER} on ${FORMULA} ***"
+echo "*** Checking numerical compatibility of ${OPTIMIZER_NAME} on ${FORMULA} ***"
 cat ${OPTIMIZER}
 echo "* Running $(basename ${OPTIMIZER}) with Theano backend"
 LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --output ${FILE1} --iterations ${ITERATIONS}
