@@ -1,0 +1,11 @@
+
+layer:
+  name: Dense
+  args:
+    n_nodes: 7
+    with_bias: True
+
+input: input_randn_5x3.h5
+
+parameter: parameter_randn_3x7.h5
+

@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
+import os
 import logging
 
 import h5py
 import numpy as np
 
 from luchador import get_nn_backend, get_nn_conv_format
-from luchador.util import load_config
+import luchador.util
 from luchador.nn import (
     Input,
     Session,
@@ -28,14 +29,6 @@ def parse_command_line_args():
         help='File contains layer and run config.'
     )
     ap.add_argument(
-        'input',
-        help='Input data file. Must be HDF5 data with dataset named "input"'
-    )
-    ap.add_argument(
-        '--parameter',
-        help='Layer paramter file.'
-    )
-    ap.add_argument(
         '--output',
         help='Output data file.'
     )
@@ -52,7 +45,7 @@ def forward_prop(layer, input_value, parameter_file, n_ite):
     output = layer(input.build())
     if parameter_file:
         _LG.info('Loading parameter values from {}'.format(parameter_file))
-        sess.load_from_file(parameter_file)
+        sess.load_from_file(parameter_file, strict=False)
 
     _LG.info('Running forward path for {} times'.format(n_ite))
     for _ in range(n_ite):
@@ -121,6 +114,10 @@ def load_input_value(filepath):
 
 
 def save_output(filepath, data):
+    directory = os.path.dirname(filepath)
+    if not os.path.exists(directory):
+            os.makedirs(directory)
+
     _LG.info('Saving output value to {}'.format(filepath))
     _LG.info('  Shape {}'.format(data.shape))
     _LG.info('  Dtype {}'.format(data.dtype))
@@ -129,18 +126,28 @@ def save_output(filepath, data):
     f.close()
 
 
+def load_config(config_path):
+    cfg = luchador.util.load_config(config_path)
+
+    cfg_dir = os.path.dirname(config_path)
+    input_file = os.path.join(cfg_dir, cfg['input'])
+    param_file = os.path.join(cfg_dir, cfg['parameter']) if 'parameter' in cfg else None
+    return cfg, input_file, param_file
+
+
 def main():
     args = parse_command_line_args()
 
     if args.debug:
         _LG.setLevel(logging.DEBUG)
 
-    cfg = load_config(args.config)
+    cfg, input_file, param_file = load_config(args.config)
+
     output = run_forward_prop(
         layer=load_layer(cfg['layer']),
-        input_value=load_input_value(args.input),
-        parameter_file=args.parameter,
-        **cfg.get('run')
+        input_value=load_input_value(input_file),
+        parameter_file=param_file,
+        **cfg.get('run', {})
     )
 
     if args.output:

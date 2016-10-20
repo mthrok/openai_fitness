@@ -1,0 +1,7 @@
+
+layer:
+  name: Flatten
+  args: {}
+
+input: input_mnist_10x4x28x27.h5
+

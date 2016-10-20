@@ -4,15 +4,18 @@
 #
 # Arguments:
 # --dir: Path to the layer configuration directory. "config.yml", "parameter.h5", "input.h5" must be present
-set -e
+set -eu
 
-LAYER_DIR=
+COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+CONFIG=
 while [[ $# -gt 0 ]]
 do
     key="$1"
     case $key in
-        --dir)
-	    LAYER_DIR="$2"
+        --config)
+	    CONFIG="$2"
             shift
             ;;
         *)
@@ -23,37 +26,28 @@ do
     shift
 done
 
-if [[ -z "${LAYER_DIR}" ]]; then
-    echo "--dir must be given"
+if [[ -z "${CONFIG}" ]]; then
+    echo "--config must be given"
     exit 1
 fi
 
-LAYER_NAME="$( basename ${LAYER_DIR} )"
-LAYER_CONFIG="${LAYER_DIR}/config.yml"
-LAYER_PARAM="${LAYER_DIR}/parameter.h5"
-LAYER_INPUT="${LAYER_DIR}/input.h5"
-
-BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+LAYER_NAME="$( basename ${CONFIG%.*} )"
 if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
     TEST_COMMAND="coverage run --source luchador -a"
 else
     TEST_COMMAND="python"
 fi
-TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_layer.py ${LAYER_CONFIG} ${LAYER_INPUT}"
-if [ -f "${LAYER_PARAM}" ]; then
-    TEST_COMMAND="${TEST_COMMAND}  --parameter ${LAYER_PARAM}"
-fi
+TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_layer.py ${CONFIG}"
 COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
-FILE1="tmp/test_layer_numerical_comparitbility_${LAYER_NAME}_theano.h5"
-FILE2="tmp/test_layer_numerical_comparitbility_${LAYER_NAME}_tensorflow.h5"
+FILE1="tmp/test_layer_numerical_comparitbility/${LAYER_NAME}/theano.h5"
+FILE2="tmp/test_layer_numerical_comparitbility/${LAYER_NAME}/tensorflow.h5"
 
 echo "*** Checking numerical compatibility of ${LAYER_NAME} ***"
-cat ${LAYER_CONFIG}
-echo "* Running $(basename ${LAYER_NAME}) with Theano backend"
+cat ${CONFIG}
+echo "* Running ${LAYER_NAME} with Theano backend"
 LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --output ${FILE1}
-echo "* Running $(basename ${LAYER_NAME}) with Tensorflow backend"
+echo "* Running ${LAYER_NAME} with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2}
 echo "* Comparing results"
 ${COMPARE_COMMAND} ${FILE1} ${FILE2}

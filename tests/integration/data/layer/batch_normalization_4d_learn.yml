@@ -1,0 +1,17 @@
+
+run:
+  iteration: 10
+
+layer:
+  name: BatchNormalization
+  args:
+    scale: 2.0
+    offset: 0.5
+    learn: True
+    decay: 0.999
+
+
+input: input_randn_3x5_offset_3.h5
+
+parameter: parameter_bn.h5
+

@@ -1,0 +1,15 @@
+
+layer:
+  name: Conv2D
+  args:
+    filter_height: 7
+    filter_width: 5
+    n_filters: 3
+    strides: 3
+    padding: VALID
+    with_bias: False
+
+input: input_mnist_10x4x28x27.h5
+
+parameter:  parameter_randn_3x4x7x5.h5
+
