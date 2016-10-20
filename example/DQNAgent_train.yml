@@ -51,7 +51,7 @@ args:
     saver_config:
       output_dir: &output_dir results
       max_to_keep: 10
-      keep_every_n_hours: 1.0
+      keep_every_n_hours: 0.5
       prefix: DQN
 
   summary_config:
