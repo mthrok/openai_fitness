@@ -135,7 +135,7 @@ class Session(BaseSession):
         self.session.run(tf.initialize_all_variables())
 
     ###########################################################################
-    def load_dataset(self, dataset, cast=True):
+    def load_dataset(self, dataset, cast=True, strict=True):
         """Set the value of Variables with the given values
 
         Args:
@@ -144,14 +144,26 @@ class Session(BaseSession):
 
           cast (Bool): Not used in Tensorflow backend as it casts dtype
             internally.
+
+          strict (Bool): When True, if dataset contains a value for Variable
+            which is not defined, then ValueError exception is raised.
+            Otherwise it will be skipped.
         """
         op = []
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
-                _LG.info('  Loading: {:10} {:24} {}'
-                         .format(value.dtype, value.shape, name))
 
-                variable = scope.get_variable(name=name)
+                try:
+                    variable = scope.get_variable(name=name)
+                    _LG.info('  Loading: {:10} {:24} {}'
+                             .format(value.dtype, value.shape, name))
+
+                except ValueError:
+                    if strict:
+                        raise
+                    _LG.info('  Variable `{}` does not exist.'.format(name))
+                    continue
+
                 src_shape, tgt_shape = value.shape, variable.shape
                 if not tgt_shape == src_shape:
                     # Tensorflow's convolution filter shape is

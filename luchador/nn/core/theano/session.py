@@ -111,7 +111,7 @@ class Session(BaseSession):
         pass
 
     ###########################################################################
-    def load_dataset(self, dataset, cast=True):
+    def load_dataset(self, dataset, cast=True, strict=True):
         """Set the value of Variables with the given values
 
         Args:
@@ -121,14 +121,24 @@ class Session(BaseSession):
           cast (Bool): If True, values are casted to the dtype of Variables.
             When False and if dtypes of Variables and dataset do not match,
             It raise TypeError.
+
+          strict (Bool): When True, if dataset contains a value for Variable
+            which is not defined, then ValueError exception is raised.
+            Otherwise it will be skipped.
         """
         op = OrderedDict()
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
-                _LG.info('  Loading: {:10} {:24} {}'
-                         .format(value.dtype, value.shape, name))
+                try:
+                    variable = scope.get_variable(name=name)
+                    _LG.info('  Loading: {:10} {:24} {}'
+                             .format(value.dtype, value.shape, name))
+                except ValueError:
+                    if strict:
+                        raise
+                    _LG.info('  Variable `{}` does not exist.'.format(name))
+                    continue
 
-                variable = scope.get_variable(name=name)
                 if cast:
                     value = np.array(value, dtype=variable.dtype)
 
