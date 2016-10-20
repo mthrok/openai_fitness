@@ -131,7 +131,8 @@ def load_config(config_path):
 
     cfg_dir = os.path.dirname(config_path)
     input_file = os.path.join(cfg_dir, cfg['input'])
-    param_file = os.path.join(cfg_dir, cfg['parameter']) if 'parameter' in cfg else None
+    param_file = (os.path.join(cfg_dir, cfg['parameter'])
+                  if 'parameter' in cfg else None)
     return cfg, input_file, param_file
 
 
