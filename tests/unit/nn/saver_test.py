@@ -20,8 +20,8 @@ def list_files(prefix, dir_name=OUTPUT_DIR):
             for f in os.listdir(dir_name) if f.startswith(prefix)]
 
 
-def remove_files(prefix, dir_name=OUTPUT_DIR):
-    for f in list_files(prefix, dir_name):
+def remove_files(dir_name=OUTPUT_DIR):
+    for f in list_files('', dir_name):
         os.remove(f)
 
 
@@ -30,12 +30,16 @@ def gen_random_value():
 
 
 class SaverTest(unittest.TestCase):
+    def get_empty_dir(self):
+        output_dir = os.path.join(OUTPUT_DIR, self.id().split('.')[-1])
+        remove_files(output_dir)
+        return output_dir
+
     def test_save(self):
         """`save` function can save data"""
         prefix = 'test_save'
 
-        output_dir = os.path.join(OUTPUT_DIR, 'test_save')
-        remove_files(prefix, output_dir)
+        output_dir = self.get_empty_dir()
         saver = Saver(output_dir, prefix=prefix)
 
         key = 'test'
@@ -53,8 +57,7 @@ class SaverTest(unittest.TestCase):
         """`save` function appends to existing file"""
         prefix, global_step = 'test_append', 0
 
-        output_dir = os.path.join(OUTPUT_DIR, 'test_append')
-        remove_files(prefix, output_dir)
+        output_dir = self.get_empty_dir()
         saver = Saver(output_dir, prefix=prefix)
 
         key1 = 'key1'
@@ -82,11 +85,10 @@ class SaverTest(unittest.TestCase):
         )
 
     def test_overwrite(self):
-        """`save` function raises error if key exists"""
+        """`save` function overwrites the existing values"""
         prefix, global_step = 'test_overwrite', 0
 
-        output_dir = os.path.join(OUTPUT_DIR, 'test_overwrite')
-        remove_files(prefix, output_dir)
+        output_dir = self.get_empty_dir()
         saver = Saver(output_dir, prefix=prefix)
 
         key = 'foo'
@@ -110,8 +112,7 @@ class SaverTest(unittest.TestCase):
         """Saver only keeps lates files"""
         prefix, max_to_keep = 'test_max_to_keep', 10
 
-        output_dir = os.path.join(OUTPUT_DIR, 'test_max_to_keep')
-        remove_files(prefix, output_dir)
+        output_dir = self.get_empty_dir()
         saver = Saver(output_dir, prefix=prefix, max_to_keep=max_to_keep)
 
         for step in range(2 * max_to_keep):
@@ -123,8 +124,7 @@ class SaverTest(unittest.TestCase):
         prefix, max_to_keep = 'test_keep_every_n_hours', 10
         keep_every_n_hours = 1.0
 
-        output_dir = os.path.join(OUTPUT_DIR, 'test_keep_every_n_hours')
-        remove_files(prefix, output_dir)
+        output_dir = self.get_empty_dir()
         saver = Saver(output_dir, prefix=prefix, max_to_keep=max_to_keep,
                       keep_every_n_hours=keep_every_n_hours)
 
@@ -137,3 +137,25 @@ class SaverTest(unittest.TestCase):
                 saver.save({'foo': gen_random_value()}, global_step=step+1)
                 files_kept = len(list_files(prefix, output_dir))
                 self.assertEqual(files_kept, max_to_keep + i + 1)
+
+    def test_keep_oldest_file_while_delete(self):
+        """Saver retains oldest file in current tmp files"""
+        prefix, max_to_keep = 'test_keep_and_keep', 3
+        keep_every_n_hours = 0.5
+
+        output_dir = self.get_empty_dir()
+        saver = Saver(output_dir, prefix=prefix, max_to_keep=max_to_keep,
+                      keep_every_n_hours=keep_every_n_hours)
+
+        now = 0
+        for _ in range(20):
+            now += 420  # 7 mins
+            saver.save({'foo': gen_random_value()},
+                       global_step=now/60, now=now)
+
+        files = list_files(prefix, output_dir)
+        for i in range(1, 18, 4):
+            filepath = '{}_{}.h5'.format(prefix, 7 * i)
+            self.assertTrue(filepath in files,
+                            'File is not found in output dir. {}'
+                            .format(filepath))

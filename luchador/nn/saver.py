@@ -5,7 +5,6 @@ import os
 import time
 import errno
 import logging
-from collections import OrderedDict
 
 import h5py
 import numpy as np
@@ -30,9 +29,10 @@ class Saver(object):
         self.output_dir = output_dir
         self.max_to_keep = max_to_keep
         self.keep_every_n_hours = keep_every_n_hours
+        self.threshold = 3600 * keep_every_n_hours
 
-        self.saved = OrderedDict()
-        self.last_saved = time.time()
+        self.to_be_deleted = []
+        self.last_back_up = None
 
     def _write(self, f, data):
         for key, value in data.items():
@@ -58,7 +58,8 @@ class Saver(object):
             f.create_dataset('LUCHADOR_VERSION', data=data)
         f.flush()
 
-    def save(self, data, global_step):
+    def save(self, data, global_step, now=None):
+        # `now` should be used only for testing
         filename = '{}_{}.h5'.format(self.prefix, global_step)
         filepath = os.path.join(self.output_dir, filename)
 
@@ -71,21 +72,34 @@ class Saver(object):
         finally:
             f.close()
 
-        self.saved[filepath] = time.time()
+        self._add_new_record(filepath, now=now)
         self._remove_old_data()
         return filepath
 
-    def _remove_old_data(self):
-        threshold = 3600 * self.keep_every_n_hours
-
-        while self.max_to_keep < len(self.saved):
-            filepath, saved_time = self.saved.popitem(last=False)
-            elapsed = (saved_time - self.last_saved)
-            if elapsed > threshold:
-                self.last_saved = saved_time
+    def _add_new_record(self, filepath, now=None):
+        # `now` should be used only for testing
+        now = now if now else time.time()
+        if self.last_back_up is None:
+            # If this is the first time, do not put this in delete candidates
+            _LG.info('Backing up: {}'.format(filepath))
+            self.last_back_up = now
+        elif now - self.last_back_up < self.threshold:
+            # Add the new file to delete candidate
+            self.to_be_deleted.append((now, filepath))
+        else:
+            # It's been a while since the last back up, so back up one
+            if self.to_be_deleted:
+                self.last_back_up, filepath_ = self.to_be_deleted.pop()
+                self.to_be_deleted.append((now, filepath))
+                _LG.info('Backing up: {}'.format(filepath_))
             else:
-                try:
-                    _LG.info('Removing: {}'.format(filepath))
-                    os.remove(filepath)
-                except Exception:
-                    _LG.exception('Failed to delete {}'.format(filepath))
+                self.last_back_up = now
+
+    def _remove_old_data(self):
+        while self.max_to_keep < len(self.to_be_deleted):
+            _, filepath = self.to_be_deleted.pop(0)
+            try:
+                _LG.info('Removing: {}'.format(filepath))
+                os.remove(filepath)
+            except Exception:
+                _LG.exception('Failed to delete {}'.format(filepath))
