@@ -70,11 +70,14 @@ class DQNAgent(BaseAgent):
         params = self.ql.pre_trans_net.get_parameter_variables()
         outputs = self.ql.pre_trans_net.get_output_tensors()
         self.summary_writer.register(
-            'histogram', (
-                ['/'.join(v.name.split('/')[1:]) for v in params] +
-                ['/'.join(v.name.split('/')[1:]) for v in outputs] +
-                ['Training/Error', 'Training/Reward', 'Training/Steps']
-            )
+            'histogram', tag='params',
+            names=['/'.join(v.name.split('/')[1:]) for v in params])
+        self.summary_writer.register(
+            'histogram', tag='outputs',
+            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
+        self.summary_writer.register(
+            'histogram', tag='training',
+            names=['Training/Error', 'Training/Reward', 'Training/Steps']
         )
         self.summary_writer.register_stats(['Error', 'Reward', 'Steps'])
 
@@ -234,11 +237,11 @@ class DQNAgent(BaseAgent):
         self._summarize_layer_params(episode)
         self._summarize_layer_outputs(episode)
         self.summary_writer.summarize(
-            episode, {
-                'Training/Error': self.summary_values['error'],
-                'Training/Reward': self.summary_values['rewards'],
-                'Training/Steps': self.summary_values['steps'],
-            }
+            episode, tag='training', dataset=[
+                self.summary_values['error'],
+                self.summary_values['rewards'],
+                self.summary_values['steps'],
+            ]
         )
         if self.summary_values['rewards']:
             self.summary_writer.summarize_stats(
