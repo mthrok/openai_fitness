@@ -58,40 +58,29 @@ class DQNAgent(BaseAgent):
         self._init_network()
         self._init_summary_writer()
         self.saver = Saver(**self.save_config['saver_config'])
+        self._summarize_layer_params(0)
 
     def _init_summary_writer(self):
         cfg = self.summary_config
         self.summary_writer = SummaryWriter(**cfg['writer_config'])
-        self.summary_writer.add_graph(self.session.graph)
+
+        if self.session.graph:
+            self.summary_writer.add_graph(self.session.graph)
+
         params = self.ql.pre_trans_net.get_parameter_variables()
         outputs = self.ql.pre_trans_net.get_output_tensors()
         self.summary_writer.register(
-            'pre_trans_net_params', 'histogram',
-            ['/'.join(v.name.split('/')[1:]) for v in params]
-        )
+            'histogram', tag='params',
+            names=['/'.join(v.name.split('/')[1:]) for v in params])
         self.summary_writer.register(
-            'pre_trans_net_outputs', 'histogram',
-            ['/'.join(v.name.split('/')[1:]) for v in outputs]
-        )
+            'histogram', tag='outputs',
+            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
         self.summary_writer.register(
-            'training_summary', 'histogram',
-            ['Training/Error', 'Training/Reward', 'Training/Steps']
+            'histogram', tag='training',
+            names=['Training/Error', 'Training/Reward', 'Training/Steps']
         )
+        self.summary_writer.register_stats(['Error', 'Reward', 'Steps'])
 
-        self.summary_writer.register(
-            'training_summary_ave', 'scalar',
-            ['Error/Average', 'Reward/Average', 'Steps/Average']
-        )
-
-        self.summary_writer.register(
-            'training_summary_min', 'scalar',
-            ['Error/Min', 'Reward/Min', 'Steps/Min']
-        )
-
-        self.summary_writer.register(
-            'training_summary_max', 'scalar',
-            ['Error/Max', 'Reward/Max', 'Steps/Max']
-        )
         self.summary_values = {
             'error': [],
             'rewards': [],
@@ -245,47 +234,55 @@ class DQNAgent(BaseAgent):
 
     def _summarize(self, episode):
         """Summarize network parameter, output and training history"""
-        sample = self.recorder.sample(32)
-
-        params = self.ql.pre_trans_net.get_parameter_variables()
-        outputs = self.ql.pre_trans_net.get_output_tensors()
-
-        params_vals = self.session.run(outputs=params, name='pre_trans_params')
-        output_vals = self.session.run(
-            outputs=outputs,
-            inputs={self.ql.pre_states: sample['pre_states']},
-            name='pre_trans_outputs'
+        self._summarize_layer_params(episode)
+        self._summarize_layer_outputs(episode)
+        self.summary_writer.summarize(
+            episode, tag='training', dataset=[
+                self.summary_values['error'],
+                self.summary_values['rewards'],
+                self.summary_values['steps'],
+            ]
         )
-        self.summary_writer.summarize(
-            'pre_trans_net_params', episode, params_vals)
-        self.summary_writer.summarize(
-            'pre_trans_net_outputs', episode, output_vals)
-
-        summary = self.summary_values
-        values = [summary['error'], summary['rewards'], summary['steps']]
-        self.summary_writer.summarize(
-            'training_summary', episode, values,
-        )
-
-        self.summary_writer.summarize(
-            'training_summary_min', episode,
-            [np.min(v) if v else 0 for v in values],
-        )
-
-        self.summary_writer.summarize(
-            'training_summary_ave', episode,
-            [np.mean(v) if v else 0 for v in values],
-        )
-
-        self.summary_writer.summarize(
-            'training_summary_max', episode,
-            [np.max(v) if v else 0 for v in values],
-        )
+        if self.summary_values['rewards']:
+            self.summary_writer.summarize_stats(
+                episode, {'Reward': self.summary_values['rewards']}
+            )
+        if self.summary_values['error']:
+            self.summary_writer.summarize_stats(
+                episode, {'Error': self.summary_values['error']}
+            )
+        if self.summary_values['steps']:
+            self.summary_writer.summarize_stats(
+                episode, {'Steps': self.summary_values['steps']}
+            )
         self.summary_values = {
             'error': [],
             'rewards': [],
             'steps': [],
         }
+
+    def _summarize_layer_outputs(self, episode):
+        sample = self.recorder.sample(32)
+        outputs = self.ql.pre_trans_net.get_output_tensors()
+        output_vals = self.session.run(
+            outputs=outputs,
+            inputs={self.ql.pre_states: sample['pre_states']},
+            name='pre_trans_outputs'
+        )
+        output_data = {
+            '/'.join(v.name.split('/')[1:]): val
+            for v, val in zip(outputs, output_vals)
+        }
+        self.summary_writer.summarize(episode, output_data)
+
+    def _summarize_layer_params(self, episode):
+        params = self.ql.pre_trans_net.get_parameter_variables()
+        params_vals = self.session.run(outputs=params, name='pre_trans_params')
+        params_data = {
+            '/'.join(v.name.split('/')[1:]): val
+            for v, val in zip(params, params_vals)
+        }
+        self.summary_writer.summarize(episode, params_data)
 
     ###########################################################################
     def __repr__(self):
