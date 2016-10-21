@@ -106,14 +106,14 @@ def run_single_episode(env, agent, timelimit=300):
 
 
 def run_episodes(env, agent, episodes=30, timelimit=300):
-    total_rewards, total_steps = 0, 0
+    rewards, steps = 0, 0
     _LG.info('  Running {} Episodes'.format(episodes))
     for i in range(episodes):
-        rewards, steps = run_single_episode(env, agent, timelimit)
+        r, s = run_single_episode(env, agent, timelimit)
         _LG.info('  Ep {}: {}'.format(i+1, rewards))
-        total_rewards += rewards
-        total_steps += steps
-    return total_rewards / episodes, total_steps / episodes
+        rewards.append(r)
+        steps.append(s)
+    return rewards, steps
 
 
 def main():
@@ -126,16 +126,16 @@ def main():
     agent.init(env)
     writer = SummaryWriter(args.output_dir)
     writer.add_graph(agent.session.graph)
-    writer.register('eval', 'scalar', ['Reward', 'Steps'])
+    writer.register_stats(['Reward', 'Steps'])
 
     for ite, f in files:
         _LG.info('*** Evaluating {}'.format(f))
         agent.session.load_from_file(f)
         rewards, steps = run_episodes(
             env, agent, episodes=args.episodes, timelimit=args.timelimit)
-        _LG.info('Average rewards: {}'.format(rewards))
-        _LG.info('Average steps: {}'.format(steps))
-        writer.summarize('eval', ite, [rewards, steps])
+        _LG.info('Average rewards: {}'.format(sum(rewards) / len(rewards)))
+        _LG.info('Average steps: {}'.format(sum(steps) / len(steps)))
+        writer.summarize_stats(ite, {'Rewards': rewards, 'Steps': steps})
 
 if __name__ == '__main__':
     main()
