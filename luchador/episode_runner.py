@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import time
 import logging
 
 _LG = logging.getLogger(__name__)
@@ -14,7 +15,11 @@ class EpisodeRunner(object):
         self.env = env
         self.agent = agent
         self.max_steps = max_steps
+
         self.episode = 0
+        self.time = 0
+        self.steps = 0
+        self.rewards = 0
 
     def _reset(self):
         """Reset environment and agent"""
@@ -31,21 +36,29 @@ class EpisodeRunner(object):
         max_steps = max_steps or self.max_steps
         self._reset()
 
-        total_rewards = 0
+        rewards = 0
+        t0 = time.time()
         for steps in range(1, max_steps+1):
             action = self.agent.act()
             outcome = self.env.step(action)
 
             self.agent.observe(action, outcome)
-            total_rewards += outcome.reward
+            rewards += outcome.reward
 
             if outcome.terminal:
                 break
 
+        elapsed = time.time() - t0
+
         stats = {
             'episode': self.episode,
-            'rewards': total_rewards,
+            'rewards': rewards,
             'steps': steps,
+            'time': elapsed,
         }
+        self.time += elapsed
+        self.steps += steps
+        self.rewards += rewards
+
         self._perform_post_episode_task(stats)
         return stats

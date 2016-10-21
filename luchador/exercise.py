@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import time
 import logging
 
 from .env import get_env
@@ -20,32 +19,28 @@ def main(env, agent, episodes, steps, report_every=1000):
 
     Agent = get_agent(agent['name'])
     agent = Agent(**agent['args'])
-    agent.init(env)
     _LG.info('\n{}'.format(agent))
+    agent.init(env)
 
     runner = EpisodeRunner(env, agent, max_steps=steps)
 
-    total_time = 0
-    total_steps = 0
-    total_rewards = 0.0
     _LG.info('Running {} episodes'.format(episodes))
+    n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     for i in range(1, episodes+1):
-        t0 = time.time()
         stats = runner.run_episode()
-        t1 = time.time()
 
-        total_time += t1 - t0
-        total_steps += stats['steps']
-        total_rewards += stats['rewards']
+        n_ep += 1
+        time_ += stats['time']
+        steps_ += stats['steps']
+        rewards += stats['rewards']
         if i % report_every == 0 or i == episodes:
             _LG.info('Finished episode: {}'.format(i))
-            _LG.info('  Steps: {}, ({} [/sec])'
-                     .format(total_steps, total_steps / total_time))
-            _LG.info('  Rewards: {}, ({} [/epi])'
-                     .format(total_rewards, total_rewards / report_every))
-            total_time = 0
-            total_steps = 0
-            total_rewards = 0.0
+            _LG.info('  Rewards:     {:8.1f} [/epi]'.format(rewards / n_ep))
+            _LG.info('  Steps:       {:8.1f} [/epi]'.format(steps_ / n_ep))
+            _LG.info('               {:8.1f} [/sec]'.format(steps_ / time_))
+            _LG.info('  Total Steps: {:8d}'.format(runner.steps))
+            _LG.info('  Total Time:  {:8.1f} [sec]'.format(runner.time))
+            n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     _LG.info('Done')
 
 
