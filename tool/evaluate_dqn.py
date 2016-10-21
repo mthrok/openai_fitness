@@ -101,16 +101,16 @@ def run_single_episode(env, agent, timelimit=300):
 
         elapsed = time.time() - t0
         if elapsed > timelimit:
-            _LG('  Reached time limit')
+            _LG.info('  Reached time limit')
     return rewards, steps
 
 
 def run_episodes(env, agent, episodes=30, timelimit=300):
-    rewards, steps = 0, 0
+    rewards, steps = [], []
     _LG.info('  Running {} Episodes'.format(episodes))
     for i in range(episodes):
         r, s = run_single_episode(env, agent, timelimit)
-        _LG.info('  Ep {}: {}'.format(i+1, rewards))
+        _LG.info('  Ep {}: {} ({} steps)'.format(i+1, r, s))
         rewards.append(r)
         steps.append(s)
     return rewards, steps
@@ -125,7 +125,8 @@ def main():
 
     agent.init(env)
     writer = SummaryWriter(args.output_dir)
-    writer.add_graph(agent.session.graph)
+    if agent.session.graph:
+        writer.add_graph(agent.session.graph)
     writer.register_stats(['Reward', 'Steps'])
 
     for ite, f in files:
