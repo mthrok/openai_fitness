@@ -49,7 +49,7 @@ args:
     # Giving non-positive value effectively disable save functionality
     interval: 3
     saver_config:
-      output_dir: &output_dir tmp
+      output_dir: &output_dir tmp/test_dqn/
       max_to_keep: 10
       keep_every_n_hours: 1.0
       prefix: DQN_integration_test
