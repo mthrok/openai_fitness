@@ -68,13 +68,10 @@ class SummaryWriter(object):
         """
         ops, feed_dict = [], {}
         if tag:
-            for name, value in zip(self.tags[tag], dataset):
-                ops.append(self.summary_ops[name].op)
-                feed_dict[self.summary_ops[name].pf] = value
-        else:
-            for name, value in dataset.items():
-                ops.append(self.summary_ops[name].op)
-                feed_dict[self.summary_ops[name].pf] = value
+            dataset = {name: val for name, val in zip(self.tags[tag], dataset)}
+        for name, value in dataset.items():
+            ops.append(self.summary_ops[name].op)
+            feed_dict[self.summary_ops[name].pf] = value
 
         summaries = self.session.run(ops, feed_dict=feed_dict)
         for summary in summaries:
