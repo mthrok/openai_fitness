@@ -118,7 +118,7 @@ class SaverTest(unittest.TestCase):
         for step in range(2 * max_to_keep):
             saver.save({'foo': gen_random_value()}, global_step=step)
             files_kept = len(list_files(prefix, output_dir))
-            self.assertLessEqual(files_kept, max_to_keep)
+            self.assertLessEqual(files_kept, max_to_keep + 1)
 
     def test_keep_every_n_hours(self):
         prefix, max_to_keep = 'test_keep_every_n_hours', 10
@@ -132,11 +132,12 @@ class SaverTest(unittest.TestCase):
             saver.save({'foo': gen_random_value()}, global_step=step)
 
         for i in range(10):
-            saver.last_saved -= 3600 * keep_every_n_hours
+            now = 3600 * i
             for step in range(max_to_keep * (i+1), max_to_keep * (i + 2)):
-                saver.save({'foo': gen_random_value()}, global_step=step+1)
+                saver.save({'foo': gen_random_value()},
+                           global_step=step+1, now=now)
                 files_kept = len(list_files(prefix, output_dir))
-                self.assertEqual(files_kept, max_to_keep + i + 1)
+                self.assertEqual(files_kept, max_to_keep+1)
 
     def test_keep_oldest_file_while_delete(self):
         """Saver retains oldest file in current tmp files"""
@@ -155,7 +156,8 @@ class SaverTest(unittest.TestCase):
 
         files = list_files(prefix, output_dir)
         for i in range(1, 18, 4):
-            filepath = '{}_{}.h5'.format(prefix, 7 * i)
-            self.assertTrue(filepath in files,
-                            'File is not found in output dir. {}'
-                            .format(filepath))
+            filepath = os.path.join(
+                output_dir, '{}_{}.h5'.format(prefix, 7 * i))
+            self.assertTrue(
+                filepath in files,
+                'File is not found in output dir. {}'.format(filepath))
