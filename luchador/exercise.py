@@ -35,13 +35,25 @@ def main(env, agent, episodes, steps, report_every=1000):
         rewards += stats['rewards']
         if i % report_every == 0 or i == episodes:
             _LG.info('Finished episode: {}'.format(i))
-            _LG.info('  Rewards:     {:8.1f} [/epi]'.format(rewards / n_ep))
-            _LG.info('  Steps:       {:8.1f} [/epi]'.format(steps_ / n_ep))
-            _LG.info('               {:8.1f} [/sec]'.format(steps_ / time_))
-            _LG.info('  Total Steps: {:8d}'.format(runner.steps))
-            _LG.info('  Total Time:  {:8.1f} [sec]'.format(runner.time))
+            _LG.info('  Rewards:     {:10.3f} [/epi]'.format(rewards / n_ep))
+            _LG.info('  Steps:       {:6d}'.format(steps_))
+            _LG.info('               {:10.3f} [/epi]'.format(steps_ / n_ep))
+            _LG.info('               {:10.3f} [/sec]'.format(steps_ / time_))
+            _LG.info('  Total Steps: {:6d}'.format(runner.steps))
+            _LG.info('  Total Time:  {}'.format(format_time(runner.time)))
             n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     _LG.info('Done')
+
+
+def format_time(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+
+    ret = '{:02d}:{:02d}:{:02d}'.format(h, m, s)
+    if d:
+        ret = '{:d} Days {}'.format(d, ret)
+    return ret
 
 
 ###############################################################################
