@@ -18,4 +18,3 @@ class MyRandomAgent(BaseAgent):
 
     def act(self):
         return np.random.randint(self.n_actions)
-
