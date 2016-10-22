@@ -3,12 +3,16 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from ..base import (
+    get_cost,
     BaseCost,
     BaseSSE2,
 )
 from .wrapper import Tensor
 
-__all__ = ['SSE2', 'SigmoidCrossEntropy']
+__all__ = [
+    'BaseCost', 'get_cost',
+    'SSE2', 'SigmoidCrossEntropy',
+]
 
 
 def mean_sum(err):

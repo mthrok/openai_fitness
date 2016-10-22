@@ -45,3 +45,14 @@ def get_layers():
                 not Class == luchador.nn.BaseLayer
         )
     }
+
+
+def get_costs():
+    return {
+        name: Class for name, Class
+        in inspect.getmembers(luchador.nn, inspect.isclass)
+        if (
+                issubclass(Class, luchador.nn.BaseCost) and
+                not Class == luchador.nn.BaseCost
+        )
+    }

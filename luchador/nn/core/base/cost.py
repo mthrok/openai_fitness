@@ -2,10 +2,11 @@ from __future__ import absolute_import
 
 import logging
 
-from luchador.common import StoreMixin
+from luchador.common import get_subclasses, StoreMixin
 
 __all__ = [
-    'BaseCost', 'BaseSSE2'
+    'BaseCost', 'get_cost',
+    'BaseSSE2',
 ]
 
 _LG = logging.getLogger(__name__)
@@ -38,6 +39,13 @@ class BaseCost(StoreMixin, object):
             '`build` method is not implemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)
         )
+
+
+def get_cost(name):
+    for Class in get_subclasses(BaseCost):
+        if Class.__name__ == name:
+            return Class
+    raise ValueError('Unknown Cost: {}'.format(name))
 
 
 class BaseSSE2(BaseCost):

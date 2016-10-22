@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import unittest
 
 from tests.unit.fixture import (
+    get_costs,
     get_layers,
     get_optimizers,
     get_initializers,
@@ -12,6 +13,7 @@ from luchador.nn import (
     get_initializer,
     get_optimizer,
     get_layer,
+    get_cost,
 )
 from luchador.nn.util import (
     get_model_config,
@@ -53,6 +55,17 @@ class UtilTest(unittest.TestCase):
             self.assertEqual(
                 expected, found,
                 'get_layer returned wrong layer Class. '
+                'Expected: {}, Found: {}.'.format(expected, found)
+            )
+
+    def test_get_cost(self):
+        """get_cost returns correct layer class"""
+        for name, Cost in get_costs().items():
+            expected = Cost
+            found = get_cost(name)
+            self.assertEqual(
+                expected, found,
+                'get_cost returned wrong cost Class. '
                 'Expected: {}, Found: {}.'.format(expected, found)
             )
 

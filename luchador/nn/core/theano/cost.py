@@ -6,6 +6,7 @@ import theano
 import theano.tensor as T
 
 from ..base import (
+    get_cost,
     BaseCost,
     BaseSSE2,
 )
@@ -13,7 +14,10 @@ from .wrapper import Tensor
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['SSE2', 'SigmoidCrossEntropy']
+__all__ = [
+    'BaseCost', 'get_cost',
+    'SSE2', 'SigmoidCrossEntropy',
+]
 
 
 def sum_mean(x):
