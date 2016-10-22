@@ -14,7 +14,7 @@ def create_image(height=210, width=160, channel=3):
     return np.ones(shape, dtype=np.uint8)
 
 
-def get_initializers():
+def get_all_initializers():
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -25,7 +25,7 @@ def get_initializers():
     }
 
 
-def get_optimizers():
+def get_all_optimizers():
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -36,7 +36,7 @@ def get_optimizers():
     }
 
 
-def get_layers():
+def get_all_layers():
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -47,7 +47,7 @@ def get_layers():
     }
 
 
-def get_costs():
+def get_all_costs():
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)

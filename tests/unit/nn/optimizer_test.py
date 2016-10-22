@@ -2,10 +2,10 @@ from __future__ import absolute_import
 
 import unittest
 
-from tests.unit.fixture import get_optimizers
+from tests.unit.fixture import get_all_optimizers
 from luchador.nn import get_optimizer
 
-OPTIMIZERS = get_optimizers()
+OPTIMIZERS = get_all_optimizers()
 N_OPTIMIZERS = 6
 
 ARGS1 = {
@@ -105,6 +105,17 @@ class OptimizerTest(unittest.TestCase):
             'Number of optimizers are changed. (New optimizer is added?) '
             'Fix unittest to cover new optimizers'
         )
+
+    def test_get_optimzier(self):
+        """get_optimizer returns correct optimizer class"""
+        for name, Optimizer in OPTIMIZERS.items():
+            expected = Optimizer
+            found = get_optimizer(name)
+            self.assertEqual(
+                expected, found,
+                'get_optimizer returned wrong optimizer Class. '
+                'Expected: {}, Found: {}.'.format(expected, found)
+            )
 
     def test_optimizer_equality(self):
         """Optimizers with same arguments must be equal"""

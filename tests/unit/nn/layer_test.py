@@ -7,10 +7,18 @@ from luchador.nn import (
     Dense,
     Conv2D,
     ReLU,
+    Sigmoid,
+    Softmax,
     Flatten,
     TrueDiv,
     BatchNormalization,
+    NCHW2NHWC,
+    NHWC2NCHW,
 )
+from tests.unit.fixture import get_all_layers
+
+LAYERS = get_all_layers()
+N_LAYERS = 10
 
 PARAMETERIZED_LAYER_CLASSES = (
     Dense,
@@ -22,11 +30,12 @@ PARAMETERIZED_LAYER_CLASSES = (
 FIXED_LAYER_CLASSES = (
     Flatten,
     ReLU,
+    Sigmoid,
+    Softmax,
+    NCHW2NHWC,
+    NHWC2NCHW,
 )
 
-
-LAYERS = PARAMETERIZED_LAYER_CLASSES + FIXED_LAYER_CLASSES
-N_LAYERS = 6
 
 ARGS1 = {
     'Dense': {
@@ -88,6 +97,17 @@ class LayerTest(unittest.TestCase):
             'Number of layers are changed. (New layer is added?) '
             'Fix unittest to cover new layers'
         )
+
+    def test_get_layer(self):
+        """get_layer returns correct layer class"""
+        for name, Layer in get_all_layers().items():
+            expected = Layer
+            found = get_layer(name)
+            self.assertEqual(
+                expected, found,
+                'get_layer returned wrong layer Class. '
+                'Expected: {}, Found: {}.'.format(expected, found)
+            )
 
     def test_parameterized_layer_equality(self):
         """Parameterized layers with same arguments must be equal"""

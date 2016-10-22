@@ -9,9 +9,11 @@ from luchador.nn import (
     Input,
     Session,
     scope as scp,
+    get_cost,
     SSE2,
     SigmoidCrossEntropy,
 )
+from tests.unit.fixture import get_all_costs
 
 '''
 import logging
@@ -26,6 +28,17 @@ BE = luchador.get_nn_backend()
 
 class CostTest(unittest.TestCase):
     longMessage = True
+
+    def test_get_cost(self):
+        """get_cost returns correct layer class"""
+        for name, Cost in get_all_costs().items():
+            expected = Cost
+            found = get_cost(name)
+            self.assertEqual(
+                expected, found,
+                'get_cost returned wrong cost Class. '
+                'Expected: {}, Found: {}.'.format(expected, found)
+            )
 
     def _compute_cost(self, cost, target, logit):
         target_tensor = Input(shape=target.shape).build()
