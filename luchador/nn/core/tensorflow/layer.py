@@ -32,7 +32,10 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization',
+    'Dense', 'Conv2D',
+    'ReLU', 'Sigmoid',
+    'Flatten', 'TrueDiv',
+    'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
@@ -243,6 +246,14 @@ class ReLU(TFLayerMixin, BaseLayer):
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
+        return _wrap_output(output)
+
+
+class Sigmoid(TFLayerMixin, BaseLayer):
+    """Applies Sigmoid activation"""
+    def build(self, input_tensor):
+        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+        output = tf.sigmoid(input_tensor.unwrap(), 'output')
         return _wrap_output(output)
 
 

@@ -31,7 +31,10 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'Dense', 'Conv2D', 'ReLU', 'Flatten', 'TrueDiv', 'BatchNormalization',
+    'Dense', 'Conv2D',
+    'ReLU', 'Sigmoid',
+    'Flatten', 'TrueDiv',
+    'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
@@ -273,16 +276,20 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
 class ReLU(TheanoLayerMixin, BaseLayer):
     """Applies Rectified Linear Unit"""
     def build(self, input_tensor):
-        """
-        Args:
-          input_tensor (ShapedTensor): Placeholder object.
-          Output: Output object
-        """
         input_shape = input_tensor.get_shape()
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         _LG.debug('    input_shape: {}'.format(input_shape))
 
         output_tensor = T.nnet.relu(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
+
+
+class Sigmoid(TheanoLayerMixin, BaseLayer):
+    """Applies Sigmoid activation"""
+    def build(self, input_tensor):
+        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+        input_shape = input_tensor.get_shape()
+        output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
