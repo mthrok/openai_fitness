@@ -48,6 +48,7 @@ def get_cost(name):
     raise ValueError('Unknown Cost: {}'.format(name))
 
 
+###############################################################################
 class BaseSSE2(BaseCost):
     """Sum-Squared Error
 
