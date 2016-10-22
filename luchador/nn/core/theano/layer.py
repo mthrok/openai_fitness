@@ -12,12 +12,8 @@ from ..base import (
     BaseLayer,
     BaseDense,
     BaseConv2D,
-    BaseReLU,
-    BaseFlatten,
     BaseTrueDiv,
     BaseBatchNormalization,
-    BaseNHWC2NCHW,
-    BaseNCHW2NHWC,
 )
 from . import scope as scp
 from .wrapper import (
@@ -274,7 +270,8 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class ReLU(TheanoLayerMixin, BaseReLU):
+class ReLU(TheanoLayerMixin, BaseLayer):
+    """Applies Rectified Linear Unit"""
     def build(self, input_tensor):
         """
         Args:
@@ -289,7 +286,8 @@ class ReLU(TheanoLayerMixin, BaseReLU):
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Flatten(TheanoLayerMixin, BaseFlatten):
+class Flatten(TheanoLayerMixin, BaseLayer):
+    """Reshape batch into 2D (batch_size, n_features) from 4D"""
     def build(self, input_tensor):
         input_shape = input_tensor.get_shape()
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
@@ -383,7 +381,8 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
         return _wrap_output(output, input_tensor.get_shape(), 'output')
 
 
-class NHWC2NCHW(TheanoLayerMixin, BaseNHWC2NCHW):
+class NHWC2NCHW(TheanoLayerMixin, BaseLayer):
+    """Convert NCHW data to NHWC"""
     def build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
@@ -393,7 +392,8 @@ class NHWC2NCHW(TheanoLayerMixin, BaseNHWC2NCHW):
         return _wrap_output(output_tensor_, output_shape, 'output')
 
 
-class NCHW2NHWC(TheanoLayerMixin, BaseNCHW2NHWC):
+class NCHW2NHWC(TheanoLayerMixin, BaseLayer):
+    """Convert NCHW data to NHWC"""
     def build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)

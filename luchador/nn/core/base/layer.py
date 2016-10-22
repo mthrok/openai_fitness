@@ -10,8 +10,9 @@ _LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'get_layer',
-    'BaseDense', 'BaseConv2D', 'BaseReLU', 'BaseFlatten', 'BaseTrueDiv',
-    'BaseBatchNormalization', 'BaseNHWC2NCHW', 'BaseNCHW2NHWC',
+    'BaseDense', 'BaseConv2D',
+    'BaseTrueDiv',
+    'BaseBatchNormalization',
 ]
 
 
@@ -126,18 +127,6 @@ class BaseConv2D(BaseLayer):
             initializers=initializers, with_bias=with_bias, **kwargs)
 
 
-class BaseReLU(BaseLayer):
-    """Applies Rectified Linear Unit"""
-    def __init__(self):
-        super(BaseReLU, self).__init__()
-
-
-class BaseFlatten(BaseLayer):
-    """Reshape batch into 2D (batch_size, n_features) from 4D"""
-    def __init__(self):
-        super(BaseFlatten, self).__init__()
-
-
 class BaseTrueDiv(BaseLayer):
     """Applies element wise division"""
     def __init__(self, denom, dtype=None):
@@ -157,15 +146,3 @@ class BaseBatchNormalization(BaseLayer):
         super(BaseBatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
             scale=scale, offset=offset, learn=learn)
-
-
-class BaseNHWC2NCHW(BaseLayer):
-    """Convert NCHW data to NHWC"""
-    def __init__(self):
-        super(BaseNHWC2NCHW, self).__init__()
-
-
-class BaseNCHW2NHWC(BaseLayer):
-    """Convert NCHW data to NHWC"""
-    def __init__(self):
-        super(BaseNCHW2NHWC, self).__init__()

@@ -13,12 +13,8 @@ from ..base import (
     BaseLayer,
     BaseDense,
     BaseConv2D,
-    BaseReLU,
-    BaseFlatten,
     BaseTrueDiv,
     BaseBatchNormalization,
-    BaseNHWC2NCHW,
-    BaseNCHW2NHWC,
 )
 from .wrapper import (
     Tensor,
@@ -242,14 +238,16 @@ class Conv2D(TFLayerMixin, BaseConv2D):
         return _wrap_output(output_tensor)
 
 
-class ReLU(TFLayerMixin, BaseReLU):
+class ReLU(TFLayerMixin, BaseLayer):
+    """Applies Rectified Linear Unit"""
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
         return _wrap_output(output)
 
 
-class Flatten(TFLayerMixin, BaseFlatten):
+class Flatten(TFLayerMixin, BaseLayer):
+    """Reshape batch into 2D (batch_size, n_features) from 4D"""
     def build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         in_shape = input_tensor.get_shape()
@@ -333,14 +331,14 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         return _wrap_output(output)
 
 
-class NHWC2NCHW(TFLayerMixin, BaseNHWC2NCHW):
+class NHWC2NCHW(TFLayerMixin, BaseLayer):
     def build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 3, 1, 2))
         return _wrap_output(output_tensor_)
 
 
-class NCHW2NHWC(TFLayerMixin, BaseNCHW2NHWC):
+class NCHW2NHWC(TFLayerMixin, BaseLayer):
     def build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 2, 3, 1))
