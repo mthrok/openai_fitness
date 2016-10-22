@@ -78,10 +78,18 @@ class HDF5Editor(object):
         ap = AP(
             description='Inspect HDF5 Data'
         )
-        ap.add_argument('command', choices=['inspect', 'delete', 'rename', 'view'])
+        ap.add_argument('command')
 
+        valid_commands = ['inspect', 'delete', 'rename', 'view']
         args = ap.parse_args(sys.argv[1:2])
-        getattr(self, args.command)(sys.argv[2:])
+        if args.command not in valid_commands:
+            command = 'inspect'
+            argv = sys.argv[1:]
+        else:
+            command = args.command
+            argv = sys.argv[2:]
+
+        getattr(self, command)(argv)
 
     def inspect(self, argv):
         ap = AP(
