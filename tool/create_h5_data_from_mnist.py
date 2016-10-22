@@ -1,11 +1,9 @@
 import os
+import gzip
 import cPickle as pickle
 
 import h5py
 import numpy as np
-
-
-MNIST = os.path.join(os.path.dirname(__file__), 'mnist.pkl')
 
 
 def parse_command_line_args():
@@ -19,7 +17,8 @@ def parse_command_line_args():
         )
     )
     ap.add_argument('output', help='Output file path')
-    ap.add_argument('--input', help='mnist.pkl data', default=MNIST)
+    ap.add_argument('--input', help='mnist.pkl data',
+                    default=os.path.join('data', 'mnist.pkl.gz'))
     ap.add_argument('--key', default='input', help='Name of dataset to create')
     ap.add_argument('--height', default=28, type=int, help='batch height.')
     ap.add_argument('--width', default=27, type=int, help='batch width.')
@@ -31,7 +30,8 @@ def parse_command_line_args():
 
 
 def load_data(filepath):
-    return pickle.load(open(filepath, 'r'))[0]
+    with gzip.open(filepath, 'rb') as f:
+        return pickle.load(f)[0]
 
 
 def process(dataset, channel=4, height=28, width=27):
