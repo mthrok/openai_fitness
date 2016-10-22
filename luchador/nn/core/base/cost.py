@@ -4,7 +4,9 @@ import logging
 
 from luchador.common import StoreMixin
 
-__all__ = ['SSE']
+__all__ = [
+    'BaseCost', 'BaseSSE2'
+]
 
 _LG = logging.getLogger(__name__)
 
@@ -38,10 +40,11 @@ class BaseCost(StoreMixin, object):
         )
 
 
-class SSE(BaseCost):
+class BaseSSE2(BaseCost):
     """Sum-Squared Error
 
     Actual Cost class must implement `build` method.
     """
     def __init__(self, max_delta=None, min_delta=None):
-        super(SSE, self).__init__(max_delta=max_delta, min_delta=min_delta)
+        super(BaseSSE2, self).__init__(
+            max_delta=max_delta, min_delta=min_delta)

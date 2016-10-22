@@ -5,15 +5,22 @@ import logging
 import theano
 import theano.tensor as T
 
-from ..base import SSE as BaseSSE
+from ..base import (
+    BaseCost,
+    BaseSSE2,
+)
 from .wrapper import Tensor
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['SSE2']
+__all__ = ['SSE2', 'SigmoidCrossEntropy']
 
 
-class SSE2(BaseSSE):
+def sum_mean(x):
+    return x.sum(axis=1).mean()
+
+
+class SSE2(BaseSSE2):
     """Compute Sum-Squared Error / 2
     TODO: Add math expression
     """
@@ -32,6 +39,13 @@ class SSE2(BaseSSE):
         if self.args['min_delta']:
             delta = delta.clip(self.args['min_delta'], self.args['max_delta'])
         delta = T.square(delta) / 2
-        err = delta.sum(axis=1).mean()
-        output_shape = [1]
-        return Tensor(err, output_shape)
+        return Tensor(sum_mean(delta), output_shape=(1,))
+
+
+class SigmoidCrossEntropy(BaseCost):
+    """Apply sigmoid activation followed by cross entropy """
+    def build(self, target, logit):
+        x = logit.unwrap()
+        z = theano.gradient.disconnected_grad(target.unwrap())
+        ce = T.relu(x) - x * z + T.log(1 + T.exp(-x.abs()))
+        return Tensor(sum_mean(ce), output_shape=(1,))
