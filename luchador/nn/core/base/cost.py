@@ -16,10 +16,10 @@ class BaseCost(StoreMixin, object):
 
     Actual Cost class must implement `build` method.
     """
-    def __init__(self, **args):
+    def __init__(self, elementwise=False, **args):
         """Validate args and set it as instance property. See CopyMixin"""
         super(BaseCost, self).__init__()
-        self._store_args(**args)
+        self._store_args(elementwise=elementwise, **args)
 
     def __call__(self, target, prediction):
         """Build cost between target and prediction
@@ -45,6 +45,6 @@ class BaseSSE2(BaseCost):
 
     Actual Cost class must implement `build` method.
     """
-    def __init__(self, max_delta=None, min_delta=None):
+    def __init__(self, max_delta=None, min_delta=None, elementwise=False):
         super(BaseSSE2, self).__init__(
-            max_delta=max_delta, min_delta=min_delta)
+            max_delta=max_delta, min_delta=min_delta, elementwise=elementwise)

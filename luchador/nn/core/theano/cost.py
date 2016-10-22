@@ -34,12 +34,17 @@ class SSE2(BaseSSE2):
                          '`min_delta` and `max_delta` must be provided')
 
     def build(self, target, prediction):
-        target, prediction = target.unwrap(), prediction.unwrap()
-        delta = theano.gradient.disconnected_grad(target) - prediction
+        target_, pred_ = target.unwrap(), prediction.unwrap()
+        delta = theano.gradient.disconnected_grad(target_) - pred_
         if self.args['min_delta']:
             delta = delta.clip(self.args['min_delta'], self.args['max_delta'])
         delta = T.square(delta) / 2
-        return Tensor(sum_mean(delta), output_shape=(1,))
+
+        if self.args['elementwise']:
+            output = Tensor(delta, shape=target.get_shape())
+        else:
+            output = Tensor(sum_mean(delta), shape=(1,))
+        return output
 
 
 class SigmoidCrossEntropy(BaseCost):
@@ -47,5 +52,10 @@ class SigmoidCrossEntropy(BaseCost):
     def build(self, target, logit):
         x = logit.unwrap()
         z = theano.gradient.disconnected_grad(target.unwrap())
-        ce = T.relu(x) - x * z + T.log(1 + T.exp(-x.abs()))
-        return Tensor(sum_mean(ce), output_shape=(1,))
+        ce = T.nnet.relu(x) - x * z + T.log(1 + T.exp(-abs(x)))
+
+        if self.args['elementwise']:
+            output = Tensor(ce, shape=target.get_shape())
+        else:
+            output = Tensor(sum_mean(ce), shape=(1,))
+        return output

@@ -45,7 +45,12 @@ class SSE2(BaseSSE2):
             target_ = tf.stop_gradient(target.unwrap())
             delta = _clipped_delta(target_, pred_, min_delta, max_delta)
             err = tf.square(delta) / 2
-            return Tensor(mean_sum(err))
+
+            if self.args['elementwise']:
+                output = Tensor(err)
+            else:
+                output = Tensor(mean_sum(err))
+            return output
 
 
 class SigmoidCrossEntropy(BaseCost):
@@ -54,4 +59,9 @@ class SigmoidCrossEntropy(BaseCost):
         with tf.name_scope(self.__class__.__name__):
             ce = tf.nn.sigmoid_cross_entropy_with_logits(
                 logit.unwrap(), tf.stop_gradient(target.unwrap()))
-            return Tensor(mean_sum(ce))
+
+            if self.args['elementwise']:
+                output = Tensor(ce)
+            else:
+                output = Tensor(mean_sum(ce))
+            return output
