@@ -174,8 +174,8 @@ class TransitionRecorder(object):
             n_recorders -= 1
 
         _LG.debug('  After truncate:')
-        _LG.debug('  # records  : {}'.format(n_records))
-        _LG.debug('  # recorders: {}'.format(n_recorders))
+        _LG.debug('  # records  : %s', n_records)
+        _LG.debug('  # recorders: %s', n_recorders)
 
     def is_ready(self):
         """True if the current episode recorder has sufficient records"""

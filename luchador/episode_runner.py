@@ -36,8 +36,8 @@ class EpisodeRunner(object):
         max_steps = max_steps or self.max_steps
         self._reset()
 
-        rewards = 0
-        t0 = time.time()
+        steps, rewards = 0, 0
+        t_start = time.time()
         for steps in range(1, max_steps+1):
             action = self.agent.act()
             outcome = self.env.step(action)
@@ -48,15 +48,15 @@ class EpisodeRunner(object):
             if outcome.terminal:
                 break
 
-        elapsed = time.time() - t0
+        t_elapsed = time.time() - t_start
 
         stats = {
             'episode': self.episode,
             'rewards': rewards,
             'steps': steps,
-            'time': elapsed,
+            'time': t_elapsed,
         }
-        self.time += elapsed
+        self.time += t_elapsed
         self.steps += steps
         self.rewards += rewards
 

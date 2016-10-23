@@ -50,7 +50,7 @@ class BaseEnvironment(object):
 
 
 def get_env(name):
-    for Class in get_subclasses(BaseEnvironment):
-        if Class.__name__ == name:
-            return Class
+    for class_ in get_subclasses(BaseEnvironment):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Environment: {}'.format(name))

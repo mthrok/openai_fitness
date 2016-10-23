@@ -49,7 +49,7 @@ class NoOpAgent(BaseAgent):
 
 
 def get_agent(name):
-    for Class in get_subclasses(BaseAgent):
-        if Class.__name__ == name:
-            return Class
+    for class_ in get_subclasses(BaseAgent):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Agent: {}'.format(name))

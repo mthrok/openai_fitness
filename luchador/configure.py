@@ -53,5 +53,5 @@ def set_nn_dtype(dtype):
         )
         warnings.warn(msg)
 
-    dt = np.dtype(dtype)
-    _NN_DTYPE = dt.name
+    dtype_ = np.dtype(dtype)
+    _NN_DTYPE = dtype_.name

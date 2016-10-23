@@ -183,13 +183,13 @@ class ALEEnvironment(BaseEnvironment):
         # so we do not implement an equivalent in our wrapper.
 
         if self.record_screen_path:
-            _LG.info('Recording screens: {}'.format(self.record_screen_path))
+            _LG.info('Recording screens: %s', self.record_screen_path)
             if not os.path.exists(self.record_screen_path):
                 os.makedirs(self.record_screen_path)
             ale.setString('record_screen_dir', self.record_screen_path)
 
         if self.record_sound_filename:
-            _LG.info('Recording sound: {}'.format(self.record_sound_filename))
+            _LG.info('Recording sound: %s', self.record_sound_filename)
             record_sound_dir = os.path.dirname(self.record_sound_filename)
             if not os.path.exists(record_sound_dir):
                 os.makedirs(record_sound_dir)
@@ -330,8 +330,8 @@ class ALEEnvironment(BaseEnvironment):
 
     def _step(self, action):
         reward = self._ale.act(action)
-        buffer = self._frame_buffer[self._buffer_index]
-        self._get_raw_screen(screen_data=buffer)
+        buffer_ = self._frame_buffer[self._buffer_index]
+        self._get_raw_screen(screen_data=buffer_)
         self._buffer_index = (self._buffer_index + 1) % self.buffer_frames
         return reward
 

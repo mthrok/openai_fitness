@@ -212,7 +212,7 @@ class Adamax(TheanoOptimizerMixin, BaseAdamax):
             u = self._create_slot_var(var, 'u').unwrap()
 
             new_m = m + (1.0 - b1) * (grad - m)
-            new_u = T.maximum(b2 * u,  abs(grad))
+            new_u = T.maximum(b2 * u, abs(grad))
             new_var = var - (new_m * alpha) / (new_u + ep)
 
             updates[m] = new_m

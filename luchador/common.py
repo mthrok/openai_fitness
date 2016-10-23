@@ -7,17 +7,17 @@ def pprint_dict(dictionary):
     return yaml.dump(dictionary, default_flow_style=False)
 
 
-def is_iteratable(l):
+def is_iteratable(obj):
     try:
-        list(l)
+        list(obj)
         return True
-    except Exception:
+    except TypeError:
         return False
 
 
 ###############################################################################
 # Getter mechanism
-def get_subclasses(Class):
+def get_subclasses(class_):
     """Get the list of all subclasses
 
     This function is intended to use in get_* functions such as
@@ -25,13 +25,13 @@ def get_subclasses(Class):
     for flexible access.
     """
     ret = []
-    for SubClass in Class.__subclasses__():
+    for subclass in class_.__subclasses__():
         # As we adopt subclassing-base-interface approach to realize backend
         # switch, we prefer to return subclasses in the order similar to
         # python's inheritence resolution.
         # So the descendant classes comes before their anscestors.
-        ret.extend(get_subclasses(SubClass))
-        ret.append(SubClass)
+        ret.extend(get_subclasses(subclass))
+        ret.append(subclass)
     return ret
 
 
