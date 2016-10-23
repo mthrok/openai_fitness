@@ -74,7 +74,7 @@ def get_layer(name):
 
 ###############################################################################
 class BaseDense(BaseLayer):
-    def __init__(self, n_nodes, initializers={}, with_bias=True):
+    def __init__(self, n_nodes, initializers=None, with_bias=True):
         """Initialize dense layer.
         Also called fully connected, affine, linear or inner product.
 
@@ -91,7 +91,7 @@ class BaseDense(BaseLayer):
 
 class BaseConv2D(BaseLayer):
     def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers={}, with_bias=True, **kwargs):
+                 padding='VALID', initializers=None, with_bias=True, **kwargs):
         """Initialize 2D convolution layer.
         Args:
           filter_height (int): filter height (== row)

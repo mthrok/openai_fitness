@@ -52,7 +52,7 @@ class TheanoLayerMixin(object):
 
 class Dense(TheanoLayerMixin, BaseDense):
     def _instantiate_initializers(self):
-        init_cfg = self.args.get('initializers', {})
+        init_cfg = self.args.get('initializers') or {}
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
@@ -160,7 +160,7 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
 
     ###########################################################################
     def _instantiate_initializers(self):
-        init_cfg = self.args.get('initializers', {})
+        init_cfg = self.args.get('initializers') or {}
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
