@@ -13,7 +13,7 @@ __all__ = ['SummaryWriter']
 
 class SummaryOperation(object):
     """Create placeholder and summary operations for the given names"""
-    def __init__(self, type, name):
+    def __init__(self, summary_type, name):
         summary_funcs = {
             'scalar': tf.scalar_summary,
             'image': tf.image_summary,
@@ -21,7 +21,7 @@ class SummaryOperation(object):
             'histogram': tf.histogram_summary,
         }
         self.pf = tf.placeholder('float32')
-        self.op = summary_funcs[type](name, self.pf)
+        self.op = summary_funcs[summary_type](name, self.pf)
 
 
 class SummaryWriter(object):
@@ -39,14 +39,14 @@ class SummaryWriter(object):
     def add_graph(self, graph=None, global_step=None):
         self.writer.add_graph(graph, global_step=global_step)
 
-    def register(self, type, names, tag=None):
+    def register(self, summary_type, names, tag=None):
         with self.graph.as_default():
             with self.graph.device('/cpu:0'):
-                self._register(type, names, tag=tag)
+                self._register(summary_type, names, tag=tag)
 
-    def _register(self, type, names, tag):
+    def _register(self, summary_type, names, tag):
         for name in names:
-            self.summary_ops[name] = SummaryOperation(type, name)
+            self.summary_ops[name] = SummaryOperation(summary_type, name)
 
         if tag:
             self.tags[tag] = names

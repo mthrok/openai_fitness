@@ -46,7 +46,7 @@ class NameScope(object):
     def __enter__(self):
         pass
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type_, value, traceback):
         pass
 
 
@@ -76,7 +76,7 @@ class VariableScope(object):
         _LG.debug('Current Scope: {}'.format(_CURRENT_VARIABLE_SCOPE))
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type_, value, traceback):
         self._close()
         _LG.debug('Current Scope: {}'.format(_CURRENT_VARIABLE_SCOPE))
 

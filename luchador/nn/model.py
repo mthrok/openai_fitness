@@ -24,10 +24,10 @@ def get_model(name):
 ###############################################################################
 class LayerConfig(object):
     """Class to hold complementary info for Layer class"""
-    def __init__(self, layer, scope, input=None, output=None):
+    def __init__(self, layer, scope, input_=None, output=None):
         self.layer = layer
         self.scope = scope
-        self.input = input
+        self.input = input_
         self.output = output
 
     def __eq__(self, other):
@@ -67,7 +67,7 @@ class Sequential(BaseModel):
         self.layer_configs.append(LayerConfig(
             layer=layer,
             scope=scope,
-            input=None,
+            input_=None,
             output=None,
         ))
         return self

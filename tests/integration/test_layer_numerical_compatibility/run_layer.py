@@ -41,8 +41,8 @@ def parse_command_line_args():
 
 def forward_prop(layer, input_value, parameter_file, n_ite):
     sess = Session()
-    input = Input(shape=input_value.shape, dtype=input_value.dtype)
-    output = layer(input.build())
+    input_ = Input(shape=input_value.shape, dtype=input_value.dtype)
+    output = layer(input_.build())
     if parameter_file:
         _LG.info('Loading parameter values from {}'.format(parameter_file))
         sess.load_from_file(parameter_file, strict=False)
@@ -50,7 +50,7 @@ def forward_prop(layer, input_value, parameter_file, n_ite):
     _LG.info('Running forward path for {} times'.format(n_ite))
     for _ in range(n_ite):
         ret = sess.run(
-            outputs=output, inputs={input: input_value},
+            outputs=output, inputs={input_: input_value},
             updates=layer.get_update_operation())
     _LG.info('Run forward path. Output shape: {}'.format(ret.shape))
     return ret

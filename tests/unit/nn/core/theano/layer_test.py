@@ -39,10 +39,10 @@ class TestConv2D(unittest.TestCase):
                         filter_width=filter_shape['width'],
                         n_filters=n_filters,
                         strides=strides, padding=padding)
-        input = Input(shape=input_shape)()
-        output = conv2d(input)
+        input_ = Input(shape=input_shape)()
+        output = conv2d(input_)
 
-        f = theano.function([input.unwrap()], output.unwrap())
+        f = theano.function([input_.unwrap()], output.unwrap())
         input_value = np.zeros(input_shape)
         output_value = f(input_value)
 
