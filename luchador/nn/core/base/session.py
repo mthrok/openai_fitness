@@ -20,7 +20,7 @@ def _parse_dataset(h5group, prefix=''):
     ret = OrderedDict()
     for key, value in h5group.items():
         if key in meta_data:
-            _LG.info('  {:25} {}'.format(key, np.asarray(value)))
+            _LG.info('  %25s %s', key, np.asarray(value))
             continue
 
         path = '{}/{}'.format(prefix, key) if prefix else key
@@ -40,10 +40,7 @@ class Session(object):
       - initialize: Initialize Variable-s
     """
     def __init__(self):
-        raise NotImplementedError(
-            '{}.{} is not implemented yet.'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
     def run(self,
             inputs=None, outputs=None, updates=None, givens=None, name=None):
@@ -59,6 +56,11 @@ class Session(object):
             '`initialize` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)
         )
+
+    @property
+    def graph(self):
+        """Mimic TF.Session.graph for SummaryWriter"""
+        return None
 
     ###########################################################################
     def load_from_file(self, filepath, var_names=None, cast=True, strict=True):

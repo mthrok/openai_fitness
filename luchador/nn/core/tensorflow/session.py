@@ -98,7 +98,8 @@ def _construct_feed_dict(inputs, givens):
 
 
 class Session(BaseSession):
-    def __init__(self, graph=None, config=None, **kwargs):
+    def __init__(self, graph=None, config=None):
+        super(Session, self).__init__()
         self.session = TFSession('', graph, config)
 
     @property
@@ -132,9 +133,11 @@ class Session(BaseSession):
         return values[0]
 
     def close(self):
+        """Close this session and frees all associated resources"""
         return self.session.close()
 
     def initialize(self):
+        """Initialize all variables"""
         self.session.run(tf.initialize_all_variables())
 
     ###########################################################################
@@ -152,19 +155,19 @@ class Session(BaseSession):
             which is not defined, then ValueError exception is raised.
             Otherwise it will be skipped.
         """
-        op = []
+        ops = []
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
 
                 try:
                     variable = scope.get_variable(name=name)
-                    _LG.info('  Loading: {:10} {:24} {}'
-                             .format(value.dtype, value.shape, name))
+                    _LG.info('  Loading: %10s %24s %s',
+                             value.dtype, value.shape, name)
 
                 except ValueError:
                     if strict:
                         raise
-                    _LG.info('  Variable `{}` does not exist.'.format(name))
+                    _LG.info('  Variable `%s` does not exist.', name)
                     continue
 
                 src_shape, tgt_shape = value.shape, variable.shape
@@ -179,8 +182,8 @@ class Session(BaseSession):
                             src_shape[2:4] == tgt_shape[:2] and  # h, w
                             src_shape[:2] == tgt_shape[:1:-1]  # channels
                     ):
-                        _LG.info('    Reshaping variable: {} -> {}'
-                                 .format(src_shape, tgt_shape))
+                        _LG.info('    Reshaping variable: %s -> %s',
+                                 src_shape, tgt_shape)
                         value = value.transpose((2, 3, 1, 0))
                         value = value[::-1, ::-1, :, :]
                     else:
@@ -189,5 +192,5 @@ class Session(BaseSession):
                             'Model shape: {}, Value shape: {}'
                             .format(src_shape, tgt_shape)
                         )
-                op.append(variable.unwrap().assign(value))
-        self.run(name=None, updates=Operation(tf.group(*op)))
+                ops.append(variable.unwrap().assign(value))
+        self.run(name=None, updates=Operation(tf.group(*ops)))
