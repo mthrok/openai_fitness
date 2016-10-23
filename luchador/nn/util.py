@@ -5,19 +5,10 @@ import StringIO
 
 import yaml
 
-from luchador.common import get_subclasses
-import luchador.nn
+from luchador.nn import get_model, get_layer
 
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')
-
-
-def get_model(name):
-    from . import model
-    for Class in get_subclasses(model.BaseModel):
-        if Class.__name__ == name:
-            return Class
-    raise ValueError('Unknown model: {}'.format(name))
 
 
 def make_model(model_config):
@@ -33,7 +24,7 @@ def make_model(model_config):
     for cfg in model_config['layer_configs']:
         scope = cfg['scope']
         layer_cfg = cfg['layer']
-        layer = luchador.nn.get_layer(layer_cfg['name'])(**layer_cfg['args'])
+        layer = get_layer(layer_cfg['name'])(**layer_cfg['args'])
         model.add_layer(layer=layer, scope=scope)
     return model
 

@@ -130,7 +130,7 @@ class Session(BaseSession):
             for name, value in dataset.items():
                 try:
                     variable = scope.get_variable(name=name)
-                    _LG.info('  Loading: %10s %24s %s',
+                    _LG.info('  Loading: %10s %-24s %s',
                              value.dtype, value.shape, name)
                 except ValueError:
                     if strict:

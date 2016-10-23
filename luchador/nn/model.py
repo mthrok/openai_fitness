@@ -1,15 +1,29 @@
 from __future__ import absolute_import
 
+from luchador.common import get_subclasses
 from .core import scope as scp
 
-__all__ = ['Sequential']
+__all__ = [
+    'BaseModel', 'get_model', 'Sequential',
+]
 
 
 class BaseModel(object):
+    """Base Model class"""
     pass
 
 
+def get_model(name):
+    """Get Model class by name"""
+    for Class in get_subclasses(BaseModel):
+        if Class.__name__ == name:
+            return Class
+    raise ValueError('Unknown model: {}'.format(name))
+
+
+###############################################################################
 class LayerConfig(object):
+    """Class to hold complementary info for Layer class"""
     def __init__(self, layer, scope, input=None, output=None):
         self.layer = layer
         self.scope = scope
