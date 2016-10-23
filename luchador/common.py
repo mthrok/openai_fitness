@@ -8,6 +8,7 @@ def pprint_dict(dictionary):
 
 
 def is_iteratable(obj):
+    """Return True if given object is iteratable"""
     try:
         list(obj)
         return True
