@@ -1,5 +1,6 @@
-from __future__ import absolute_import
+"""Atari Environment based on Arcade Learning Environment"""
 
+from __future__ import absolute_import
 
 import sys
 import os
@@ -21,6 +22,8 @@ _ROM_DIR = os.path.join(_DIR, 'rom')
 
 
 class ALEEnvironment(BaseEnvironment):
+    """Atari Environment"""
+
     @staticmethod
     def get_roms():
         """Get the list of ROMs available
