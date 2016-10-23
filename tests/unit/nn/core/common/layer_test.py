@@ -200,24 +200,25 @@ class BatchNormalizationTest(unittest.TestCase):
             stdi_diff_prev = var_diff
 
 
+def _convert(layer, shape):
+    input_tensor = Input(shape=shape).build()
+    input_value = np.random.randn(*shape) - 100
+
+    session = Session()
+
+    output_tensor = layer(input_tensor)
+    output_value = session.run(
+        outputs=output_tensor,
+        inputs={input_tensor: input_value},
+    )
+    return output_value, output_tensor
+
+
 class FormatConversionTest(unittest.TestCase):
-    def _test_layer(self, layer, shape):
-        input_tensor = Input(shape=shape).build()
-        input_value = np.random.randn(*shape) - 100
-
-        session = Session()
-
-        output_tensor = layer(input_tensor)
-        output_value = session.run(
-            outputs=output_tensor,
-            inputs={input_tensor: input_value},
-        )
-        return output_value, output_tensor
-
     def test_NCHW2NHWC(self):
         shape = (32, 4, 7, 8)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value, output_tensor = self._test_layer(NCHW2NHWC(), shape)
+            output_value, output_tensor = _convert(NCHW2NHWC(), shape)
 
         expected = (shape[0], shape[2], shape[3], shape[1])
         self.assertEqual(expected, output_value.shape)
@@ -226,7 +227,7 @@ class FormatConversionTest(unittest.TestCase):
     def test_NHWC2NCHW(self):
         shape = (32, 8, 7, 4)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value, output_tensor = self._test_layer(NHWC2NCHW(), shape)
+            output_value, output_tensor = _convert(NHWC2NCHW(), shape)
 
         expected = (shape[0], shape[3], shape[1], shape[2])
         self.assertEqual(expected, output_value.shape)
