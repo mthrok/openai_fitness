@@ -16,29 +16,28 @@ _LG = logging.getLogger(__name__)
 __all__ = ['Saver']
 
 
-def _write_data_to_file(f, data):
+def _write_data_to_file(file_, data):
     for key, value in data.items():
-        _LG.debug('  Saving: {:10} {:24} {}'.format(
-            value.dtype, value.shape, key))
-        if key in f:
-            del f[key]
+        _LG.debug('  Saving: %10s %24s %s', value.dtype, value.shape, key)
+        if key in file_:
+            del file_[key]
 
         chunks = False if value.size == 1 else True
-        f.create_dataset(key, data=value, chunks=chunks)
+        file_.create_dataset(key, data=value, chunks=chunks)
 
-    if 'LUCHADOR_NN_BACKEND' not in f:
+    if 'LUCHADOR_NN_BACKEND' not in file_:
         data = np.string_(luchador.get_nn_backend())
-        f.create_dataset('LUCHADOR_NN_BACKEND', data=data, dtype='S10')
-    if 'LUCHADOR_NN_CONV_FORMAT' not in f:
+        file_.create_dataset('LUCHADOR_NN_BACKEND', data=data, dtype='S10')
+    if 'LUCHADOR_NN_CONV_FORMAT' not in file_:
         data = np.string_(luchador.get_nn_conv_format())
-        f.create_dataset('LUCHADOR_NN_CONV_FORMAT', data=data, dtype='S4')
-    if 'LUCHADOR_NN_DTYPE' not in f:
+        file_.create_dataset('LUCHADOR_NN_CONV_FORMAT', data=data, dtype='S4')
+    if 'LUCHADOR_NN_DTYPE' not in file_:
         data = np.string_(luchador.get_nn_dtype())
-        f.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
-    if 'LUCHADOR_VERSION' not in f:
+        file_.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
+    if 'LUCHADOR_VERSION' not in file_:
         data = np.string_(luchador.__version__)
-        f.create_dataset('LUCHADOR_VERSION', data=data)
-    f.flush()
+        file_.create_dataset('LUCHADOR_VERSION', data=data)
+    file_.flush()
 
 
 class Saver(object):
@@ -64,14 +63,14 @@ class Saver(object):
         filename = '{}_{}.h5'.format(self.prefix, global_step)
         filepath = os.path.join(self.output_dir, filename)
 
-        _LG.info('Saving data to {}'.format(filepath))
-        f = h5py.File(filepath, 'a')
+        _LG.info('Saving data to %s', filepath)
+        file_ = h5py.File(filepath, 'a')
         try:
-            _write_data_to_file(f, data)
+            _write_data_to_file(file_, data)
         except Exception:
             raise
         finally:
-            f.close()
+            file_.close()
 
         self._add_new_record(filepath, now=now)
         self._remove_old_data()
@@ -82,7 +81,7 @@ class Saver(object):
         now = now if now else time.time()
         if self.last_back_up is None:
             # If this is the first time, do not put this in delete candidates
-            _LG.info('Backing up: {}'.format(filepath))
+            _LG.info('Backing up: %s', filepath)
             self.last_back_up = now
         elif now - self.last_back_up < self.threshold:
             # Add the new file to delete candidate
@@ -92,15 +91,28 @@ class Saver(object):
             if self.to_be_deleted:
                 self.last_back_up, filepath_ = self.to_be_deleted.pop()
                 self.to_be_deleted.append((now, filepath))
-                _LG.info('Backing up: {}'.format(filepath_))
+                _LG.info('Backing up: %s', filepath_)
             else:
                 self.last_back_up = now
 
     def _remove_old_data(self):
+        to_be_deleted = []
+
+        while True:
+            then = self.to_be_deleted[0][0]
+            if then - self.last_back_up > self.threshold:
+                _, filepath = self.to_be_deleted.pop(0)
+                to_be_deleted.append(filepath)
+            else:
+                break
+
         while self.max_to_keep < len(self.to_be_deleted):
             _, filepath = self.to_be_deleted.pop(0)
+            to_be_deleted.append(filepath)
+
+        for filepath in to_be_deleted:
             try:
-                _LG.info('Removing: {}'.format(filepath))
+                _LG.info('Removing: %s', filepath)
                 os.remove(filepath)
-            except Exception:
-                _LG.exception('Failed to delete {}'.format(filepath))
+            except OSError:
+                _LG.exception('Failed to delete %s', filepath)
