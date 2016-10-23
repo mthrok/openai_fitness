@@ -13,18 +13,15 @@ _LG = logging.getLogger(__name__)
 
 ###############################################################################
 def main(env, agent, episodes, steps, report_every=1000):
-    Environment = get_env(env['name'])
-    env = Environment(**env['args'])
-    _LG.info('\n{}'.format(env))
+    env = get_env(env['name'])(**env['args'])
+    agent = get_agent(agent['name'])(**agent['args'])
+    _LG.info('\n%s', env)
+    _LG.info('\n%s', agent)
 
-    Agent = get_agent(agent['name'])
-    agent = Agent(**agent['args'])
-    _LG.info('\n{}'.format(agent))
     agent.init(env)
-
     runner = EpisodeRunner(env, agent, max_steps=steps)
 
-    _LG.info('Running {} episodes'.format(episodes))
+    _LG.info('Running %s episodes', episodes)
     n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     for i in range(1, episodes+1):
         stats = runner.run_episode()
@@ -34,54 +31,54 @@ def main(env, agent, episodes, steps, report_every=1000):
         steps_ += stats['steps']
         rewards += stats['rewards']
         if i % report_every == 0 or i == episodes:
-            _LG.info('Finished episode: {}'.format(i))
-            _LG.info('  Rewards:     {:12.3f} [/epi]'.format(rewards / n_ep))
-            _LG.info('  Steps:       {:8d}'.format(steps_))
-            _LG.info('               {:12.3f} [/epi]'.format(steps_ / n_ep))
-            _LG.info('               {:12.3f} [/sec]'.format(steps_ / time_))
-            _LG.info('  Total Steps: {:8d}'.format(runner.steps))
-            _LG.info('  Total Time:  {}'.format(format_time(runner.time)))
+            _LG.info('Finished episode: %d', i)
+            _LG.info('  Rewards:     %12.3f [/epi]', rewards / n_ep)
+            _LG.info('  Steps:       %8d', steps_)
+            _LG.info('               %12.3f [/epi]', steps_ / n_ep)
+            _LG.info('               %12.3f [/sec]', steps_ / time_)
+            _LG.info('  Total Steps: %8d', runner.steps)
+            _LG.info('  Total Time:  %s', format_time(runner.time))
             n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     _LG.info('Done')
 
 
 def format_time(seconds):
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    d, h = divmod(h, 24)
+    min_, sec = divmod(seconds, 60)
+    hour, min_ = divmod(min_, 60)
+    day, hour = divmod(hour, 24)
 
-    ret = '{:02d}:{:02d}:{:02d}'.format(int(h), int(m), int(s))
-    if d:
-        ret = '{:d} Days {}'.format(d, ret)
+    ret = '{:02d}:{:02d}:{:02d}'.format(int(hour), int(min_), int(sec))
+    if day:
+        ret = '{:d} Days {}'.format(day, ret)
     return ret
 
 
 ###############################################################################
 def _parse_command_line_arguments():
     import argparse
-    ap = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description='Run environment with agents.',
     )
-    ap.add_argument(
+    parser.add_argument(
         'environment',
         help='YAML file contains environment configuration')
-    ap.add_argument(
+    parser.add_argument(
         '--agent',
         help='YAML file contains agent configuration')
-    ap.add_argument(
+    parser.add_argument(
         '--episodes', type=int, default=1000,
         help='Run this number of episodes.')
-    ap.add_argument(
+    parser.add_argument(
         '--report', type=int, default=1000,
         help='Report run stats every this number of episodes')
-    ap.add_argument(
+    parser.add_argument(
         '--steps', type=int, default=10000,
         help='Set max steps for each episode.')
-    ap.add_argument(
+    parser.add_argument(
         '--sources', nargs='+', default=[],
         help='Source files that contain custom Agent/Env etc')
-    ap.add_argument('--debug', action='store_true')
-    return ap.parse_args()
+    parser.add_argument('--debug', action='store_true')
+    return parser.parse_args()
 
 
 def _set_logging_level(debug):
@@ -90,9 +87,9 @@ def _set_logging_level(debug):
 
 
 def _load_additional_sources(*files):
-    for f in files:
-        _LG.info('Loading additional source file: {}'.format(f))
-        exec('import {}'.format(f))
+    for file_ in files:
+        _LG.info('Loading additional source file: %s', file_)
+        exec('import {}'.format(file_))  # pylint: disable=exec-used
 
 
 def _parse_config():
