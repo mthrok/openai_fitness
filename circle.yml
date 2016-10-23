@@ -42,7 +42,3 @@ test:
     # Style check
     - flake8 luchador
     - flake8 tests
-  post:
-    # Report test coverage
-    - coverage html -d "${CIRCLE_ARTIFACTS}/coverage"
-    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./cci_script/report_codeclimate_test_coverage.sh; fi
