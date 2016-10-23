@@ -42,3 +42,6 @@ test:
     # Style check
     - flake8 luchador
     - flake8 tests
+  post:
+    # Report test coverage
+    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./cci_script/report_codacy_test_coverage.sh; fi
