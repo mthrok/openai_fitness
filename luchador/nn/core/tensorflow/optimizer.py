@@ -29,6 +29,26 @@ __all__ = [
 ]
 
 
+def _parse_kwargs(kwargs):
+    keys_and_defaults1 = [
+        ('gate_gradients', 1),
+        ('aggregation_method', None),
+        ('colocate_gradients_with_ops', False),
+        ('grad_loss', None)
+    ]
+    keys_and_defaults2 = [
+        ('global_step', None),
+        ('name', None)
+    ]
+    kws_compute_gradients = {
+        key: kwargs.get(key, default_value)
+        for key, default_value in keys_and_defaults1}
+    kws_apply_gradients = {
+        key: kwargs.get(key, default_value)
+        for key, default_value in keys_and_defaults2}
+    return [kws_compute_gradients, kws_apply_gradients]
+
+
 class TFOptimizerMixin(object):
     """Adds TF-specific helper methods to base Optimizer"""
     def init(self):
@@ -56,7 +76,7 @@ class TFOptimizerMixin(object):
         Returns:
           Operation: Minimization operation
         """
-        kws1, kws2 = self._parse_kwargs(kwargs)
+        kws1, kws2 = _parse_kwargs(kwargs)
         grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
         return self.apply_gradients(grads_and_vars, **kws2)
 

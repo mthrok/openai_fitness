@@ -42,9 +42,9 @@ class BaseCost(StoreMixin, object):
 
 
 def get_cost(name):
-    for Class in get_subclasses(BaseCost):
-        if Class.__name__ == name:
-            return Class
+    for class_ in get_subclasses(BaseCost):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Cost: {}'.format(name))
 
 

@@ -16,6 +16,31 @@ _LG = logging.getLogger(__name__)
 __all__ = ['Saver']
 
 
+def _write_data_to_file(self, f, data):
+    for key, value in data.items():
+        _LG.debug('  Saving: {:10} {:24} {}'.format(
+            value.dtype, value.shape, key))
+        if key in f:
+            del f[key]
+
+        chunks = False if value.size == 1 else True
+        f.create_dataset(key, data=value, chunks=chunks)
+
+    if 'LUCHADOR_NN_BACKEND' not in f:
+        data = np.string_(luchador.get_nn_backend())
+        f.create_dataset('LUCHADOR_NN_BACKEND', data=data, dtype='S10')
+    if 'LUCHADOR_NN_CONV_FORMAT' not in f:
+        data = np.string_(luchador.get_nn_conv_format())
+        f.create_dataset('LUCHADOR_NN_CONV_FORMAT', data=data, dtype='S4')
+    if 'LUCHADOR_NN_DTYPE' not in f:
+        data = np.string_(luchador.get_nn_dtype())
+        f.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
+    if 'LUCHADOR_VERSION' not in f:
+        data = np.string_(luchador.__version__)
+        f.create_dataset('LUCHADOR_VERSION', data=data)
+    f.flush()
+
+
 class Saver(object):
     def __init__(self, output_dir, max_to_keep=5,
                  keep_every_n_hours=1.0, prefix='save'):
@@ -34,30 +59,6 @@ class Saver(object):
         self.to_be_deleted = []
         self.last_back_up = None
 
-    def _write(self, f, data):
-        for key, value in data.items():
-            _LG.debug('  Saving: {:10} {:24} {}'.format(
-                value.dtype, value.shape, key))
-            if key in f:
-                del f[key]
-
-            chunks = False if value.size == 1 else True
-            f.create_dataset(key, data=value, chunks=chunks)
-
-        if 'LUCHADOR_NN_BACKEND' not in f:
-            data = np.string_(luchador.get_nn_backend())
-            f.create_dataset('LUCHADOR_NN_BACKEND', data=data, dtype='S10')
-        if 'LUCHADOR_NN_CONV_FORMAT' not in f:
-            data = np.string_(luchador.get_nn_conv_format())
-            f.create_dataset('LUCHADOR_NN_CONV_FORMAT', data=data, dtype='S4')
-        if 'LUCHADOR_NN_DTYPE' not in f:
-            data = np.string_(luchador.get_nn_dtype())
-            f.create_dataset('LUCHADOR_NN_DTYPE', data=data, dtype='S10')
-        if 'LUCHADOR_VERSION' not in f:
-            data = np.string_(luchador.__version__)
-            f.create_dataset('LUCHADOR_VERSION', data=data)
-        f.flush()
-
     def save(self, data, global_step, now=None):
         # `now` should be used only for testing
         filename = '{}_{}.h5'.format(self.prefix, global_step)
@@ -66,7 +67,7 @@ class Saver(object):
         _LG.info('Saving data to {}'.format(filepath))
         f = h5py.File(filepath, 'a')
         try:
-            self._write(f, data)
+            _write_data_to_file(f, data)
         except Exception:
             raise
         finally:

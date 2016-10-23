@@ -22,6 +22,23 @@ from tests.unit.fixture import get_all_costs
 BE = luchador.get_nn_backend()
 
 
+def _compute_cost(cost, target, logit):
+    target_tensor = Input(shape=target.shape).build()
+    logit_tensor = Input(shape=logit.shape).build()
+
+    output_tensor = cost.build(target_tensor, logit_tensor)
+
+    session = Session()
+    output_value = session.run(
+        outputs=output_tensor,
+        inputs={
+            logit_tensor: logit,
+            target_tensor: target,
+        },
+    )
+    return output_value
+
+
 class CostTest(unittest.TestCase):
     longMessage = True
 
@@ -36,22 +53,6 @@ class CostTest(unittest.TestCase):
                 'Expected: {}, Found: {}.'.format(expected, found)
             )
 
-    def _compute_cost(self, cost, target, logit):
-        target_tensor = Input(shape=target.shape).build()
-        logit_tensor = Input(shape=logit.shape).build()
-
-        output_tensor = cost.build(target_tensor, logit_tensor)
-
-        session = Session()
-        output_value = session.run(
-            outputs=output_tensor,
-            inputs={
-                logit_tensor: logit,
-                target_tensor: target,
-            },
-        )
-        return output_value
-
     def test_sce_element_wise(self):
         """SigmoidCrossEntropy output value is correct"""
         batch, n_classes = 32, 3
@@ -64,7 +65,7 @@ class CostTest(unittest.TestCase):
 
         with scp.variable_scope(self.id().replace('.', '/')):
             sce = SigmoidCrossEntropy(elementwise=True)
-            sce_be = self._compute_cost(sce, target, logit)
+            sce_be = _compute_cost(sce, target, logit)
 
         x, z = logit, target
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
@@ -89,7 +90,7 @@ class CostTest(unittest.TestCase):
 
         with scp.variable_scope(self.id().replace('.', '/')):
             sce = SigmoidCrossEntropy(elementwise=False)
-            sce_be = self._compute_cost(sce, target, logit)
+            sce_be = _compute_cost(sce, target, logit)
 
         x, z = logit, target
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
@@ -113,7 +114,7 @@ class CostTest(unittest.TestCase):
 
         with scp.variable_scope(self.id().replace('.', '/')):
             sse2 = SSE2(elementwise=True)
-            sse2_be = self._compute_cost(sse2, target, prediction)
+            sse2_be = _compute_cost(sse2, target, prediction)
 
         sse2_np = np.square(target - prediction) / 2
 
@@ -137,7 +138,7 @@ class CostTest(unittest.TestCase):
         with scp.variable_scope(self.id().replace('.', '/')):
             sse2 = SSE2(
                 max_delta=max_delta, min_delta=min_delta, elementwise=True)
-            sse2_be = self._compute_cost(sse2, target, prediction)
+            sse2_be = _compute_cost(sse2, target, prediction)
 
         delta = target - prediction
         delta = np.minimum(np.maximum(delta, min_delta), max_delta)
@@ -161,7 +162,7 @@ class CostTest(unittest.TestCase):
 
         with scp.variable_scope(self.id().replace('.', '/')):
             sse2 = SSE2(elementwise=False)
-            sse2_be = self._compute_cost(sse2, target, prediction)
+            sse2_be = _compute_cost(sse2, target, prediction)
 
         sse2_np = np.square(target - prediction) / 2
         sse2_np = np.mean(np.sum(sse2_np, axis=1))

@@ -5,8 +5,9 @@ import logging
 import luchador
 
 
-_LG = logging.getLogger(__name__)
-_LG.info('Using {} backend'.format(luchador.get_nn_backend()))
+logging.getLogger(__name__).info(
+    'Using %s backend', luchador.get_nn_backend()
+)
 
 if luchador.get_nn_backend() == 'tensorflow':
     from .tensorflow import *  # noqa: F401, F403

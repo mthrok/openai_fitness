@@ -3,7 +3,10 @@ from __future__ import absolute_import
 import unittest
 
 import luchador
-from luchador.nn.core.theano import scope as scp
+from luchador.nn.core.theano import (
+    wrapper,
+    scope as scp,
+)
 reset_scope = scp._reset
 
 
@@ -382,7 +385,10 @@ class TestGetVariable(unittest.TestCase):
 
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
+        name = 'test_var'
+        self.assertTrue(name not in wrapper._VARIABLES)
         scp.get_variable('test_var', shape=[3, 1])
+        self.assertTrue(name in wrapper._VARIABLES)
 
     def test_get_variable_reuse_variable(self):
         """get_variable create variable"""

@@ -30,6 +30,22 @@ def is_gpu_available():
     return False
 
 
+def _normalize_batch(shape, offset, scale):
+    _shape = (None,) + shape[1:]
+    input_tensor = Input(shape=_shape).build()
+    input_value = np.random.randn(*shape) - 100
+
+    bn = BatchNormalization(
+        scale=scale, offset=offset, learn=True, decay=0.0)
+    normalized = bn(input_tensor)
+    updates = bn.get_update_operation()
+    session = Session()
+    session.initialize()
+    return session.run(
+        outputs=normalized,
+        inputs={input_tensor: input_value}, updates=updates)
+
+
 class BatchNormalizationTest(unittest.TestCase):
     """Test for BatchNormalization class"""
     def setUp(self):
@@ -38,27 +54,12 @@ class BatchNormalizationTest(unittest.TestCase):
     def tearDown(self):
         luchador.set_nn_conv_format(self.conv_format)
 
-    def _normalize(self, shape, offset, scale):
-        _shape = (None,) + shape[1:]
-        input_tensor = Input(shape=_shape).build()
-        input_value = np.random.randn(*shape) - 100
-
-        bn = BatchNormalization(
-            scale=scale, offset=offset, learn=True, decay=0.0)
-        normalized = bn(input_tensor)
-        updates = bn.get_update_operation()
-        session = Session()
-        session.initialize()
-        return session.run(
-            outputs=normalized,
-            inputs={input_tensor: input_value}, updates=updates)
-
     def test_normalization_2d(self):
         """Output of normalization layer is normalized on 2D array"""
         offset, scale, shape = 10.0, 1.0, (64, 16)
 
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, offset, scale)
+            output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
@@ -94,7 +95,7 @@ class BatchNormalizationTest(unittest.TestCase):
         luchador.set_nn_conv_format('NCHW')
         offset, scale, shape = 3.0, 7.0, (32, 16, 8, 7)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, offset, scale)
+            output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
@@ -129,7 +130,7 @@ class BatchNormalizationTest(unittest.TestCase):
         luchador.set_nn_conv_format('NHWC')
         offset, scale, shape = 3.0, 7.0, (32, 8, 7, 16)
         with scp.variable_scope(self.id().replace('.', '/')):
-            output_value = self._normalize(shape, offset, scale)
+            output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
 
