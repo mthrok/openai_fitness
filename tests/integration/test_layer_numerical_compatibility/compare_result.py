@@ -32,11 +32,11 @@ def _load_result(filepath):
 
 def print_stats(*arrs):
     print('{sum:>10}  {max:>10}  {min:>10}  {mean:>10}'
-             .format(sum='sum', max='max', min='min', mean='mean'))
+          .format(sum='sum', max='max', min='min', mean='mean'))
     for arr in arrs:
         sum_, max_, min_, mean = arr.sum(), arr.max(), arr.min(), arr.mean()
         print('{sum:10.3E}  {max:10.3E}  {min:10.3E}  {mean:10.3E}'
-                 .format(sum=sum_, max=max_, min=min_, mean=mean))
+              .format(sum=sum_, max=max_, min=min_, mean=mean))
     print('')
 
 
