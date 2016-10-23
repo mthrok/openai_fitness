@@ -23,45 +23,19 @@ class Initializer(SerializeMixin, object):
         self._store_args(**kwargs)
 
     ###########################################################################
-    def _serialize_seed(self, args, key, value):
-        if (
-                value is None or
-                isinstance(value, int) or
-                isinstance(value, list)
-        ):
-            args[key] = value
-            return
-
-        try:
-            args[key] = value.tolist()
-        except AttributeError:
-            _LG.warning('Failed to serialize seed: {}'.format(value))
-
-    def serialize(self):
-        args = {}
-        for key, val in self.args.items():
-            if key == 'seed':
-                self._serialize_seed(args, key, val)
-                continue
-
-            args[key] = val.serialize() if hasattr(val, 'serialize') else val
-        return {
-            'name': self.__class__.__name__,
-            'args': args
-        }
-
-    ###########################################################################
     def __call__(self, shape):
         self.sample(shape)
 
     def sample(self, shape):
+        """Sample random values for the given shape"""
         raise NotImplementedError(
             '`sample` method is not implemented for {}.{}'
             .format(type(self).__module__, type(self).__name__))
 
 
 def get_initializer(name):
-    for Class in get_subclasses(Initializer):
-        if Class.__name__ == name:
-            return Class
+    """Get Initializer class with name"""
+    for class_ in get_subclasses(Initializer):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Initializer: {}'.format(name))
