@@ -116,13 +116,13 @@ def _validate_padding(padding):
         warnings.warn(msg)
 
 
-def _validate_strides(self, strides):
+def _validate_strides(strides):
     if isinstance(strides, int):
         return
     try:
         if (
                 len(strides) in [2, 4] and
-                all(map(lambda s: isinstance(s, int), strides))
+                all([isinstance(s, int) for s in strides])
         ):
             return
     except Exception:

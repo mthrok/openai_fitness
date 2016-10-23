@@ -116,7 +116,11 @@ def _map_border_mode(padding):
     return padding
 
 
-def _validate_padding(self, padding):
+def _is_int_list(list_, length=2):
+    return (len(list_) == length and all([isinstance(e, int) for e in list_]))
+
+
+def _validate_padding(padding):
     msg = ('`padding` must be either str ("valid", "full", "half" or '
            '"same"), int or tuple of two int')
 
@@ -129,8 +133,7 @@ def _validate_padding(self, padding):
         raise ValueError(msg)
 
     try:
-        p0, p1 = padding[0], padding[1]
-        if (isinstance(p0, int) and isinstance(p1, int)):
+        if _is_int_list(padding, length=2):
             return
     except Exception:
         pass
@@ -138,14 +141,11 @@ def _validate_padding(self, padding):
     raise ValueError(msg)
 
 
-def _validate_strides(self, strides):
+def _validate_strides(strides):
     if isinstance(strides, int):
         return
     try:
-        if (
-                len(strides) == 2 and
-                all(map(lambda s: isinstance(s, int), strides))
-        ):
+        if _is_int_list(strides, length=2):
             return
     except Exception:
         pass
