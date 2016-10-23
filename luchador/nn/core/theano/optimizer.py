@@ -51,7 +51,8 @@ class TheanoOptimizerMixin(object):
         grads_and_vars = self.compute_gradients(loss, wrt)
         return self.apply_gradients(grads_and_vars)
 
-    def compute_gradients(self, loss, wrt, **kwargs):
+    @staticmethod
+    def compute_gradients(loss, wrt, **kwargs):
         """Compute gradient of loss with respect to wrt.
 
         This method works in similar way as Tensorflow Optimizers'

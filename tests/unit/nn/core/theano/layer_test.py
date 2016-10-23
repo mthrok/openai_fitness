@@ -236,10 +236,10 @@ class TestFlatten(unittest.TestCase):
         """4D input tensor is flattened to 2D tensor"""
         input_shape = (32, 4, 77, 84)
         flatten = Flatten()
-        input = Input(shape=input_shape)()
-        output = flatten(input)
+        input_ = Input(shape=input_shape)()
+        output = flatten(input_)
 
-        f = theano.function([input.unwrap()], output.unwrap())
+        f = theano.function([input_.unwrap()], output.unwrap())
         input_value = np.zeros(input_shape)
         output_value = f(input_value)
 
