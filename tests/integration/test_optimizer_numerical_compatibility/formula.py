@@ -1,10 +1,7 @@
-import logging
+from __future__ import print_function
 
-import luchador  # noqa: F401
-logging.getLogger('luchador').setLevel(logging.NOTSET)
-
-from luchador.common import get_subclasses  # noqa: E402
-from luchador.nn import (  # noqa: E402
+from luchador.common import get_subclasses
+from luchador.nn import (
     scope,
     Tensor,
     Constant,
@@ -47,7 +44,7 @@ class x6(Formula):
 
 
 def print_formulae():
-    print ' '.join([formula.__name__ for formula in get_subclasses(Formula)])
+    print(' '.join([formula.__name__ for formula in get_subclasses(Formula)]))
 
 
 if __name__ == '__main__':

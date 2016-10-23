@@ -3,6 +3,9 @@ from __future__ import absolute_import
 import unittest
 
 import numpy as np
+# import theano
+# theano.config.optimizer = 'None'
+# theano.config.exception_verbosity = 'high'
 
 import luchador
 from luchador.nn import (
@@ -15,13 +18,6 @@ from luchador.nn import (
 )
 from tests.unit.fixture import get_all_costs
 
-'''
-import logging
-import theano
-theano.config.optimizer = 'None'
-theano.config.exception_verbosity = 'high'
-logging.getLogger('luchador').setLevel(logging.DEBUG)
-'''
 
 BE = luchador.get_nn_backend()
 

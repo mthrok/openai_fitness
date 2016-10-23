@@ -36,7 +36,7 @@ def _parse_inputs(inputs):
         inputs = [inputs]
 
     if isinstance(inputs, dict):
-        for key, value in inputs.items():
+        for key in inputs.keys():
             inputs_.append(key.unwrap())
     elif isinstance(inputs, list):
         for key, value in inputs:

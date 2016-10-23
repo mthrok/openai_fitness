@@ -1,12 +1,10 @@
 from __future__ import division
 
-import logging
-
 import h5py
 import numpy as np
 
-import luchador  # noqa
-_LG = logging.getLogger('luchador')
+from luchador.logging import init_logger
+_LG = init_logger(__name__)
 
 
 def parse_command_line_args():

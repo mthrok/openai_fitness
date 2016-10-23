@@ -165,7 +165,7 @@ class TestTransitionRecorder(unittest.TestCase):
             state_length=4,
             memory_size=n_episodes * timesteps)
 
-        for i in range(n_episodes):
+        for _ in range(n_episodes):
             tr.reset(initial_observation=obs)
             expected = 0
             found = len(tr.recorder)
@@ -195,7 +195,7 @@ class TestTransitionRecorder(unittest.TestCase):
                 '#recorders expected is {}, instead of {}.'
                 .format(expected, found))
 
-            for t in range(timesteps):
+            for _ in range(timesteps):
                 tr.record(1, obs, 1, True)
             tr.truncate()
 
@@ -211,7 +211,7 @@ class TestTransitionRecorder(unittest.TestCase):
         # each episode
         for i in range(10):
             tr.reset(initial_observation=obs)
-            for t in range(10):
+            for _ in range(10):
                 tr.record(1, obs, 1, True)
             tr.truncate()
 

@@ -1,6 +1,6 @@
-from __future__ import absolute_import
+"""Implements interface common for NN backends"""
 
-"""This module implements interface common for NN backends"""
+from __future__ import absolute_import
 
 from .session import *  # noqa: F401, F403
 from .layer import *  # noqa: F401, F403

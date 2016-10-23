@@ -1,10 +1,7 @@
 from __future__ import division
+from __future__ import print_function
 
 import csv
-import logging
-
-import luchador  # noqa
-_LG = logging.getLogger('luchador')
 
 
 def parse_command_line_args():
@@ -49,8 +46,8 @@ def check(series1, series2, abs_threshold=0.00015, relative_threshold=1e-1):
 
 def main():
     args = parse_command_line_args()
-    _LG.info('Comparing {} and {}. (Threshold: {} [%])'
-             .format(args.input1, args.input2, 100 * args.threshold))
+    print('Comparing {} and {}. (Threshold: {} [%])'
+          .format(args.input1, args.input2, 100 * args.threshold))
     data1 = load_data(args.input1)
     data2 = load_data(args.input2)
 
@@ -71,13 +68,13 @@ def main():
             message += 'Line {}: {}, {}\n'.format(i, val1, val2)
 
     if message:
-        _LG.error(message)
+        print(message)
         raise ValueError(
             'Data are different at {} % points'
             .format(100 * error_ratio)
         )
     else:
-        _LG.info('Okay')
+        print('Okay')
 
 if __name__ == '__main__':
     main()

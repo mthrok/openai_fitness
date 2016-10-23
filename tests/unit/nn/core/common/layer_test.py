@@ -4,6 +4,9 @@ from __future__ import absolute_import
 import unittest
 
 import numpy as np
+# import theano
+# theano.config.optimizer = 'None'
+# theano.config.exception_verbosity = 'high'
 
 import luchador
 from luchador.nn import (
@@ -15,13 +18,6 @@ from luchador.nn import (
     scope as scp
 )
 
-'''
-import logging
-import theano
-theano.config.optimizer = 'None'
-theano.config.exception_verbosity = 'high'
-logging.getLogger('luchador').setLevel(logging.DEBUG)
-'''
 
 BE = luchador.get_nn_backend()
 
@@ -181,7 +177,7 @@ class BatchNormalizationTest(unittest.TestCase):
         session.initialize()
         mean_diff_prev, stdi_diff_prev = None, None
         for i in range(30):
-            output, mean_val, var_val = session.run(
+            _, mean_val, var_val = session.run(
                 outputs=[normalized, mean_tensor, var_tensor],
                 inputs={input_tensor: input_value},
                 updates=updates,

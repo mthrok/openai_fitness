@@ -3,11 +3,9 @@ from collections import OrderedDict
 
 import numpy as np
 
-'''
-import theano
-theano.config.optimizer = 'None'
-theano.config.exception_verbosity = 'high'
-'''
+# import theano
+# theano.config.optimizer = 'None'
+# theano.config.exception_verbosity = 'high'
 
 import luchador
 from luchador.util import load_config

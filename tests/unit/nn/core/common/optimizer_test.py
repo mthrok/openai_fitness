@@ -3,6 +3,10 @@ from __future__ import absolute_import
 
 import unittest
 
+# import theano
+# theano.config.optimizer = 'None'
+# theano.config.exception_verbosity = 'high'
+
 import luchador
 from luchador.nn import (
     Tensor,
@@ -12,14 +16,6 @@ from luchador.nn import (
     Adamax,
     scope as scp
 )
-
-'''
-import logging
-import theano
-theano.config.optimizer = 'None'
-theano.config.exception_verbosity = 'high'
-logging.getLogger('luchador').setLevel(logging.DEBUG)
-'''
 
 BE = luchador.get_nn_backend()
 
