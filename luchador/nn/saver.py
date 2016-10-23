@@ -96,8 +96,10 @@ class Saver(object):
                 self.last_back_up = now
 
     def _remove_old_data(self):
-        to_be_deleted = []
+        if not self.to_be_deleted:
+            return
 
+        to_be_deleted = []
         while True:
             then = self.to_be_deleted[0][0]
             if then - self.last_back_up > self.threshold:
