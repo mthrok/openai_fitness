@@ -12,8 +12,9 @@ from .fb_component import Ground, Background, Pipes, Player
 from ..base import BaseEnvironment, Outcome
 
 
-def get_index_generator(repeat=5, pattern=[0, 1, 2, 1]):
+def get_index_generator(repeat=5, pattern=None):
     indices = []
+    pattern = pattern if pattern else [0, 1, 2, 1]
     for val in pattern:
         indices.extend([val] * repeat)
     return cycle(indices)

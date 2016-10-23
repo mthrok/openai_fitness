@@ -14,11 +14,11 @@ class Outcome(object):
       terminal (bool): True if environment is in terminal state
       state (dict): Contains other environment-specific information
     """
-    def __init__(self, reward, observation, terminal, state={}):
+    def __init__(self, reward, observation, terminal, state=None):
         self.reward = reward
         self.observation = observation
         self.terminal = terminal
-        self.state = state
+        self.state = state if state else {}
 
 
 class BaseEnvironment(object):

@@ -108,7 +108,6 @@ class Session(BaseSession):
 
     def close(self):
         warnings.warn('`close` does nothing in Theano backend.')
-        pass
 
     ###########################################################################
     def load_dataset(self, dataset, cast=True, strict=True):

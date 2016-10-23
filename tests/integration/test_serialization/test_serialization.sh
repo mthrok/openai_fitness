@@ -55,9 +55,7 @@ for i in {0..1}
 do
     BACKEND="${BACKENDS[${i}]}"
     CONV_FORMAT="${CONV_FORMATS[${i}]}"
-
     OUTPUT_DIR="${BASE_OUTPUT_DIR}/${BACKEND}"
-    INPUT_FILE="${OUTPUT_DIR}/save_0.h5"
 
     echo "* Serializing on ${BACKEND} ${CONV_FORMAT}"
     LUCHADOR_NN_BACKEND=${BACKEND} LUCHADOR_NN_CONV_FORMAT=${CONV_FORMAT} ${TEST_COMMAND} --output ${OUTPUT_DIR}

@@ -85,7 +85,7 @@ class Session(object):
 
         self.load_dataset(data_set, cast=cast, strict=strict)
 
-    def load_dataset(self, dataset, cast=True):
+    def load_dataset(self, dataset, cast=True, strict=True):
         raise NotImplementedError(
             '`load_dataset` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)

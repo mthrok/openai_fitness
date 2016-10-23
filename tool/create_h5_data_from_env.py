@@ -8,7 +8,7 @@ from luchador.util import load_config
 def parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
-        Description='Create ALE Environment state data'
+        description='Create ALE Environment state data'
     )
     ap.add_argument('env', help='YAML file contains environment config')
     ap.add_argument('output', help='Output HDF5 file name')
