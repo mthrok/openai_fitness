@@ -31,6 +31,7 @@ def is_gpu_available():
 
 
 class BatchNormalizationTest(unittest.TestCase):
+    """Test for BatchNormalization class"""
     def setUp(self):
         self.conv_format = luchador.get_nn_conv_format()
 

@@ -67,7 +67,7 @@ ARGS2 = {
 }
 
 
-def make_initializers(args):
+def _make_initializers(args):
     return [Initializer(**args[name])
             for name, Initializer in INITIALIZERS.items()]
 
@@ -96,8 +96,8 @@ class InitializerTest(unittest.TestCase):
 
     def test_initializer_equality(self):
         """Initializers with same arguments must be equal"""
-        initializers1 = make_initializers(ARGS1)
-        initializers2 = make_initializers(ARGS1)
+        initializers1 = _make_initializers(ARGS1)
+        initializers2 = _make_initializers(ARGS1)
         for name, i1, i2 in zip(ARGS1, initializers1, initializers2):
             self.assertEqual(
                 i1, i2,
@@ -110,8 +110,8 @@ class InitializerTest(unittest.TestCase):
 
     def test_initializer_inequality(self):
         """Initializers with different arguments must not be equal"""
-        initializers1 = make_initializers(ARGS1)
-        initializers2 = make_initializers(ARGS2)
+        initializers1 = _make_initializers(ARGS1)
+        initializers2 = _make_initializers(ARGS2)
         for name, i1, i2 in zip(ARGS1, initializers1, initializers2):
             self.assertNotEqual(
                 i1, i2,
@@ -125,7 +125,7 @@ class InitializerTest(unittest.TestCase):
 
     def test_initializer_serialize(self):
         """`serialize` method should return constructor arguments """
-        initializers = make_initializers(ARGS1)
+        initializers = _make_initializers(ARGS1)
         for initializer in initializers:
             args = initializer.serialize()
             found = args['args']
@@ -137,7 +137,7 @@ class InitializerTest(unittest.TestCase):
 
     def test_initializer_equality_serialize(self):
         """Initializers recreated with serialize are identical to originals"""
-        for initializer0 in make_initializers(ARGS1):
+        for initializer0 in _make_initializers(ARGS1):
             args = initializer0.serialize()
             initializer1 = get_initializer(args['name'])(**args['args'])
             expected = initializer0

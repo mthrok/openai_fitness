@@ -78,12 +78,12 @@ ARGS2 = {
 }
 
 
-def make_parameterized_layers(args):
+def _make_parameterized_layers(args):
     return [Layer(**args[Layer.__name__])
             for Layer in PARAMETERIZED_LAYER_CLASSES]
 
 
-def make_fixed_layers():
+def _make_fixed_layers():
     return [Layer() for Layer in FIXED_LAYER_CLASSES]
 
 
@@ -111,8 +111,8 @@ class LayerTest(unittest.TestCase):
 
     def test_parameterized_layer_equality(self):
         """Parameterized layers with same arguments must be equal"""
-        layers1 = make_parameterized_layers(ARGS1)
-        layers2 = make_parameterized_layers(ARGS1)
+        layers1 = _make_parameterized_layers(ARGS1)
+        layers2 = _make_parameterized_layers(ARGS1)
         for l1, l2 in zip(layers1, layers2):
             self.assertEqual(
                 l1, l2,
@@ -121,8 +121,8 @@ class LayerTest(unittest.TestCase):
 
     def test_parameterized_layer_inequality(self):
         """Parameterized layers with different arguments must not be equal"""
-        layers1 = make_parameterized_layers(ARGS1)
-        layers2 = make_parameterized_layers(ARGS2)
+        layers1 = _make_parameterized_layers(ARGS1)
+        layers2 = _make_parameterized_layers(ARGS2)
         for l1, l2 in zip(layers1, layers2):
             self.assertNotEqual(
                 l1, l2,
@@ -131,15 +131,15 @@ class LayerTest(unittest.TestCase):
 
     def test_fixed_layer_equality(self):
         """Instances of not parmaeterized layers must be equal"""
-        layers1 = make_fixed_layers()
-        layers2 = make_fixed_layers()
+        layers1 = _make_fixed_layers()
+        layers2 = _make_fixed_layers()
         for l1, l2 in zip(layers1, layers2):
             self.assertEqual(
                 l1, l2, '\n{} layers must be eqauel'.format(type(l1)))
 
     def test_layer_serialize(self):
         """`serialize` method should return constructor arguments """
-        layers = make_parameterized_layers(ARGS1)
+        layers = _make_parameterized_layers(ARGS1)
         for layer in layers:
             args = layer.serialize()
             layer_name = args['name']
@@ -154,7 +154,7 @@ class LayerTest(unittest.TestCase):
 
     def test_layer_equality_serialize(self):
         """Layers recreated with serialized arguments equal to originals"""
-        for layer0 in make_parameterized_layers(ARGS1):
+        for layer0 in _make_parameterized_layers(ARGS1):
             args = layer0.serialize()
             layer1 = get_layer(args['name'])(**args['args'])
             expected = layer0

@@ -82,6 +82,8 @@ def _construct_function(inputs, outputs, updates, givens):
 
 
 class Session(BaseSession):
+    """Handles operations and computations in similar way as Tensorflow session
+    """
     def __init__(self, **kwargs):
         self.functions = {}
 

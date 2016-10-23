@@ -15,6 +15,7 @@ def create_image(height=210, width=160, channel=3):
 
 
 def get_all_initializers():
+    """Get the all subclasses of BaseInitializer class"""
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -26,6 +27,7 @@ def get_all_initializers():
 
 
 def get_all_optimizers():
+    """Get the all subclasses of BaseOptimizer class"""
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -37,6 +39,7 @@ def get_all_optimizers():
 
 
 def get_all_layers():
+    """Get the all subclasses of BaseLayer class"""
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)
@@ -48,6 +51,7 @@ def get_all_layers():
 
 
 def get_all_costs():
+    """Get the all subclasses of BaseCost class"""
     return {
         name: Class for name, Class
         in inspect.getmembers(luchador.nn, inspect.isclass)

@@ -25,14 +25,14 @@ class x2(Formula):
 
 
 class x6(Formula):
+    """
+    https://www.google.com/search?q=y+%3D+(x-1.5)(x+-1)(x-1)(x%2B1)(x%2B1)(x%2B1.5)
+
+    Global minimum: (x, y) = (0, -2.25)
+    Local minimum: (x, y) = (+- 1.354, -0.29)
+    """
     @staticmethod
     def get():
-        '''
-        https://www.google.com/search?q=y+%3D+(x-1.5)(x+-1)(x-1)(x%2B1)(x%2B1)(x%2B1.5)
-
-        Global minimum: (x, y) = (0, -2.25)
-        Local minimum: (x, y) = (+- 1.354, -0.29)
-        '''
         x_ = scope.get_variable(name='x', shape=[], initializer=Constant(2.0))
         x = x_.unwrap()
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)

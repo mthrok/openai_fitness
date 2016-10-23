@@ -1,3 +1,5 @@
+"""Implements Session functionalities common to backends"""
+
 from __future__ import absolute_import
 
 import logging
@@ -43,13 +45,15 @@ class Session(object):
             .format(type(self).__module__, type(self).__name__)
         )
 
-    def run(self, name, inputs, outputs, updates, givens):
+    def run(self, inputs, outputs, updates, givens, name):
+        """Runs operations and evaluates tensors in outputs"""
         raise NotImplementedError(
             '`run` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)
         )
 
     def initialize(self):
+        """Initialize Variables"""
         raise NotImplementedError(
             '`initialize` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)
@@ -86,6 +90,10 @@ class Session(object):
         self.load_dataset(data_set, cast=cast, strict=strict)
 
     def load_dataset(self, dataset, cast=True, strict=True):
+        """Set the values of Variables with the given dataset values
+
+        TODO: Add args
+        """
         raise NotImplementedError(
             '`load_dataset` method is not yet impolemented for {}.{}.'
             .format(type(self).__module__, type(self).__name__)

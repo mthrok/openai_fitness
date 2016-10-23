@@ -97,12 +97,12 @@ class Sequential(BaseModel):
 
     ###########################################################################
     # Functions for building actual computation graphs
-    def __call__(self, input):
-        return self.build(input)
+    def __call__(self, input_tensor):
+        return self.build(input_tensor)
 
-    def build(self, input):
+    def build(self, input_tensor):
         """Build the model on top of input tensor"""
-        tensor = self.input = input
+        tensor = self.input = input_tensor
         for cfg in self.layer_configs:
             cfg.input = tensor
             with scp.variable_scope(cfg.scope or scp.get_variable_scope()):

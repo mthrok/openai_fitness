@@ -19,6 +19,7 @@ def parse_command_line_args():
 
 
 def create_env(cfg_file):
+    """Load Environment config file and instantiate"""
     cfg = load_config(cfg_file)
     Environment = get_env(cfg['name'])
     env = Environment(**cfg['args'])

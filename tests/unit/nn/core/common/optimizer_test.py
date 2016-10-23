@@ -41,6 +41,7 @@ def get_slot_var(optimizer, slot_name, var_name=None):
 
 
 class AdamTest(unittest.TestCase):
+    """Test Adam Optimizer"""
     def test_beta_power_update(self):
         """Beta paramete is updated every time update is evaluated"""
         beta1, beta2, x_init_val, name = 0.9, 0.999, 3.0, 'Adam'

@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-def mean_sum(err):
+def _mean_sum(err):
     err = tf.reduce_sum(err, reduction_indices=1)
     return tf.reduce_mean(err)
 
@@ -53,7 +53,7 @@ class SSE2(BaseSSE2):
             if self.args['elementwise']:
                 output = Tensor(err)
             else:
-                output = Tensor(mean_sum(err))
+                output = Tensor(_mean_sum(err))
             return output
 
 
@@ -67,5 +67,5 @@ class SigmoidCrossEntropy(BaseCost):
             if self.args['elementwise']:
                 output = Tensor(ce)
             else:
-                output = Tensor(mean_sum(ce))
+                output = Tensor(_mean_sum(ce))
             return output

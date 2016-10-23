@@ -39,13 +39,13 @@ class TestDense(unittest.TestCase):
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
-        input = Input(shape=(None, n_nodes), name='foo')()
+        input_ = Input(shape=(None, n_nodes), name='foo')()
         with scp.variable_scope('test_recreate_with_reuse', reuse=False):
             dense1 = Dense(n_nodes)
-            dense1(input)
+            dense1(input_)
             with scp.variable_scope(tf.get_variable_scope(), reuse=True):
                 dense2 = Dense(**dense1.serialize()['args'])
-                dense2(input)
+                dense2(input_)
 
         vars1 = dense1.parameter_variables
         vars2 = dense2.parameter_variables
@@ -69,13 +69,13 @@ class TestDense(unittest.TestCase):
         """Copied layer fails to create node when reuse is not True"""
         fmt = luchador.get_nn_conv_format()
         shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
-        input = Input(shape=shape, name='foo')()
+        input_ = Input(shape=shape, name='foo')()
         with scp.variable_scope('test_recreate_without_reuse', reuse=False):
             conv = Conv2D(84, 84, 4, 4)
-            conv(input)
+            conv(input_)
             try:
                 conv2 = Conv2D(**conv.serialize()['args'])
-                conv2(input)
+                conv2(input_)
                 self.fail('Copied layer should raise ValueError when '
                           'reuse is not enabled in variable scope.')
             except ValueError:
