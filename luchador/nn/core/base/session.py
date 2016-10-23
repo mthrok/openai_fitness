@@ -45,7 +45,8 @@ class Session(object):
             .format(type(self).__module__, type(self).__name__)
         )
 
-    def run(self, inputs, outputs, updates, givens, name):
+    def run(self,
+            inputs=None, outputs=None, updates=None, givens=None, name=None):
         """Runs operations and evaluates tensors in outputs"""
         raise NotImplementedError(
             '`run` method is not yet impolemented for {}.{}.'

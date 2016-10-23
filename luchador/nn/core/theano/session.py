@@ -91,7 +91,10 @@ class Session(BaseSession):
     def graph(self):
         return None
 
-    def run(self, outputs=[], inputs={}, updates=None, givens=None, name=None):
+    def run(self, outputs=None, inputs=None,
+            updates=None, givens=None, name=None):
+        outputs = outputs if outputs else []
+        inputs = inputs if inputs else {}
         if name in self.functions:
             function = self.functions[name]
         else:

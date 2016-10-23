@@ -105,7 +105,8 @@ class Session(BaseSession):
     def graph(self):
         return self.session.graph
 
-    def run(self, outputs=[], inputs={}, updates=None, givens=None, name=None):
+    def run(self, outputs=None, inputs=None,
+            updates=None, givens=None, name=None):
         """
 
         Args:
@@ -121,6 +122,8 @@ class Session(BaseSession):
 
           name (str): Not used. Compatibility for theano backend
         """
+        outputs = outputs if outputs else []
+        inputs = inputs if inputs else {}
         fetches = _construct_fetches(outputs, updates)
         feed_dict = _construct_feed_dict(inputs, givens)
         values = self.session.run(fetches, feed_dict=feed_dict)
