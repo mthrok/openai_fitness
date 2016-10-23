@@ -16,7 +16,7 @@ _LG = logging.getLogger(__name__)
 __all__ = ['Saver']
 
 
-def _write_data_to_file(self, f, data):
+def _write_data_to_file(f, data):
     for key, value in data.items():
         _LG.debug('  Saving: {:10} {:24} {}'.format(
             value.dtype, value.shape, key))
