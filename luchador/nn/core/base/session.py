@@ -20,7 +20,7 @@ def _parse_dataset(h5group, prefix=''):
     ret = OrderedDict()
     for key, value in h5group.items():
         if key in meta_data:
-            _LG.info('  %25s %s', key, np.asarray(value))
+            _LG.info('  %-25s %s', key, np.asarray(value))
             continue
 
         path = '{}/{}'.format(prefix, key) if prefix else key
