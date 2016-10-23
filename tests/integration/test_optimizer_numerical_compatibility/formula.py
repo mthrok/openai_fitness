@@ -13,6 +13,7 @@ class Formula(object):
 
 
 class x2(Formula):
+    """ y = x2 """
     @staticmethod
     def get():
         x = scope.get_variable(name='x', shape=[], initializer=Constant(3))
@@ -26,6 +27,7 @@ class x2(Formula):
 
 class x6(Formula):
     """
+    y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
     https://www.google.com/search?q=y+%3D+(x-1.5)(x+-1)(x-1)(x%2B1)(x%2B1)(x%2B1.5)
 
     Global minimum: (x, y) = (0, -2.25)
