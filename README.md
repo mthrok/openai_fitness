@@ -1,3 +1,6 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7c1de2718e594da09513074a6c7b1c0e)](https://www.codacy.com/app/mthrok/luchador?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mthrok/luchador&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/7c1de2718e594da09513074a6c7b1c0e)](https://www.codacy.com/app/mthrok/luchador?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mthrok/luchador&amp;utm_campaign=Badge_Coverage)
+
 ## Overview
 
 Luchador is a library for Reinforcement Learning with forcus on Deep Reinforcement Learning. It contains environment, agent and runner implementation.
@@ -32,10 +35,10 @@ def main(env, agent, episodes, steps):
 
 `luchador` command takes configuration files for environment and agent as it's argument. (Run `luchador --help` to see options, and for the detail of the command, see `luchador/exercise.py`).
 
-Examples of configuration files are found in `example` directory. Let's train [DeepMind's DQN Agent on Atari environment](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf), using them. Run the following command from the top directory of luchador.
+Examples of configuration files are found in `example` directory. Let's train [DeepMind's DQN Agent](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf) in Atari environment, using files from them. Run the following command from the top directory of luchador.
 
 ```bash
-luchador --env example/ALEEnvironment_train.yml --agent example/DQNAgent_train.yml --episodes 100000  --steps 10000
+luchador example/ALEEnvironment_train.yml --agent example/DQNAgent_train.yml --episodes 100000  --steps 10000
 ```
 
 This will let agent play 100000 games (episodes), each of which can have 10000 steps at most. Looking inside of these YAML files, you can tell that agent is playing Space Invaders, that the agent has network architecture defined in `example/vanilla_dqn.yml` which is 3 layers of convolution followed by 2 layers of inner product layers, and such.
@@ -43,14 +46,12 @@ This will let agent play 100000 games (episodes), each of which can have 10000 s
 After the training is done, the trained parameter is saved at `results` directory. It takes about a day on GPU to finish this, so I included the result in `example/space_invaders_vanilla_dqn_99000.h5`, and you can run it by the following command in test mode.
 
 ```bash
-luchador --env example/ALEEnvironment_test.yml --agent example/DQNAgent_test.yml
+luchador example/ALEEnvironment_test.yml --agent example/DQNAgent_test.yml
 ```
 
 You should be able to see the agent plays Space Invaders effectively.
 
-<img src="assets/space_invaders_1.gif" width="280">
-<img src="assets/space_invaders_2.gif" width="280">
-<img src="assets/space_invaders_3.gif" width="280">
+<img src="assets/space_invaders_1.gif" width="280"><img src="assets/space_invaders_2.gif" width="280"><img src="assets/space_invaders_3.gif" width="280">
 
 You can use Tensorboard to visualize the training.
 
@@ -70,7 +71,7 @@ You can modify the files to run experiments in different configuration. For exam
 
 `luchador` has a traversal mechanism to find subclass, so you do not need to modify and re-install the library to add custom agent, environment, NN layor or NN model architecture. By subclassing the corresponding base class and loading the souce you can use it in the same manner as using the pre-defined ones. Let's create a new agent.
 
-To create Agent, you must subclass `luchador.agent.BaseAgent` class and implement `__init__`, `reset`, `observe` and `act` method. You have the following minimal implementation in `example/custom_agent.py`. Agent will just behave randomly.
+To create Agent, you must subclass `luchador.agent.BaseAgent` class and implement `init`, `reset`, `observe` and `act` method. You have the following minimal implementation in `example/custom_agent.py`. Agent will just behave randomly.
 
 ```python
 from luchador.agent import BaseAgent
@@ -115,7 +116,7 @@ args: {}
 You can use the same `luchador` command to run this agent, by giving the location of the file (in Python's dot notation) as `--sources` argument.
 
 ```bash
-luchador --env example/ALEEnvironment_test.yml --agent example/MyRandomAgent.yml --sources example.custom_agent
+luchador example/ALEEnvironment_test.yml --agent example/MyRandomAgent.yml --sources example.custom_agent
 ```
 
 ### 3. Adding a new environment
@@ -241,18 +242,29 @@ The following dependencies are automatically installed during the installation.
 
 ### Setting backend
 
-At the time of importing `luchador.nn` module, luchador checks environmental variable `LUCHADOR_NN_BACKEND` to detcide which backend it should use. Set value either `tensorflow` or `theano` to switch backend. Or programtically, you can set backend before importing,
+At the time of importing `luchador.nn` module, luchador checks environmental variable `LUCHADOR_NN_BACKEND` to detcide which backend it should use. Set value either `tensorflow` or `theano` to switch backend.
+
+```bash
+LUCHADOR_NN_BACKEND=theano luchador
+```
+
+When running Tensorflow backend, you can additionally configure default `dtype` and convolution data format  with `LUCHADOR_NN_DTYPE` and `LUCHADOR_NN_CONV_FORMAT`. These values are only effective in Tensorflow backend. To configure Theano, make `.theanorc` file in hme directory and follow the instruction found at Theano documentation..
+
+```bash
+LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 luchador 
+```
+
+Or programtically, you can set backend before importing `nn` module.
 
 ```python
 import luchador
 luchador.set_nn_backend('tensorflow')
+luchador.set_nn_conv_format('NHWC')
+luchador.set_nn_dtype('float32')
 
-import luchador.nn
+import luchador.nn  # tensorflow backend is loaded
 ```
 
-Additionally you can configure default `dtype` and convolution format used in Tensorflow backend with `LUCHADOR_NN_DTYPE` and `LUCHADOR_NN_CONV_FORMAT`. These values are only used in Tensorflow backend.
-
-To configure Theano, make `.theanorc` file in hme directory and follow the instruction found at Theano documentation..
 
 ## Development Plan
 
