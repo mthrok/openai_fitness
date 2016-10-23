@@ -58,7 +58,8 @@ class VariableScope(object):
         self.previous_scopes = []
         self.previous_reuse_flags = []
 
-    def reuse_variables(self):
+    @staticmethod
+    def reuse_variables():
         _set_flag(True)
 
     def _open(self):
