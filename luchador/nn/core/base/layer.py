@@ -150,14 +150,14 @@ class BaseConv2D(BaseLayer):
               - 'NHWC' (default): (batch, height, width, channel)
               - 'NCHW': (batch, channel, height, width)
 
-        padding:
+        padding :
             - [tensorflow] (str): Either 'SAME' or 'VALID'
             - [theano] (str or int or tuple of two int): See Theano doc
 
         with_bias : bool
             When True bias term is added after convolution
 
-        kwargs:
+        kwargs :
             Tensorflow: Arguments passed to tf.nn.conv2d. 'use_cudnn_on_gpu'
         """
         super(BaseConv2D, self).__init__(
@@ -168,16 +168,19 @@ class BaseConv2D(BaseLayer):
 
 ###############################################################################
 class BaseReLU(BaseLayer):
+    """Apply rectified linear activation"""
     def __init__(self):
         super(BaseReLU, self).__init__()
 
 
 class BaseSigmoid(BaseLayer):
+    """Apply Sigmoid activation elementwise"""
     def __init__(self):
         super(BaseSigmoid, self).__init__()
 
 
 class BaseSoftmax(BaseLayer):
+    """Apply Softmax activation"""
     def __init__(self):
         super(BaseSoftmax, self).__init__()
 

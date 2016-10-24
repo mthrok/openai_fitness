@@ -1,3 +1,5 @@
+"""Implement Layer classes in Theano"""
+
 from __future__ import division
 from __future__ import absolute_import
 
@@ -8,19 +10,10 @@ import theano.tensor as T
 
 from ..base import layer as base_layer
 from ..base import get_layer, get_initializer
-from . import scope as scp
-from .wrapper import (
-    Tensor,
-    Operation,
-)
-from .initializer import (
-    Constant,
-    Xavier,
-    XavierConv2D,
-)
+from . import scope
+from . import wrapper
+from . import initializer
 
-
-_LG = logging.getLogger(__name__)
 
 __all__ = [
     'BaseLayer', 'LayerMixin', 'get_layer',
@@ -31,12 +24,14 @@ __all__ = [
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
+_LG = logging.getLogger(__name__)
+
 
 BaseLayer = base_layer.BaseLayer
 
 
 class LayerMixin(object):
-    """Implement common Layer methods in Theano backend"""
+    """Implement common Layer methods in Theano"""
     def get_update_operation(self):
         """Get operation which updates Layer parameter
 
@@ -46,13 +41,13 @@ class LayerMixin(object):
 
         Currently only BatchNormalization requires such operation.
         """
-        return Operation(self.update_operations)
+        return wrapper.Operation(self.update_operations)
 
 
 def _wrap_output(tensor, shape, name='output'):
     """Prefix the name of output tensor with current scope"""
-    name = '{}/{}'.format(scp.get_variable_scope().name, name)
-    return Tensor(tensor, shape=shape, name=name)
+    name = '{}/{}'.format(scope.get_variable_scope().name, name)
+    return wrapper.Tensor(tensor, shape=shape, name=name)
 
 
 class Dense(LayerMixin, base_layer.BaseDense):
@@ -63,14 +58,14 @@ class Dense(LayerMixin, base_layer.BaseDense):
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
             get_initializer(cfg['name'])(**cfg['args'])
-            if cfg else Xavier()
+            if cfg else initializer.Xavier()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else Constant(0.1)
+                if cfg else initializer.Constant(0.1)
             )
 
     def _instantiate_parameters(self, n_inputs):
@@ -78,13 +73,13 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
         w_shape = (n_inputs, self.args['n_nodes'])
         w_init = self.initializers['weight']
-        self._add_parameter('weight', scp.get_variable(
+        self._add_parameter('weight', scope.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_nodes'],)
             b_init = self.initializers['bias']
-            self._add_parameter('bias', scp.get_variable(
+            self._add_parameter('bias', scope.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
     def _build(self, input_tensor):
@@ -165,14 +160,14 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
             get_initializer(cfg['name'])(**cfg['args'])
-            if cfg else XavierConv2D()
+            if cfg else initializer.XavierConv2D()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
                 get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else Constant(0.1)
+                if cfg else initializer.Constant(0.1)
             )
 
     def _instantiate_parameters(self, n_inputs):
@@ -181,13 +176,13 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         w_shape = (self.args['n_filters'], n_inputs,
                    self.args['filter_height'], self.args['filter_width'])
         w_init = self.initializers['weight']
-        self._add_parameter('weight', scp.get_variable(
+        self._add_parameter('weight', scope.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
             b_init = self.initializers['bias']
-            self._add_parameter('bias', scp.get_variable(
+            self._add_parameter('bias', scope.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
     def _get_subsample(self):
@@ -357,17 +352,19 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         _LG.debug('     Axes: %s', self._axes)
         _LG.debug('  Pattern: %s', self._pattern)
 
-        mean = scp.get_variable(name='mean', shape=shape,
-                                initializer=Constant(0), trainable=False)
-        var = scp.get_variable(name='var', shape=shape,
-                               initializer=Constant(1), trainable=False)
+        mean = scope.get_variable(
+            name='mean', shape=shape, trainable=False,
+            initializer=initializer.Constant(0))
+        var = scope.get_variable(
+            name='var', shape=shape, trainable=False,
+            initializer=initializer.Constant(1))
 
-        scale = scp.get_variable(
-            name='scale', shape=shape,
-            initializer=Constant(self.args['scale']), trainable=True)
-        offset = scp.get_variable(
-            name='offset', shape=shape,
-            initializer=Constant(self.args['offset']), trainable=True)
+        scale = scope.get_variable(
+            name='scale', shape=shape, trainable=True,
+            initializer=initializer.Constant(self.args['scale']))
+        offset = scope.get_variable(
+            name='offset', shape=shape, trainable=True,
+            initializer=initializer.Constant(self.args['offset']))
 
         self._add_parameter('mean', mean)
         self._add_parameter('var', var)
