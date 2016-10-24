@@ -1,18 +1,19 @@
+"""Implement Cost classes in Tensorflow"""
+
 from __future__ import absolute_import
 
 import tensorflow as tf
 
-from ..base import (
-    get_cost,
-    BaseCost,
-    BaseSSE2,
-)
-from .wrapper import Tensor
+from ..base import cost as base_cost
+from ..base import get_cost
+from . import wrapper
 
 __all__ = [
     'BaseCost', 'get_cost',
     'SSE2', 'SigmoidCrossEntropy',
 ]
+
+BaseCost = base_cost.BaseCost
 
 
 def _mean_sum(err):
@@ -27,8 +28,8 @@ def _clipped_delta(target, prediction, min_delta, max_delta):
     return delta
 
 
-class SSE2(BaseSSE2):
-    """Compute Sum-Squared-Error / 2.0 for the given target and prediction"""
+class SSE2(base_cost.BaseSSE2):
+    """Implement SSE2 in Tensorflow"""
     def _validate_args(self, args):
         if (
                 ('min_delta' in args and 'max_delta' in args) or
@@ -38,7 +39,7 @@ class SSE2(BaseSSE2):
         raise ValueError('When clipping delta, both '
                          '`min_delta` and `max_delta` must be provided')
 
-    def build(self, target, prediction):
+    def _build(self, target, prediction):
         """Build error tensor for target and prediction.
         TODO: Add Math expression here.
         """
@@ -50,22 +51,16 @@ class SSE2(BaseSSE2):
             delta = _clipped_delta(target_, pred_, min_delta, max_delta)
             err = tf.square(delta) / 2
 
-            if self.args['elementwise']:
-                output = Tensor(err)
-            else:
-                output = Tensor(_mean_sum(err))
-            return output
+            output = err if self.args['elementwise'] else _mean_sum(err)
+            return wrapper.Tensor(output)
 
 
-class SigmoidCrossEntropy(BaseCost):
-    """Apply sigmoid activation followed by cross entropy """
-    def build(self, target, logit):
+class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
+    """Implement SCE in Tensorflow"""
+    def _build(self, target, logit):
         with tf.name_scope(self.__class__.__name__):
-            ce = tf.nn.sigmoid_cross_entropy_with_logits(
+            sce = tf.nn.sigmoid_cross_entropy_with_logits(
                 logit.unwrap(), tf.stop_gradient(target.unwrap()))
 
-            if self.args['elementwise']:
-                output = Tensor(ce)
-            else:
-                output = Tensor(_mean_sum(ce))
-            return output
+            output = sce if self.args['elementwise'] else _mean_sum(sce)
+            return wrapper.Tensor(output)

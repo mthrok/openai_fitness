@@ -32,15 +32,7 @@ BaseLayer = base_layer.BaseLayer
 
 class LayerMixin(object):
     """Implement common Layer methods in Theano"""
-    def get_update_operation(self):
-        """Get operation which updates Layer parameter
-
-        For layers which require updates other than back propagate
-        optimization, Operation returned by this function must be
-        fed to Session.run function.
-
-        Currently only BatchNormalization requires such operation.
-        """
+    def _get_update_operation(self):
         return wrapper.Operation(self.update_operations)
 
 
@@ -83,7 +75,6 @@ class Dense(LayerMixin, base_layer.BaseDense):
                 name='bias', shape=b_shape, initializer=b_init))
 
     def _build(self, input_tensor):
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.shape
 
         if not len(input_shape) == 2:
@@ -248,7 +239,6 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
             4D Tensor with shape (batch, #output channel, row, col)
         """
         input_shape = input_tensor.shape
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         _LG.debug('    input_shape: %s', input_shape)
         _LG.debug('    border_mode: %s', self._get_border_mode())
 
@@ -283,7 +273,6 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
     """Implement ReLU layer in Theano"""
     def _build(self, input_tensor):
         """Build rectified linear activation operation on input tensor"""
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.shape
         output_tensor = T.nnet.relu(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
@@ -292,7 +281,6 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
 class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
     """Implement Sigmoid layer in Theano"""
     def _build(self, input_tensor):
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.shape
         output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
@@ -301,7 +289,6 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """Implement Softmax layer in Theano"""
     def _build(self, input_tensor):
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.shape
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
@@ -314,7 +301,6 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         input_shape = input_tensor.shape
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
 
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         _LG.debug('    Input shape: %s', input_shape)
         _LG.debug('    #Nodes     : %s', n_nodes)
 
@@ -332,7 +318,6 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
             self.args['denom'], dtype=dtype, name='denominator')
 
     def _build(self, input_tensor):
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         if self.denom is None:
             self._instantiate_denominator()
         output_tensor = input_tensor.unwrap() / self.args['denom']
@@ -372,7 +357,6 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         self._add_parameter('offset', offset)
 
     def _build(self, input_tensor):
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         if not self.parameter_variables:
             self._instantiate_parameters(input_tensor.shape)
 

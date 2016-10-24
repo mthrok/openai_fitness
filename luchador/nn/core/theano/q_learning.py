@@ -64,7 +64,7 @@ class DeepQLearning(BaseQLI):
             rewards = rewards.clip(min_reward, max_reward)
         future = rewards + post_q
 
-        n_actions = self.pre_trans_net.output.get_shape()[1]
+        n_actions = self.pre_trans_net.output.shape[1]
         mask_on = T.extra_ops.to_one_hot(actions, n_actions)
         mask_off = 1.0 - mask_on
         current = self.pre_trans_net.output.unwrap()

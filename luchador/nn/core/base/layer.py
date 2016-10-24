@@ -1,3 +1,5 @@
+"""Define common interface for Layer classes"""
+
 from __future__ import division
 from __future__ import absolute_import
 
@@ -37,10 +39,21 @@ class BaseLayer(SerializeMixin, object):
 
     ###########################################################################
     # Setter for learnable parameters
-    def _add_update(self, name, op):
-        self.update_operations[name] = op
+    def _add_update(self, name, operation):
+        self.update_operations[name] = operation
 
     def get_update_operation(self):
+        """Get operation which updates Layer parameter
+
+        For layers which require updates other than back propagate
+        optimization, Operation returned by this function must be
+        fed to Session.run function.
+
+        Currently only BatchNormalization requires such operation.
+        """
+        return self._get_update_operation()
+
+    def _get_update_operation(self):
         raise NotImplementedError(
             '`get_update_operation` method is not implemented for {}'
             .format(self.__class__)
@@ -57,16 +70,29 @@ class BaseLayer(SerializeMixin, object):
     ###########################################################################
     # Functions for building computation graph
     def __call__(self, input_tensor):
-        """Build layer computation graph on top of the given tensor"""
+        """Convenience method to call `build`"""
         return self.build(input_tensor)
 
     def build(self, input_tensor):
-        """Build layer computation graph on top of the given tensor"""
+        """Build layer computation graph on top of the given tensor
+
+        Parameters
+        ----------
+        input_tensor : Tensor
+            Tensor object. Requirement for this object (such as shape and
+            dtype) varies from Layer types.
+
+        Returns
+        -------
+        Tensor
+            Tensor which holds the output of build computation
+        """
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         return self._build(input_tensor)
 
     def _build(self, input_tensor):
         raise NotImplementedError(
-            '`build` method is not implemented for {}'.format(self.__class__)
+            '`_build` method is not implemented for {}'.format(self.__class__)
         )
 
 
@@ -189,7 +215,7 @@ class BaseSoftmax(BaseLayer):
 class BaseTrueDiv(BaseLayer):
     """Apply reald-valued division to input tensor elementwise"""
     def __init__(self, denom, dtype=None):
-        super(BaseTrueDiv, self).__init__(denom=denom, dtype=None)
+        super(BaseTrueDiv, self).__init__(denom=denom, dtype=dtype)
         self.denom = None
 
 

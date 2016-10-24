@@ -72,7 +72,7 @@ class DeepQLearning(BaseQLI):
             future = tf.add(rewards, post_q, name='future_reward')
 
         with tf.name_scope('target_q_value'):
-            n_actions = self.pre_trans_net.output.get_shape()[1]
+            n_actions = self.pre_trans_net.output.shape[1]
             with tf.name_scope('reshape_current_q_value'):
                 mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
                                       off_value=1., name='actions_not_taken')
