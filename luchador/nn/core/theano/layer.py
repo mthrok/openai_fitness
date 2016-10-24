@@ -84,7 +84,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
     def _build(self, input_tensor):
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
 
         if not len(input_shape) == 2:
             raise ValueError('Input tensor must be 2D. '
@@ -247,7 +247,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         Tensor
             4D Tensor with shape (batch, #output channel, row, col)
         """
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         _LG.debug('    input_shape: %s', input_shape)
         _LG.debug('    border_mode: %s', self._get_border_mode())
@@ -284,7 +284,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
     def _build(self, input_tensor):
         """Build rectified linear activation operation on input tensor"""
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         output_tensor = T.nnet.relu(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
@@ -293,7 +293,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
     """Implement Sigmoid layer in Theano"""
     def _build(self, input_tensor):
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
@@ -302,7 +302,7 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """Implement Softmax layer in Theano"""
     def _build(self, input_tensor):
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
@@ -311,7 +311,7 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
 class Flatten(LayerMixin, base_layer.BaseFlatten):
     """Implement Flatten layer in Theano"""
     def _build(self, input_tensor):
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
 
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
@@ -336,7 +336,7 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
         if self.denom is None:
             self._instantiate_denominator()
         output_tensor = input_tensor.unwrap() / self.args['denom']
-        return _wrap_output(output_tensor, input_tensor.get_shape(), 'output')
+        return _wrap_output(output_tensor, input_tensor.shape, 'output')
 
 
 ###############################################################################
@@ -374,7 +374,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
     def _build(self, input_tensor):
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         if not self.parameter_variables:
-            self._instantiate_parameters(input_tensor.get_shape())
+            self._instantiate_parameters(input_tensor.shape)
 
         input_tensor_ = input_tensor.unwrap()
 
@@ -404,7 +404,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
         stdi = T.inv(T.sqrt(var_acc + self.args['epsilon']))
         output = scale * (input_tensor_ - mean_acc) * stdi + offset
-        return _wrap_output(output, input_tensor.get_shape(), 'output')
+        return _wrap_output(output, input_tensor.shape, 'output')
 
 
 ###############################################################################
@@ -413,7 +413,7 @@ class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
 
-        shape = input_tensor.get_shape()
+        shape = input_tensor.shape
         output_shape = (shape[0], shape[3], shape[1], shape[2])
         return _wrap_output(output_tensor_, output_shape, 'output')
 
@@ -423,6 +423,6 @@ class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)
 
-        shape = input_tensor.get_shape()
+        shape = input_tensor.shape
         output_shape = (shape[0], shape[2], shape[3], shape[1])
         return _wrap_output(output_tensor_, output_shape, 'output')

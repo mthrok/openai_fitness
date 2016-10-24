@@ -84,7 +84,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
     def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input_tensor.get_shape()[1])
+            self._instantiate_parameter_variables(input_tensor.shape[1])
 
         weight = self._get_parameter('weight').unwrap()
         output = tf.matmul(input_tensor.unwrap(), weight)
@@ -225,7 +225,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
     def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input_tensor.get_shape())
+            self._instantiate_parameter_variables(input_tensor.shape)
 
         weight = self._get_parameter('weight').unwrap()
         strides = self._get_strides()
@@ -273,7 +273,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
     """Implement Flatten in Tensorflow"""
     def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        in_shape = input_tensor.get_shape()
+        in_shape = input_tensor.shape
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
         out_shape = (-1, n_nodes)
         output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
@@ -325,7 +325,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
     def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        input_shape = input_tensor.get_shape()
+        input_shape = input_tensor.shape
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_shape)
 

@@ -45,7 +45,7 @@ class SSE2(BaseSSE2):
         delta = T.square(delta) / 2
 
         if self.args['elementwise']:
-            output = Tensor(delta, shape=target.get_shape())
+            output = Tensor(delta, shape=target.shape)
         else:
             output = Tensor(sum_mean(delta), shape=(1,))
         return output
@@ -59,7 +59,7 @@ class SigmoidCrossEntropy(BaseCost):
         ce = T.nnet.relu(x) - x * z + T.log(1 + T.exp(-abs(x)))
 
         if self.args['elementwise']:
-            output = Tensor(ce, shape=target.get_shape())
+            output = Tensor(ce, shape=target.shape)
         else:
             output = Tensor(sum_mean(ce), shape=(1,))
         return output

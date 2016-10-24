@@ -16,9 +16,6 @@ class TensorWrapper(object):
         self.name = name
         self.dtype = dtype
 
-    def get_shape(self):
-        return self.shape
-
     def unwrap(self):
         """Get the underlying tensor object"""
         return self._tensor
