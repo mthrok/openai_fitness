@@ -376,7 +376,6 @@ class TestTransitionRecorder(unittest.TestCase):
         """Last observations are retrieved in "NHWC" format"""
         self._test_get_current_state('NHWC')
 
-    @unittest.skipIf('CIRCLECI' in os.environ, 'Skipping sampling time')
     def test_sampling_time(self):
         """Sampling should finish in reasonable time."""
         height, width = 1, 1
@@ -400,8 +399,10 @@ class TestTransitionRecorder(unittest.TestCase):
             tr.sample(n_samples)
         dt = (time.time() - t0) / n_repeats
         print('{} [sec]'.format(dt))
+
+        threshold = 0.0010 if 'CIRCLECI' in os.environ else 0.0005
         self.assertTrue(
-            dt < 0.0008,
+            dt < threshold,
             'Sampling is taking too much time ({} sec). '
             'Review implementation.'.format(dt)
         )
