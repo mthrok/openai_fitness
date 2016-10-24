@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import time
 import unittest
 
@@ -375,6 +376,7 @@ class TestTransitionRecorder(unittest.TestCase):
         """Last observations are retrieved in "NHWC" format"""
         self._test_get_current_state('NHWC')
 
+    @unittest.skipIf('CIRCLECI' in os.environ, 'Skipping sampling time')
     def test_sampling_time(self):
         """Sampling should finish in reasonable time."""
         height, width = 1, 1
