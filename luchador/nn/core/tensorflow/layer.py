@@ -7,20 +7,13 @@ import warnings
 import tensorflow as tf
 
 import luchador
-from ..base import (
-    get_layer,
-    get_initializer,
-    BaseLayer,
-    BaseDense,
-    BaseConv2D,
-    BaseTrueDiv,
-    BaseBatchNormalization,
-)
+from ..base import layer as base_layer
+from ..base import get_layer, get_initializer
+from . import scope as scp
 from .wrapper import (
     Tensor,
     Operation
 )
-from . import scope as scp
 from .initializer import (
     Constant,
     Xavier,
@@ -31,7 +24,7 @@ from .initializer import (
 _LG = logging.getLogger(__name__)
 
 __all__ = [
-    'BaseLayer', 'get_layer',
+    'BaseLayer', 'LayerMixin', 'get_layer',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax',
     'Flatten', 'TrueDiv',
@@ -39,18 +32,31 @@ __all__ = [
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
 
+BaseLayer = base_layer.BaseLayer
+
+
+class LayerMixin(object):
+    """Implement common Layer methods in Tensorflow backend"""
+    def get_update_operation(self):
+        """Get operation which updates Layer parameter
+
+        For layers which require updates other than back propagate
+        optimization, Operation returned by this function must be
+        fed to Session.run function.
+
+        Currently only BatchNormalization requires such operation.
+        """
+        return Operation(tf.group(*self.update_operations.values()))
+
 
 def _wrap_output(tensor, name='output'):
+    """Prefix the name of output tensor with current scope"""
     name = '{}/{}'.format(tf.get_variable_scope().name, name)
     return Tensor(tensor, name=name)
 
 
-class TFLayerMixin(BaseLayer):
-    def get_update_operation(self):
-        return Operation(tf.group(*self.update_operations.values()))
-
-
-class Dense(TFLayerMixin, BaseDense):
+class Dense(LayerMixin, base_layer.BaseDense):
+    """Implement Dense layer in Tensorflow"""
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers') or {}
 
@@ -80,7 +86,7 @@ class Dense(TFLayerMixin, BaseDense):
             self._add_parameter('bias', scp.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
-    def build(self, input_tensor):
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_tensor.get_shape()[1])
@@ -133,7 +139,8 @@ def _validate_strides(strides):
     )
 
 
-class Conv2D(TFLayerMixin, BaseConv2D):
+class Conv2D(LayerMixin, base_layer.BaseConv2D):
+    """Implement Conv2D layer in Tensorflow"""
     def _validate_args(self, args):
         _validate_padding(args['padding'])
         _validate_strides(args['strides'])
@@ -220,7 +227,7 @@ class Conv2D(TFLayerMixin, BaseConv2D):
             self._add_parameter('bias', scp.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
-    def build(self, input_tensor):
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if not self.parameter_variables:
             self._instantiate_parameter_variables(input_tensor.get_shape())
@@ -243,33 +250,33 @@ class Conv2D(TFLayerMixin, BaseConv2D):
         return _wrap_output(output_tensor)
 
 
-class ReLU(TFLayerMixin, BaseLayer):
-    """Apply Rectified Linear Unit"""
-    def build(self, input_tensor):
+class ReLU(LayerMixin, base_layer.BaseReLU):
+    """Implement ReLU in Tensorflow"""
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
         return _wrap_output(output)
 
 
-class Sigmoid(TFLayerMixin, BaseLayer):
-    """Apply Sigmoid activation"""
-    def build(self, input_tensor):
+class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
+    """Implement Sigmoid in Tensorflow"""
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.sigmoid(input_tensor.unwrap(), 'output')
         return _wrap_output(output)
 
 
-class Softmax(TFLayerMixin, BaseLayer):
-    """Apply Softmax activation"""
-    def build(self, input_tensor):
+class Softmax(LayerMixin, base_layer.BaseSoftmax):
+    """Implement Softmax in Tensorflow"""
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         output = tf.nn.softmax(input_tensor.unwrap())
         return _wrap_output(output)
 
 
-class Flatten(TFLayerMixin, BaseLayer):
-    """Reshape batch into 2D (batch_size, n_features) from 4D"""
-    def build(self, input_tensor):
+class Flatten(LayerMixin, base_layer.BaseFlatten):
+    """Implement Flatten in Tensorflow"""
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         in_shape = input_tensor.get_shape()
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
@@ -278,13 +285,14 @@ class Flatten(TFLayerMixin, BaseLayer):
         return _wrap_output(output)
 
 
-class TrueDiv(TFLayerMixin, BaseTrueDiv):
+class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
+    """Implement TrueDiv in Tensorflow"""
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or luchador.get_nn_dtype()
         self.denom = tf.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
-    def build(self, input_tensor):
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         if self.denom is None:
             self._instantiate_denominator()
@@ -292,27 +300,27 @@ class TrueDiv(TFLayerMixin, BaseTrueDiv):
         return _wrap_output(output)
 
 
-class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
+class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
+    """Implement BN in Tensorflow"""
     def _instantiate_parameter_variables(self, input_shape):
-        """Instantiate variable for mean and standard diviation"""
         dim, fmt = len(input_shape), luchador.get_nn_conv_format()
         channel = 1 if dim == 2 or fmt == 'NCHW' else 3
 
-        self.axes = tuple(i for i in range(dim) if not i == channel)
-        self.shape = tuple(input_shape[i] for i in range(dim) if i == channel)
+        self._axes = tuple(i for i in range(dim) if not i == channel)
+        shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
         mean = scp.get_variable(
-            name='mean', shape=self.shape,
+            name='mean', shape=shape,
             initializer=Constant(0), trainable=False)
         var = scp.get_variable(
-            name='var', shape=self.shape,
+            name='var', shape=shape,
             initializer=Constant(1), trainable=False)
 
         scale = scp.get_variable(
-            name='scale', shape=self.shape,
+            name='scale', shape=shape,
             initializer=Constant(self.args['scale']), trainable=True)
         offset = scp.get_variable(
-            name='offset', shape=self.shape,
+            name='offset', shape=shape,
             initializer=Constant(self.args['offset']), trainable=True)
 
         self._add_parameter('mean', mean)
@@ -320,7 +328,7 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         self._add_parameter('scale', scale)
         self._add_parameter('offset', offset)
 
-    def build(self, input_tensor):
+    def _build(self, input_tensor):
         _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
         input_shape = input_tensor.get_shape()
         if not self.parameter_variables:
@@ -335,7 +343,7 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         offset = self._get_parameter('offset').unwrap()
 
         if self.args['learn']:
-            mean_in, var_in = tf.nn.moments(input_, self.axes)
+            mean_in, var_in = tf.nn.moments(input_, self._axes)
 
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
             new_var_acc = decay * var_acc + (1 - decay) * var_in
@@ -352,15 +360,17 @@ class BatchNormalization(TFLayerMixin, BaseBatchNormalization):
         return _wrap_output(output)
 
 
-class NHWC2NCHW(TFLayerMixin, BaseLayer):
-    def build(self, input_tensor):
+class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
+    """Implement NHWC2NCHW in Tensorflow"""
+    def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 3, 1, 2))
         return _wrap_output(output_tensor_)
 
 
-class NCHW2NHWC(TFLayerMixin, BaseLayer):
-    def build(self, input_tensor):
+class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
+    """Implement NCHW2NHWC in Tensorflow"""
+    def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 2, 3, 1))
         return _wrap_output(output_tensor_)

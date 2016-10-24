@@ -6,15 +6,8 @@ import logging
 import theano
 import theano.tensor as T
 
-from ..base import (
-    get_layer,
-    get_initializer,
-    BaseLayer,
-    BaseDense,
-    BaseConv2D,
-    BaseTrueDiv,
-    BaseBatchNormalization,
-)
+from ..base import layer as base_layer
+from ..base import get_layer, get_initializer
 from . import scope as scp
 from .wrapper import (
     Tensor,
@@ -30,7 +23,7 @@ from .initializer import (
 _LG = logging.getLogger(__name__)
 
 __all__ = [
-    'BaseLayer', 'get_layer',
+    'BaseLayer', 'LayerMixin', 'get_layer',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax',
     'Flatten', 'TrueDiv',
@@ -39,18 +32,31 @@ __all__ = [
 ]
 
 
+BaseLayer = base_layer.BaseLayer
+
+
+class LayerMixin(object):
+    """Implement common Layer methods in Theano backend"""
+    def get_update_operation(self):
+        """Get operation which updates Layer parameter
+
+        For layers which require updates other than back propagate
+        optimization, Operation returned by this function must be
+        fed to Session.run function.
+
+        Currently only BatchNormalization requires such operation.
+        """
+        return Operation(self.update_operations)
+
+
 def _wrap_output(tensor, shape, name='output'):
-    """Add scope prefix to the name of ouptut Tenaor"""
+    """Prefix the name of output tensor with current scope"""
     name = '{}/{}'.format(scp.get_variable_scope().name, name)
     return Tensor(tensor, shape=shape, name=name)
 
 
-class TheanoLayerMixin(object):
-    def get_update_operation(self):
-        return Operation(self.update_operations)
-
-
-class Dense(TheanoLayerMixin, BaseDense):
+class Dense(LayerMixin, base_layer.BaseDense):
+    """Implement Dense layer in Theano"""
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers') or {}
 
@@ -67,7 +73,7 @@ class Dense(TheanoLayerMixin, BaseDense):
                 if cfg else Constant(0.1)
             )
 
-    def _instantiate_parameter_variables(self, n_inputs):
+    def _instantiate_parameters(self, n_inputs):
         self._instantiate_initializers()
 
         w_shape = (n_inputs, self.args['n_nodes'])
@@ -81,15 +87,8 @@ class Dense(TheanoLayerMixin, BaseDense):
             self._add_parameter('bias', scp.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
-    def build(self, input_tensor):
-        """
-        Args:
-          input_tensor (TensorWrapper): 2D tensor
-
-        Returns:
-          TensorWrapper: 2D tensor wrapper
-        """
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+    def _build(self, input_tensor):
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.get_shape()
 
         if not len(input_shape) == 2:
@@ -97,7 +96,7 @@ class Dense(TheanoLayerMixin, BaseDense):
                              'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input_shape[1])
+            self._instantiate_parameters(input_shape[1])
 
         weight = self._get_parameter('weight').unwrap()
         output_tensor = T.dot(input_tensor.unwrap(), weight)
@@ -117,7 +116,7 @@ def _map_border_mode(padding):
 
 
 def _is_int_list(list_, length=2):
-    return (len(list_) == length and all([isinstance(e, int) for e in list_]))
+    return len(list_) == length and all([isinstance(e, int) for e in list_])
 
 
 def _validate_padding(padding):
@@ -135,7 +134,7 @@ def _validate_padding(padding):
     try:
         if _is_int_list(padding, length=2):
             return
-    except Exception:
+    except TypeError:
         pass
 
     raise ValueError(msg)
@@ -147,13 +146,14 @@ def _validate_strides(strides):
     try:
         if _is_int_list(strides, length=2):
             return
-    except Exception:
+    except TypeError:
         pass
 
     raise ValueError('`strides` must be either int or tuple of two int')
 
 
-class Conv2D(TheanoLayerMixin, BaseConv2D):
+class Conv2D(LayerMixin, base_layer.BaseConv2D):
+    """Implement Conv2D layer in Theano"""
     def _validate_args(self, args):
         _validate_padding(args['padding'])
         _validate_strides(args['strides'])
@@ -175,7 +175,7 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
                 if cfg else Constant(0.1)
             )
 
-    def _instantiate_parameter_variables(self, n_inputs):
+    def _instantiate_parameters(self, n_inputs):
         self._instantiate_initializers()
 
         w_shape = (self.args['n_filters'], n_inputs,
@@ -201,9 +201,13 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
     def _get_output_shape(self, input_shape, filter_shape):
         """Compute output shape
 
-        Args:
-          input_shape(tuple): (batch, n_input_channels, row, col)
-          filter_shape(tuple): (n_filters, n_input_channels, rows, cols)
+        Parameters
+        ----------
+        input_shape : tuple
+            Input shape in order of (batch, n_input_channels, row, col)
+
+        filter_shape : tuple
+            Filter shape in order of (n_filters, n_input_channels, rows, cols)
         """
         # TODO: Add warning if
         # parts of image are not covered because of subsampling
@@ -235,27 +239,30 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
         output_shape = (n_batches, n_filters, out_row, out_col)
         return output_shape
 
-    def build(self, input_tensor):
-        """Build 2D conolution on top of the input tensor
-        Args:
-          input_tensor (TensorWrapper):
-            4D Tensor with shape (batch, channel, row, col).
+    def _build(self, input_tensor):
+        """Build 2D conolution operation of the input tensor
 
-        Returns:
-          TensorWrapper: 4D Tensor with shape (batch, stack, row, col)
+        Parameters
+        ----------
+        input_tensor : Tensor
+            4D Tensor with shape (batch, #input channel, row, col)
+
+        Returns
+        -------
+        Tensor
+            4D Tensor with shape (batch, #output channel, row, col)
         """
         input_shape = input_tensor.get_shape()
-
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        _LG.debug('    input_shape: {}'.format(input_shape))
-        _LG.debug('    border_mode: {}'.format(self._get_border_mode()))
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
+        _LG.debug('    input_shape: %s', input_shape)
+        _LG.debug('    border_mode: %s', self._get_border_mode())
 
         if not len(input_shape) == 4:
             raise ValueError('Input tensor must be 4D. '
                              'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input_shape[1])
+            self._instantiate_parameters(input_shape[1])
 
         filters = self._get_parameter('weight').unwrap()
         filter_shape = filters.get_value().shape
@@ -273,91 +280,93 @@ class Conv2D(TheanoLayerMixin, BaseConv2D):
             output_tensor = bias + output_tensor
 
         output_shape = self._get_output_shape(input_shape, filter_shape)
-        _LG.debug('    output_shape: {}'.format(output_shape))
+        _LG.debug('    output_shape: %s', output_shape)
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class ReLU(TheanoLayerMixin, BaseLayer):
-    """Apply Rectified Linear Unit"""
-    def build(self, input_tensor):
+class ReLU(LayerMixin, base_layer.BaseReLU):
+    """Implement ReLU layer in Theano"""
+    def _build(self, input_tensor):
+        """Build rectified linear activation operation on input tensor"""
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.get_shape()
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        _LG.debug('    input_shape: {}'.format(input_shape))
-
         output_tensor = T.nnet.relu(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Sigmoid(TheanoLayerMixin, BaseLayer):
-    """Apply Sigmoid activation"""
-    def build(self, input_tensor):
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
+    """Implement Sigmoid layer in Theano"""
+    def _build(self, input_tensor):
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.get_shape()
         output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Softmax(TheanoLayerMixin, BaseLayer):
-    """Apply Softmax activation"""
-    def build(self, input_tensor):
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+class Softmax(LayerMixin, base_layer.BaseSoftmax):
+    """Implement Softmax layer in Theano"""
+    def _build(self, input_tensor):
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         input_shape = input_tensor.get_shape()
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
-class Flatten(TheanoLayerMixin, BaseLayer):
-    """Reshape batch into 2D (batch_size, n_features) from 4D"""
-    def build(self, input_tensor):
+###############################################################################
+class Flatten(LayerMixin, base_layer.BaseFlatten):
+    """Implement Flatten layer in Theano"""
+    def _build(self, input_tensor):
         input_shape = input_tensor.get_shape()
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
 
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
-        _LG.debug('    Input shape: {}'.format(input_shape))
-        _LG.debug('    #Nodes     : {}'.format(n_nodes))
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
+        _LG.debug('    Input shape: %s', input_shape)
+        _LG.debug('    #Nodes     : %s', n_nodes)
 
         output_shape = (input_shape[0] or -1, n_nodes)
         output_tensor = T.reshape(input_tensor.unwrap(), output_shape)
-        _LG.debug('    output_shape: {}'.format(output_shape))
+        _LG.debug('    output_shape: %s', output_shape)
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-class TrueDiv(TheanoLayerMixin, BaseTrueDiv):
+class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
+    """Implement TrueDiv layer in Theano"""
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or theano.config.floatX
         self.denom = T.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
-    def build(self, input_tensor):
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+    def _build(self, input_tensor):
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         if self.denom is None:
             self._instantiate_denominator()
         output_tensor = input_tensor.unwrap() / self.args['denom']
         return _wrap_output(output_tensor, input_tensor.get_shape(), 'output')
 
 
-class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
-    def _instantiate_parameter_variables(self, input_shape):
-        """Instantiate variable for mean and standard diviation"""
+###############################################################################
+class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
+    """Implement BN layer in Theano"""
+    def _instantiate_parameters(self, input_shape):
         dim = len(input_shape)
-        self.axes = tuple(i for i in range(dim) if not i == 1)
-        self.shape = tuple(input_shape[i] for i in range(dim) if i == 1)
-        self.pattern = tuple((0 if i == 1 else 'x') for i in range(dim))
+        shape = tuple(input_shape[i] for i in range(dim) if i == 1)
+        self._axes = tuple(i for i in range(dim) if not i == 1)
+        self._pattern = tuple((0 if i == 1 else 'x') for i in range(dim))
 
-        _LG.debug('    Shape: {}'.format(self.shape))
-        _LG.debug('     Axes: {}'.format(self.axes))
-        _LG.debug('  Pattern: {}'.format(self.pattern))
+        _LG.debug('    Shape: %s', shape)
+        _LG.debug('     Axes: %s', self._axes)
+        _LG.debug('  Pattern: %s', self._pattern)
 
-        mean = scp.get_variable(name='mean', shape=self.shape,
+        mean = scp.get_variable(name='mean', shape=shape,
                                 initializer=Constant(0), trainable=False)
-        var = scp.get_variable(name='var', shape=self.shape,
+        var = scp.get_variable(name='var', shape=shape,
                                initializer=Constant(1), trainable=False)
 
         scale = scp.get_variable(
-            name='scale', shape=self.shape,
+            name='scale', shape=shape,
             initializer=Constant(self.args['scale']), trainable=True)
         offset = scp.get_variable(
-            name='offset', shape=self.shape,
+            name='offset', shape=shape,
             initializer=Constant(self.args['offset']), trainable=True)
 
         self._add_parameter('mean', mean)
@@ -365,10 +374,10 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
         self._add_parameter('scale', scale)
         self._add_parameter('offset', offset)
 
-    def build(self, input_tensor):
-        _LG.debug('    Building {}: {}'.format(type(self).__name__, self.args))
+    def _build(self, input_tensor):
+        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         if not self.parameter_variables:
-            self._instantiate_parameter_variables(input_tensor.get_shape())
+            self._instantiate_parameters(input_tensor.get_shape())
 
         input_tensor_ = input_tensor.unwrap()
 
@@ -379,8 +388,8 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
 
         if self.args['learn']:
             decay = self.args['decay']
-            mean_in = input_tensor_.mean(axis=self.axes)
-            var_in = input_tensor_.var(self.axes)
+            mean_in = input_tensor_.mean(axis=self._axes)
+            var_in = input_tensor_.var(self._axes)
 
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
             new_var_acc = decay * var_acc + (1 - decay) * var_in
@@ -391,33 +400,32 @@ class BatchNormalization(TheanoLayerMixin, BaseBatchNormalization):
             mean_acc = new_mean_acc
             var_acc = new_var_acc
 
-        mean_acc = mean_acc.dimshuffle(self.pattern)
-        var_acc = var_acc.dimshuffle(self.pattern)
-        scale = scale.dimshuffle(self.pattern)
-        offset = offset.dimshuffle(self.pattern)
+        mean_acc = mean_acc.dimshuffle(self._pattern)
+        var_acc = var_acc.dimshuffle(self._pattern)
+        scale = scale.dimshuffle(self._pattern)
+        offset = offset.dimshuffle(self._pattern)
 
         stdi = T.inv(T.sqrt(var_acc + self.args['epsilon']))
         output = scale * (input_tensor_ - mean_acc) * stdi + offset
         return _wrap_output(output, input_tensor.get_shape(), 'output')
 
 
-class NHWC2NCHW(TheanoLayerMixin, BaseLayer):
-    """Convert NCHW data to NHWC"""
-    def build(self, input_tensor):
+###############################################################################
+class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
+    def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
 
-        s = input_tensor.get_shape()
-        output_shape = (s[0], s[3], s[1], s[2])
+        shape = input_tensor.get_shape()
+        output_shape = (shape[0], shape[3], shape[1], shape[2])
         return _wrap_output(output_tensor_, output_shape, 'output')
 
 
-class NCHW2NHWC(TheanoLayerMixin, BaseLayer):
-    """Convert NCHW data to NHWC"""
-    def build(self, input_tensor):
+class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
+    def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)
 
-        s = input_tensor.get_shape()
-        output_shape = (s[0], s[2], s[3], s[1])
+        shape = input_tensor.get_shape()
+        output_shape = (shape[0], shape[2], shape[3], shape[1])
         return _wrap_output(output_tensor_, output_shape, 'output')

@@ -11,8 +11,10 @@ _LG = logging.getLogger(__name__)
 __all__ = [
     'BaseLayer', 'get_layer',
     'BaseDense', 'BaseConv2D',
-    'BaseTrueDiv',
+    'BaseReLU', 'BaseSigmoid', 'BaseSoftmax',
+    'BaseTrueDiv', 'BaseFlatten',
     'BaseBatchNormalization',
+    'BaseNCHW2NHWC', 'BaseNHWC2NCHW',
 ]
 
 
@@ -38,7 +40,7 @@ class BaseLayer(SerializeMixin, object):
     def _add_update(self, name, op):
         self.update_operations[name] = op
 
-    def get_update_operations(self):
+    def get_update_operation(self):
         raise NotImplementedError(
             '`get_update_operation` method is not implemented for {}'
             .format(self.__class__)
@@ -60,6 +62,9 @@ class BaseLayer(SerializeMixin, object):
 
     def build(self, input_tensor):
         """Build layer computation graph on top of the given tensor"""
+        return self._build(input_tensor)
+
+    def _build(self, input_tensor):
         raise NotImplementedError(
             '`build` method is not implemented for {}'.format(self.__class__)
         )
@@ -74,52 +79,86 @@ def get_layer(name):
 
 ###############################################################################
 class BaseDense(BaseLayer):
+    """Apply 2D affine transformation.
+
+    Apply affine transformation to 2D tensor. Activation functions, such as
+    ReLU are not applied.
+
+    Input shape
+    -----------
+    (batch size, #input features)
+
+    Output shape
+    ------------
+    (batch size, #output features)
+
+    """
     def __init__(self, n_nodes, initializers=None, with_bias=True):
         """Initialize dense layer.
-        Also called fully connected, affine, linear or inner product.
 
-        Activation function, such as ReLU is not included.
+        Parameters
+        ----------
+        n_nodes : int
+            The number of internal neurons.
 
-        Args:
-          n_nodes (int): The number of internal neurons.
-          initializers (dict): Dictionary containing configuration.
-          with_bias (bool): When True bias term is added after multiplication
+        initializers : dict or None
+            Dictionary containing configuration.
+
+        with_bias : bool
+            When True, bias term is added after multiplication.
         """
         super(BaseDense, self).__init__(
             n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
 
 
 class BaseConv2D(BaseLayer):
+    """Apply 2D convolution.
+
+    Apply convolution to 4D tensor
+
+    Input shape
+    -----------
+    HCHW format
+        (batch size, #input channel, #input height, #input width) when data
+
+    NHWC format (Tensorflow backend only)
+        (batch size, #input height, #input width, #input channel)
+    """
     def __init__(self, filter_height, filter_width, n_filters, strides,
                  padding='VALID', initializers=None, with_bias=True, **kwargs):
         """Initialize 2D convolution layer.
-        Args:
-          filter_height (int): filter height (== row)
 
-          filter_weight (int): filter weight (== column)
+        Parameters
+        ----------
+        filter_height : int
+            filter height, (#rows in filter)
 
-          n_filters (int): #filters (== #output channels)
+        filter_weight : int
+            filter weight (#columns in filter)
 
-          strides (int, tuple of two int, or tuple of four int): stride
+        n_filters : int
+            #filters (#output channels)
+
+        strides : (int, tuple of two int, or tuple of four int)
             - When given type is int, the output is subsampled by this factor
               in both width and height direction.
             - When given type is tuple of two int, the output is subsapmled
               `strides[0]` in height direction and `striders[1]` in width
               direction.
-            - [Tensorflow only] When given type is tuple of four int, it must
+            - In Tensorflow, when given type is tuple of four int, it must
               be consistent with the input data format. That is:
-              - data_format=='NHWC' (default): [batch, height, width, channel]
-              - data_format=='NCHW': [batch, channel, height, width]
+              - 'NHWC' (default): (batch, height, width, channel)
+              - 'NCHW': (batch, channel, height, width)
 
-          padding:
+        padding:
             - [tensorflow] (str): Either 'SAME' or 'VALID'
             - [theano] (str or int or tuple of two int): See Theano doc
 
-          with_bias (bool): When True bias term is added after convolution
+        with_bias : bool
+            When True bias term is added after convolution
 
-          kwargs:
-            - Tensorflow: Arguments passed to tf.nn.conv2d.
-              'use_cudnn_on_gpu' and 'name'
+        kwargs:
+            Tensorflow: Arguments passed to tf.nn.conv2d. 'use_cudnn_on_gpu'
         """
         super(BaseConv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
@@ -127,22 +166,73 @@ class BaseConv2D(BaseLayer):
             initializers=initializers, with_bias=with_bias, **kwargs)
 
 
+###############################################################################
+class BaseReLU(BaseLayer):
+    def __init__(self):
+        super(BaseReLU, self).__init__()
+
+
+class BaseSigmoid(BaseLayer):
+    def __init__(self):
+        super(BaseSigmoid, self).__init__()
+
+
+class BaseSoftmax(BaseLayer):
+    def __init__(self):
+        super(BaseSoftmax, self).__init__()
+
+
+###############################################################################
 class BaseTrueDiv(BaseLayer):
-    """Applies element wise division"""
+    """Apply reald-valued division to input tensor elementwise"""
     def __init__(self, denom, dtype=None):
         super(BaseTrueDiv, self).__init__(denom=denom, dtype=None)
         self.denom = None
 
 
-class BaseBatchNormalization(BaseLayer):
-    """Applies batch normalization
+class BaseFlatten(BaseLayer):
+    """Reshape 4D tensor into 2D tensor"""
+    def __init__(self):
+        super(BaseFlatten, self).__init__()
 
-    Ioffe, Sergey and Szegedy, Christian (2015):
+
+###############################################################################
+class BaseBatchNormalization(BaseLayer):
+    """Apply batch normalization [1]_:
+
+    .. math::
+        y = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}} \\gamma + \\beta
+
+    References
+    ----------
+    .. [1] Ioffe, Sergey and Szegedy, Christian (2015):
            Batch Normalization: Accelerating Deep Network Training by Reducing
            Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
+
     """
     def __init__(self, scale=1.0, offset=0.0, epsilon=1e-4,
                  learn=True, decay=0.999):
         super(BaseBatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
             scale=scale, offset=offset, learn=learn)
+
+        self._axes = self._pattern = None
+
+
+###############################################################################
+class BaseNHWC2NCHW(BaseLayer):
+    """Convert NCHW data from to NHWC
+
+    Rearrange the order of axes in 4D tensor from NHWC to NCHW
+    """
+    def __init__(self):
+        super(BaseNHWC2NCHW, self).__init__()
+
+
+class BaseNCHW2NHWC(BaseLayer):
+    """Convert NCHW data flow to NHWC
+
+    Rearrange the order of axes in 4D tensor from NCHW to NHWC
+    """
+    def __init__(self):
+        super(BaseNCHW2NHWC, self).__init__()
