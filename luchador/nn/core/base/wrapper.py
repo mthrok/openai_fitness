@@ -8,7 +8,7 @@ class TensorWrapper(object):
 
     This class was introduced to provide easy shape inference to Theano Tensors
     while having the common interface for both Theano and Tensorflow.
-    `get` method provides access to the underlying object.
+    `unwrap` method provides access to the underlying object.
     """
     def __init__(self, tensor, shape, name, dtype):
         self._tensor = tensor
