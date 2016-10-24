@@ -46,12 +46,15 @@ class DeepQLearning(StoreMixin, object):
 
         # Actual NN models
         self.pre_trans_net = None
-        self.pre_trans_net = None
+        self.post_trans_net = None
 
         # Q values
+        self.future_reward = None
         self.predicted_q = None
         self.target_q = None
+        self.error = None
 
+        # Sync operation
         self.sync_op = None
 
     def _validate_args(self, args):
