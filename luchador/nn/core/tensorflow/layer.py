@@ -211,13 +211,13 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
         w_shape = self._get_weight_shape(input_shape)
         self._check_filter_shape(input_shape, w_shape)
-        w_init = self.initializers['weight'].unwrap()
+        w_init = self.initializers['weight']
         self._add_parameter('weight', scope.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
-            b_init = self.initializers['bias'].unwrap()
+            b_init = self.initializers['bias']
             self._add_parameter('bias', scope.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 

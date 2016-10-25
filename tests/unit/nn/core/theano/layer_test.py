@@ -4,13 +4,6 @@ import theano
 import numpy as np
 
 import luchador
-from luchador.nn.core.theano.layer import (
-    Conv2D,
-    Flatten,
-    _map_border_mode,
-)
-from luchador.nn.core.theano.scope import _reset as reset_scope
-from luchador.nn.core.theano.wrapper import Input
 
 # import theano
 # theano.config.optimizer = 'None'
@@ -22,24 +15,27 @@ class TestConv2D(unittest.TestCase):
     longMessage = True
 
     def setUp(self):
-        reset_scope()
+        from luchador.nn import scope
+        scope._reset()
 
     def test_map_border_mode(self):
         """padding string is correctly mapped to border_mode"""
+        from luchador import nn
         inputs = ('full', 'half', 'SAME', 'valid')
         expecteds = ('full', 'half', 'half', 'valid')
         for i, expected in zip(inputs, expecteds):
-            found = _map_border_mode(i)
+            found = nn.core.theano.layer._map_border_mode(i)
             self.assertEqual(expected, found)
 
     def _test_shape_inference(
             self, input_shape, filter_shape, n_filters, strides, padding):
-        reset_scope()
-        conv2d = Conv2D(filter_height=filter_shape['height'],
-                        filter_width=filter_shape['width'],
-                        n_filters=n_filters,
-                        strides=strides, padding=padding)
-        input_ = Input(shape=input_shape)()
+        from luchador import nn
+        nn.core.theano.scope._reset()
+        conv2d = nn.Conv2D(filter_height=filter_shape['height'],
+                           filter_width=filter_shape['width'],
+                           n_filters=n_filters,
+                           strides=strides, padding=padding)
+        input_ = nn.Input(shape=input_shape)()
         output = conv2d(input_)
 
         f = theano.function([input_.unwrap()], output.unwrap())
@@ -230,13 +226,15 @@ class TestConv2D(unittest.TestCase):
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
 class TestFlatten(unittest.TestCase):
     def setUp(self):
-        reset_scope()
+        from luchador.nn import scope
+        scope._reset()
 
     def test_flatten(self):
         """4D input tensor is flattened to 2D tensor"""
+        from luchador import nn
         input_shape = (32, 4, 77, 84)
-        flatten = Flatten()
-        input_ = Input(shape=input_shape)()
+        flatten = nn.Flatten()
+        input_ = nn.Input(shape=input_shape)()
         output = flatten(input_)
 
         f = theano.function([input_.unwrap()], output.unwrap())

@@ -3,20 +3,16 @@ from __future__ import absolute_import
 import unittest
 
 import luchador
-from luchador.nn.core.theano import (
-    wrapper,
-    scope as scp,
-)
-reset_scope = scp._reset
 
 
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
 class TestVariableScopeClass(unittest.TestCase):
     def tearDown(self):
+        from luchador.nn import scope as scp
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        reset_scope()
+        scp._reset()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
@@ -24,6 +20,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_update_scope(self):
         """VariableScope updates current variable scope"""
+        from luchador.nn import scope as scp
         scopes = ['aaa', 'bbb', 'ccc']
         with scp.VariableScope(reuse=False, name=scopes[0]):
             expected = scopes[0]
@@ -52,6 +49,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_update_reuse_flag(self):
         """VariableScope updates current reuse flag"""
+        from luchador.nn import scope as scp
         with scp.VariableScope(reuse=False, name='scope'):
             expected = False
             found = scp._get_flag()
@@ -103,6 +101,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_reusing_VS_object_correctly_reset_scope(self):
         """Reusing VariableScope changes scope and flag correctly"""
+        from luchador.nn import scope as scp
         scope, flag = 'aaa', False
         with scp.VariableScope(reuse=flag, name=scope) as vs:
             pass
@@ -128,6 +127,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_VariableScope_correctly_closes_scope(self):
         """VariableScope revert current variable scope after close"""
+        from luchador.nn import scope as scp
         scopes = ['aaa', 'bbb', 'ccc']
         for scope in scopes:
             pre_scope = scp._get_scope()
@@ -155,6 +155,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_reuse_variables_enables_flag(self):
         """reuse_variables call enable reuse flag"""
+        from luchador.nn import scope as scp
         with scp.VariableScope(reuse=False, name='base_scope'):
             with scp.VariableScope(reuse=False, name='base') as vs:
                 vs.reuse_variables()
@@ -169,6 +170,7 @@ class TestVariableScopeClass(unittest.TestCase):
 
     def test_flag_reset_after_reuse_variables(self):
         """reuse_variables call enable reuse flag"""
+        from luchador.nn import scope as scp
         with scp.VariableScope(reuse=False, name='base_scope'):
             with scp.VariableScope(reuse=False, name='base') as vs:
                 vs.reuse_variables()
@@ -195,10 +197,11 @@ class TestVariableScopeClass(unittest.TestCase):
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
 class TestVariableScopeFuncs(unittest.TestCase):
     def tearDown(self):
+        from luchador.nn import scope as scp
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        reset_scope()
+        scp._reset()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
@@ -206,6 +209,7 @@ class TestVariableScopeFuncs(unittest.TestCase):
 
     def test_variable_scope(self):
         """variable_scope stacks new scope on the current scope"""
+        from luchador.nn import scope as scp
         scopes = ['aaa', 'bbb', 'ccc']
         with scp.variable_scope(scopes[0]):
             expected = scopes[0]
@@ -242,6 +246,7 @@ class TestVariableScopeFuncs(unittest.TestCase):
 
     def test_get_variable_scope(self):
         """get_variable_scope retrieves the current scope and reuse flag"""
+        from luchador.nn import scope as scp
         scope, reuse = 'aaa', False
         with scp.variable_scope(scope, reuse=reuse):
             vs = scp.get_variable_scope()
@@ -374,10 +379,11 @@ class TestVariableScopeFuncs(unittest.TestCase):
 @unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
 class TestGetVariable(unittest.TestCase):
     def tearDown(self):
+        from luchador.nn import scope as scp
         # After each test, scope should be reset to root
         expected, found = '', scp._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        reset_scope()
+        scp._reset()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. '
@@ -385,6 +391,8 @@ class TestGetVariable(unittest.TestCase):
 
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
+        from luchador.nn import scope as scp
+        from luchador.nn import wrapper
         name = 'test_var'
         self.assertTrue(name not in wrapper._VARIABLES)
         scp.get_variable('test_var', shape=[3, 1])
@@ -392,6 +400,7 @@ class TestGetVariable(unittest.TestCase):
 
     def test_get_variable_reuse_variable(self):
         """get_variable create variable"""
+        from luchador.nn import scope as scp
         name = 'test_var'
         var1 = scp.get_variable(name, shape=[3, 1])
         scp._set_flag(True)
@@ -402,6 +411,7 @@ class TestGetVariable(unittest.TestCase):
 
     def test_get_variable_raises_when_reuseing_non_existent_variable(self):
         """get_variable raise when trying to reuse non existent variable"""
+        from luchador.nn import scope as scp
         scp._set_flag(True)
         try:
             scp.get_variable('non_existent_var')
@@ -413,6 +423,7 @@ class TestGetVariable(unittest.TestCase):
 
     def test_get_variable_raises_when_creating_already_existing_variable(self):
         """get_variable raise when trying to create existent variable"""
+        from luchador.nn import scope as scp
         name = 'aaa'
         scp.get_variable(name, shape=[3, 1])
         try:

@@ -40,7 +40,7 @@ def get_variable(name, shape=None, dtype=None,
       https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
     if isinstance(initializer, base_init_mod.BaseInitializer):
-        initializer = initializer.unwrap()
+        initializer = initializer._unwrap()
 
     scope = tf.get_variable_scope()
     if scope.reuse:

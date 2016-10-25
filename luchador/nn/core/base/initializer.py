@@ -1,20 +1,29 @@
+"""Define the common interface for Initializer classes"""
 from __future__ import absolute_import
 
 import abc
 import logging
 
-from luchador import common
+import luchador
 
 _LG = logging.getLogger(__name__)
 
 
-class BaseInitializer(common.SerializeMixin, object):
+class BaseInitializer(luchador.common.SerializeMixin, object):
     """Define Common interface for Initializer classes"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
         super(BaseInitializer, self).__init__()
         self._store_args(**kwargs)
+
+        # Backend-specific initialization is run here
+        self._run_backend_specific_init()
+
+    @abc.abstractmethod
+    def _run_backend_specific_init(self):
+        """Backend-specific initilization"""
+        pass
 
     def sample(self, shape):
         """Sample random values in the given shape
@@ -57,7 +66,132 @@ def get_initializer(name):
     ValueError
         When Initializer with the given name is not found
     """
-    for class_ in common.get_subclasses(BaseInitializer):
+    for class_ in luchador.common.get_subclasses(BaseInitializer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Initializer: {}'.format(name))
+
+
+###############################################################################
+class BaseConstant(BaseInitializer):
+    """Initialize Variale with constant value
+
+    Parameters
+    ----------
+    value : number
+        Value to initialize Variable
+
+    dtype : str or None
+        Data type to sample. If None, default dtype is used.
+    """
+    def __init__(self, value, dtype=None):
+        super(BaseConstant, self).__init__(value=value, dtype=dtype)
+
+
+class BaseUniform(BaseInitializer):
+    """Initialize Variale with samples from uniform distribution
+
+    Parameters
+    ----------
+    minval, maxval : float
+        Minimum/maximum value of sampling distribution
+
+    seed : int or None
+        Seed value for random generator
+
+    dtype : str or None
+        Data type to sample. If None, default dtype is used.
+    """
+    def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
+        super(BaseUniform, self).__init__(
+            minval=minval, maxval=maxval, seed=seed, dtype=dtype)
+
+
+class BaseNormal(BaseInitializer):
+    """Initialize Variale with samples from normal distribution
+
+    Parameters
+    ----------
+    mean, stddev : float
+        Mean and standard dedviation of sampling distribution
+
+    seed : int or None
+        Seed value for random generator
+
+    dtype : str or None
+        Data type to sample. If None, default dtype is used.
+    """
+    def __init__(self, mean=0.0, stddev=1.0, seed=None, dtype=None):
+        super(BaseNormal, self).__init__(
+            mean=mean, stddev=stddev, seed=seed, dtype=dtype)
+
+
+class BaseXavier(BaseInitializer):
+    """Implement Xavier initialization [1]_ in Tensorflow manner [2]_
+
+    Parameters
+    ----------
+    uniform : Bool
+        If True, uniform distribution is used. Otherwise normal distribution
+        is used. See Notes.
+
+    seed : int or None
+        Seed value for random generator
+
+    dtype : str or None
+        Data type to sample. If None, default dtype is used.
+
+
+    Notes
+    -----
+    The implementation of Xavier in Theano follows that of Tensorflow.[2]_
+    The underlying distribution is computed in the following way.
+
+    when ``uniform=True``,
+
+    .. math::
+       a &= \\sqrt{\\frac{6}{fan_{in}+fan_{out}}}\\\\
+       W &\sim U[-a, a]
+
+    When ``uniform=False``,
+
+    .. math::
+       \\sigma &= \\sqrt{\\frac{3}{fan_{in}+fan_{out}}}\\\\
+       W &\sim N(0, \\sigma)
+
+    References
+    ----------
+    .. [1] Xavier Glorot and Yoshua Bengio (2010):
+           Understanding the difficulty of training deep feedforward neural
+           networks. International conference on artificial intelligence and
+           statistics.
+    .. [2]
+           https://www.tensorflow.org/versions/r0.11/api_docs/python/contrib.layers.html#xavier_initializer
+
+    See Also
+    --------
+    BaseXavierConv2D : For initializing convolution filter.
+    """
+    def __init__(self, uniform=True, seed=None, dtype=None):
+        super(BaseXavier, self).__init__(
+            uniform=uniform, seed=seed, dtype=dtype)
+
+
+class BaseXavierConv2D(BaseInitializer):
+    """Implements Xavier initialization for convolution filters
+
+    This initializer only differs in the sense that it expects 4D tensor, and
+    computes fan-in and fan-out accordingly. [1]_
+
+    References
+    ----------
+    .. [1]
+           https://www.tensorflow.org/versions/r0.11/api_docs/python/contrib.layers.html#xavier_initializer_conv2d
+
+    See Also
+    --------
+    BaseXavier : For initializing 2D dense weight.
+    """
+    def __init__(self, uniform=True, seed=None, dtype=None):
+        super(BaseXavierConv2D, self).__init__(
+            uniform=uniform, seed=seed, dtype=dtype)
