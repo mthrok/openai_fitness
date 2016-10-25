@@ -15,7 +15,10 @@ def _mean_sum(err):
 
 
 class SSE2(base_cost.BaseSSE2):
-    """Implement SSE2 in Tensorflow"""
+    """Implement SSE2 in Tensorflow.
+
+    See :any:`BaseSSE2` for detail.
+    """
     def _build(self, target, prediction):
         with tf.name_scope('SSE'):
             pred_ = prediction.unwrap()
@@ -31,7 +34,10 @@ class SSE2(base_cost.BaseSSE2):
 
 
 class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
-    """Implement SCE in Tensorflow"""
+    """Implement SigmoidCrossEntropy in Tensorflow.
+
+    See :any:`BaseSigmoidCrossEntropy` for detail.
+    """
     def _build(self, target, logit):
         with tf.name_scope(self.__class__.__name__):
             sce = tf.nn.sigmoid_cross_entropy_with_logits(

@@ -20,7 +20,10 @@ def _mean_sum(x):
 
 
 class SSE2(base_cost.BaseSSE2):
-    """Implement SSE2 in Theano"""
+    """Implement SSE2 in Theano.
+
+    See :any:`BaseSSE2` for detail.
+    """
     def _build(self, target, prediction):
         target_, pred_ = target.unwrap(), prediction.unwrap()
         delta = theano.gradient.disconnected_grad(target_) - pred_
@@ -34,7 +37,10 @@ class SSE2(base_cost.BaseSSE2):
 
 
 class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
-    """Implement SCE in Theano"""
+    """Implement SigmoidCrossEntropy in Theano.
+
+    See :any:`BaseSigmoidCrossEntropy` for detail.
+    """
     def _build(self, target, logit):
         x = logit.unwrap()
         z = theano.gradient.disconnected_grad(target.unwrap())

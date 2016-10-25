@@ -12,7 +12,7 @@ _LG = logging.getLogger(__name__)
 
 
 class BaseCost(common.StoreMixin, object):
-    """Common interface for cost computation"""
+    """Define common interface for cost computation class"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **args):

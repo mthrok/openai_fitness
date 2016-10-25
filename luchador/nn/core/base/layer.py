@@ -13,17 +13,10 @@ _LG = logging.getLogger(__name__)
 
 
 class BaseLayer(common.SerializeMixin, object):
-    """Defines common interface (copy and build) for Layer classes"""
+    """Define common interface (`build`, `parameters` etc) of Layer classes"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
-        """Validate and store arguments passed to subclass __init__ method
-
-        As these **args are used to create a copy of instance, arguments which
-        cannot be passed to constructor should not be passed. In other way, the
-        signature of this constructor must match to the signature of the
-        constractor of subclass object being created.
-        """
         super(BaseLayer, self).__init__()
         self._store_args(**kwargs)
 
@@ -80,7 +73,7 @@ class BaseLayer(common.SerializeMixin, object):
         Returns
         -------
         Tensor
-            Tensor which holds the output of build computation
+            Tensor which holds the output of built computation
         """
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         return self._build(input_tensor)
@@ -103,32 +96,24 @@ def get_layer(name):
 class BaseDense(BaseLayer):
     """Apply 2D affine transformation.
 
-    Apply affine transformation to 2D tensor. Activation functions, such as
-    ReLU are not applied.
+    Input shape : 2D Tensor
+        (batch size, #input features)
 
-    Input shape
-    -----------
-    (batch size, #input features)
+    Output shape : 2D Tensor with the same dtype
+        (batch size, #output features)
 
-    Output shape
-    ------------
-    (batch size, #output features)
+    Parameters
+    ----------
+    n_nodes : int
+        The number of internal neurons.
 
+    initializers : dict or None
+        Dictionary containing configuration.
+
+    with_bias : bool
+        When True, bias term is added after multiplication.
     """
     def __init__(self, n_nodes, initializers=None, with_bias=True):
-        """Initialize dense layer.
-
-        Parameters
-        ----------
-        n_nodes : int
-            The number of internal neurons.
-
-        initializers : dict or None
-            Dictionary containing configuration.
-
-        with_bias : bool
-            When True, bias term is added after multiplication.
-        """
         super(BaseDense, self).__init__(
             n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
 
@@ -136,52 +121,55 @@ class BaseDense(BaseLayer):
 class BaseConv2D(BaseLayer):
     """Apply 2D convolution.
 
-    Apply convolution to 4D tensor
+    Input Shape : 4D tensor
+        NCHW Format
+            (batch size, #input channels, input height, input width)
 
-    Input shape
-    -----------
-    HCHW format
-        (batch size, #input channel, #input height, #input width) when data
+        NHWC format : (Tensorflow backend only)
+            (batch size, input height, input width, #input channels)
 
-    NHWC format (Tensorflow backend only)
-        (batch size, #input height, #input width, #input channel)
+    Output Shape : 4D tensor
+        NCHW Format
+            (batch size, #output channels, output height, output width)
+
+        NHWC format : (Tensorflow backend only)
+            (batch size, output height, output width, #output channels)
+
+
+    Parameters
+    ----------
+    filter_height : int
+        filter height, (#rows in filter)
+
+    filter_weight : int
+        filter weight (#columns in filter)
+
+    n_filters : int
+        #filters (#output channels)
+
+    strides : (int, tuple of two ints, or tuple of four ints)
+        - When given type is int, the output is subsampled by this factor
+          in both width and height direction.
+        - When given type is tuple of two int, the output is subsapmled by
+          `strides[0]` in height  and `striders[1]` in width.
+        - (Tensorflow backend only)
+          when given type is tuple of four int, it must be consistent with
+          the input data format. That is:
+            - NHWC: (batch, height, width, channel)
+            - NCHW: (batch, channel, height, width)
+
+    padding : (str or int or tuple of two ints)
+        - Tensorflow : Either 'SAME' or 'VALID'
+        - Theano : See doc for `theano.tensor.nnet.conv2d`
+
+    with_bias : bool
+        When True bias term is added after convolution
+
+    kwargs :
+        Tensorflow: Arguments passed to tf.nn.conv2d. 'use_cudnn_on_gpu'
     """
     def __init__(self, filter_height, filter_width, n_filters, strides,
                  padding='VALID', initializers=None, with_bias=True, **kwargs):
-        """Initialize 2D convolution layer.
-
-        Parameters
-        ----------
-        filter_height : int
-            filter height, (#rows in filter)
-
-        filter_weight : int
-            filter weight (#columns in filter)
-
-        n_filters : int
-            #filters (#output channels)
-
-        strides : (int, tuple of two int, or tuple of four int)
-            - When given type is int, the output is subsampled by this factor
-              in both width and height direction.
-            - When given type is tuple of two int, the output is subsapmled
-              `strides[0]` in height direction and `striders[1]` in width
-              direction.
-            - In Tensorflow, when given type is tuple of four int, it must
-              be consistent with the input data format. That is:
-              - 'NHWC' (default): (batch, height, width, channel)
-              - 'NCHW': (batch, channel, height, width)
-
-        padding :
-            - [tensorflow] (str): Either 'SAME' or 'VALID'
-            - [theano] (str or int or tuple of two int): See Theano doc
-
-        with_bias : bool
-            When True bias term is added after convolution
-
-        kwargs :
-            Tensorflow: Arguments passed to tf.nn.conv2d. 'use_cudnn_on_gpu'
-        """
         super(BaseConv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
