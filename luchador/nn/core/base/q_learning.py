@@ -28,7 +28,7 @@ class BaseDeepQLearning(common.StoreMixin, object):
     def __init__(self, discount_rate, scale_reward=None,
                  min_reward=None, max_reward=None,
                  min_delta=None, max_delta=None):
-        self._store_args(
+        self.store_args(
             discount_rate=discount_rate,
             scale_reward=scale_reward,
             min_reward=min_reward,
