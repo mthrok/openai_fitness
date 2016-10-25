@@ -6,16 +6,16 @@ from numpy.random import RandomState
 
 from theano import config
 
-from .random import get_rng
-from ..base import initializer as init_mod
+from ..base import initializer as base_initializer
+from . import random
 
 __all__ = [
     'BaseInitializer', 'get_initializer',
     'Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D',
 ]
 
-get_initializer = init_mod.get_initializer
-BaseInitializer = init_mod.BaseInitializer
+get_initializer = base_initializer.get_initializer
+BaseInitializer = base_initializer.BaseInitializer
 
 
 class Constant(BaseInitializer):
@@ -31,7 +31,7 @@ class Uniform(BaseInitializer):
     def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
         super(Uniform, self).__init__(
             minval=minval, maxval=maxval, seed=seed, dtype=dtype)
-        self._rng = RandomState(seed) if seed else get_rng()
+        self._rng = RandomState(seed) if seed else random.get_rng()
 
     def sample(self, shape):
         low, high = self.args['minval'], self.args['maxval']
@@ -44,7 +44,7 @@ class Normal(BaseInitializer):
     def __init__(self, mean=0.0, stddev=1.0, seed=None, dtype=None):
         super(Normal, self).__init__(
             mean=mean, stddev=stddev, seed=seed, dtype=dtype)
-        self._rng = RandomState(seed) if seed else get_rng()
+        self._rng = RandomState(seed) if seed else random.get_rng()
 
     def sample(self, shape):
         loc, scale = self.args['mean'], self.args['stddev']
@@ -57,7 +57,7 @@ class Xavier(BaseInitializer):
     """Adoptation of xavier_initializer from tensorflow"""
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(Xavier, self).__init__(uniform=uniform, seed=seed, dtype=dtype)
-        self._rng = RandomState(seed) if seed else get_rng()
+        self._rng = RandomState(seed) if seed else random.get_rng()
 
     def _compute_param(self, fan_in, fan_out):
         if self.args['uniform']:
