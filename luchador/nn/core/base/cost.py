@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import abc
 import logging
 
 from luchador import common
@@ -19,6 +20,8 @@ class BaseCost(common.StoreMixin, object):
 
     Actual Cost class must implement `build` method.
     """
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, **args):
         """Validate args and set it as instance property
 
@@ -52,11 +55,9 @@ class BaseCost(common.StoreMixin, object):
         """
         return self._build(target, prediction)
 
+    @abc.abstractmethod
     def _build(self, target, prediction):
-        raise NotImplementedError(
-            '`_build` method is not implemented for {}.{}.'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
 
 def get_cost(name):

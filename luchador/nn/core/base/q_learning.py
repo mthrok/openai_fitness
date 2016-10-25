@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import abc
 import logging
 
 from luchador import common
@@ -25,6 +26,8 @@ class BaseDeepQLearning(common.StoreMixin, object):
                                  target Q is clipped with this value.
       max_delta(number or None): See `max_reward`
     """
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, discount_rate, scale_reward=None,
                  min_reward=None, max_reward=None,
                  min_delta=None, max_delta=None):
@@ -77,6 +80,7 @@ class BaseDeepQLearning(common.StoreMixin, object):
         """
         self.build(q_network_maker)
 
+    @abc.abstractmethod
     def build(self, q_network):
         """Build computation graph (error and sync ops) for Q learning"""
         raise NotImplementedError(

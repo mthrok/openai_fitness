@@ -81,6 +81,10 @@ class Session(session.BaseSession):
         super(Session, self).__init__()
         self.functions = {}
 
+    @property
+    def graph(self):
+        return None
+
     def run(self, outputs=None, inputs=None,
             updates=None, givens=None, name=None):
         outputs = outputs if outputs else []

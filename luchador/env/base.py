@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import abc
 
-from luchador.common import get_subclasses
+from luchador import common
 
 __all__ = ['BaseEnvironment', 'get_env']
 
@@ -60,7 +60,7 @@ class BaseEnvironment(object):
 
 
 def get_env(name):
-    for class_ in get_subclasses(BaseEnvironment):
+    for class_ in common.get_subclasses(BaseEnvironment):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Environment: {}'.format(name))

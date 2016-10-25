@@ -19,6 +19,9 @@ class TFInitializer(BaseInitializer):
     def unwrap(self):
         return self._initializer
 
+    def sample(self):
+        pass
+
 
 class Constant(TFInitializer):
     def __init__(self, value, dtype=None):

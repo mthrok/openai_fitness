@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import abc
 import logging
 
 from luchador import common
@@ -11,6 +12,8 @@ __all__ = ['BaseInitializer', 'get_initializer']
 
 class BaseInitializer(common.SerializeMixin, object):
     """Common interface for Initializer classes"""
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, **kwargs):
         """Validate and store arguments passed to subclass __init__ method
 
@@ -26,11 +29,10 @@ class BaseInitializer(common.SerializeMixin, object):
     def __call__(self, shape):
         self.sample(shape)
 
+    @abc.abstractmethod
     def sample(self, shape):
         """Sample random values for the given shape"""
-        raise NotImplementedError(
-            '`sample` method is not implemented for {}.{}'
-            .format(type(self).__module__, type(self).__name__))
+        pass
 
 
 def get_initializer(name):

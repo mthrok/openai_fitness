@@ -3,6 +3,7 @@
 from __future__ import division
 from __future__ import absolute_import
 
+import abc
 import logging
 from collections import OrderedDict
 
@@ -22,6 +23,8 @@ __all__ = [
 
 class BaseLayer(common.SerializeMixin, object):
     """Defines common interface (copy and build) for Layer classes"""
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, **kwargs):
         """Validate and store arguments passed to subclass __init__ method
 
@@ -53,6 +56,7 @@ class BaseLayer(common.SerializeMixin, object):
         """
         return self._get_update_operation()
 
+    @abc.abstractmethod
     def _get_update_operation(self):
         raise NotImplementedError(
             '`get_update_operation` method is not implemented for {}'
@@ -90,6 +94,7 @@ class BaseLayer(common.SerializeMixin, object):
         _LG.debug('    Building %s: %s', type(self).__name__, self.args)
         return self._build(input_tensor)
 
+    @abc.abstractmethod
     def _build(self, input_tensor):
         raise NotImplementedError(
             '`_build` method is not implemented for {}'.format(self.__class__)

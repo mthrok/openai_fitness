@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import abc
+
 from luchador import common
 
 __all__ = [
@@ -12,6 +14,8 @@ __all__ = [
 
 class BaseOptimizer(common.SerializeMixin):
     """Defines common interface for gradient computation and application"""
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, **kwargs):
         super(BaseOptimizer, self).__init__()
         self.store_args(**kwargs)
@@ -20,13 +24,12 @@ class BaseOptimizer(common.SerializeMixin):
         # Backend-specific initialization is run here
         self.init()
 
+    @abc.abstractmethod
     def init(self):
         """Backend-specific initilization"""
-        raise NotImplementedError(
-            '`init` is not implemnted for {}.{}'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
+    @abc.abstractmethod
     def minimize(self, loss, wrt, **kwargs):
         """Minimize loss with the given variables
 
@@ -37,11 +40,9 @@ class BaseOptimizer(common.SerializeMixin):
         Returns:
           OperationWrapper: Minimization operation
         """
-        raise NotImplementedError(
-            '`minimize` is not implemnted for {}.{}'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
+    @abc.abstractmethod
     def compute_gradients(self, loss, wrt, **kwargs):
         """Compute gradient of loss with respect to wrt.
 
@@ -58,11 +59,9 @@ class BaseOptimizer(common.SerializeMixin):
             Each tensor is underlying object and not wrapped with
             TensorWrapper class.
         """
-        raise NotImplementedError(
-            '`compute_gradients` is not implemnted for {}.{}'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
+    @abc.abstractmethod
     def apply_gradients(self, grads_and_vars, **kwargs):
         """Apply gradients to variables
 
@@ -73,10 +72,7 @@ class BaseOptimizer(common.SerializeMixin):
         Returns:
           OperationWrapper: Operation which updates variables.
         """
-        raise NotImplementedError(
-            '`apply_gradients` is not implemnted for {}.{}'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
     def get_parameter_variables(self):
         """Get the list of parameter variables used by optimizers"""

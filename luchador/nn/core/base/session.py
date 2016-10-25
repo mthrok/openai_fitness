@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import abc
 import logging
 from collections import OrderedDict
 
@@ -39,25 +40,23 @@ class BaseSession(object):
       - run: Run computation
       - initialize: Initialize Variable-s
     """
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self):
         pass
 
-    def run(self,
-            inputs=None, outputs=None, updates=None, givens=None, name=None):
+    @abc.abstractmethod
+    def run(self, inputs=None, outputs=None,
+            updates=None, givens=None, name=None):
         """Runs operations and evaluates tensors in outputs"""
-        raise NotImplementedError(
-            '`run` method is not yet impolemented for {}.{}.'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
+    @abc.abstractmethod
     def initialize(self):
         """Initialize Variables"""
-        raise NotImplementedError(
-            '`initialize` method is not yet impolemented for {}.{}.'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
 
-    @property
+    @abc.abstractproperty
     def graph(self):
         """Mimic TF.Session.graph for SummaryWriter"""
         return None
@@ -92,12 +91,10 @@ class BaseSession(object):
 
         self.load_dataset(data_set, cast=cast, strict=strict)
 
+    @abc.abstractmethod
     def load_dataset(self, dataset, cast=True, strict=True):
         """Set the values of Variables with the given dataset values
 
         TODO: Add args
         """
-        raise NotImplementedError(
-            '`load_dataset` method is not yet impolemented for {}.{}.'
-            .format(type(self).__module__, type(self).__name__)
-        )
+        pass
