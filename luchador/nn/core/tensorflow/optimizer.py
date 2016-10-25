@@ -39,7 +39,7 @@ def _parse_kwargs(kwargs):
 
 class TFOptimizerMixin(object):
     """Adds TF-specific helper methods to base Optimizer"""
-    def init(self):
+    def _run_backend_specific_init(self):
         """Initialize underlying TF optimizer to SGD
 
         Manually implemented optimizers use SGD as the actual step for
@@ -151,14 +151,16 @@ class TFOptimizerMixin(object):
 
 
 class SGD(TFOptimizerMixin, base_optimizer.BaseSGD):
-    def init(self):
+    def _run_backend_specific_init(self):
+        """Initialize underlying optimizer with TF native SGD Optimizer"""
         self.optimizer = tf.train.GradientDescentOptimizer(
             learning_rate=self.args['learning_rate'], name=self.args['name'],
             use_locking=self.args.get('use_locking', False))
 
 
 class RMSProp(TFOptimizerMixin, base_optimizer.BaseRMSProp):
-    def init(self):
+    def _run_backend_specific_init(self):
+        """Initialize underlying optimizer with TF native RMSProp Optimizer"""
         self.optimizer = tf.train.RMSPropOptimizer(
             learning_rate=self.args['learning_rate'],
             decay=self.args['decay'], momentum=self.args['momentum'],
@@ -217,7 +219,8 @@ class GravesRMSProp(TFOptimizerMixin, base_optimizer.BaseGravesRMSProp):
 
 
 class Adam(TFOptimizerMixin, base_optimizer.BaseAdam):
-    def init(self):
+    def _run_backend_specific_init(self):
+        """Initialize underlying optimizer with TF native Adam Optimizer"""
         self.optimizer = tf.train.AdamOptimizer(
             learning_rate=self.args['learning_rate'],
             beta1=self.args['beta1'], beta2=self.args['beta2'],

@@ -22,7 +22,7 @@ BaseOptimizer = base_opt.BaseOptimizer
 
 class TheanoOptimizerMixin(object):
     """Adds Theano-specific helper methods to base Optimizer"""
-    def init(self):
+    def _run_backend_specific_init(self):
         pass
 
     def minimize(self, loss, wrt, **kwargs):

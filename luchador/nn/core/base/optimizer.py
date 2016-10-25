@@ -1,3 +1,5 @@
+"""Define common interface of Optimizer"""
+
 from __future__ import absolute_import
 
 import abc
@@ -13,7 +15,7 @@ __all__ = [
 
 
 class BaseOptimizer(common.SerializeMixin):
-    """Defines common interface for gradient computation and application"""
+    """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
@@ -22,10 +24,10 @@ class BaseOptimizer(common.SerializeMixin):
         self.slot = []
 
         # Backend-specific initialization is run here
-        self.init()
+        self._run_backend_specific_init()
 
     @abc.abstractmethod
-    def init(self):
+    def _run_backend_specific_init(self):
         """Backend-specific initilization"""
         pass
 
@@ -33,12 +35,19 @@ class BaseOptimizer(common.SerializeMixin):
     def minimize(self, loss, wrt, **kwargs):
         """Minimize loss with the given variables
 
-        Args:
-          loss (TensorWrapper):Loss value to be minimized
-          wrt (list of Variables): Variables with which loss is minimzied
+        Parameters
+        ----------
+        loss : Tensor
+            Tensor holding loss value to be minimized
 
-        Returns:
-          OperationWrapper: Minimization operation
+        wrt : [list of] Variable
+            Variables with which loss is minimzied. Variables marked
+            as not trainable are ignored.
+
+        Returns
+        -------
+        Operation
+            Minimization operation
         """
         pass
 
@@ -49,15 +58,21 @@ class BaseOptimizer(common.SerializeMixin):
         This method works in similar way as Tensorflow Optimizers'
         compute_gradient method.
 
-        Args:
-          loss (TensorWrapper): Loss value to compute gradients
-          wrt (list of TensorWrapper):
-            Variables with which gradients are computed
+        Parameters
+        ----------
+        loss : Tensor
+            Tensor holding loss value to be minimized
 
-        Returns:
-          List of Tensor pairs: Gradient and corresponding variable pairs.
-            Each tensor is underlying object and not wrapped with
-            TensorWrapper class.
+        wrt : [list of] Tensors:
+            Variables with which gradients of loss are computed. Variables
+            marked as not trainable are ignored.
+
+        Returns
+        -------
+        list of Tensor pairs
+            Gradient and corresponding variable pairs. Each tensor is
+            not wrapped with Luchador's Variable but bare TensorVariable
+            native to backend.
         """
         pass
 
@@ -65,36 +80,108 @@ class BaseOptimizer(common.SerializeMixin):
     def apply_gradients(self, grads_and_vars, **kwargs):
         """Apply gradients to variables
 
-        Args:
-          grads_and_vars (list of Tensor pairs):
-            Return value of compute_gradient method.
+        Parameters
+        ----------
+        grads_and_vars : list of Tensor pairs
+            Valued returned from compute_gradient method.
 
-        Returns:
-          OperationWrapper: Operation which updates variables.
+        Returns
+        -------
+        Operation
+            Operation which updates parameter variables
         """
         pass
 
     def get_parameter_variables(self):
-        """Get the list of parameter variables used by optimizers"""
+        """Get the list of parameter variables used by optimizers
+
+        Returns
+        -------
+        OrderedDict
+            Keys are the names of parameter variables and value are Tensors
+        """
         return self.slot
 
 
 def get_optimizer(name):
-    """Get optimizer class"""
-    for Class in common.get_subclasses(BaseOptimizer):
-        if Class.__name__ == name:
-            return Class
+    """Retrieve Optimizer class by name
+
+    Parameters
+    ----------
+    name : str
+        Name of Optimizer to retrieve
+
+    Returns
+    -------
+    type
+        Optimizer type found
+
+    Raises
+    ------
+    ValueError
+        When Optimizer with the given name is not found
+    """
+    for class_ in common.get_subclasses(BaseOptimizer):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Optimizer: {}'.format(name))
 
 
 ###############################################################################
 class BaseSGD(BaseOptimizer):
+    """Implement Stochastic Gradient Descent
+
+    Parameters
+    ----------
+    learning_rate : float
+        The learning rate controlling the size of update steps
+    name : str
+        Used to create scope which contains parameter variables.
+        Virtually has no effect in SGD
+    kwargs
+        - use_lock : [TF only] passed to underlying TF native optimizer
+    """
     def __init__(self, learning_rate, name='SGD', **kwargs):
         super(BaseSGD, self).__init__(
             learning_rate=learning_rate, name=name, **kwargs)
 
 
 class BaseRMSProp(BaseOptimizer):
+    """Implement RMSProp with momentum
+
+    Scale learning rates by dividing with the moving average of the root mean
+    squared (RMS) gradients. See [1]_ for further description.
+
+    This implementation mimics TF native RMSProp, which updates parameters as
+
+    .. math::
+        rms_t &= \\rho * rms_{t-1} + (1- \\rho) * grad ^2 \\\\
+        lr_t &= \\frac{lr}{\\sqrt{rms_t + \\epsilon}} \\\\
+        mom_t &= \\gamma * mom_{t-1} + lr * grad  \\\\
+        var_t &= var_{t-1} - mom_t
+
+    where :math:`\\rho` is decay ratio and :math:`\\gamma` is momentum
+    coefficient.
+
+    Parameters
+    ----------
+    learning_rate : float
+        The learning rate controlling the size of update steps
+    decay : float
+        Decay factor at which rate accumurated RMS decays.
+    momentum : float
+        Momentum coefficient at which rate parameter update is accumurated.
+    name : str
+        Used to create scope which contains parameter variables
+    kwargs
+        - use_lock : [TF only] passed to underlying TF native optimizer
+
+    References
+    ----------
+    .. [1] Tieleman, T. and Hinton, G. (2012):
+           Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
+           Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
+    """
     def __init__(self, learning_rate,
                  decay=0.95, momentum=0.0,
                  epsilon=1e-2, name='RMSProp', **kwargs):
