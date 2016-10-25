@@ -45,9 +45,9 @@ args:
     n_samples: *batch_size
 
   save_config:
-    # Save network parameter every once after this #episodes
+    # Save network parameter every once after this #trainings
     # Giving non-positive value effectively disable save functionality
-    interval: 3
+    interval: 100
     saver_config:
       output_dir: &output_dir tmp/test_dqn/
       max_to_keep: 10
@@ -55,8 +55,8 @@ args:
       prefix: DQN_integration_test
 
   summary_config:
-    # Summarize network every once after this #episodes
+    # Summarize network every once after this #trainings
     # Giving non-positive value effectively disable save functionality
-    interval: 3
+    interval: 100
     writer_config:
       output_dir: *output_dir

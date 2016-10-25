@@ -48,11 +48,13 @@ class DQNAgent(BaseAgent):
         self.save_config = save_config
         self.summary_config = summary_config
 
+        self.n_total_observations = 0
+        self.n_total_trainings = 0
+
     ###########################################################################
     # Methods for initialization
     def init(self, env):
         self._n_actions = env.n_actions
-        self.n_total_observations = 0
         self.recorder = TransitionRecorder(**self.recorder_config)
 
         self._init_network()
@@ -185,6 +187,18 @@ class DQNAgent(BaseAgent):
             error = self._train(cfg['n_samples'])
             self.summary_values['error'].append(error)
 
+            self.n_total_trainings += 1
+
+            interval = self.save_config['interval']
+            if interval > 0 and self.n_total_trainings % interval == 0:
+                _LG.info('Saving parameters')
+                self._save(self.n_total_trainings)
+
+            interval = self.summary_config['interval']
+            if interval > 0 and self.n_total_trainings % interval == 0:
+                _LG.info('Summarizing Network')
+                self._summarize(self.n_total_trainings)
+
     def _sync_network(self):
         self.session.run(updates=self.ql.sync_op, name='sync')
 
@@ -205,24 +219,6 @@ class DQNAgent(BaseAgent):
             name='minibatch_training',
         )
         return error
-
-    ###########################################################################
-    # Methods for post_episode_action
-    def perform_post_episode_task(self, stats):
-        self.recorder.truncate()
-        episode = stats['episode']
-        self.summary_values['rewards'].append(stats['rewards'])
-        self.summary_values['steps'].append(stats['steps'])
-
-        save_interval = self.save_config['interval']
-        if save_interval > 0 and episode % save_interval == 0:
-            _LG.info('Saving parameters')
-            self._save(episode)
-
-        summary_interval = self.summary_config['interval']
-        if summary_interval > 0 and episode % summary_interval == 0:
-            _LG.info('Summarizing Network')
-            self._summarize(episode)
 
     def _save(self, episode):
         """Save network parameter to file"""
@@ -284,6 +280,13 @@ class DQNAgent(BaseAgent):
             for v, val in zip(params, params_vals)
         }
         self.summary_writer.summarize(episode, params_data)
+
+    ###########################################################################
+    # Methods for post_episode_action
+    def perform_post_episode_task(self, stats):
+        self.recorder.truncate()
+        self.summary_values['rewards'].append(stats['rewards'])
+        self.summary_values['steps'].append(stats['steps'])
 
     ###########################################################################
     def __repr__(self):

@@ -45,7 +45,7 @@ args:
     n_samples: *batch_size
 
   save_config:
-    # Save network parameter every once after this #episodes
+    # Save network parameter every once after this #trainings
     # Giving non-positive value effectively disable save functionality
     interval: -1
     saver_config:
@@ -55,7 +55,7 @@ args:
       prefix: DQN
 
   summary_config:
-    # Summarize network every once after this #episodes
+    # Summarize network every once after this #trainings
     # Giving non-positive value effectively disable save functionality
     interval: -1
     writer_config:
