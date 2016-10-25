@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import abc
+
 from luchador.common import get_subclasses
 
 __all__ = ['BaseEnvironment', 'get_env']
@@ -22,31 +24,39 @@ class Outcome(object):
 
 
 class BaseEnvironment(object):
-    @property
-    def n_actions(self):
-        raise NotImplementedError(
-            '`n_actions` is not implemented for {}'.format(self.__class__)
-        )
+    __metaclass__ = abc.ABCMeta
 
+    @abc.abstractproperty
+    def n_actions(self):
+        """Return the number of actions agent can take"""
+        pass
+
+    @abc.abstractmethod
     def reset(self):
         """Reset the environment to start new episode
 
-        Returns:
-          Outcome: Outcome of resetting the state.
+        Returns
+        _______
+        Outcome
+            Outcome of resetting the state.
         """
-        raise NotImplementedError(
-            '`reset` method is not implemented for {}'.format(self.__class__)
-        )
+        pass
 
+    @abc.abstractmethod
     def step(self, action):
         """Advance environment one step
 
-        Returns:
-          Outcome: Outcome of taking the given action
+        Parameters
+        ----------
+        action : int
+            Action taken by an agent
+
+        Returns
+        -------
+        Outcome
+            Outcome of taking the given action
         """
-        raise NotImplementedError(
-            '`step` method is not implemented for {}'.format(self.__class__)
-        )
+        pass
 
 
 def get_env(name):
