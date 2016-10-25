@@ -1,3 +1,5 @@
+"""Implement SummaryWriter"""
+
 from __future__ import absolute_import
 
 import logging
@@ -25,6 +27,13 @@ class SummaryOperation(object):
 
 
 class SummaryWriter(object):
+    """Wrap tf.SummaryWriter for better flwexibility
+
+    Unlike Tensorflow's native SummaryWrite, this SummaryWriter accepts
+    NumPy Arrays for summarization. Generation of summary protocol buffer
+    is handled internally.
+
+    """
     def __init__(self, output_dir, graph=None):
         self.output_dir = output_dir
         self.summary_ops = {}
@@ -54,17 +63,20 @@ class SummaryWriter(object):
     def summarize(self, global_step, dataset, tag=None):
         """Summarize the dataset
 
-        Args:
-          global_step (int): Global step
+        Parameters
+        ----------
+        global_step : int
+            Global step used as surffix for output file name
 
-          dataset (dict or list of values):
+        dataset : (dict or list of values)
             When tag is not given this must be a dictionary mapping name of
             registered summary operation to summary value.
             When tag is given, summary operations registered with the tag are
             pulled, so only values are needed so dataset must be a list of
             values in the same order as the operations registered.
 
-          tag (str): See above
+        tag : str
+            See above
         """
         ops, feed_dict = [], {}
         if tag:
@@ -81,7 +93,7 @@ class SummaryWriter(object):
     ###########################################################################
     # Convenient functions
     def register_stats(self, names):
-        """For each name, create 'name/[Average, Min, Max]' summary ops"""
+        """For each name, create ``name/[Average, Min, Max]`` summary ops"""
         all_names = ['{}/{}'.format(name, stats) for name in names
                      for stats in ['Average', 'Min', 'Max']]
         self.register('scalar', all_names, tag=None)
@@ -89,12 +101,16 @@ class SummaryWriter(object):
     def summarize_stats(self, global_step, dataset):
         """Summarize statistics of dataset
 
-        Args:
-          global_step (int): Global step
+        Parameters
+        ----------
+        global_step : int
+            Global step used as surffix for output file name
 
-          dataset (dict):
-            - Key (str): Names used in `register_stats`
-            - Value (list of floats, or NumPy Array): Values to summarize stats
+        dataset (dict):
+            Key : str
+                Names used in :any:`register_stats`
+            Value : list of floats, or NumPy Array
+                Values to summarize stats
         """
         for name, values in dataset.items():
             _dataset = {
