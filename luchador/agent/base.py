@@ -1,30 +1,46 @@
 from __future__ import absolute_import
+import abc
 
-from luchador.common import get_subclasses
+from luchador import common
 
 __all__ = ['BaseAgent', 'NoOpAgent', 'get_agent']
 
 
 class BaseAgent(object):
+    __metaclass__ = abc.ABCMeta
+
     def init(self, env):
         pass
 
+    @abc.abstractmethod
     def observe(self, action, outcome):
         """Observe the action and it's outcome.
 
-        Args:
-          action: The action that this agent previously took.
-          oucome (Outome): Outcome of taking the action
+        Parameters
+        ----------
+        action : int
+            The action that this agent previously took.
+
+        oucome : Outome
+            Outcome of taking the action
         """
-        raise NotImplementedError('observe method is not implemented.')
+        pass
 
+    @abc.abstractmethod
     def act(self):
-        """Choose action. Must be implemented in subclass."""
-        raise NotImplementedError('act method is not implemented.')
+        """Choose action."""
+        pass
 
+    @abc.abstractmethod
     def reset(self, observation):
-        """Reset agent with the initial state of the environment."""
-        raise NotImplementedError('reset method is not implemented.')
+        """Reset agent with the initial state of the environment.
+
+        Parameters
+        ----------
+        observation
+            Observation made when environment is reset
+        """
+        pass
 
     def perform_post_episode_task(self, stats):
         """Perform post episode task"""
@@ -49,7 +65,7 @@ class NoOpAgent(BaseAgent):
 
 
 def get_agent(name):
-    for class_ in get_subclasses(BaseAgent):
+    for class_ in common.get_subclasses(BaseAgent):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Agent: {}'.format(name))
