@@ -4,10 +4,7 @@ import tensorflow as tf
 
 import luchador
 from .. import initializer as base_init_mod
-from . import (
-    wrapper,
-    initializer as init_mod
-)
+from . import wrapper
 
 __all__ = ['name_scope', 'get_variable', 'variable_scope',
            'VariableScope', 'get_variable_scope']
