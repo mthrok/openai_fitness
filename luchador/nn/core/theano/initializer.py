@@ -7,15 +7,15 @@ from numpy.random import RandomState
 from theano import config
 
 from .random import get_rng
-from ..base import (
-    get_initializer,
-    Initializer as BaseInitializer,
-)
+from ..base import initializer as init_mod
 
 __all__ = [
     'BaseInitializer', 'get_initializer',
     'Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D',
 ]
+
+get_initializer = init_mod.get_initializer
+BaseInitializer = init_mod.BaseInitializer
 
 
 class Constant(BaseInitializer):

@@ -7,9 +7,10 @@ import numpy as np
 import theano
 from theano import config
 
-from .initializer import Normal
-from . import wrapper
-from .wrapper import Variable
+from . import (
+    initializer as init_mod,
+    wrapper,
+)
 
 _LG = logging.getLogger(__name__)
 
@@ -137,13 +138,13 @@ def get_variable(name, shape=None, dtype=None,
         dtype = dtype or config.floatX
 
         if not initializer:
-            initializer = Normal(dtype=dtype)
+            initializer = init_mod.Normal(dtype=dtype)
 
         # Scalar variable should not have `broadcastable`
         if not shape and 'broadcastable' in kwargs:
             del kwargs['broadcastable']
 
-        return Variable(
+        return wrapper.Variable(
             theano.shared(
                 value=np.array(initializer.sample(shape), dtype=dtype),
                 name=name, allow_downcast=True, **kwargs

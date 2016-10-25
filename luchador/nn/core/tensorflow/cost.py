@@ -5,7 +5,6 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from ..base import cost as base_cost
-from ..base import get_cost
 from . import wrapper
 
 __all__ = [
@@ -13,6 +12,7 @@ __all__ = [
     'SSE2', 'SigmoidCrossEntropy',
 ]
 
+get_cost = base_cost.get_cost
 BaseCost = base_cost.BaseCost
 
 
@@ -30,11 +30,8 @@ def _clipped_delta(target, prediction, min_delta, max_delta):
 
 class SSE2(base_cost.BaseSSE2):
     """Implement SSE2 in Tensorflow"""
-    def _validate_args(self, args):
-        if (
-                ('min_delta' in args and 'max_delta' in args) or
-                ('min_delta' not in args and 'max_delta' not in args)
-        ):
+    def validate_args(self, min_delta, max_delta, **kwargs):
+        if (min_delta and max_delta) or (not min_delta and not max_delta):
             return
         raise ValueError('When clipping delta, both '
                          '`min_delta` and `max_delta` must be provided')

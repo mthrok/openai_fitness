@@ -5,28 +5,19 @@ from collections import OrderedDict
 import theano
 import theano.tensor as T
 
-from luchador.common import is_iteratable
-from ..base import (
-    make_optimizer,
-    get_optimizer,
-    BaseOptimizer,
-    BaseSGD,
-    BaseRMSProp,
-    BaseNeonRMSProp,
-    BaseGravesRMSProp,
-    BaseAdam,
-    BaseAdamax,
-)
-from . import scope as scp
-from .initializer import Constant
-from .wrapper import Operation
+from luchador import common
+from ..base import optimizer as base_opt
+from . import scope, initializer, wrapper
 
 __all__ = [
-    'BaseOptimizer', 'make_optimizer', 'get_optimizer',
+    'BaseOptimizer', 'get_optimizer',
     'SGD',
     'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
     'Adam', 'Adamax',
 ]
+
+get_optimizer = base_opt.get_optimizer
+BaseOptimizer = base_opt.BaseOptimizer
 
 
 class TheanoOptimizerMixin(object):
@@ -67,7 +58,7 @@ class TheanoOptimizerMixin(object):
             Unlike other methods, each tensor is not wrapped with Luchador's
             TensorWrapper so they are Theano's native Variable objects.
         """
-        wrt = wrt if is_iteratable(wrt) else [wrt]
+        wrt = wrt if common.is_iteratable(wrt) else [wrt]
         loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]
@@ -81,9 +72,10 @@ class TheanoOptimizerMixin(object):
         value = var.get_value(borrow=True)
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = scp.get_variable(
+        slot_var = scope.get_variable(
             name=name, shape=value.shape, dtype=value.dtype,
-            initializer=Constant(0), broadcastable=var.broadcastable)
+            initializer=initializer.Constant(0),
+            broadcastable=var.broadcastable)
         self.slot.append(slot_var)
         return slot_var
 
@@ -94,22 +86,22 @@ class TheanoOptimizerMixin(object):
         Only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = scp.get_variable(
-            name=name, shape=[],
-            initializer=Constant(initial_value), broadcastable=True)
+        slot_var = scope.get_variable(
+            name=name, shape=[], broadcastable=True,
+            initializer=initializer.Constant(initial_value))
         self.slot.append(slot_var)
         return slot_var
 
 
-class SGD(TheanoOptimizerMixin, BaseSGD):
+class SGD(TheanoOptimizerMixin, base_opt.BaseSGD):
     def apply_gradients(self, grads_and_vars):
         updates = OrderedDict()
         for grad, var in grads_and_vars:
             updates[var] = var - self.args['learning_rate'] * grad
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)
 
 
-class RMSProp(TheanoOptimizerMixin, BaseRMSProp):
+class RMSProp(TheanoOptimizerMixin, base_opt.BaseRMSProp):
     def apply_gradients(self, grads_and_vars):
         decay, momentum = self.args['decay'], self.args['momentum']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -126,10 +118,10 @@ class RMSProp(TheanoOptimizerMixin, BaseRMSProp):
             updates[rms] = new_rms
             updates[mom] = new_mom
             updates[var] = new_var
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)
 
 
-class NeonRMSProp(TheanoOptimizerMixin, BaseNeonRMSProp):
+class NeonRMSProp(TheanoOptimizerMixin, base_opt.BaseNeonRMSProp):
     def apply_gradients(self, grads_and_vars):
         decay, ep = self.args['decay'], self.args['epsilon']
         lr = self.args['learning_rate']
@@ -143,10 +135,10 @@ class NeonRMSProp(TheanoOptimizerMixin, BaseNeonRMSProp):
 
             updates[rms] = new_rms
             updates[var] = new_var
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)
 
 
-class GravesRMSProp(TheanoOptimizerMixin, BaseGravesRMSProp):
+class GravesRMSProp(TheanoOptimizerMixin, base_opt.BaseGravesRMSProp):
     def apply_gradients(self, grads_and_vars):
         d1, d2 = self.args['decay1'], self.args['decay2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -168,10 +160,10 @@ class GravesRMSProp(TheanoOptimizerMixin, BaseGravesRMSProp):
             updates[mean_g1] = new_mean_g1
             updates[mean_g2] = new_mean_g2
             updates[var] = new_var
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)
 
 
-class Adam(TheanoOptimizerMixin, BaseAdam):
+class Adam(TheanoOptimizerMixin, base_opt.BaseAdam):
     def apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -195,10 +187,10 @@ class Adam(TheanoOptimizerMixin, BaseAdam):
 
         updates[b1_pow] = b1_pow * b1
         updates[b2_pow] = b2_pow * b2
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)
 
 
-class Adamax(TheanoOptimizerMixin, BaseAdamax):
+class Adamax(TheanoOptimizerMixin, base_opt.BaseAdamax):
     def apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -220,4 +212,4 @@ class Adamax(TheanoOptimizerMixin, BaseAdamax):
             updates[var] = new_var
 
         updates[b1_pow] = b1_pow * b1
-        return Operation(op=updates)
+        return wrapper.Operation(op=updates)

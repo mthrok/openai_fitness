@@ -39,16 +39,16 @@ def get_subclasses(class_):
 ###############################################################################
 # Mixins
 class StoreMixin(object):
-    def _store_args(self, **args):
+    def store_args(self, **args):
         """Store initializer arguments to `args` attribute
         Args:
             args (dict): Arguments passed to __init__.
             This will be used to recreate a subclass instance.
         """
-        self._validate_args(args)
+        self.validate_args(**args)
         self.args = args
 
-    def _validate_args(self, args):
+    def validate_args(self, **args):
         """Validate arguments
         Args:
             args (dict): Arguments passed to __init__.

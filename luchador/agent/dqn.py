@@ -11,7 +11,7 @@ from luchador.nn import (
     Input,
     Saver,
     DeepQLearning,
-    make_optimizer,
+    get_optimizer,
 )
 from luchador.nn.util import (
     make_model,
@@ -113,7 +113,8 @@ class DQNAgent(BaseAgent):
         self.ql.build(model_maker)
 
     def _build_optimization(self):
-        self.optimizer = make_optimizer(self.optimizer_config)
+        self.optimizer = get_optimizer(
+            self.optimizer_config['name'])(**self.optimizer_config['args'])
         wrt = self.ql.pre_trans_net.get_parameter_variables()
         self.minimize_op = self.optimizer.minimize(self.ql.error, wrt=wrt)
 

@@ -6,17 +6,19 @@ from collections import OrderedDict
 
 import theano.tensor as T
 
-from ..base import DeepQLearning as BaseQLI
-from . import scope as scp
-from .wrapper import Input, Tensor, Operation
-from .cost import SSE2
+from ..base import q_learning as base_q
+from . import (
+    scope as scp,
+    wrapper,
+    cost,
+)
 
 _LG = logging.getLogger(__name__)
 
 __all__ = ['DeepQLearning']
 
 
-class DeepQLearning(BaseQLI):
+class DeepQLearning(base_q.BaseDeepQLearning):
     def build(self, model_maker):
         """Build computation graph (error and sync ops) for Q learning
 
@@ -45,9 +47,11 @@ class DeepQLearning(BaseQLI):
         scale_reward = self.args['scale_reward']
         discount_rate = self.args['discount_rate']
 
-        self.actions = Input(dtype='uint16', shape=(None,), name='actions')
-        self.rewards = Input(dtype='float64', shape=(None,), name='rewards')
-        self.terminals = Input(shape=(None,), name='continuations')
+        self.actions = wrapper.Input(
+            dtype='uint16', shape=(None,), name='actions')
+        self.rewards = wrapper.Input(
+            dtype='float64', shape=(None,), name='rewards')
+        self.terminals = wrapper.Input(shape=(None,), name='continuations')
 
         actions = self.actions().unwrap()
         rewards = self.rewards().unwrap()
@@ -76,8 +80,8 @@ class DeepQLearning(BaseQLI):
 
         target_q = current + future
         # TODO: Add shape inference
-        self.future_reward = Tensor(tensor=future, shape=(-1, ))
-        self.target_q = Tensor(tensor=target_q, shape=(-1, n_actions))
+        self.future_reward = wrapper.Tensor(tensor=future, shape=(-1, ))
+        self.target_q = wrapper.Tensor(tensor=target_q, shape=(-1, n_actions))
         self.predicted_q = self.pre_trans_net.output
 
     def _build_sync_op(self):
@@ -86,9 +90,9 @@ class DeepQLearning(BaseQLI):
         tgt_vars = self.post_trans_net.get_parameter_variables()
         for src, tgt in zip(src_vars, tgt_vars):
             sync_op[tgt.unwrap()] = src.unwrap()
-        self.sync_op = Operation(op=sync_op)
+        self.sync_op = wrapper.Operation(op=sync_op)
 
     def _build_error(self):
         min_delta, max_delta = self.args['min_delta'], self.args['max_delta']
-        sse2 = SSE2(min_delta=min_delta, max_delta=max_delta)
+        sse2 = cost.SSE2(min_delta=min_delta, max_delta=max_delta)
         self.error = sse2(self.target_q, self.predicted_q)

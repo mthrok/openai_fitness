@@ -2,14 +2,14 @@ from __future__ import absolute_import
 
 import logging
 
-from luchador.common import StoreMixin
+from luchador import common
 
-__all__ = ['DeepQLearning']
+__all__ = ['BaseDeepQLearning']
 
 _LG = logging.getLogger(__name__)
 
 
-class DeepQLearning(StoreMixin, object):
+class BaseDeepQLearning(common.StoreMixin, object):
     """Build Q-learning network and optimization operations
 
     Args:
@@ -57,18 +57,13 @@ class DeepQLearning(StoreMixin, object):
         # Sync operation
         self.sync_op = None
 
-    def _validate_args(self, args):
-        if (
-                (args['min_reward'] or args['max_reward']) and
-                (not args['max_reward'] or not args['min_reward'])
-        ):
+    def validate_args(self, min_reward=None, max_reward=None,
+                      min_delta=None, max_delta=None):
+        if (min_reward and not max_reward) or (max_reward and not min_reward):
             raise ValueError(
                 'When clipping reward, both `min_reward` '
                 'and `max_reward` must be provided.')
-        if (
-                (args['min_delta'] or args['max_delta']) and
-                (not args['max_delta'] or not args['min_delta'])
-        ):
+        if (min_delta and not max_delta) or (max_delta and not min_delta):
             raise ValueError(
                 'When clipping reward, both `min_delta` '
                 'and `max_delta` must be provided.')

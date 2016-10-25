@@ -2,31 +2,19 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador.common import is_iteratable
-from ..base import (
-    make_optimizer,
-    get_optimizer,
-    BaseOptimizer,
-    BaseSGD,
-    BaseRMSProp,
-    BaseNeonRMSProp,
-    BaseGravesRMSProp,
-    BaseAdam,
-    BaseAdamax,
-)
-from .scope import get_variable
-from .initializer import Constant
-from .wrapper import (
-    Variable,
-    Operation,
-)
+from luchador import common
+from ..base import optimizer as base_optimizer
+from . import scope, initializer, wrapper
 
 __all__ = [
-    'BaseOptimizer', 'make_optimizer', 'get_optimizer',
+    'BaseOptimizer', 'get_optimizer',
     'SGD',
     'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
     'Adam', 'Adamax',
 ]
+
+get_optimizer = base_optimizer.get_optimizer
+BaseOptimizer = base_optimizer.BaseOptimizer
 
 
 def _parse_kwargs(kwargs):
@@ -100,7 +88,7 @@ class TFOptimizerMixin(object):
             Unlike other methods, each tensor is not wrapped with Luchador's
             TensorWrapper so they are Tensorflow's native Tensor objects.
         """
-        wrt = [wrt] if wrt is not None and not is_iteratable(wrt) else wrt
+        wrt = [wrt] if wrt and not common.is_iteratable(wrt) else wrt
         var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
         return self.optimizer.compute_gradients(
             loss=loss.unwrap(), var_list=var_list, **kwargs)
@@ -123,7 +111,7 @@ class TFOptimizerMixin(object):
         """
         minimize_op = self.optimizer.apply_gradients(grads_and_vars, **kwargs)
         self._register_slot(grads_and_vars)
-        return Operation(minimize_op)
+        return wrapper.Operation(minimize_op)
 
     def _register_slot(self, grads_and_vars):
         """Store TF-native optimizer slots to luchador Optimizer slots"""
@@ -132,7 +120,7 @@ class TFOptimizerMixin(object):
                 slot = self.optimizer.get_slot(var, slot_name)
                 name = '{}/{}/{}'.format(
                     self.args['name'],  var.op.name, slot_name)
-                self.slot.append(Variable(slot, name=name))
+                self.slot.append(wrapper.Variable(slot, name=name))
 
     def _create_slot_var(self, var, slot_name):
         """Create slot variable for the given Variable
@@ -142,7 +130,7 @@ class TFOptimizerMixin(object):
         """
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = get_variable(
+        slot_var = scope.get_variable(
             name=name, shape=var.get_shape(), dtype=var.dtype,
             initializer=tf.constant_initializer(0))
         self.slot.append(slot_var)
@@ -155,21 +143,21 @@ class TFOptimizerMixin(object):
         Currently only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = get_variable(
+        slot_var = scope.get_variable(
             name=name, shape=[],
-            initializer=Constant(initial_value))
+            initializer=initializer.Constant(initial_value))
         self.slot.append(slot_var)
         return slot_var.unwrap()
 
 
-class SGD(TFOptimizerMixin, BaseSGD):
+class SGD(TFOptimizerMixin, base_optimizer.BaseSGD):
     def init(self):
         self.optimizer = tf.train.GradientDescentOptimizer(
             learning_rate=self.args['learning_rate'], name=self.args['name'],
             use_locking=self.args.get('use_locking', False))
 
 
-class RMSProp(TFOptimizerMixin, BaseRMSProp):
+class RMSProp(TFOptimizerMixin, base_optimizer.BaseRMSProp):
     def init(self):
         self.optimizer = tf.train.RMSPropOptimizer(
             learning_rate=self.args['learning_rate'],
@@ -178,7 +166,7 @@ class RMSProp(TFOptimizerMixin, BaseRMSProp):
             use_locking=self.args.get('use_locking', False))
 
 
-class NeonRMSProp(TFOptimizerMixin, BaseNeonRMSProp):
+class NeonRMSProp(TFOptimizerMixin, base_optimizer.BaseNeonRMSProp):
     def apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients(grads_and_vars, **kwargs)
@@ -197,10 +185,10 @@ class NeonRMSProp(TFOptimizerMixin, BaseNeonRMSProp):
             new_grads_and_vars.append((new_grad, var))
 
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return Operation(tf.group(*updates))
+        return wrapper.Operation(tf.group(*updates))
 
 
-class GravesRMSProp(TFOptimizerMixin, BaseGravesRMSProp):
+class GravesRMSProp(TFOptimizerMixin, base_optimizer.BaseGravesRMSProp):
     def apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients(grads_and_vars, **kwargs)
@@ -225,10 +213,10 @@ class GravesRMSProp(TFOptimizerMixin, BaseGravesRMSProp):
             new_grads_and_vars.append((new_grad, var))
 
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return Operation(tf.group(*updates))
+        return wrapper.Operation(tf.group(*updates))
 
 
-class Adam(TFOptimizerMixin, BaseAdam):
+class Adam(TFOptimizerMixin, base_optimizer.BaseAdam):
     def init(self):
         self.optimizer = tf.train.AdamOptimizer(
             learning_rate=self.args['learning_rate'],
@@ -239,14 +227,16 @@ class Adam(TFOptimizerMixin, BaseAdam):
 
     def apply_gradients(self, grads_and_vars, **kwargs):
         ret = super(Adam, self).apply_gradients(grads_and_vars, **kwargs)
-        name = '{}/{}'.format(self.args['name'], 'beta1_power')
-        self.slot.append(Variable(self.optimizer._beta1_power, name=name))
-        name = '{}/{}'.format(self.args['name'], 'beta2_power')
-        self.slot.append(Variable(self.optimizer._beta2_power, name=name))
+        name1 = '{}/{}'.format(self.args['name'], 'beta1_power')
+        name2 = '{}/{}'.format(self.args['name'], 'beta2_power')
+        self.slot.extend([
+            wrapper.Variable(self.optimizer._beta1_power, name=name1),
+            wrapper.Variable(self.optimizer._beta2_power, name=name2),
+        ])
         return ret
 
 
-class Adamax(TFOptimizerMixin, BaseAdamax):
+class Adamax(TFOptimizerMixin, base_optimizer.BaseAdamax):
     def apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients(grads_and_vars, **kwargs)
@@ -273,4 +263,4 @@ class Adamax(TFOptimizerMixin, BaseAdamax):
 
         updates.append(beta1_power.assign(beta1_power * b1))
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return Operation(tf.group(*updates))
+        return wrapper.Operation(tf.group(*updates))

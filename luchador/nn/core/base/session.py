@@ -8,7 +8,7 @@ from collections import OrderedDict
 import h5py
 import numpy as np
 
-__all__ = ['Session']
+__all__ = ['BaseSession']
 
 _LG = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def _parse_dataset(h5group, prefix=''):
     return ret
 
 
-class Session(object):
+class BaseSession(object):
     """Defines common interface for computation handler
 
     Each backend must implement the following methods:

@@ -1,20 +1,20 @@
 from __future__ import absolute_import
 
-from luchador.common import get_subclasses, SerializeMixin
+from luchador import common
 
 __all__ = [
-    'BaseOptimizer', 'get_optimizer', 'make_optimizer',
+    'BaseOptimizer', 'get_optimizer',
     'BaseSGD',
     'BaseRMSProp', 'BaseNeonRMSProp', 'BaseGravesRMSProp',
     'BaseAdam', 'BaseAdamax',
 ]
 
 
-class BaseOptimizer(SerializeMixin):
+class BaseOptimizer(common.SerializeMixin):
     """Defines common interface for gradient computation and application"""
     def __init__(self, **kwargs):
         super(BaseOptimizer, self).__init__()
-        self._store_args(**kwargs)
+        self.store_args(**kwargs)
         self.slot = []
 
         # Backend-specific initialization is run here
@@ -85,15 +85,10 @@ class BaseOptimizer(SerializeMixin):
 
 def get_optimizer(name):
     """Get optimizer class"""
-    for Class in get_subclasses(BaseOptimizer):
+    for Class in common.get_subclasses(BaseOptimizer):
         if Class.__name__ == name:
             return Class
     raise ValueError('Unknown Optimizer: {}'.format(name))
-
-
-def make_optimizer(cfg):
-    Optimizer = get_optimizer(cfg['name'])
-    return Optimizer(**cfg['args'])
 
 
 ###############################################################################

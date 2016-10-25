@@ -3,13 +3,11 @@ from __future__ import absolute_import
 import theano
 import theano.tensor as T
 
-from ..base import (
-    TensorWrapper as BaseWrapper,
-    OperationWrapper as Operation,
-)
+from ..base import wrapper as base_wrapper
 
 __all__ = ['Tensor', 'Input', 'Operation']
 
+Operation = base_wrapper.Operation
 
 _VARIABLES = {}
 
@@ -24,7 +22,7 @@ def retrieve_variable(name):
     return _VARIABLES.get(name)
 
 
-class Variable(BaseWrapper):
+class Variable(base_wrapper.BaseTensor):
     """Wrap SharedVariable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap SharedVariable object.
@@ -43,7 +41,7 @@ class Variable(BaseWrapper):
         self.trainable = trainable
 
 
-class Tensor(BaseWrapper):
+class Tensor(base_wrapper.BaseTensor):
     """Wrap TensorVariable object for storing computation result"""
     def __init__(self, tensor, shape=None, name=None):
         """Wrap TensorVariable object.
@@ -57,7 +55,7 @@ class Tensor(BaseWrapper):
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 
 
-class Input(BaseWrapper):
+class Input(base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which is converted to TensorVariable at build time

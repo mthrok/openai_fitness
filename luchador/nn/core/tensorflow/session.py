@@ -8,13 +8,8 @@ from tensorflow import (
 )
 
 from luchador.common import is_iteratable
-from ..base import Session as BaseSession
-from . import scope
-from .wrapper import (
-    Tensor,
-    Variable,
-    Operation,
-)
+from ..base import session
+from . import scope, wrapper
 
 _LG = logging.getLogger(__name__)
 
@@ -24,8 +19,8 @@ __all__ = ['Session']
 def _get_full_class(cls):
     return '{}.{}'.format(cls.__module__, cls.__name__)
 
-_TENSOR_CLASS_STR = _get_full_class(Tensor)
-_OP_CLASS_STR = _get_full_class(Operation)
+_TENSOR_CLASS_STR = _get_full_class(wrapper.Tensor)
+_OP_CLASS_STR = _get_full_class(wrapper.Operation)
 
 
 def _parse_outputs(outputs):
@@ -37,7 +32,8 @@ def _parse_outputs(outputs):
         outputs = [outputs]
 
     for output in outputs:
-        if not (isinstance(output, Tensor) or isinstance(output, Variable)):
+        if not (isinstance(output, wrapper.Tensor) or
+                isinstance(output, wrapper.Variable)):
             raise ValueError(
                 '`outputs` must be [list of] {}. Given: {}'
                 .format(_TENSOR_CLASS_STR, _get_full_class(type(output))))
@@ -54,7 +50,7 @@ def _parse_updates(updates):
         updates = [updates]
 
     for update in updates:
-        if not isinstance(update, Operation):
+        if not isinstance(update, wrapper.Operation):
             raise ValueError(
                 '`updates` must be [list of] {}. Given: {}'
                 .format(_OP_CLASS_STR, _get_full_class(type(update))))
@@ -97,7 +93,7 @@ def _construct_feed_dict(inputs, givens):
     return feed_dict
 
 
-class Session(BaseSession):
+class Session(session.BaseSession):
     def __init__(self, graph=None, config=None):
         super(Session, self).__init__()
         self.session = TFSession('', graph, config)
@@ -193,4 +189,4 @@ class Session(BaseSession):
                             .format(src_shape, tgt_shape)
                         )
                 ops.append(variable.unwrap().assign(value))
-        self.run(name=None, updates=Operation(tf.group(*ops)))
+        self.run(name=None, updates=wrapper.Operation(tf.group(*ops)))

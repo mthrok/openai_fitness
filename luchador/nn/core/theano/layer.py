@@ -9,10 +9,7 @@ import theano
 import theano.tensor as T
 
 from ..base import layer as base_layer
-from ..base import get_layer, get_initializer
-from . import scope
-from . import wrapper
-from . import initializer
+from . import scope, wrapper, initializer
 
 
 __all__ = [
@@ -26,7 +23,7 @@ __all__ = [
 
 _LG = logging.getLogger(__name__)
 
-
+get_layer = base_layer.get_layer
 BaseLayer = base_layer.BaseLayer
 
 
@@ -49,14 +46,14 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
-            get_initializer(cfg['name'])(**cfg['args'])
+            initializer.get_initializer(cfg['name'])(**cfg['args'])
             if cfg else initializer.Xavier()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
+                initializer.get_initializer(cfg['name'])(**cfg['args'])
                 if cfg else initializer.Constant(0.1)
             )
 
@@ -140,9 +137,9 @@ def _validate_strides(strides):
 
 class Conv2D(LayerMixin, base_layer.BaseConv2D):
     """Implement Conv2D layer in Theano"""
-    def _validate_args(self, args):
-        _validate_padding(args['padding'])
-        _validate_strides(args['strides'])
+    def validate_args(self, padding, strides, **kwargs):
+        _validate_padding(padding)
+        _validate_strides(strides)
 
     ###########################################################################
     def _instantiate_initializers(self):
@@ -150,14 +147,14 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
-            get_initializer(cfg['name'])(**cfg['args'])
+            initializer.get_initializer(cfg['name'])(**cfg['args'])
             if cfg else initializer.XavierConv2D()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
-                get_initializer(cfg['name'])(**cfg['args'])
+                initializer.get_initializer(cfg['name'])(**cfg['args'])
                 if cfg else initializer.Constant(0.1)
             )
 

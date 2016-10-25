@@ -6,7 +6,7 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
-from luchador.common import get_subclasses, SerializeMixin
+from luchador import common
 
 _LG = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class BaseLayer(SerializeMixin, object):
+class BaseLayer(common.SerializeMixin, object):
     """Defines common interface (copy and build) for Layer classes"""
     def __init__(self, **kwargs):
         """Validate and store arguments passed to subclass __init__ method
@@ -31,7 +31,7 @@ class BaseLayer(SerializeMixin, object):
         constractor of subclass object being created.
         """
         super(BaseLayer, self).__init__()
-        self._store_args(**kwargs)
+        self.store_args(**kwargs)
 
         self.initializers = OrderedDict()
         self.update_operations = OrderedDict()
@@ -97,7 +97,7 @@ class BaseLayer(SerializeMixin, object):
 
 
 def get_layer(name):
-    for Class in get_subclasses(BaseLayer):
+    for Class in common.get_subclasses(BaseLayer):
         if Class.__name__ == name:
             return Class
     raise ValueError('Unknown Layer: {}'.format(name))

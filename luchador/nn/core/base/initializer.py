@@ -2,14 +2,14 @@ from __future__ import absolute_import
 
 import logging
 
-from luchador.common import get_subclasses, SerializeMixin
+from luchador import common
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['Initializer', 'get_initializer']
+__all__ = ['BaseInitializer', 'get_initializer']
 
 
-class Initializer(SerializeMixin, object):
+class BaseInitializer(common.SerializeMixin, object):
     """Common interface for Initializer classes"""
     def __init__(self, **kwargs):
         """Validate and store arguments passed to subclass __init__ method
@@ -19,8 +19,8 @@ class Initializer(SerializeMixin, object):
         signature of this constructor must match to the signature of the
         constractor of subclass object being created.
         """
-        super(Initializer, self).__init__()
-        self._store_args(**kwargs)
+        super(BaseInitializer, self).__init__()
+        self.store_args(**kwargs)
 
     ###########################################################################
     def __call__(self, shape):
@@ -35,7 +35,7 @@ class Initializer(SerializeMixin, object):
 
 def get_initializer(name):
     """Get Initializer class with name"""
-    for class_ in get_subclasses(Initializer):
+    for class_ in common.get_subclasses(BaseInitializer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Initializer: {}'.format(name))

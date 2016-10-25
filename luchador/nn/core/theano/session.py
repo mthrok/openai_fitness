@@ -7,12 +7,9 @@ import theano
 import numpy as np
 
 from luchador.common import is_iteratable
-from ..base import Session as BaseSession
-from . import scope
-from .wrapper import (
-    Tensor,
-    Operation,
-)
+from ..base import session
+from . import scope, wrapper
+
 
 _LG = logging.getLogger(__name__)
 
@@ -22,8 +19,8 @@ __all__ = ['Session']
 def _get_full_class(cls):
     return '{}.{}'.format(cls.__module__, cls.__name__)
 
-_TENSOR_CLASS_STR = _get_full_class(Tensor)
-_OP_CLASS_STR = _get_full_class(Operation)
+_TENSOR_CLASS_STR = _get_full_class(wrapper.Tensor)
+_OP_CLASS_STR = _get_full_class(wrapper.Operation)
 
 
 def _parse_inputs(inputs):
@@ -61,7 +58,7 @@ def _parse_updates(updates):
         updates = [updates]
 
     for update in updates:
-        if not isinstance(update, Operation):
+        if not isinstance(update, wrapper.Operation):
             raise ValueError(
                 '`updates` must be [list of] {}. Given: {}'
                 .format(_OP_CLASS_STR, _get_full_class(type(update))))
@@ -77,7 +74,7 @@ def _construct_function(inputs, outputs, updates, givens):
     return theano.function(inputs_, outputs_, updates=updates_, givens=givens)
 
 
-class Session(BaseSession):
+class Session(session.BaseSession):
     """Handles operations and computations in similar way as Tensorflow session
     """
     def __init__(self, **kwargs):
@@ -164,4 +161,4 @@ class Session(BaseSession):
                             .format(src_shape, tgt_shape)
                         )
                 ops[variable.unwrap()] = value
-        self.run(name=None, updates=Operation(op=ops))
+        self.run(name=None, updates=wrapper.Operation(op=ops))

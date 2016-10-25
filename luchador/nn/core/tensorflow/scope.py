@@ -1,23 +1,20 @@
 from __future__ import absolute_import
 
 import tensorflow as tf
-from tensorflow import (
-    name_scope,
-    get_variable as _get_variable,
-    VariableScope,
-    variable_scope,
-    get_variable_scope,
-)
 
 from luchador import get_nn_dtype
-from .wrapper import (
-    Variable,
-    retrieve_variable,
+from . import (
+    wrapper,
+    initializer as init_mod
 )
-from .initializer import TFInitializer
 
 __all__ = ['name_scope', 'get_variable', 'variable_scope',
            'VariableScope', 'get_variable_scope']
+
+name_scope = tf.name_scope
+VariableScope = tf.VariableScope
+variable_scope = tf.variable_scope
+get_variable_scope = tf.get_variable_scope
 
 
 def get_variable(name, shape=None, dtype=None,
@@ -44,13 +41,13 @@ def get_variable(name, shape=None, dtype=None,
       For other arguments, see
       https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
-    if isinstance(initializer, TFInitializer):
+    if isinstance(initializer, init_mod.TFInitializer):
         initializer = initializer.unwrap()
 
     scope = tf.get_variable_scope()
     if scope.reuse:
         name = '{}/{}'.format(scope.name, name) if scope.name else name
-        var = retrieve_variable(name)
+        var = wrapper.retrieve_variable(name)
         if var is None:
             raise ValueError(
                 'Variable {} does not exist, disallowed. '
@@ -61,8 +58,8 @@ def get_variable(name, shape=None, dtype=None,
     else:
         dtype = dtype or get_nn_dtype()
 
-        variable = _get_variable(
+        variable = tf.get_variable(
             name, shape=shape, dtype=dtype, initializer=initializer,
             regularizer=regularizer, trainable=trainable, **kwargs)
 
-        return Variable(variable, trainable=trainable)
+        return wrapper.Variable(variable, trainable=trainable)

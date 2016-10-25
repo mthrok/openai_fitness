@@ -3,12 +3,12 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 from luchador import get_nn_dtype
-from ..base import (
-    TensorWrapper as BaseWrapper,
-    OperationWrapper as Operation,
-)
+from ..base import wrapper as base_wrapper
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
+
+
+Operation = base_wrapper.Operation
 
 ###############################################################################
 # Mechanism for enabling reusing variable without explicitly giving dtype or
@@ -29,7 +29,7 @@ def retrieve_variable(name):
 ###############################################################################
 
 
-class Variable(BaseWrapper):
+class Variable(base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap Tensorflow Variable object.
@@ -48,7 +48,7 @@ class Variable(BaseWrapper):
         self.trainable = trainable
 
 
-class Tensor(BaseWrapper):
+class Tensor(base_wrapper.BaseTensor):
     """Wrap tf.Tensor object for storing computation result"""
     def __init__(self, tensor, shape=None, name=None):
         """Wrap Tensorflow Tensor object.
@@ -72,7 +72,7 @@ class Tensor(BaseWrapper):
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
 
-class Input(BaseWrapper):
+class Input(base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which is converted to placeholder at build time

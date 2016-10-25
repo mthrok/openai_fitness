@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 import logging
 
-from luchador.common import get_subclasses, StoreMixin
+from luchador import common
 
 __all__ = [
     'BaseCost', 'get_cost',
@@ -14,7 +14,7 @@ __all__ = [
 _LG = logging.getLogger(__name__)
 
 
-class BaseCost(StoreMixin, object):
+class BaseCost(common.StoreMixin, object):
     """Common interface for cost computation
 
     Actual Cost class must implement `build` method.
@@ -28,7 +28,7 @@ class BaseCost(StoreMixin, object):
             Underlying mechanism to store constructor arguments
         """
         super(BaseCost, self).__init__()
-        self._store_args(**args)
+        self.store_args(**args)
 
     def __call__(self, target, prediction):
         """Convenience method to call `build`"""
@@ -60,7 +60,7 @@ class BaseCost(StoreMixin, object):
 
 
 def get_cost(name):
-    for class_ in get_subclasses(BaseCost):
+    for class_ in common.get_subclasses(BaseCost):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Cost: {}'.format(name))
