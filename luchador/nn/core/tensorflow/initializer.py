@@ -6,11 +6,6 @@ from tensorflow.contrib import layers as tf_layers
 import luchador
 from ..base import initializer as base_initializer
 
-__all__ = [
-    'TFInitializerMixin',
-    'Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D'
-]
-
 
 class TFInitializerMixin(object):
     """Provide TF-specific Initializer methods"""
@@ -18,7 +13,7 @@ class TFInitializerMixin(object):
         """Returns the underlying TF native initializer"""
         return self._initializer
 
-    def sample(self):
+    def _sample(self):
         """Dummy sampling override
         In TF backend, initialization is handled by TF native initializers.
         """
