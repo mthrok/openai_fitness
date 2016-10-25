@@ -86,6 +86,23 @@ class BaseLayer(common.SerializeMixin, object):
 
 
 def get_layer(name):
+    """Retrieve Layer class by name
+
+    Parameters
+    ----------
+    name : str
+        Name of Layer to retrieve
+
+    Returns
+    -------
+    type
+        Layer type found
+
+    Raises
+    ------
+    ValueError
+        When Layer with the given name is not found
+    """
     for Class in common.get_subclasses(BaseLayer):
         if Class.__name__ == name:
             return Class
@@ -96,16 +113,16 @@ def get_layer(name):
 class BaseDense(BaseLayer):
     """Apply 2D affine transformation.
 
-    Input shape : 2D Tensor
-        (batch size, #input features)
+    Input Tensor
+        2D Tensor with shape (batch size, #input features)
 
-    Output shape : 2D Tensor with the same dtype
-        (batch size, #output features)
+    Output Tensor
+        2D Tensor with shape (batch size, #output features)
 
     Parameters
     ----------
     n_nodes : int
-        The number of internal neurons.
+        The number of features after tarnsformation.
 
     initializers : dict or None
         Dictionary containing configuration.
@@ -121,19 +138,19 @@ class BaseDense(BaseLayer):
 class BaseConv2D(BaseLayer):
     """Apply 2D convolution.
 
-    Input Shape : 4D tensor
+    Input Tensor : 4D tensor
         NCHW Format
-            (batch size, #input channels, input height, input width)
+            (batch size, **#input channels**, input height, input width)
 
         NHWC format : (Tensorflow backend only)
-            (batch size, input height, input width, #input channels)
+            (batch size, input height, input width, **#input channels**)
 
-    Output Shape : 4D tensor
+    Output Shape
         NCHW Format
-            (batch size, #output channels, output height, output width)
+            (batch size, **#output channels**, output height, output width)
 
         NHWC format : (Tensorflow backend only)
-            (batch size, output height, output width, #output channels)
+            (batch size, output height, output width, **#output channels**)
 
 
     Parameters
@@ -178,26 +195,35 @@ class BaseConv2D(BaseLayer):
 
 ###############################################################################
 class BaseReLU(BaseLayer):
-    """Apply rectified linear activation"""
+    """Apply rectified linear activation elementwise"""
     def __init__(self):
         super(BaseReLU, self).__init__()
 
 
 class BaseSigmoid(BaseLayer):
-    """Apply Sigmoid activation elementwise"""
+    """Apply sigmoid activation elementwise"""
     def __init__(self):
         super(BaseSigmoid, self).__init__()
 
 
 class BaseSoftmax(BaseLayer):
-    """Apply Softmax activation"""
+    """Apply softmax activation elementwise"""
     def __init__(self):
         super(BaseSoftmax, self).__init__()
 
 
 ###############################################################################
 class BaseTrueDiv(BaseLayer):
-    """Apply reald-valued division to input tensor elementwise"""
+    """Apply real-valued division to input tensor elementwise
+
+    Parameters
+    ----------
+    denom : float
+        The value of denominator
+
+    dtype : str
+        The data type of denominator Tensor
+    """
     def __init__(self, denom, dtype=None):
         super(BaseTrueDiv, self).__init__(denom=denom, dtype=dtype)
         self.denom = None

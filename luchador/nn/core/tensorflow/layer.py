@@ -29,7 +29,11 @@ __all__ = [
 
 
 class LayerMixin(object):
-    """Implement common Layer methods in Tensorflow"""
+    """Implement the following common Layer methods in Tensorflow
+
+    - ``_get_update_operation``
+
+    """
     def _get_update_operation(self):
         return wrapper.Operation(tf.group(*self.update_operations.values()))
 
@@ -41,7 +45,10 @@ def _wrap_output(tensor, name='output'):
 
 
 class Dense(LayerMixin, base_layer.BaseDense):
-    """Implement Dense layer in Tensorflow"""
+    """Implement Dense layer in Tensorflow.
+
+    See :any:`BaseDense` for detail.
+    """
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers') or {}
 
@@ -124,7 +131,10 @@ def _validate_strides(strides):
 
 
 class Conv2D(LayerMixin, base_layer.BaseConv2D):
-    """Implement Conv2D layer in Tensorflow"""
+    """Implement Conv2D layer in Tensorflow.
+
+    See :any:`BaseConv2D` for detail.
+    """
     def _validate_args(self, padding, strides, **args):
         _validate_padding(padding)
         _validate_strides(strides)
@@ -234,28 +244,40 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
 
 class ReLU(LayerMixin, base_layer.BaseReLU):
-    """Implement ReLU in Tensorflow"""
+    """Implement ReLU in Tensorflow.
+
+    See :any:`BaseReLU` for detail.
+    """
     def _build(self, input_tensor):
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
         return _wrap_output(output)
 
 
 class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
-    """Implement Sigmoid in Tensorflow"""
+    """Implement Sigmoid in Tensorflow.
+
+    See :any:`BaseSigmoid` for detail.
+    """
     def _build(self, input_tensor):
         output = tf.sigmoid(input_tensor.unwrap(), 'output')
         return _wrap_output(output)
 
 
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
-    """Implement Softmax in Tensorflow"""
+    """Implement Softmax in Tensorflow.
+
+    See :any:`BaseSoftmax` for detail.
+    """
     def _build(self, input_tensor):
         output = tf.nn.softmax(input_tensor.unwrap())
         return _wrap_output(output)
 
 
 class Flatten(LayerMixin, base_layer.BaseFlatten):
-    """Implement Flatten in Tensorflow"""
+    """Implement Flatten in Tensorflow.
+
+    See :any:`BaseFlatten` for detail.
+    """
     def _build(self, input_tensor):
         in_shape = input_tensor.shape
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
@@ -265,7 +287,10 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
 
 
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
-    """Implement TrueDiv in Tensorflow"""
+    """Implement TrueDiv in Tensorflow.
+
+    See :any:`BaseTrueDiv` for detail.
+    """
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or luchador.get_nn_dtype()
         self.denom = tf.constant(
@@ -279,7 +304,10 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
 
 
 class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
-    """Implement BN in Tensorflow"""
+    """Implement BatchNormalization in Tensorflow.
+
+    See :any:`BaseBatchNormalization` for detail.
+    """
     def _instantiate_parameters(self, input_shape):
         dim, fmt = len(input_shape), luchador.get_nn_conv_format()
         channel = 1 if dim == 2 or fmt == 'NCHW' else 3
@@ -337,8 +365,9 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         return _wrap_output(output)
 
 
+###############################################################################
 class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
-    """Implement NHWC2NCHW in Tensorflow"""
+    """See :any:`BaseNHWC2NCHW` for detail."""
     def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 3, 1, 2))
@@ -346,7 +375,7 @@ class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
 
 
 class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
-    """Implement NCHW2NHWC in Tensorflow"""
+    """See :any:`BaseNCHW2NHWC` for detail."""
     def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = tf.transpose(input_tensor_, perm=(0, 2, 3, 1))

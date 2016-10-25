@@ -28,7 +28,11 @@ _LG = logging.getLogger(__name__)
 
 
 class LayerMixin(object):
-    """Implement common Layer methods in Theano"""
+    """Implement the following common Layer methods in Theano
+
+    - ``_get_update_operation``
+
+    """
     def _get_update_operation(self):
         return wrapper.Operation(self.update_operations)
 
@@ -40,7 +44,10 @@ def _wrap_output(tensor, shape, name='output'):
 
 
 class Dense(LayerMixin, base_layer.BaseDense):
-    """Implement Dense layer in Theano"""
+    """Implement Dense layer in Theano.
+
+    See :any:`BaseDense` for detail.
+    """
     def _instantiate_initializers(self):
         init_cfg = self.args.get('initializers') or {}
 
@@ -136,7 +143,10 @@ def _validate_strides(strides):
 
 
 class Conv2D(LayerMixin, base_layer.BaseConv2D):
-    """Implement Conv2D layer in Theano"""
+    """Implement Conv2D layer in Theano.
+
+    See :any:`BaseConv2D` for detail.
+    """
     def _validate_args(self, padding, strides, **kwargs):
         _validate_padding(padding)
         _validate_strides(strides)
@@ -267,7 +277,10 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
 
 class ReLU(LayerMixin, base_layer.BaseReLU):
-    """Implement ReLU layer in Theano"""
+    """Implement ReLU layer in Theano.
+
+    See :any:`BaseReLU` for detail.
+    """
     def _build(self, input_tensor):
         """Build rectified linear activation operation on input tensor"""
         input_shape = input_tensor.shape
@@ -276,7 +289,10 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
 
 
 class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
-    """Implement Sigmoid layer in Theano"""
+    """Implement Sigmoid layer in Theano.
+
+    See :any:`BaseSigmoid` for detail.
+    """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
@@ -284,7 +300,10 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
 
 
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
-    """Implement Softmax layer in Theano"""
+    """Implement Softmax layer in Theano.
+
+    See :any:`BaseSoftmax` for detail.
+    """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
@@ -293,7 +312,10 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
 
 ###############################################################################
 class Flatten(LayerMixin, base_layer.BaseFlatten):
-    """Implement Flatten layer in Theano"""
+    """Implement Flatten layer in Theano
+
+    See :any:`BaseFlatten` for detail.
+    """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
@@ -308,7 +330,10 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
 
 
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
-    """Implement TrueDiv layer in Theano"""
+    """Implement TrueDiv layer in Theano.
+
+    See :any:`BaseTrueDiv` for detail.
+    """
     def _instantiate_denominator(self):
         dtype = self.args['dtype'] or theano.config.floatX
         self.denom = T.constant(
@@ -323,7 +348,10 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
 
 ###############################################################################
 class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
-    """Implement BN layer in Theano"""
+    """Implement BN layer in Theano.
+
+    See :any:`BaseBatchNormalization` for detail.
+    """
     def _instantiate_parameters(self, input_shape):
         dim = len(input_shape)
         shape = tuple(input_shape[i] for i in range(dim) if i == 1)
@@ -390,6 +418,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
 ###############################################################################
 class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
+    """See :any:`BaseNHWC2NCHW` for detail."""
     def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
@@ -400,6 +429,7 @@ class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
 
 
 class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
+    """See :any:`BaseNCHW2NHWC` for detail."""
     def _build(self, input_tensor):
         input_tensor_ = input_tensor.unwrap()
         output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)
