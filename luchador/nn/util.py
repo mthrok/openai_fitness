@@ -1,3 +1,5 @@
+"""Utility functions for NN model creation"""
+
 from __future__ import absolute_import
 
 import os
@@ -14,11 +16,15 @@ _DATA_DIR = os.path.join(
 def make_model(model_config):
     """Make model from model configuration
 
-    Args:
-      model_condig (JSON-compatible object): model configuration.
+    Parameters
+    ----------
+    model_condig : JSON-compatible object
+        model configuration.
 
-    Returns:
-      Model
+    Returns
+    -------
+    Model
+        Resulting model
     """
     model = get_model(model_config['model_type'])()
     for cfg in model_config['layer_configs']:
@@ -32,12 +38,18 @@ def make_model(model_config):
 def get_model_config(model_name, **parameters):
     """Load pre-defined model configurations
 
-    Args:
-      model_name (name): Model name or path to YAML file
-      parameters: Parameter for model config
+    Parameters
+    ----------
+    model_name : str
+        Model name or path to YAML file
 
-    Returns:
-      JSON-compatible object: model configuration.
+    parameters
+        Parameter for model config
+
+    Returns
+    -------
+    JSON-compatible object
+        Model configuration.
     """
     file_name = model_name
     if not file_name.endswith('.yml'):
