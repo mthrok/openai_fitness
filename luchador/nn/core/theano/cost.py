@@ -22,17 +22,11 @@ BaseCost = base_cost.BaseCost
 
 
 def _mean_sum(x):
-    return x.sum(axis=1).mean()
+    return x.mean(axis=0).sum()
 
 
 class SSE2(base_cost.BaseSSE2):
     """Implement SSE2 in Theano"""
-    def validate_args(self, min_delta, max_delta, **kwargs):
-        if (min_delta and max_delta) or (not max_delta and not min_delta):
-            return
-        raise ValueError('When clipping delta, both '
-                         '`min_delta` and `max_delta` must be provided')
-
     def _build(self, target, prediction):
         target_, pred_ = target.unwrap(), prediction.unwrap()
         delta = theano.gradient.disconnected_grad(target_) - pred_
