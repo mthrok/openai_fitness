@@ -19,6 +19,16 @@ BaseInitializer = base_initializer.BaseInitializer
 
 
 class Constant(BaseInitializer):
+    """Initialize variale with constant value
+
+    Parameters
+    ----------
+    value : number
+        Value to initialize Variable
+
+    dtype : str or None
+        Data type to sample. If None, default dtype is used.
+    """
     def __init__(self, value, dtype=None):
         super(Constant, self).__init__(value=value, dtype=dtype)
 

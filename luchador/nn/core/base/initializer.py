@@ -25,10 +25,6 @@ class BaseInitializer(common.SerializeMixin, object):
         super(BaseInitializer, self).__init__()
         self.store_args(**kwargs)
 
-    ###########################################################################
-    def __call__(self, shape):
-        self.sample(shape)
-
     @abc.abstractmethod
     def sample(self, shape):
         """Sample random values for the given shape"""
