@@ -9,8 +9,6 @@ from collections import OrderedDict
 import h5py
 import numpy as np
 
-__all__ = ['BaseSession']
-
 _LG = logging.getLogger(__name__)
 
 

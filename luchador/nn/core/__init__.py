@@ -4,6 +4,7 @@ import logging
 
 import luchador
 
+from .base import *  # noqa: F401, F403
 
 logging.getLogger(__name__).info(
     'Using %s backend', luchador.get_nn_backend()

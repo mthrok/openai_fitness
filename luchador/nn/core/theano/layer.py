@@ -8,12 +8,15 @@ import logging
 import theano
 import theano.tensor as T
 
-from ..base import layer as base_layer
+from ..base import (
+    layer as base_layer,
+    initializer as base_init,
+)
 from . import scope, wrapper, initializer
 
 
 __all__ = [
-    'BaseLayer', 'LayerMixin', 'get_layer',
+    'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax',
     'Flatten', 'TrueDiv',
@@ -22,9 +25,6 @@ __all__ = [
 ]
 
 _LG = logging.getLogger(__name__)
-
-get_layer = base_layer.get_layer
-BaseLayer = base_layer.BaseLayer
 
 
 class LayerMixin(object):
@@ -46,14 +46,14 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
-            initializer.get_initializer(cfg['name'])(**cfg['args'])
+            base_init.get_initializer(cfg['name'])(**cfg['args'])
             if cfg else initializer.Xavier()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
-                initializer.get_initializer(cfg['name'])(**cfg['args'])
+                base_init.get_initializer(cfg['name'])(**cfg['args'])
                 if cfg else initializer.Constant(0.1)
             )
 
@@ -147,14 +147,14 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
         cfg = init_cfg.get('weight')
         self.initializers['weight'] = (
-            initializer.get_initializer(cfg['name'])(**cfg['args'])
+            base_init.get_initializer(cfg['name'])(**cfg['args'])
             if cfg else initializer.XavierConv2D()
         )
 
         if self.args['with_bias']:
             cfg = init_cfg.get('bias')
             self.initializers['bias'] = (
-                initializer.get_initializer(cfg['name'])(**cfg['args'])
+                base_init.get_initializer(cfg['name'])(**cfg['args'])
                 if cfg else initializer.Constant(0.1)
             )
 

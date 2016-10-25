@@ -6,7 +6,7 @@ from collections import OrderedDict
 import theano
 import numpy as np
 
-from luchador.common import is_iteratable
+from luchador import common
 from ..base import session
 from . import scope, wrapper
 
@@ -28,7 +28,7 @@ def _parse_inputs(inputs):
     if inputs is None:
         return inputs_
 
-    if not is_iteratable(inputs):
+    if not common.is_iteratable(inputs):
         inputs = [inputs]
 
     try:
@@ -44,7 +44,7 @@ def _parse_inputs(inputs):
 def _parse_outputs(outputs):
     if outputs is None:
         return []
-    if not is_iteratable(outputs):
+    if not common.is_iteratable(outputs):
         outputs = [outputs]
     return [o.unwrap() for o in outputs]
 
@@ -54,7 +54,7 @@ def _parse_updates(updates):
     if updates is None:
         return ret
 
-    if not is_iteratable(updates):
+    if not common.is_iteratable(updates):
         updates = [updates]
 
     for update in updates:
@@ -98,7 +98,7 @@ class Session(session.BaseSession):
             self.functions[name] = function
 
         values = function(*inputs.values())
-        if is_iteratable(outputs):
+        if common.is_iteratable(outputs):
             return values
         return values[0]
 

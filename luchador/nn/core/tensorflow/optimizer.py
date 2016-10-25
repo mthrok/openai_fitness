@@ -7,14 +7,10 @@ from ..base import optimizer as base_optimizer
 from . import scope, initializer, wrapper
 
 __all__ = [
-    'BaseOptimizer', 'get_optimizer',
     'SGD',
     'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
     'Adam', 'Adamax',
 ]
-
-get_optimizer = base_optimizer.get_optimizer
-BaseOptimizer = base_optimizer.BaseOptimizer
 
 
 def _parse_kwargs(kwargs):

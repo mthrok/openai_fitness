@@ -9,16 +9,10 @@ from theano import config
 from ..base import initializer as base_initializer
 from . import random
 
-__all__ = [
-    'BaseInitializer', 'get_initializer',
-    'Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D',
-]
-
-get_initializer = base_initializer.get_initializer
-BaseInitializer = base_initializer.BaseInitializer
+__all__ = ['Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D']
 
 
-class Constant(BaseInitializer):
+class Constant(base_initializer.BaseInitializer):
     """Initialize variale with constant value
 
     Parameters
@@ -37,7 +31,7 @@ class Constant(BaseInitializer):
         return self.args['value'] * np.ones(shape, dtype=dtype)
 
 
-class Uniform(BaseInitializer):
+class Uniform(base_initializer.BaseInitializer):
     def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
         super(Uniform, self).__init__(
             minval=minval, maxval=maxval, seed=seed, dtype=dtype)
@@ -50,7 +44,7 @@ class Uniform(BaseInitializer):
         return values.astype(dtype)
 
 
-class Normal(BaseInitializer):
+class Normal(base_initializer.BaseInitializer):
     def __init__(self, mean=0.0, stddev=1.0, seed=None, dtype=None):
         super(Normal, self).__init__(
             mean=mean, stddev=stddev, seed=seed, dtype=dtype)
@@ -63,7 +57,7 @@ class Normal(BaseInitializer):
         return values.astype(dtype)
 
 
-class Xavier(BaseInitializer):
+class Xavier(base_initializer.BaseInitializer):
     """Adoptation of xavier_initializer from tensorflow"""
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(Xavier, self).__init__(uniform=uniform, seed=seed, dtype=dtype)

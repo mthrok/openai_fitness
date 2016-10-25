@@ -10,15 +10,9 @@ import theano.tensor as T
 from ..base import cost as base_cost
 from . import wrapper
 
-__all__ = [
-    'BaseCost', 'get_cost',
-    'SSE2', 'SigmoidCrossEntropy',
-]
+__all__ = ['SSE2', 'SigmoidCrossEntropy']
 
 _LG = logging.getLogger(__name__)
-
-get_cost = base_cost.get_cost
-BaseCost = base_cost.BaseCost
 
 
 def _mean_sum(x):

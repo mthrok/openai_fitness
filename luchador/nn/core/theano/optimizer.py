@@ -10,14 +10,10 @@ from ..base import optimizer as base_opt
 from . import scope, initializer, wrapper
 
 __all__ = [
-    'BaseOptimizer', 'get_optimizer',
     'SGD',
     'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
     'Adam', 'Adamax',
 ]
-
-get_optimizer = base_opt.get_optimizer
-BaseOptimizer = base_opt.BaseOptimizer
 
 
 class TheanoOptimizerMixin(object):

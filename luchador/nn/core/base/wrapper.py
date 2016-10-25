@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 
 
-__all__ = ['BaseTensor', 'Operation']
-
-
 class BaseTensor(object):
     """Wraps Tensor or Variable object in Theano/Tensorflow
 

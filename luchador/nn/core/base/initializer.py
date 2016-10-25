@@ -7,8 +7,6 @@ from luchador import common
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['BaseInitializer', 'get_initializer']
-
 
 class BaseInitializer(common.SerializeMixin, object):
     """Common interface for Initializer classes"""

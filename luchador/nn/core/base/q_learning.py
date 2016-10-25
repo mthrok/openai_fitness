@@ -5,7 +5,6 @@ import logging
 
 from luchador import common
 
-__all__ = ['BaseDeepQLearning']
 
 _LG = logging.getLogger(__name__)
 

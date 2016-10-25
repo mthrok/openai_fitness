@@ -11,15 +11,6 @@ from luchador import common
 
 _LG = logging.getLogger(__name__)
 
-__all__ = [
-    'BaseLayer', 'get_layer',
-    'BaseDense', 'BaseConv2D',
-    'BaseReLU', 'BaseSigmoid', 'BaseSoftmax',
-    'BaseTrueDiv', 'BaseFlatten',
-    'BaseBatchNormalization',
-    'BaseNCHW2NHWC', 'BaseNHWC2NCHW',
-]
-
 
 class BaseLayer(common.SerializeMixin, object):
     """Defines common interface (copy and build) for Layer classes"""

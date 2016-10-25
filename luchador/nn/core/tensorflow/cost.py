@@ -7,13 +7,7 @@ import tensorflow as tf
 from ..base import cost as base_cost
 from . import wrapper
 
-__all__ = [
-    'BaseCost', 'get_cost',
-    'SSE2', 'SigmoidCrossEntropy',
-]
-
-get_cost = base_cost.get_cost
-BaseCost = base_cost.BaseCost
+__all__ = ['SSE2', 'SigmoidCrossEntropy']
 
 
 def _mean_sum(err):

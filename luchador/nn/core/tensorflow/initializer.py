@@ -7,12 +7,9 @@ import luchador
 from ..base import initializer as base_initializer
 
 __all__ = [
-    'BaseInitializer', 'get_initializer',
+    'TFInitializerMixin',
     'Constant', 'Normal', 'Uniform', 'Xavier', 'XavierConv2D'
 ]
-
-get_initializer = base_initializer.get_initializer
-BaseInitializer = base_initializer.BaseInitializer
 
 
 class TFInitializerMixin(object):
@@ -28,14 +25,14 @@ class TFInitializerMixin(object):
         pass
 
 
-class Constant(TFInitializerMixin, BaseInitializer):
+class Constant(TFInitializerMixin, base_initializer.BaseInitializer):
     def __init__(self, value, dtype=None):
         super(Constant, self).__init__(value=value, dtype=dtype)
         dtype = tf.as_dtype(dtype or luchador.get_nn_dtype())
         self._initializer = tf.constant_initializer(value=value, dtype=dtype)
 
 
-class Normal(TFInitializerMixin, BaseInitializer):
+class Normal(TFInitializerMixin, base_initializer.BaseInitializer):
     def __init__(self, mean=0.0, stddev=1.0, seed=None, dtype=None):
         super(Normal, self).__init__(
             mean=mean, stddev=stddev, seed=seed, dtype=dtype)
@@ -44,7 +41,7 @@ class Normal(TFInitializerMixin, BaseInitializer):
             mean=mean, stddev=stddev, seed=seed, dtype=dtype)
 
 
-class Uniform(TFInitializerMixin, BaseInitializer):
+class Uniform(TFInitializerMixin, base_initializer.BaseInitializer):
     def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
         super(Uniform, self).__init__(
             minval=minval, maxval=maxval, seed=seed, dtype=dtype)
@@ -53,7 +50,7 @@ class Uniform(TFInitializerMixin, BaseInitializer):
             minval=minval, maxval=maxval, seed=seed, dtype=dtype)
 
 
-class Xavier(TFInitializerMixin, BaseInitializer):
+class Xavier(TFInitializerMixin, base_initializer.BaseInitializer):
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(Xavier, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)
@@ -62,7 +59,7 @@ class Xavier(TFInitializerMixin, BaseInitializer):
             uniform=uniform, seed=seed, dtype=dtype)
 
 
-class XavierConv2D(TFInitializerMixin, BaseInitializer):
+class XavierConv2D(TFInitializerMixin, base_initializer.BaseInitializer):
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(XavierConv2D, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)

@@ -6,13 +6,6 @@ import abc
 
 from luchador import common
 
-__all__ = [
-    'BaseOptimizer', 'get_optimizer',
-    'BaseSGD',
-    'BaseRMSProp', 'BaseNeonRMSProp', 'BaseGravesRMSProp',
-    'BaseAdam', 'BaseAdamax',
-]
-
 
 class BaseOptimizer(common.SerializeMixin):
     """Define common interface of Optimizer"""

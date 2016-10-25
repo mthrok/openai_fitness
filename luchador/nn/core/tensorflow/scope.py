@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador import get_nn_dtype
+import luchador
+from .. import initializer as base_init_mod
 from . import (
     wrapper,
     initializer as init_mod
@@ -41,7 +42,7 @@ def get_variable(name, shape=None, dtype=None,
       For other arguments, see
       https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
-    if isinstance(initializer, init_mod.BaseInitializer):
+    if isinstance(initializer, base_init_mod.BaseInitializer):
         initializer = initializer.unwrap()
 
     scope = tf.get_variable_scope()
@@ -56,7 +57,7 @@ def get_variable(name, shape=None, dtype=None,
             )
         return var
     else:
-        dtype = dtype or get_nn_dtype()
+        dtype = dtype or luchador.get_nn_dtype()
 
         variable = tf.get_variable(
             name, shape=shape, dtype=dtype, initializer=initializer,
