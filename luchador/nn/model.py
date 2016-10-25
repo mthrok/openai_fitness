@@ -203,8 +203,8 @@ class Sequential(BaseModel):
     def build(self, input_tensor):
         """Build the model on top of input tensor.
 
-        Prameters
-        --------
+        Parameters
+        ----------
         input_tensor : Tensor
             Input to this model
 
