@@ -20,7 +20,7 @@ class BaseOptimizer(common.SerializeMixin):
 
     def __init__(self, **kwargs):
         super(BaseOptimizer, self).__init__()
-        self.store_args(**kwargs)
+        self._store_args(**kwargs)
         self.slot = []
 
         # Backend-specific initialization is run here

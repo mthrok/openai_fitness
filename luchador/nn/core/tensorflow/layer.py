@@ -125,7 +125,7 @@ def _validate_strides(strides):
 
 class Conv2D(LayerMixin, base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow"""
-    def validate_args(self, padding, strides, **args):
+    def _validate_args(self, padding, strides, **args):
         _validate_padding(padding)
         _validate_strides(strides)
 

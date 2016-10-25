@@ -31,7 +31,7 @@ class BaseDeepQLearning(common.StoreMixin, object):
     def __init__(self, discount_rate, scale_reward=None,
                  min_reward=None, max_reward=None,
                  min_delta=None, max_delta=None):
-        self.store_args(
+        self._store_args(
             discount_rate=discount_rate,
             scale_reward=scale_reward,
             min_reward=min_reward,
@@ -60,8 +60,8 @@ class BaseDeepQLearning(common.StoreMixin, object):
         # Sync operation
         self.sync_op = None
 
-    def validate_args(self, min_reward=None, max_reward=None,
-                      min_delta=None, max_delta=None, **kwargs):
+    def _validate_args(self, min_reward=None, max_reward=None,
+                       min_delta=None, max_delta=None, **kwargs):
         if (min_reward and not max_reward) or (max_reward and not min_reward):
             raise ValueError(
                 'When clipping reward, both `min_reward` '

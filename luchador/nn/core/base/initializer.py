@@ -23,7 +23,7 @@ class BaseInitializer(common.SerializeMixin, object):
         constractor of subclass object being created.
         """
         super(BaseInitializer, self).__init__()
-        self.store_args(**kwargs)
+        self._store_args(**kwargs)
 
     @abc.abstractmethod
     def sample(self, shape):

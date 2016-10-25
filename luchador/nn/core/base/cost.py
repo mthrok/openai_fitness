@@ -28,7 +28,7 @@ class BaseCost(common.StoreMixin, object):
             Underlying mechanism to store constructor arguments
         """
         super(BaseCost, self).__init__()
-        self.store_args(**args)
+        self._store_args(**args)
 
     def __call__(self, target, prediction):
         """Convenience method to call `build`"""
@@ -102,7 +102,7 @@ class BaseSSE2(BaseCost):
         super(BaseSSE2, self).__init__(
             max_delta=max_delta, min_delta=min_delta, elementwise=elementwise)
 
-    def validate_args(self, min_delta, max_delta, **kwargs):
+    def _validate_args(self, min_delta, max_delta, **kwargs):
         """Check if constructor arguments are valid. Raise error if invalid.
 
         Called automatically by constructor. Not to be called by user.

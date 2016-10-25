@@ -34,7 +34,7 @@ class BaseLayer(common.SerializeMixin, object):
         constractor of subclass object being created.
         """
         super(BaseLayer, self).__init__()
-        self.store_args(**kwargs)
+        self._store_args(**kwargs)
 
         self.initializers = OrderedDict()
         self.update_operations = OrderedDict()
