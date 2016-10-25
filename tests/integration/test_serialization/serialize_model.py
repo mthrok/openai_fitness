@@ -10,7 +10,7 @@ import numpy as np
 import luchador
 from luchador.util import load_config
 from luchador.nn import (
-    make_optimizer,
+    get_optimizer,
     Saver,
     Input,
     Session,
@@ -60,9 +60,9 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def get_optimizer(filepath):
+def make_optimizer(filepath):
     cfg = load_config(filepath)
-    return make_optimizer(cfg)
+    return get_optimizer(cfg['name'])(**cfg['args'])
 
 
 def build_network(model_filepath, optimizer_filepath):
@@ -86,7 +86,7 @@ def build_network(model_filepath, optimizer_filepath):
     ql.build(model_maker)
 
     _LG.info('Building Optimization')
-    optimizer = get_optimizer(optimizer_filepath)
+    optimizer = make_optimizer(optimizer_filepath)
     minimize_op = optimizer.minimize(
         ql.error, wrt=ql.pre_trans_net.get_parameter_variables())
 
