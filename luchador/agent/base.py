@@ -1,3 +1,5 @@
+"""Define agent interface"""
+
 from __future__ import absolute_import
 import abc
 
@@ -7,9 +9,21 @@ __all__ = ['BaseAgent', 'NoOpAgent', 'get_agent']
 
 
 class BaseAgent(object):
+    """Define interface for Agent class"""
     __metaclass__ = abc.ABCMeta
 
+    @abc.abstractmethod
     def init(self, env):
+        """Inittialize agent under the given env
+
+        This method serves to retrieve environment-specific information,
+        such as the number of action the agent can take, from environment.
+
+        Parameters
+        ----------
+        env : Environment
+            The environment agent works on.
+        """
         pass
 
     @abc.abstractmethod
@@ -48,6 +62,7 @@ class BaseAgent(object):
 
 
 class NoOpAgent(BaseAgent):
+    """Agent does nothing"""
     def __init__(self):
         super(NoOpAgent, self).__init__()
 
@@ -65,6 +80,23 @@ class NoOpAgent(BaseAgent):
 
 
 def get_agent(name):
+    """Retrieve Agent class by name
+
+    Parameters
+    ----------
+    name : str
+        Name of Agent to retrieve
+
+    Returns
+    -------
+    type
+        Agent type found
+
+    Raises
+    ------
+    ValueError
+        When Agent with the given name is not found
+    """
     for class_ in common.get_subclasses(BaseAgent):
         if class_.__name__ == name:
             return class_
