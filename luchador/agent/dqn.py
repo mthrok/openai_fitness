@@ -82,11 +82,13 @@ class DQNAgent(BaseAgent):
             names=['Training/Error', 'Training/Reward', 'Training/Steps']
         )
         self.summary_writer.register_stats(['Error', 'Reward', 'Steps'])
+        self.summary_writer.register('scalar', ['Episode'])
 
         self.summary_values = {
             'error': [],
             'rewards': [],
             'steps': [],
+            'episode': 0,
         }
 
     def _init_network(self):
@@ -240,6 +242,9 @@ class DQNAgent(BaseAgent):
                 self.summary_values['steps'],
             ]
         )
+        self.summary_writer.summarize(
+            episode, {'Episode': self.summary_values['episode']}
+        )
         if self.summary_values['rewards']:
             self.summary_writer.summarize_stats(
                 episode, {'Reward': self.summary_values['rewards']}
@@ -252,11 +257,9 @@ class DQNAgent(BaseAgent):
             self.summary_writer.summarize_stats(
                 episode, {'Steps': self.summary_values['steps']}
             )
-        self.summary_values = {
-            'error': [],
-            'rewards': [],
-            'steps': [],
-        }
+        self.summary_values['error'] = []
+        self.summary_values['rewards'] = []
+        self.summary_values['steps'] = []
 
     def _summarize_layer_outputs(self, episode):
         sample = self.recorder.sample(32)
@@ -287,6 +290,7 @@ class DQNAgent(BaseAgent):
         self.recorder.truncate()
         self.summary_values['rewards'].append(stats['rewards'])
         self.summary_values['steps'].append(stats['steps'])
+        self.summary_values['episode'] = stats['episode']
 
     ###########################################################################
     def __repr__(self):
