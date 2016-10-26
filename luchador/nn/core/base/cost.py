@@ -89,10 +89,15 @@ class BaseSSE2(BaseCost):
         Clip the difference between target value and prediction values
 
     elementwise : Bool
-        When true, the cost tesnor returned by `build` method has the same
-        shape as its input Tensors. When False, the cost tensor is flattened
+        When true, the cost tesnor returned by this method has the same shape
+        as its input Tensors. When False, the cost tensor is flattened
         to scalar shape by taking average over batch and sum over feature.
         Default: False.
+
+    Notes
+    -----
+    In case ``elementwise=True``, this cost is reduced to squared difference
+    between target and prediction.
     """
     def __init__(self, max_delta=None, min_delta=None, elementwise=False):
         super(BaseSSE2, self).__init__(

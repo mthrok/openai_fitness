@@ -117,7 +117,8 @@ class EpisodeRecorder(object):
 
             For performance reason, argument validity check is omitted, but
             arguments must satisfy the following condition:
-              0 < length <= index < len(self.actions)
+
+                0 < length <= index < len(self.actions)
 
         length : int
             The number of observations included in the state
