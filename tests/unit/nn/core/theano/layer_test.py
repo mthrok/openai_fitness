@@ -20,17 +20,18 @@ class TestConv2D(unittest.TestCase):
 
     def test_map_border_mode(self):
         """padding string is correctly mapped to border_mode"""
-        from luchador import nn
+        from luchador.nn.core.theano import layer
         inputs = ('full', 'half', 'SAME', 'valid')
         expecteds = ('full', 'half', 'half', 'valid')
         for i, expected in zip(inputs, expecteds):
-            found = nn.core.theano.layer._map_border_mode(i)
+            found = layer._map_border_mode(i)
             self.assertEqual(expected, found)
 
     def _test_shape_inference(
             self, input_shape, filter_shape, n_filters, strides, padding):
         from luchador import nn
-        nn.core.theano.scope._reset()
+        from luchador.nn.core.theano import scope
+        scope._reset()
         conv2d = nn.Conv2D(filter_height=filter_shape['height'],
                            filter_width=filter_shape['width'],
                            n_filters=n_filters,
