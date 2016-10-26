@@ -99,3 +99,6 @@ tool/mnist.pkl*
 
 # Artifacts from integration test data
 tmp
+
+# Sphynx-apidoc
+/docs/source/API

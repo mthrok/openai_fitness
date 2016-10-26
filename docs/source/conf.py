@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-import subprocess
-
-from sphinx.apidoc import main as apidoc_main
-
-on_rtd = 'READTHEDOCS' in os.environ
+import sphinx_rtd_theme
 #
 # Luchador documentation build configuration file, created by
 # sphinx-quickstart on Mon Oct 24 15:09:50 2016.
@@ -128,12 +123,8 @@ todo_include_todos = False
 
 
 # -- Options for HTML output ----------------------------------------------
-
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
@@ -340,11 +331,3 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
-
-if on_rtd:
-    subprocess.check_call(['pip', 'install', 'numpydoc'])
-
-# Generate API documentation from docstring
-target_dir = './API'
-source_dir = '../../luchador'
-apidoc_main(['-e', '-o', target_dir, source_dir, '--force'])

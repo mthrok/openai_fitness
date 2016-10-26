@@ -46,3 +46,11 @@ test:
   post:
     # Report test coverage
     - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./cci_script/report_codacy_test_coverage.sh; fi
+
+deployment:
+   docs:
+     branch: master
+     owner: mthrok
+     commands:
+       - pip install Sphinx numpydoc sphinx_rtd_theme
+       - ./cci_script/build_docs.sh
