@@ -21,39 +21,12 @@ class TheanoOptimizerMixin(object):
     def _run_backend_specific_init(self):
         pass
 
-    def minimize(self, loss, wrt, **kwargs):
-        """Create minimization op which updates parameter variables
-
-        Args:
-          loss (Tensor): Loss Tensor to be minimized
-
-          wrt ([list of] Variables): Variables with which loss is minimzied
-
-          **kwargs: Not used. This is for the consistency with TF backend.
-
-        Returns:
-          Operation: Minimization operation
-        """
-
-        grads_and_vars = self.compute_gradients(loss, wrt)
-        return self.apply_gradients(grads_and_vars)
+    def _minimize(self, loss, wrt, **kwargs):
+        grads_and_vars = self._compute_gradients(loss, wrt)
+        return self._apply_gradients(grads_and_vars)
 
     @staticmethod
-    def compute_gradients(loss, wrt, **kwargs):
-        """Compute gradient of loss with respect to wrt.
-
-        This method works in similar way as Tensorflow Optimizers'
-        compute_gradient method.
-
-        Args:
-          loss (Tensor): Loss Tensor to be minimized
-          wrt ([list of] Variables): Variables with which gradient is computed
-
-        Returns:
-          List of Tensor pairs: Gradient and corresponding variable pairs.
-            Unlike other methods, each tensor is not wrapped with Luchador's
-            TensorWrapper so they are Theano's native Variable objects.
-        """
+    def _compute_gradients(loss, wrt, **kwargs):
         wrt = wrt if common.is_iteratable(wrt) else [wrt]
         loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
@@ -90,7 +63,7 @@ class TheanoOptimizerMixin(object):
 
 
 class SGD(TheanoOptimizerMixin, base_opt.BaseSGD):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         updates = OrderedDict()
         for grad, var in grads_and_vars:
             updates[var] = var - self.args['learning_rate'] * grad
@@ -98,7 +71,7 @@ class SGD(TheanoOptimizerMixin, base_opt.BaseSGD):
 
 
 class RMSProp(TheanoOptimizerMixin, base_opt.BaseRMSProp):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         decay, momentum = self.args['decay'], self.args['momentum']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 
@@ -118,7 +91,7 @@ class RMSProp(TheanoOptimizerMixin, base_opt.BaseRMSProp):
 
 
 class NeonRMSProp(TheanoOptimizerMixin, base_opt.BaseNeonRMSProp):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         decay, ep = self.args['decay'], self.args['epsilon']
         lr = self.args['learning_rate']
 
@@ -135,7 +108,7 @@ class NeonRMSProp(TheanoOptimizerMixin, base_opt.BaseNeonRMSProp):
 
 
 class GravesRMSProp(TheanoOptimizerMixin, base_opt.BaseGravesRMSProp):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         d1, d2 = self.args['decay1'], self.args['decay2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 
@@ -160,7 +133,7 @@ class GravesRMSProp(TheanoOptimizerMixin, base_opt.BaseGravesRMSProp):
 
 
 class Adam(TheanoOptimizerMixin, base_opt.BaseAdam):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 
@@ -187,7 +160,7 @@ class Adam(TheanoOptimizerMixin, base_opt.BaseAdam):
 
 
 class Adamax(TheanoOptimizerMixin, base_opt.BaseAdamax):
-    def apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 

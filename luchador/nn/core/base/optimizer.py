@@ -24,9 +24,8 @@ class BaseOptimizer(common.SerializeMixin):
         """Backend-specific initilization"""
         pass
 
-    @abc.abstractmethod
     def minimize(self, loss, wrt, **kwargs):
-        """Minimize loss with the given variables
+        """Create operation to minimization loss w.r.t. given variables
 
         Parameters
         ----------
@@ -37,14 +36,22 @@ class BaseOptimizer(common.SerializeMixin):
             Variables with which loss is minimzied. Variables marked
             as not trainable are ignored.
 
+        kwargs
+            [Tensorflow only] Other arguments passed to either
+            compute_gradients or apply_gradients of Tenasorflow native
+            Optimizer.
+
         Returns
         -------
         Operation
             Minimization operation
         """
-        pass
+        return self._minimize(loss, wrt, **kwargs)
 
     @abc.abstractmethod
+    def _minimize(self, loss, wrt, **kwargs):
+        pass
+
     def compute_gradients(self, loss, wrt, **kwargs):
         """Compute gradient of loss with respect to wrt.
 
@@ -60,6 +67,10 @@ class BaseOptimizer(common.SerializeMixin):
             Variables with which gradients of loss are computed. Variables
             marked as not trainable are ignored.
 
+        kwargs
+            [Tensorflow only] Other arguments passed to compute_gradients of
+            underlying Tenasorflow native Optimizer.
+
         Returns
         -------
         list of Tensor pairs
@@ -67,9 +78,12 @@ class BaseOptimizer(common.SerializeMixin):
             not wrapped with Luchador's Variable but bare TensorVariable
             native to backend.
         """
-        pass
+        return self._compute_gradients(loss, wrt, **kwargs)
 
     @abc.abstractmethod
+    def _compute_gradients(self, loss, wrt, **kwargs):
+        pass
+
     def apply_gradients(self, grads_and_vars, **kwargs):
         """Apply gradients to variables
 
@@ -83,6 +97,10 @@ class BaseOptimizer(common.SerializeMixin):
         Operation
             Operation which updates parameter variables
         """
+        return self._apply_gradients(grads_and_vars, **kwargs)
+
+    @abc.abstractmethod
+    def _apply_gradients(self, grads_and_vars, **kwargs):
         pass
 
     def get_parameter_variables(self):
