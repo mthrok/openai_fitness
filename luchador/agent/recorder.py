@@ -1,3 +1,20 @@
+"""Provide efficient replay recorder
+
+In this module
+
+- **observation**
+Referes to an observation of environment.
+
+- **state**
+Referes to a set of observations combined together as a processing unit
+passed down to further processing pipeline.
+
+- **transition**
+Refers to a set of (original state, action, reward,
+new state, terminal flag).
+
+"""
+
 from __future__ import division
 from __future__ import absolute_import
 
@@ -15,16 +32,23 @@ __all__ = ['EpisodeRecorder', 'TransitionRecorder']
 
 
 class EpisodeRecorder(object):
-    """Class for recording a single episode
+    """Class for recording a **single** episode.
 
-    In this class,
-      - `observation` referes to an observation of environment.
-      - `state` referes to a set of `observation`s combined together as a
-         processing unit passed down to further processing pipeline.
-      - `transition` refers to a set of (original state, action, reward,
-        new state, continue flag).
+    .. automethod:: __init__
+
+    .. automethod:: _create_state
+
+    .. automethod:: _create_transition
+
     """
     def __init__(self, initial_observation):
+        """Initialize history
+
+        Parameters
+        ----------
+        initial_observation : NumPy Array
+            Initial observation observed when environment is reset
+        """
         # So as to keep all the histories the same length all the time, fill
         # dummy action and reward at the beginning
         self.actions = [0]
@@ -37,6 +61,22 @@ class EpisodeRecorder(object):
         return len(self.actions) - 1
 
     def record(self, action, observation, reward, terminal):
+        """Add the given values to history
+
+        Parameters
+        ----------
+        action : int
+            action taken
+
+        observation : NumPy Array
+            Observation of environment after action is taken
+
+        reward : float
+            Reward achieved by taking action and reaching observed state
+
+        terminal : bool
+            True if the episode was ended by this action.
+        """
         self.actions.append(action)
         self.observations.append(observation)
         self.rewards.append(reward)
@@ -45,20 +85,24 @@ class EpisodeRecorder(object):
     def _create_state(self, index, length):
         """Create state matrix from observations.
 
-        Args:
-          index (int): Index for the last observation to include in the
+        Paramters
+        ---------
+        index : int
+            Index for the last observation to include in the
             resulting state.
 
             For performance reason, argument validity check is omitted, but
             arguments must satisfy the following condition:
               0 <= length - 1 <= index < len(self.actions)
 
-          length (int): The number of observations included in the state
+        length : int
+            The number of observations included in the state
 
-        Returns:
-          NumPy NDArray: Where the length of the first axis equals to
-            the given length, and the other axis corresponds to the shape
-            observation.
+        Returns
+        -------
+        NumPy Array
+            Where the length of the first axis equals to the given length, and
+            the other axis corresponds to the shape observation.
         """
         i_start, i_end = index - length + 1, index + 1
         return self.observations[i_start:i_end]
@@ -66,28 +110,35 @@ class EpisodeRecorder(object):
     def _create_transition(self, index, length):
         """Create a transition (pre_state, action -> reward, post_state) from history
 
-        Args:
-          index (int) : Index of action history.
+        Parameters
+        ----------
+        index : int
+            Index of action history.
 
             For performance reason, argument validity check is omitted, but
             arguments must satisfy the following condition:
               0 < length <= index < len(self.actions)
 
-          length (int): The number of observations included in the state
+        length : int
+            The number of observations included in the state
 
-        Returns:
-          dictionary: keys and values represent the followings
-              - `action` is the action stored at given index.
-              - `pre_state` is the state which contains the `n_observations`
-                observations before the action is taken.
-              - `reward` is the reward achieved by the taken action.
-              - `post_state` is the state transitioned by taking the action at
-                `pre_state`, and contains `n_observations - 1` observations
-                before the action and one observation after action.
-              - `terminal`: True if the `post_state` is the end of
-                episode, otherwise False
-
-            `pre_state` and `post_state` are NumPy NDArrays with same shape.
+        Returns
+        -------
+        dictionary :
+            action : int
+                The action stored at given index.
+            pre_state : NumPy Array with shape (n_observations, height, width)
+                The state which contains the `n_observations` observations
+                before the action is taken.
+            reward : float
+                The reward achieved by the taken action and the post state
+                reached.
+            post_state : NumPy Array with shape (n_observations, height, width)
+                The states which includes the state reached by taking the
+                action at pre_state, and `n_observations - 1` states before
+                the action was taken.
+            terminal : Bool
+                True if the `post_state` is the end of episode, otherwise False
         """
         return {
             # 'index': index,  # For debug
@@ -99,22 +150,57 @@ class EpisodeRecorder(object):
         }
 
     def sample(self, state_length):
+        """Sample one transition from record
+
+        Parameters
+        ----------
+        state_length : int
+            The number of obervations to combine
+
+        Returns
+        -------
+        dictionary :
+            action : int
+                The action stored at given index.
+            pre_state : NumPy Array with shape (n_observations, height, width)
+                The state which contains the `n_observations` observations
+                before the action is taken.
+            reward : float
+                The reward achieved by the taken action and the post state
+                reached.
+            post_state : NumPy Array with shape (n_observations, height, width)
+                The states which includes the state reached by taking the
+                action at pre_state, and `n_observations - 1` states before
+                the action was taken.
+            terminal : Bool
+                True if the `post_state` is the end of episode, otherwise False
+
+        See Also
+        --------
+        :any:`_create_transition` : Method to create transition
+        """
         index = np.random.randint(state_length, len(self.actions))
         return self._create_transition(index, state_length)
 
 
 class TransitionRecorder(object):
-    """Class for recording and sampling state transition"""
+    """Class for recording and sampling state transition
+
+    .. automethod:: __init__
+    """
     def __init__(
             self, memory_size=1000000,
             state_length=4, state_width=84, state_height=84, batch_size=32,
             data_format=None):
-        """Initialize TransitionRecorder class
+        """
+        Initialize TransitionRecorder class
 
-        Args:
-          state_length(int): The number of observations in state.
-          n_obaservations_to_retaion(int): The number of latest observations
-            to keep in memory
+        Parameters
+        ----------
+        state_length : int
+            The number of observations in state.
+        n_obaservations_to_retaion : int
+            The number of latest observations to keep in memory
         """
         self.memory_size = memory_size
         self.state_length = state_length
@@ -157,6 +243,22 @@ class TransitionRecorder(object):
         self.recorder = EpisodeRecorder(initial_observation)
 
     def record(self, action, observation, reward, terminal):
+        """Add the given values to history
+
+        Parameters
+        ----------
+        action : int
+            action taken
+
+        observation : NumPy Array
+            Observation of environment after action is taken
+
+        reward : float
+            Reward achieved by taking action and reaching observed state
+
+        terminal : bool
+            True if the episode was ended by this action.
+        """
         self.recorder.record(
             action=action, observation=observation,
             reward=reward, terminal=terminal)
@@ -182,7 +284,13 @@ class TransitionRecorder(object):
         return len(self.recorder) > self.state_length
 
     def get_current_state(self):
-        """Get the latest state"""
+        """Get the latest state
+
+        Returns
+        -------
+        NumPy Array with shape (state length, observation height, width)
+            The most recent state
+        """
         n_obs = self.state_length
         self.batch['_pre_states'][0] = self.recorder.observations[-n_obs:]
         return self.batch['pre_states'][0:1]
