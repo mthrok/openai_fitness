@@ -158,7 +158,7 @@ class BaseSGD(BaseOptimizer):
 
 
 class BaseRMSProp(BaseOptimizer):
-    """Implement RMSProp with momentum
+    """Tensorflow style RMSProp with momentum
 
     Scale learning rates by dividing with the moving average of the root mean
     squared (RMS) gradients. See [1]_ for further description.
@@ -182,10 +182,12 @@ class BaseRMSProp(BaseOptimizer):
         Decay factor at which rate accumurated RMS decays.
     momentum : float
         Momentum coefficient at which rate parameter update is accumurated.
+    epsilon : float
+        Small value added for numerical stability
     name : str
         Used to create scope which contains parameter variables
     kwargs
-        - use_lock : [TF only] passed to underlying TF native optimizer
+        use_lock : [Tensorflow only] passed to underlying TF native optimizer
 
     References
     ----------
@@ -202,6 +204,37 @@ class BaseRMSProp(BaseOptimizer):
 
 
 class BaseNeonRMSProp(BaseOptimizer):
+    """Neon style RMSProp
+
+    The update rule is similar to :any:`BaseRMSProp` without moemntum, but
+    epsilon appears twice.
+
+    .. math::
+        rms_t &= \\rho * rms_{t-1} + (1- \\rho) * grad ^2 \\\\
+        lr_t &= \\frac{lr}{\\sqrt{rms_t + \\epsilon} + \\epsilon} \\\\
+        var_t &= var_{t-1} - lr * grad  \\\\
+
+    where :math:`\\rho` is decay ratio
+
+    Parameters
+    ----------
+    learning_rate : float
+        The learning rate controlling the size of update steps
+    decay : float
+        Decay factor at which rate accumurated RMS decays.
+    epsilon : float
+        Small value added for numerical stability
+    name : str
+        Used to create scope which contains parameter variables
+    kwargs
+        use_lock : [Tensorflow only] passed to underlying TF native optimizer
+
+    References
+    ----------
+    .. [1] Tieleman, T. and Hinton, G. (2012):
+           Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
+           Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
+    """
     def __init__(self, learning_rate, decay=0.95, epsilon=1e-6,
                  name='NeonRMSProp', **kwargs):
         super(BaseNeonRMSProp, self).__init__(
@@ -210,10 +243,17 @@ class BaseNeonRMSProp(BaseOptimizer):
 
 
 class BaseGravesRMSProp(BaseOptimizer):
-    """RMSProp used in DQN paper[1] and described in A.Graves paper [2]
+    """RMSProp used in DQN paper [1]_ and described in A.Graves paper [2]_
 
-    [1] https://github.com/kuz/DeepMind-Atari-Deep-Q-Learner/blob/4b9f5a79b03ea0cfc512ed1c11f1b00bc875bc57/dqn/NeuralQLearner.lua#L265  # nopep8
-    [2] http://arxiv.org/pdf/1308.0850v5.pdf
+    References
+    ----------
+    .. [1] Mnih, V et. al (2015)
+           Human-level control through deep reinforcement learning
+           https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
+           https://github.com/kuz/DeepMind-Atari-Deep-Q-Learner/blob/4b9f5a79b03ea0cfc512ed1c11f1b00bc875bc57/dqn/NeuralQLearner.lua#L265
+    .. [2] Graves, A. (2014):
+           Generating Sequences With Recurrent Neural Networks
+           http://arxiv.org/pdf/1308.0850v5.pdf
     """
     def __init__(self, learning_rate,
                  decay1=0.95, decay2=0.95,
