@@ -9,14 +9,8 @@ from luchador import common
 from ..base import optimizer as base_opt
 from . import scope, initializer, wrapper
 
-__all__ = [
-    'SGD',
-    'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
-    'Adam', 'Adamax',
-]
 
-
-class TheanoOptimizerMixin(object):
+class OptimizerMixin(object):
     """Adds Theano-specific helper methods to base Optimizer"""
     def _run_backend_specific_init(self):
         pass
@@ -62,7 +56,11 @@ class TheanoOptimizerMixin(object):
         return slot_var
 
 
-class SGD(TheanoOptimizerMixin, base_opt.BaseSGD):
+class SGD(OptimizerMixin, base_opt.BaseSGD):
+    """Implement RMSProp in Theano backend.
+
+    See :any:`BaseRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         updates = OrderedDict()
         for grad, var in grads_and_vars:
@@ -70,7 +68,11 @@ class SGD(TheanoOptimizerMixin, base_opt.BaseSGD):
         return wrapper.Operation(op=updates)
 
 
-class RMSProp(TheanoOptimizerMixin, base_opt.BaseRMSProp):
+class RMSProp(OptimizerMixin, base_opt.BaseRMSProp):
+    """Implement RMSProp in Theano backend.
+
+    See :any:`BaseRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         decay, momentum = self.args['decay'], self.args['momentum']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -90,7 +92,11 @@ class RMSProp(TheanoOptimizerMixin, base_opt.BaseRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class NeonRMSProp(TheanoOptimizerMixin, base_opt.BaseNeonRMSProp):
+class NeonRMSProp(OptimizerMixin, base_opt.BaseNeonRMSProp):
+    """Implement NeonRMSProp in Theano backend.
+
+    See :any:`BaseNeonRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         decay, ep = self.args['decay'], self.args['epsilon']
         lr = self.args['learning_rate']
@@ -107,7 +113,11 @@ class NeonRMSProp(TheanoOptimizerMixin, base_opt.BaseNeonRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class GravesRMSProp(TheanoOptimizerMixin, base_opt.BaseGravesRMSProp):
+class GravesRMSProp(OptimizerMixin, base_opt.BaseGravesRMSProp):
+    """Implement GravesRMSProp in Theano backend.
+
+    See :any:`BaseGravesRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         d1, d2 = self.args['decay1'], self.args['decay2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -132,7 +142,11 @@ class GravesRMSProp(TheanoOptimizerMixin, base_opt.BaseGravesRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class Adam(TheanoOptimizerMixin, base_opt.BaseAdam):
+class Adam(OptimizerMixin, base_opt.BaseAdam):
+    """Implement Adam in Theano backend.
+
+    See :any:`BaseAdam` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
@@ -159,7 +173,11 @@ class Adam(TheanoOptimizerMixin, base_opt.BaseAdam):
         return wrapper.Operation(op=updates)
 
 
-class Adamax(TheanoOptimizerMixin, base_opt.BaseAdamax):
+class Adamax(OptimizerMixin, base_opt.BaseAdamax):
+    """Implement Adamax in Theano backend.
+
+    See :any:`BaseAdamax` for detail.
+    """
     def _apply_gradients(self, grads_and_vars):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']

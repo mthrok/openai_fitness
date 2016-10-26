@@ -6,12 +6,6 @@ from luchador import common
 from ..base import optimizer as base_optimizer
 from . import scope, initializer, wrapper
 
-__all__ = [
-    'SGD',
-    'RMSProp', 'GravesRMSProp', 'NeonRMSProp',
-    'Adam', 'Adamax',
-]
-
 
 def _parse_kwargs(kwargs):
     keys_and_defaults1 = [
@@ -33,7 +27,7 @@ def _parse_kwargs(kwargs):
     return [kws_compute_gradients, kws_apply_gradients]
 
 
-class TFOptimizerMixin(object):
+class OptimizerMixin(object):
     """Adds TF-specific helper methods to base Optimizer"""
     def _run_backend_specific_init(self):
         """Initialize underlying TF optimizer to SGD
@@ -114,7 +108,11 @@ class TFOptimizerMixin(object):
         return slot_var.unwrap()
 
 
-class SGD(TFOptimizerMixin, base_optimizer.BaseSGD):
+class SGD(OptimizerMixin, base_optimizer.BaseSGD):
+    """Implement SGD in Tensorflow backend.
+
+    See :any:`BaseSGD` for detail.
+    """
     def _run_backend_specific_init(self):
         """Initialize underlying optimizer with TF native SGD Optimizer"""
         self.optimizer = tf.train.GradientDescentOptimizer(
@@ -122,7 +120,11 @@ class SGD(TFOptimizerMixin, base_optimizer.BaseSGD):
             use_locking=self.args.get('use_locking', False))
 
 
-class RMSProp(TFOptimizerMixin, base_optimizer.BaseRMSProp):
+class RMSProp(OptimizerMixin, base_optimizer.BaseRMSProp):
+    """Implement RMSProp in Tensorflow backend.
+
+    See :any:`BaseRMSProp` for detail.
+    """
     def _run_backend_specific_init(self):
         """Initialize underlying optimizer with TF native RMSProp Optimizer"""
         self.optimizer = tf.train.RMSPropOptimizer(
@@ -132,7 +134,11 @@ class RMSProp(TFOptimizerMixin, base_optimizer.BaseRMSProp):
             use_locking=self.args.get('use_locking', False))
 
 
-class NeonRMSProp(TFOptimizerMixin, base_optimizer.BaseNeonRMSProp):
+class NeonRMSProp(OptimizerMixin, base_optimizer.BaseNeonRMSProp):
+    """Implement NeonRMSProp in Tensorflow backend.
+
+    See :any:`BaseNeonRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
@@ -154,7 +160,11 @@ class NeonRMSProp(TFOptimizerMixin, base_optimizer.BaseNeonRMSProp):
         return wrapper.Operation(tf.group(*updates))
 
 
-class GravesRMSProp(TFOptimizerMixin, base_optimizer.BaseGravesRMSProp):
+class GravesRMSProp(OptimizerMixin, base_optimizer.BaseGravesRMSProp):
+    """Implement GravesRMSProp in Tensorflow backend.
+
+    See :any:`BaseGravesRMSProp` for detail.
+    """
     def _apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
@@ -182,7 +192,11 @@ class GravesRMSProp(TFOptimizerMixin, base_optimizer.BaseGravesRMSProp):
         return wrapper.Operation(tf.group(*updates))
 
 
-class Adam(TFOptimizerMixin, base_optimizer.BaseAdam):
+class Adam(OptimizerMixin, base_optimizer.BaseAdam):
+    """Implement Adam in Tensorflow backend.
+
+    See :any:`BaseAdam` for detail.
+    """
     def _run_backend_specific_init(self):
         """Initialize underlying optimizer with TF native Adam Optimizer"""
         self.optimizer = tf.train.AdamOptimizer(
@@ -203,7 +217,11 @@ class Adam(TFOptimizerMixin, base_optimizer.BaseAdam):
         return ret
 
 
-class Adamax(TFOptimizerMixin, base_optimizer.BaseAdamax):
+class Adamax(OptimizerMixin, base_optimizer.BaseAdamax):
+    """Implement Adamax in Tensorflow backend.
+
+    See :any:`BaseAdamax` for detail.
+    """
     def _apply_gradients(self, grads_and_vars, **kwargs):
         with tf.name_scope(self.args['name']):
             return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
