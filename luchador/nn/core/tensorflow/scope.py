@@ -9,12 +9,35 @@ from . import wrapper
 __all__ = ['name_scope', 'get_variable', 'variable_scope',
            'VariableScope', 'get_variable_scope']
 
-name_scope = tf.name_scope
-VariableScope = tf.VariableScope
-variable_scope = tf.variable_scope
-get_variable_scope = tf.get_variable_scope
+
+###############################################################################
+# We would want to just rename the function and classes, but Sphynx import the
+# docstring from tensorflow and messes up the documentation, so we wrap
+# functions and classes, by just passing all the arguments
+def name_scope(name, default_name=None, values=None):
+    return tf.name_scope(name, default_name=default_name, values=values)
 
 
+class VariableScope(tf.VariableScope):
+    pass
+
+
+def variable_scope(
+        name_or_scope, default_name=None, values=None, initializer=None,
+        regularizer=None, caching_device=None, partitioner=None,
+        custom_getter=None, reuse=None, dtype=None):
+    return tf.variable_scope(
+        name_or_scope, default_name=default_name, values=values,
+        initializer=initializer, regularizer=regularizer,
+        caching_device=caching_device, partitioner=partitioner,
+        custom_getter=custom_getter, reuse=reuse, dtype=dtype)
+
+
+def get_variable_scope():
+    return tf.get_variable_scope()
+
+
+###############################################################################
 def get_variable(name, shape=None, dtype=None,
                  initializer=None, regularizer=None, trainable=True, **kwargs):
     """Create Variable with the given configuration or retrieve existing one
@@ -25,19 +48,24 @@ def get_variable(name, shape=None, dtype=None,
     Mapping from name to VariableWrapper is internally cached so that you can
     retrieve variable with only name.
 
-    Args:
-      name(str): Name of Variable to create or retrieve
+    Parameters
+    ----------
+    name : str
+        Name of Variable to create or retrieve
 
-      shape(list): Used to create new Variable.
-                   Ignored when retrieving one
+    shape : list
+        Used to create new Variable. Ignored when retrieving one
 
-      dtype(tf.Dtype compatible): Used to create new Variable.
-                                  Ignored when retrieving one
+    dtype : str
+        Used to create new Variable. Ignored when retrieving one
 
-      initializer(TFInitializer or tf.Initializer): Initializer object
+    initializer : luchador.nn.Initializer or tf.Initializer
+        Initializer object
 
-      For other arguments, see
-      https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
+    kwargs
+        Other arguments passed to ``tf.get_variable``
+        See
+        https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
     if isinstance(initializer, base_init_mod.BaseInitializer):
         initializer = initializer._unwrap()

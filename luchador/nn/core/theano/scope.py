@@ -96,7 +96,7 @@ def variable_scope(name_or_scope, reuse=None):
     return VariableScope(reuse, scope)
 
 
-def name_scope(name):
+def name_scope(name, default_name=None, values=None):
     return NameScope()
 
 
