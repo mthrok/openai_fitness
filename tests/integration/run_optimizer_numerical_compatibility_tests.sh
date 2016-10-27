@@ -12,11 +12,17 @@ do
 done
 
 # Run each optimizer on formulae
+RETURN=0
 FORMULAE="$(python ${TEST_DIR}/formula.py)"
 for FORMULA in ${FORMULAE}
 do
     for OPTIMIZER in "${OPTIMIZERS[@]}"
     do
         ${TEST_DIR}/test_optimizer_numerical_compatibility.sh --optimizer ${OPTIMIZER} --formula ${FORMULA}
+	if [[ ! $? = 0 ]]; then
+	    RETURN=1
+	fi
     done
 done
+
+exit ${RETURN}

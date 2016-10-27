@@ -60,7 +60,9 @@ TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZE
 COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
 echo "*** Checking numerical compatibility of ${OPTIMIZER_NAME} on ${FORMULA} ***"
+echo ""
 cat ${OPTIMIZER}
+echo ""
 echo "* Running $(basename ${OPTIMIZER}) with Theano backend"
 LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --output ${FILE1} --iterations ${ITERATIONS}
 echo "* Running $(basename ${OPTIMIZER}) with Tensorflow backend"
