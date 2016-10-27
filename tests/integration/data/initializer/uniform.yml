@@ -1,0 +1,14 @@
+initializer:
+  name: Uniform
+  args:
+    minval: -2.0 
+    maxval: 6.0
+
+test_config:
+  shape: [16, 16, 8, 8]
+
+compare_config:
+  threshold: 0.03
+  mean: 2.0
+  std: 2.309  # (maxval - min_val) / sqrt(12)
+

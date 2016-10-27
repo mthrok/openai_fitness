@@ -4,6 +4,10 @@ This directory contains the list of intergation tests.
 
 This test builds and run DQN against ALEEnvironment so as to verify that it is not broken.
 
+* `run_initializer_compatibility_tests.sh`
+
+This test runs initializers and check if the distribution is correct.
+
 * `run_layer_numerical_compatibility_tests.sh`
 
 This test compares the outputs from fixed layer configuration/parameter and input so as to ensure layers' behavior is same across backends.

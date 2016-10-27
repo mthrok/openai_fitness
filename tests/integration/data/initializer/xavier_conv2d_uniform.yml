@@ -1,0 +1,19 @@
+initializer:
+  name: XavierConv2D
+  args:
+    uniform: True
+
+test_config:
+  shape: [64, 32, 8, 8]
+
+compare_config:
+  threshold: 0.03
+  mean: 0.0
+  std: 0.01804
+  # Standard deviation here is not that of normal distribution, but of truncated normal distribution
+  # with bound of `2 * standard deviation of normal distribution`.
+  # To get this you can use scipy.stats.truncnorm class.
+  #
+  # fan_out, fan_in = 64 * 8 * 8, 32 * 8 * 8
+  # scale = np.sqrt(6. / (fan_in + fan_out))  
+  # std = (scale + scale) / sqrt(12)

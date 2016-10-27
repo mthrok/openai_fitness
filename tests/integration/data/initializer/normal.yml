@@ -1,0 +1,13 @@
+initializer:
+  name: Normal
+  args:
+    mean: &mean 5.3
+    stddev: &stddev 9.0
+
+test_config:
+  shape: [32, 16, 4, 4]
+
+compare_config:
+  mean: *mean
+  std: *stddev
+  threshold: 0.05
