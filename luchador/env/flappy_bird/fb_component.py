@@ -102,8 +102,8 @@ class Player(Component):
     def update(self, tapped):
         flapped = False
         if tapped and self.y > 0:
-                self.vy = self.vy_flap
-                flapped = True
+            self.vy = self.vy_flap
+            flapped = True
         else:
             self.vy += self.ay
             self.vy = min(self.vy, self.vy_max)

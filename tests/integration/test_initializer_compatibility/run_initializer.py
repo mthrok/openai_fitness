@@ -94,7 +94,7 @@ def check_dist(value, mean, std, threshold):
 def save_output(filepath, data, key):
     directory = os.path.dirname(filepath)
     if not os.path.exists(directory):
-            os.makedirs(directory)
+        os.makedirs(directory)
 
     print('Saving output value to {}'.format(filepath))
     print('  Shape {}'.format(data.shape))

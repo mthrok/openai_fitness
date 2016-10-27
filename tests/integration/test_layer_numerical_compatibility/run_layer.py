@@ -116,7 +116,7 @@ def load_input_value(filepath):
 def save_output(filepath, data):
     directory = os.path.dirname(filepath)
     if not os.path.exists(directory):
-            os.makedirs(directory)
+        os.makedirs(directory)
 
     _LG.info('Saving output value to {}'.format(filepath))
     _LG.info('  Shape {}'.format(data.shape))
