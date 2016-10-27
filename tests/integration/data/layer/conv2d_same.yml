@@ -1,4 +1,3 @@
-
 layer:
   name: Conv2D
   args:
@@ -12,4 +11,3 @@ layer:
 input: input_mnist_10x4x28x27.h5
 
 parameter:  parameter_randn_3x4x7x5.h5
-

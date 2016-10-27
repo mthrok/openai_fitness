@@ -1,4 +1,3 @@
-
 layer:
   name: Dense
   args:
@@ -8,4 +7,3 @@ layer:
 input: input_randn_5x3.h5
 
 parameter: parameter_randn_3x7.h5
-

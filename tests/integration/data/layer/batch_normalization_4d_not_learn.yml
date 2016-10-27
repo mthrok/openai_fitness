@@ -1,4 +1,3 @@
-
 run:
   iteration: 10
 
@@ -13,4 +12,3 @@ layer:
 input: input_randn_3x5_offset_3.h5
 
 parameter: parameter_bn.h5
-

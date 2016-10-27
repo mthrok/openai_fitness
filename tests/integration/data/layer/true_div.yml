@@ -1,8 +1,6 @@
-
 layer:
   name: TrueDiv
   args:
     denom: 255
 
 input: input_randint_1x3x5x7.h5
-

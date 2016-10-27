@@ -1,7 +1,5 @@
-
 layer:
   name: Sigmoid
   args: {}
 
 input: input_randn_5x3.h5
-
