@@ -14,13 +14,6 @@ layer_configs:
       filter_height: 8
       strides: 4
       padding: valid
-      initializers:
-        weight:
-          name: Uniform
-          args:
-            # 1 / sqrt(8 * 8 * 32) = 0.022097
-            maxval: 0.022
-            minval: -0.022
       with_bias: False
 - scope: layer1/BN
   layer: &BN
@@ -41,13 +34,6 @@ layer_configs:
       filter_height: 4
       strides: 2
       padding: valid
-      initializers:
-        weight:
-          name: Uniform
-          args:
-            # 1 / sqrt(4 * 4 * 64) = 0.03125
-            maxval: 0.031
-            minval: -0.031
       with_bias: False
 - scope: layer2/BN
   layer: *BN
@@ -64,13 +50,6 @@ layer_configs:
       n_filters: 64
       strides: 1
       padding: valid
-      initializers:
-        weight:
-          name: Uniform
-          args:
-            # 1 / sqrt(3 * 3 * 64) = 0.04166
-            maxval: 0.042
-            minval: -0.042
       with_bias: False
 - scope: layer3/BN
   layer: *BN
@@ -87,14 +66,6 @@ layer_configs:
     name: Dense
     args:
       n_nodes: 512
-      initializers:
-        weight:
-          name: Uniform
-          args:
-            # 1 / sqrt(3136) = 0.01785
-            # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
-            maxval: 0.018
-            minval: -0.018
       with_bias: False
 - scope: layer5/BN
   layer: *BN
@@ -107,11 +78,3 @@ layer_configs:
     name: Dense
     args:
       n_nodes: {n_actions}
-      initializers:
-        bias: &initializer6
-          name: Uniform
-          args:
-            # 1 / sqrt(512) = 0.04419
-            maxval: 0.044
-            minval: -0.044
-        weight: *initializer6
