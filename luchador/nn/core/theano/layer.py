@@ -43,38 +43,42 @@ def _wrap_output(tensor, shape, name='output'):
     return wrapper.Tensor(tensor, shape=shape, name=name)
 
 
+def _get_initializers(cfg, with_bias):
+    """Initializer for Dense and Conv2D"""
+    w_cfg = cfg.get('weight')
+    ret = {}
+    ret['weight'] = (
+        base_init.get_initializer(w_cfg['name'])(**w_cfg['args'])
+        if w_cfg else initializer.Xavier()
+    )
+
+    if with_bias:
+        b_cfg = cfg.get('bias')
+        ret['bias'] = (
+            base_init.get_initializer(b_cfg['name'])(**b_cfg['args'])
+            if b_cfg else initializer.Constant(0.1)
+        )
+
+    return ret
+
+
 class Dense(LayerMixin, base_layer.BaseDense):
     """Implement Dense layer in Theano.
 
     See :any:`BaseDense` for detail.
     """
-    def _instantiate_initializers(self):
-        init_cfg = self.args.get('initializers') or {}
-
-        cfg = init_cfg.get('weight')
-        self.initializers['weight'] = (
-            base_init.get_initializer(cfg['name'])(**cfg['args'])
-            if cfg else initializer.Xavier()
-        )
-
-        if self.args['with_bias']:
-            cfg = init_cfg.get('bias')
-            self.initializers['bias'] = (
-                base_init.get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else initializer.Constant(0.1)
-            )
-
     def _instantiate_parameters(self, n_inputs):
-        self._instantiate_initializers()
+        initializers = _get_initializers(
+            self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = (n_inputs, self.args['n_nodes'])
-        w_init = self.initializers['weight']
+        w_init = initializers['weight']
         self._add_parameter('weight', scope.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_nodes'],)
-            b_init = self.initializers['bias']
+            b_init = initializers['bias']
             self._add_parameter('bias', scope.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 
@@ -152,34 +156,19 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         _validate_strides(strides)
 
     ###########################################################################
-    def _instantiate_initializers(self):
-        init_cfg = self.args.get('initializers') or {}
-
-        cfg = init_cfg.get('weight')
-        self.initializers['weight'] = (
-            base_init.get_initializer(cfg['name'])(**cfg['args'])
-            if cfg else initializer.XavierConv2D()
-        )
-
-        if self.args['with_bias']:
-            cfg = init_cfg.get('bias')
-            self.initializers['bias'] = (
-                base_init.get_initializer(cfg['name'])(**cfg['args'])
-                if cfg else initializer.Constant(0.1)
-            )
-
     def _instantiate_parameters(self, n_inputs):
-        self._instantiate_initializers()
+        initializers = _get_initializers(
+            self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = (self.args['n_filters'], n_inputs,
                    self.args['filter_height'], self.args['filter_width'])
-        w_init = self.initializers['weight']
+        w_init = initializers['weight']
         self._add_parameter('weight', scope.get_variable(
             name='weight', shape=w_shape, initializer=w_init))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
-            b_init = self.initializers['bias']
+            b_init = initializers['bias']
             self._add_parameter('bias', scope.get_variable(
                 name='bias', shape=b_shape, initializer=b_init))
 

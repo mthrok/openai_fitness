@@ -1,5 +1,5 @@
 initializer:
-  name: XavierConv2D
+  name: Xavier
   args:
     uniform: False
 
@@ -14,7 +14,8 @@ compare_config:
   # with bound of `2 * standard deviation of normal distribution`.
   # To get this you can use scipy.stats.truncnorm class.
   #
-  # fan_out, fan_in = 64 * 8 * 8, 32 * 8 * 8
+  # fan_out =  64 * 8 * 8
+  # fan_in = 32 * 8 * 8
   # scale = np.sqrt(3. / (fan_in + fan_out))  
   # variance = truncnorm.stats(-2, 2, scale=scale, moments='v')
   # std = np.sqrt(variance)

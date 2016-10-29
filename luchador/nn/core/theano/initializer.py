@@ -63,13 +63,18 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
     See :any:`BaseXavier` for detail.
     """
     def _sample(self, shape):
-        if not len(shape) == 2:
+        if len(shape) not in [2, 4]:
             raise ValueError(
-                'Xavier initializer expects the shape to have 2 elements.'
-                'Found: {}'.format(shape)
+                'Xavier initializer expects the shape to be 2D or 4D.'
             )
+        if len(shape) == 2:
+            fan_in = shape[0]
+            fan_out = shape[1]
+        else:
+            numel = np.prod(shape[2:4])
+            fan_in = shape[1] * numel
+            fan_out = shape[0] * numel
 
-        fan_out, fan_in = shape[0], shape[1]
         scale = np.sqrt(6. / (fan_in + fan_out))
         if self.args['uniform']:
             value = self._sample_uniform(scale, shape)
@@ -83,26 +88,3 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
     def _sample_truncated_normal(self, scale, shape):
         return tnorm.rvs(
             -1, 1, scale=scale, size=shape, random_state=self._rng)
-
-
-class XavierConv2D(Xavier):
-    """Implement XavierConv2D in Theano backend.
-
-    See :any:`BaseXavierConv2D` for detail.
-    """
-    def _sample(self, shape):
-        if not len(shape) == 4:
-            raise ValueError(
-                'Xavier conv2d initializer expects the shape with 4 elements.'
-                'Found: {}'.format(shape)
-            )
-        # theano's filter shape is
-        # (output_channels, input_channels, filter_rows, filter_columns)
-        fan_in = shape[1] * shape[2] * shape[3]
-        fan_out = shape[0] * shape[2] * shape[3]
-        scale = np.sqrt(6. / (fan_in + fan_out))
-        if self.args['uniform']:
-            value = self._sample_uniform(scale, shape)
-        else:
-            value = self._sample_truncated_normal(scale, shape)
-        return value.astype(self.args['dtype'] or config.floatX)

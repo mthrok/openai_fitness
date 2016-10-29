@@ -167,31 +167,7 @@ class BaseXavier(BaseInitializer):
            statistics.
     .. [2]
            https://www.tensorflow.org/versions/r0.11/api_docs/python/contrib.layers.html#xavier_initializer
-
-    See Also
-    --------
-    BaseXavierConv2D : For initializing convolution filter.
     """
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(BaseXavier, self).__init__(
-            uniform=uniform, seed=seed, dtype=dtype)
-
-
-class BaseXavierConv2D(BaseInitializer):
-    """Implements Xavier initialization for convolution filters
-
-    This initializer only differs in the sense that it expects 4D tensor, and
-    computes fan-in and fan-out accordingly. [1]_
-
-    References
-    ----------
-    .. [1]
-           https://www.tensorflow.org/versions/r0.11/api_docs/python/contrib.layers.html#xavier_initializer_conv2d
-
-    See Also
-    --------
-    BaseXavier : For initializing 2D dense weight.
-    """
-    def __init__(self, uniform=True, seed=None, dtype=None):
-        super(BaseXavierConv2D, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)

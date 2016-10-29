@@ -68,14 +68,3 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
         self._initializer = tf_layers.xavier_initializer(
             uniform=self.args['uniform'], seed=self.args['seed'],
             dtype=self._get_dtype())
-
-
-class XavierConv2D(InitializerMixin, base_initializer.BaseXavierConv2D):
-    """Implement XavierConv2D in Tensorflow backend.
-
-    See :any:`BaseXavierConv2D` for detail.
-    """
-    def _run_backend_specific_init(self):
-        self._initializer = tf_layers.xavier_initializer_conv2d(
-            uniform=self.args['uniform'], seed=self.args['seed'],
-            dtype=self._get_dtype())

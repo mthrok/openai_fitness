@@ -14,6 +14,6 @@ compare_config:
   # with bound of `2 * standard deviation of normal distribution`.
   # To get this you can use scipy.stats.truncnorm class.
   #
-  # fan_out, fan_in = 16, 32
-  # scale = np.sqrt(6. / (fan_in + fan_out))  
+  # fan_in, fan_out = 64, 32
+  # scale = np.sqrt(6. / (fan_in + fan_out))
   # std = (scale + scale) / sqrt(12)

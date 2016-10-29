@@ -34,15 +34,16 @@ def create_initializer(name, args):
     return nn.get_initializer(name)(**args)
 
 
-def transpose_needed(initializer):
+def transpose_needed(initializer, shape):
     return (
-        initializer.__class__.__name__ == 'XavierConv2D' and
+        len(shape) == 4 and
+        initializer.__class__.__name__ == 'Xavier' and
         luchador.get_nn_backend() == 'tensorflow'
     )
 
 
 def run_initializer(initializer, shape):
-    if transpose_needed(initializer):
+    if transpose_needed(initializer, shape):
         # Shape is given in Theano's filter order, which is
         # [#out-channel, #in-channel, height, width].
         # So as to compute fan-in and fan-out correctly in Tensorflow,
@@ -56,7 +57,7 @@ def run_initializer(initializer, shape):
     session.initialize()
     value = session.run(outputs=variable)
 
-    if transpose_needed(initializer):
+    if transpose_needed(initializer, shape):
         # So as to make the output comarison easy, we revert the oreder.
         shape = [shape[3], shape[2], shape[0], shape[1]]
     return value

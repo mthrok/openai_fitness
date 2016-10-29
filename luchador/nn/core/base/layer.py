@@ -20,7 +20,6 @@ class BaseLayer(common.SerializeMixin, object):
         super(BaseLayer, self).__init__()
         self._store_args(**kwargs)
 
-        self.initializers = OrderedDict()
         self.update_operations = OrderedDict()
         self.parameter_variables = OrderedDict()
 
