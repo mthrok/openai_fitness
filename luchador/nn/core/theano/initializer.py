@@ -5,6 +5,8 @@ See :any:`luchador.nn.core.base.initializer` for the interface.
 from __future__ import division
 from __future__ import absolute_import
 
+import abc
+
 import numpy as np
 from numpy.random import RandomState
 from scipy.stats import truncnorm as tnorm
@@ -22,15 +24,22 @@ class InitializerMixin(object):
             seed = self.args['seed']
             self._rng = RandomState(seed) if seed else random.get_rng()
 
+    def _sample(self, shape):
+        dtype = self.args['dtype'] or config.floatX
+        return self._sample_values(shape).astype(dtype)
+
+    @abc.abstractmethod
+    def _sample_values(self, shape):
+        pass
+
 
 class Constant(InitializerMixin, base_initializer.BaseConstant):
     """Implement Constant in Theano backend.
 
     See :any:`BaseConstant` for detail.
     """
-    def _sample(self, shape):
-        dtype = self.args['dtype'] or config.floatX
-        return self.args['value'] * np.ones(shape, dtype=dtype)
+    def _sample_values(self, shape):
+        return self.args['value'] * np.ones(shape)
 
 
 class Uniform(InitializerMixin, base_initializer.BaseUniform):
@@ -38,11 +47,9 @@ class Uniform(InitializerMixin, base_initializer.BaseUniform):
 
     See :any:`BaseUniform` for detail.
     """
-    def _sample(self, shape):
+    def _sample_values(self, shape):
         low, high = self.args['minval'], self.args['maxval']
-        dtype = self.args['dtype'] or config.floatX
-        values = self._rng.uniform(low=low, high=high, size=shape)
-        return values.astype(dtype)
+        return self._rng.uniform(low=low, high=high, size=shape)
 
 
 class Normal(InitializerMixin, base_initializer.BaseNormal):
@@ -50,11 +57,9 @@ class Normal(InitializerMixin, base_initializer.BaseNormal):
 
     See :any:`BaseNormal` for detail.
     """
-    def _sample(self, shape):
+    def _sample_values(self, shape):
         loc, scale = self.args['mean'], self.args['stddev']
-        dtype = self.args['dtype'] or config.floatX
-        values = self._rng.normal(loc=loc, scale=scale, size=shape)
-        return values.astype(dtype)
+        return self._rng.normal(loc=loc, scale=scale, size=shape)
 
 
 def _sample_uniform(stddev, shape, rng):
@@ -76,17 +81,17 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
 
     See :any:`BaseXavier` for detail.
     """
-    def _sample(self, shape):
+    def _sample_values(self, shape):
         if len(shape) not in [2, 4]:
             raise ValueError(
                 'Xavier initializer expects the shape to be 2D or 4D.'
             )
         fan_ave = 0.5 * (shape[0] + shape[1]) * np.prod(shape[2:4])
         stddev = 1. / np.sqrt(fan_ave)
-        value = (_sample_uniform(stddev, shape, self._rng)
-                 if self.args['uniform'] else
-                 _sample_truncated_normal(stddev, shape, self._rng))
-        return value.astype(self.args['dtype'] or config.floatX)
+        if self.args['uniform']:
+            return _sample_uniform(stddev, shape, self._rng)
+        else:
+            return _sample_truncated_normal(stddev, shape, self._rng)
 
 
 class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
@@ -106,7 +111,7 @@ class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
             fan_in = shape[0]
 
         stddev = 1. / np.sqrt(fan_in)
-        value = (_sample_uniform(stddev, shape, self._rng)
-                 if self.args['uniform'] else
-                 _sample_truncated_normal(stddev, shape, self._rng))
-        return value.astype(self.args['dtype'] or config.floatX)
+        if self.args['uniform']:
+            return _sample_uniform(stddev, shape, self._rng)
+        else:
+            return _sample_truncated_normal(stddev, shape, self._rng)
