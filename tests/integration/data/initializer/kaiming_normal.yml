@@ -1,0 +1,14 @@
+initializer:
+  name: Kaiming
+  args:
+    uniform: False
+
+test_config:
+  shape: [1000, 100]
+
+compare_config:
+  threshold: 0.03
+  mean: 0.0
+  std: 0.0316
+  # fan_in = 1000
+  # stddev = np.sqrt(1. / (fan_in))

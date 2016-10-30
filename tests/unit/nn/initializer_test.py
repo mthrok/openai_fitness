@@ -6,7 +6,7 @@ from tests.unit.fixture import get_all_initializers
 from luchador.nn import get_initializer
 
 INITIALIZERS = get_all_initializers()
-N_INITIALIZERS = 4
+N_INITIALIZERS = 5
 
 ARGS1 = {
     'Constant': {
@@ -26,6 +26,11 @@ ARGS1 = {
         'dtype': 'float32',
     },
     'Xavier': {
+        'uniform': True,
+        'seed': 1,
+        'dtype': 'float32',
+    },
+    'Kaiming': {
         'uniform': True,
         'seed': 1,
         'dtype': 'float32',
@@ -53,6 +58,11 @@ ARGS2 = {
         'uniform': False,
         'seed': 10,
         'dtype': 'float64',
+    },
+    'Kaiming': {
+        'uniform': False,
+        'seed': 1,
+        'dtype': 'float32',
     },
 }
 

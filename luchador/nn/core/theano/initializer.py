@@ -87,3 +87,26 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
                  if self.args['uniform'] else
                  _sample_truncated_normal(stddev, shape, self._rng))
         return value.astype(self.args['dtype'] or config.floatX)
+
+
+class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
+    """Implement Kaiming initialization in Theano backend.
+
+    See :any:`BaseKaiming` for detail.
+    """
+    def _sample(self, shape):
+        if len(shape) not in [2, 4]:
+            raise ValueError(
+                'Kaiming initializer expects the shape to be 2D or 4D.'
+            )
+
+        if len(shape) == 4:
+            fan_in = np.prod(shape[1:])
+        elif len(shape) == 2:
+            fan_in = shape[0]
+
+        stddev = 1. / np.sqrt(fan_in)
+        value = (_sample_uniform(stddev, shape, self._rng)
+                 if self.args['uniform'] else
+                 _sample_truncated_normal(stddev, shape, self._rng))
+        return value.astype(self.args['dtype'] or config.floatX)

@@ -69,3 +69,14 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
         self._initializer = tf_layers.xavier_initializer(
             uniform=self.args['uniform'], seed=self.args['seed'],
             dtype=self._get_dtype())
+
+
+class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
+    """Implement Kaiming He initializer in Tensorflow backend.
+
+    See :any:`BaseKaiming` for detail.
+    """
+    def _run_backend_specific_init(self):
+        self._initializer = tf_layers.variance_scaling_initializer(
+            mode='FAN_IN', factor=1, uniform=self.args['uniform'],
+            seed=self.args['seed'], dtype=self._get_dtype())

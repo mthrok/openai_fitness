@@ -171,3 +171,17 @@ class BaseXavier(BaseInitializer):
     def __init__(self, uniform=True, seed=None, dtype=None):
         super(BaseXavier, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)
+
+
+class BaseKaiming(BaseInitializer):
+    """Implement Kaiming initialization
+
+    References
+    ----------
+    .. [1] Kaiming He et al. (2015):
+           Delving deep into rectifiers: Surpassing human-level performance on
+           imagenet classification. arXiv preprint arXiv:1502.01852.
+    """
+    def __init__(self, uniform=True, seed=None, dtype=None):
+        super(BaseKaiming, self).__init__(
+            uniform=uniform, seed=seed, dtype=dtype)
