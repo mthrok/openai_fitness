@@ -7,15 +7,9 @@ test_config:
   shape: [64, 32, 8, 8]
 
 compare_config:
-  threshold: 0.1
+  threshold: 0.03
   mean: 0.0
-  std: 0.0168
-  # Standard deviation here is not that of normal distribution, but of truncated normal distribution
-  # with bound of `2 * standard deviation of normal distribution`.
-  # To get this you can use scipy.stats.truncnorm class.
-  #
+  std: 0.01809
   # fan_out =  64 * 8 * 8
   # fan_in = 32 * 8 * 8
-  # scale = np.sqrt(3. / (fan_in + fan_out))  
-  # variance = truncnorm.stats(-2, 2, scale=scale, moments='v')
-  # std = np.sqrt(variance)
+  # stddev = np.sqrt(1.0 / fan_average)  

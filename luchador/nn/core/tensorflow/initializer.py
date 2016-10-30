@@ -2,6 +2,7 @@
 
 See :any:`luchador.nn.core.base.initializer` for the interface.
 """
+from __future__ import division
 from __future__ import absolute_import
 
 import tensorflow as tf

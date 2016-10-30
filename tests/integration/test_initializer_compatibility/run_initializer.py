@@ -11,7 +11,7 @@ import luchador.util
 from luchador import nn
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description=(
@@ -30,20 +30,20 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def create_initializer(name, args):
+def _create_initializer(name, args):
     return nn.get_initializer(name)(**args)
 
 
-def transpose_needed(initializer, shape):
+def _transpose_needed(initializer, shape):
     return (
         len(shape) == 4 and
-        initializer.__class__.__name__ == 'Xavier' and
+        initializer.__class__.__name__ in ['Xavier', 'Kaiming'] and
         luchador.get_nn_backend() == 'tensorflow'
     )
 
 
-def run_initializer(initializer, shape):
-    if transpose_needed(initializer, shape):
+def _run_initializer(initializer, shape):
+    if _transpose_needed(initializer, shape):
         # Shape is given in Theano's filter order, which is
         # [#out-channel, #in-channel, height, width].
         # So as to compute fan-in and fan-out correctly in Tensorflow,
@@ -57,13 +57,13 @@ def run_initializer(initializer, shape):
     session.initialize()
     value = session.run(outputs=variable)
 
-    if transpose_needed(initializer, shape):
+    if _transpose_needed(initializer, shape):
         # So as to make the output comarison easy, we revert the oreder.
         shape = [shape[3], shape[2], shape[0], shape[1]]
     return value
 
 
-def print_stats(*arrs):
+def _print_stats(*arrs):
     print('{sum:>10}  {max:>10}  {min:>10}  {mean:>10} {std:>10}'
           .format(sum='sum', max='max', min='min', mean='mean', std='std'))
     for arr in arrs:
@@ -74,7 +74,7 @@ def print_stats(*arrs):
     print('')
 
 
-def is_moment_different(data, mean, std, threshold):
+def _is_moment_different(data, mean, std, threshold):
     mean_diff = abs(mean - np.mean(data)) / (mean or 1.0)
     std_diff = abs(std - np.std(data)) / (std or 1.0)
     print('mean diff: {} [%]'.format(100 * mean_diff))
@@ -82,17 +82,17 @@ def is_moment_different(data, mean, std, threshold):
     return (mean_diff > threshold) or (std_diff > threshold)
 
 
-def check_dist(value, mean, std, threshold):
-    print_stats(value)
+def _check_dist(value, mean, std, threshold):
+    _print_stats(value)
     print('Given mean: {}'.format(mean))
     print('Given stddev: {}'.format(std))
     print('Checking (threshold: {} [%])'.format(100 * threshold))
-    if is_moment_different(value, mean, std, threshold):
+    if _is_moment_different(value, mean, std, threshold):
         raise ValueError('Data are different')
     print('Okay')
 
 
-def save_output(filepath, data, key):
+def _save_output(filepath, data, key):
     directory = os.path.dirname(filepath)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -106,15 +106,15 @@ def save_output(filepath, data, key):
 
 
 def main():
-    args = parse_command_line_args()
+    args = _parse_command_line_args()
     cfg = luchador.util.load_config(args.config)
-    initializer = create_initializer(**cfg['initializer'])
-    value = run_initializer(initializer, **cfg['test_config'])
+    initializer = _create_initializer(**cfg['initializer'])
+    value = _run_initializer(initializer, **cfg['test_config'])
 
     if args.output:
-        save_output(args.output, value, args.key)
+        _save_output(args.output, value, args.key)
 
-    check_dist(value, **cfg['compare_config'])
+    _check_dist(value, **cfg['compare_config'])
 
 if __name__ == '__main__':
     main()

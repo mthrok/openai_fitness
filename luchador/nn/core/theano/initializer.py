@@ -57,6 +57,20 @@ class Normal(InitializerMixin, base_initializer.BaseNormal):
         return values.astype(dtype)
 
 
+def _sample_uniform(stddev, shape, rng):
+    """Sample from uniform distribution in the way that
+    resulting values have the given stddev"""
+    bound = np.sqrt(3.0) * stddev
+    return rng.uniform(low=-bound, high=bound, size=shape)
+
+
+def _sample_truncated_normal(stddev, shape, rng):
+    """Sample from truncated normal distribution in the way that
+    resulting values have the given stddev"""
+    scale = np.sqrt(1.3) * stddev
+    return tnorm.rvs(-2, 2, scale=scale, size=shape, random_state=rng)
+
+
 class Xavier(InitializerMixin, base_initializer.BaseXavier):
     """Implement Xavier in Theano backend.
 
@@ -67,24 +81,9 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
             raise ValueError(
                 'Xavier initializer expects the shape to be 2D or 4D.'
             )
-        if len(shape) == 2:
-            fan_in = shape[0]
-            fan_out = shape[1]
-        else:
-            numel = np.prod(shape[2:4])
-            fan_in = shape[1] * numel
-            fan_out = shape[0] * numel
-
-        scale = np.sqrt(6. / (fan_in + fan_out))
-        if self.args['uniform']:
-            value = self._sample_uniform(scale, shape)
-        else:
-            value = self._sample_truncated_normal(scale, shape)
+        fan_ave = 0.5 * (shape[0] + shape[1]) * np.prod(shape[2:4])
+        stddev = 1. / np.sqrt(fan_ave)
+        value = (_sample_uniform(stddev, shape, self._rng)
+                 if self.args['uniform'] else
+                 _sample_truncated_normal(stddev, shape, self._rng))
         return value.astype(self.args['dtype'] or config.floatX)
-
-    def _sample_uniform(self, scale, shape):
-        return self._rng.uniform(low=-scale, high=scale, size=shape)
-
-    def _sample_truncated_normal(self, scale, shape):
-        return tnorm.rvs(
-            -1, 1, scale=scale, size=shape, random_state=self._rng)
