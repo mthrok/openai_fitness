@@ -37,19 +37,20 @@ def main(env, agent, episodes, steps, report_every=1000):
             _LG.info('               %12.3f [/epi]', steps_ / n_ep)
             _LG.info('               %12.3f [/sec]', steps_ / time_)
             _LG.info('  Total Steps: %8d', runner.steps)
-            _LG.info('  Total Time:  %s', format_time(runner.time))
+            _LG.info('  Total Time:  %s', _format_time(runner.time))
             n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
     _LG.info('Done')
 
 
-def format_time(seconds):
+def _format_time(seconds):
+    """Format duration in second to readable expression"""
     min_, sec = divmod(seconds, 60)
     hour, min_ = divmod(min_, 60)
     day, hour = divmod(hour, 24)
 
     ret = '{:02d}:{:02d}:{:02d}'.format(int(hour), int(min_), int(sec))
     if day:
-        ret = '{:d} Days {}'.format(day, ret)
+        ret = '{:d} Days {}'.format(int(day), ret)
     return ret
 
 
