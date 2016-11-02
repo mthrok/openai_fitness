@@ -48,26 +48,11 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         self.terminals = wrapper.Input(
             dtype=dtype, shape=(None,), name='terminals')
 
-        actions = self.actions().unwrap()
         with tf.name_scope('future_reward'):
             future = self._get_future_reward()
 
         with tf.name_scope('target_q_value'):
-            n_actions = self.pre_trans_net.output.shape[1]
-            with tf.name_scope('reshape_current_q_value'):
-                mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
-                                      off_value=1., name='actions_not_taken')
-                current = tf.identity(self.pre_trans_net.output.unwrap())
-                current = current * mask_off
-
-            with tf.name_scope('reshape_future_q_value'):
-                mask_on = tf.one_hot(actions, depth=n_actions, on_value=1.,
-                                     off_value=0., name='actions_taken')
-                future = tf.reshape(future, (-1, 1))
-                future = tf.tile(future, tf.pack([1, n_actions]))
-                future = future * mask_on
-
-            target_q = tf.add(current, future, name='target_q')
+            target_q = self._get_target_q_value(future)
 
         self.future_reward = wrapper.Tensor(tensor=future)
         self.target_q = wrapper.Tensor(tensor=target_q)
@@ -102,6 +87,25 @@ class DeepQLearning(base_q.BaseDeepQLearning):
 
         future = tf.add(rewards, post_q, name='future_reward')
         return future
+
+    def _get_target_q_value(self, future):
+        n_actions = self.pre_trans_net.output.shape[1]
+        actions = self.actions().unwrap()
+        with tf.name_scope('reshape_current_q_value'):
+            mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
+                                  off_value=1., name='actions_not_taken')
+            current = tf.identity(self.pre_trans_net.output.unwrap())
+            current = current * mask_off
+
+        with tf.name_scope('reshape_future_q_value'):
+            mask_on = tf.one_hot(actions, depth=n_actions, on_value=1.,
+                                 off_value=0., name='actions_taken')
+            future = tf.reshape(future, (-1, 1))
+            future = tf.tile(future, tf.pack([1, n_actions]))
+            future = future * mask_on
+
+        target_q = tf.add(current, future, name='target_q')
+        return target_q
 
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
