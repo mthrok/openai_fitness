@@ -5,7 +5,6 @@ import logging
 
 import tensorflow as tf
 
-from luchador import get_nn_dtype
 from ..base import q_learning as base_q
 from . import wrapper, cost
 
@@ -39,15 +38,8 @@ class DeepQLearning(base_q.BaseDeepQLearning):
             self._build_error()
         return self
 
+    ###########################################################################
     def _build_target_q_value(self):
-        dtype = get_nn_dtype()
-        self.actions = wrapper.Input(
-            dtype='int32', shape=(None,), name='actions')
-        self.rewards = wrapper.Input(
-            dtype=dtype, shape=(None,), name='rewards')
-        self.terminals = wrapper.Input(
-            dtype=dtype, shape=(None,), name='terminals')
-
         with tf.name_scope('future_reward'):
             future = self._get_future_reward()
 
@@ -60,19 +52,21 @@ class DeepQLearning(base_q.BaseDeepQLearning):
 
     def _get_future_q_value(self):
         self.discount_rate = tf.constant(
-            self.args['discount_rate'], name='discounted_rate')
-        term = self.terminals().unwrap()
+            self.args['discount_rate'], name='discount_rate')
+        self.terminals = wrapper.Input(shape=(None,), name='terminals')
+        terminals = self.terminals().unwrap()
 
         q = self.post_trans_net.output.unwrap()
         q = tf.reduce_max(q, reduction_indices=1)
-        q = tf.mul(q, self.discount_rate, )
-        q = tf.mul(q, 1.0 - term)
+        q = tf.mul(q, self.discount_rate)
+        q = tf.mul(q, 1.0 - terminals)
         return q
 
     def _get_future_reward(self):
         with tf.name_scope('future_q_value'):
             post_q = self._get_future_q_value()
 
+        self.rewards = wrapper.Input(shape=(None,), name='rewards')
         rewards = self.rewards().unwrap()
         if self.args['scale_reward']:
             scale_reward = tf.constant(
@@ -90,11 +84,14 @@ class DeepQLearning(base_q.BaseDeepQLearning):
 
     def _get_target_q_value(self, future):
         n_actions = self.pre_trans_net.output.shape[1]
+
+        self.actions = wrapper.Input(
+            dtype='int32', shape=(None,), name='actions')
         actions = self.actions().unwrap()
         with tf.name_scope('reshape_current_q_value'):
             mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
                                   off_value=1., name='actions_not_taken')
-            current = tf.identity(self.pre_trans_net.output.unwrap())
+            current = self.pre_trans_net.output.unwrap()
             current = current * mask_off
 
         with tf.name_scope('reshape_future_q_value'):
@@ -107,6 +104,7 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         target_q = tf.add(current, future, name='target_q')
         return target_q
 
+    ###########################################################################
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
         tgt_vars = self.post_trans_net.get_parameter_variables()
