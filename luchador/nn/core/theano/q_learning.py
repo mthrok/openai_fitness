@@ -41,34 +41,53 @@ class DeepQLearning(base_q.BaseDeepQLearning):
             self._build_error()
         return self
 
+    ###########################################################################
     def _build_target_q_value(self):
-        min_reward = self.args['min_reward']
-        max_reward = self.args['max_reward']
-        scale_reward = self.args['scale_reward']
-        discount_rate = self.args['discount_rate']
+
+        future = self._get_future_reward()
+        target_q = self._get_target_q_value(future)
+
+        # TODO: Add shape inference
+        n_actions = self.pre_trans_net.output.shape[1]
+        self.future_reward = wrapper.Tensor(tensor=future, shape=(-1, ))
+        self.target_q = wrapper.Tensor(tensor=target_q, shape=(-1, n_actions))
+        self.predicted_q = self.pre_trans_net.output
+
+    def _build_future_q_value(self):
+        self.discount_rate = T.constant(self.args['discount_rate'])
+        self.terminals = wrapper.Input(shape=(None,), name='terminals')
+        terminals = self.terminals().unwrap()
+
+        q = self.post_trans_net.output.unwrap()
+        q = T.max(q, axis=1)
+        q = q * self.discount_rate
+        q = q * (1.0 - terminals)
+        return q
+
+    def _get_future_reward(self):
+        post_q = self._get_future_q_value()
+
+        self.rewards = wrapper.Input(
+            dtype='float64', shape=(None,), name='rewards')
+        rewards = self.rewards().unwrap()
+        if self.args['scale_reward']:
+            scale_reward = T.constant(self.args['scale_reward'])
+            rewards = rewards / scale_reward
+        if self.args['min_reward'] and self.args['max_reward']:
+            min_reward = T.constant(self.args['min_reward'])
+            max_reward = T.constant(self.args['max_reward'])
+            rewards = rewards.clip(min_reward, max_reward)
+
+        future = rewards + post_q
+        return future
+
+    def _get_target_q_vlue(self, future):
+        n_actions = self.pre_trans_net.output.shape[1]
 
         self.actions = wrapper.Input(
             dtype='uint16', shape=(None,), name='actions')
-        self.rewards = wrapper.Input(
-            dtype='float64', shape=(None,), name='rewards')
-        self.terminals = wrapper.Input(shape=(None,), name='continuations')
 
         actions = self.actions().unwrap()
-        rewards = self.rewards().unwrap()
-        terminals = self.terminals().unwrap()
-
-        post_q = self.post_trans_net.output.unwrap()
-        post_q = T.max(post_q, axis=1)
-        post_q = post_q * discount_rate
-        post_q = post_q * (1.0 - terminals)
-
-        if scale_reward:
-            rewards = rewards / scale_reward
-        if min_reward and max_reward:
-            rewards = rewards.clip(min_reward, max_reward)
-        future = rewards + post_q
-
-        n_actions = self.pre_trans_net.output.shape[1]
         mask_on = T.extra_ops.to_one_hot(actions, n_actions)
         mask_off = 1.0 - mask_on
         current = self.pre_trans_net.output.unwrap()
@@ -79,11 +98,9 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         future = future * mask_on
 
         target_q = current + future
-        # TODO: Add shape inference
-        self.future_reward = wrapper.Tensor(tensor=future, shape=(-1, ))
-        self.target_q = wrapper.Tensor(tensor=target_q, shape=(-1, n_actions))
-        self.predicted_q = self.pre_trans_net.output
+        return target_q
 
+    ###########################################################################
     def _build_sync_op(self):
         sync_op = OrderedDict()
         src_vars = self.pre_trans_net.get_parameter_variables()
