@@ -65,7 +65,7 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         return q
 
     def _get_future_reward(self):
-        post_q = self._get_future_q_value()
+        post_q = self._build_future_q_value()
 
         self.rewards = wrapper.Input(
             dtype='float64', shape=(None,), name='rewards')
@@ -81,7 +81,7 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         future = rewards + post_q
         return future
 
-    def _get_target_q_vlue(self, future):
+    def _get_target_q_value(self, future):
         n_actions = self.pre_trans_net.output.shape[1]
 
         self.actions = wrapper.Input(
