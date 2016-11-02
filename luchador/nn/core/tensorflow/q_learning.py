@@ -29,10 +29,12 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         with tf.variable_scope('post_trans'):
             self.post_trans_net = model_maker()
             self.post_states = self.post_trans_net.input
-        with tf.variable_scope('target_q_value'):
-            self._build_target_q_value()
         with tf.variable_scope('sync'):
             self._build_sync_op()
+
+        with tf.variable_scope('target_q_value'):
+            self._build_target_q_value()
+
         with tf.variable_scope('error'):
             self._build_error()
         return self
@@ -42,7 +44,6 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         min_reward = self.args['min_reward']
         max_reward = self.args['max_reward']
         scale_reward = self.args['scale_reward']
-        discount_rate = self.args['discount_rate']
 
         self.actions = wrapper.Input(
             dtype='int32', shape=(None,), name='actions')
@@ -53,16 +54,9 @@ class DeepQLearning(base_q.BaseDeepQLearning):
 
         actions = self.actions().unwrap()
         rewards = self.rewards().unwrap()
-        terminals = self.terminals().unwrap()
         with tf.name_scope('future_reward'):
             with tf.name_scope('future_q_value'):
-                post_q = self.post_trans_net.output.unwrap()
-                post_q = tf.reduce_max(
-                    post_q, reduction_indices=1, name='max_post_q')
-                post_q = tf.mul(
-                    post_q, discount_rate, name='discounted_max_post_q')
-                post_q = tf.mul(
-                    post_q, 1.0 - terminals, name='masked_max_post_q')
+                post_q = self._get_future_q_value()
 
             if scale_reward:
                 rewards = tf.truediv(
@@ -93,6 +87,17 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         self.future_reward = wrapper.Tensor(tensor=future)
         self.target_q = wrapper.Tensor(tensor=target_q)
         self.predicted_q = self.pre_trans_net.output
+
+    def _get_future_q_value(self):
+        self.discount_rate = tf.constant(
+            self.args['discount_rate'], name='discounted_rate')
+        term = self.terminals().unwrap()
+
+        q = self.post_trans_net.output.unwrap()
+        q = tf.reduce_max(q, reduction_indices=1)
+        q = tf.mul(q, self.discount_rate, )
+        q = tf.mul(q, 1.0 - term)
+        return q
 
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
