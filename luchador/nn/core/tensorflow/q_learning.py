@@ -41,10 +41,6 @@ class DeepQLearning(base_q.BaseDeepQLearning):
 
     def _build_target_q_value(self):
         dtype = get_nn_dtype()
-        min_reward = self.args['min_reward']
-        max_reward = self.args['max_reward']
-        scale_reward = self.args['scale_reward']
-
         self.actions = wrapper.Input(
             dtype='int32', shape=(None,), name='actions')
         self.rewards = wrapper.Input(
@@ -53,19 +49,8 @@ class DeepQLearning(base_q.BaseDeepQLearning):
             dtype=dtype, shape=(None,), name='terminals')
 
         actions = self.actions().unwrap()
-        rewards = self.rewards().unwrap()
         with tf.name_scope('future_reward'):
-            with tf.name_scope('future_q_value'):
-                post_q = self._get_future_q_value()
-
-            if scale_reward:
-                rewards = tf.truediv(
-                    rewards, scale_reward, name='scaled_reward')
-            if min_reward and max_reward:
-                with tf.name_scope('clipped_reward'):
-                    rewards = tf.clip_by_value(rewards, min_reward, max_reward)
-
-            future = tf.add(rewards, post_q, name='future_reward')
+            future = self._get_future_reward()
 
         with tf.name_scope('target_q_value'):
             n_actions = self.pre_trans_net.output.shape[1]
@@ -98,6 +83,25 @@ class DeepQLearning(base_q.BaseDeepQLearning):
         q = tf.mul(q, self.discount_rate, )
         q = tf.mul(q, 1.0 - term)
         return q
+
+    def _get_future_reward(self):
+        with tf.name_scope('future_q_value'):
+            post_q = self._get_future_q_value()
+
+        rewards = self.rewards().unwrap()
+        if self.args['scale_reward']:
+            scale_reward = tf.constant(
+                self.args['scale_reward'], name='scale_reward')
+            rewards = tf.truediv(rewards, scale_reward)
+        if self.args['min_reward'] and self.args['max_reward']:
+            min_reward = tf.constant(
+                self.args['min_reward'], name='min_reward')
+            max_reward = tf.constant(
+                self.args['max_reward'], name='max_reward')
+            rewards = tf.clip_by_value(rewards, min_reward, max_reward)
+
+        future = tf.add(rewards, post_q, name='future_reward')
+        return future
 
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
