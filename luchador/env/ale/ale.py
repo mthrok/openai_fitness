@@ -242,7 +242,7 @@ class ALEEnvironment(BaseEnvironment):
             self.resize = (h, w) if self.grayscale else (h, w, 3)
 
     ###########################################################################
-    def __repr__(self):
+    def __str__(self):
         return pprint_dict({self.__class__.__name__: {
             'rom': self.rom_path,
             'mode': self.mode,
