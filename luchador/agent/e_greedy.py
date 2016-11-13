@@ -21,12 +21,16 @@ class EGreedyAgent(BaseAgent):
         updated with weighted sum over current estimation and newly observed
         reward value.
 
+    initial_q : float
+        Initial Q value for all actions
+
     seed : int
         Random seed
     """
-    def __init__(self, epsilon, step_size='average', seed=None):
+    def __init__(self, epsilon, step_size='average', initial_q=0.0, seed=None):
         self.epsilon = epsilon
         self.step_size = step_size
+        self.initial_q = initial_q
         self.rng = np.random.RandomState(seed=seed)
 
         self.n_actions = None
@@ -34,8 +38,8 @@ class EGreedyAgent(BaseAgent):
         self.n_trials = None
 
     def reset(self, observation):
-        self.q_values = [0.0] * self.n_actions
-        self.n_trials = [0.0] * self.n_actions
+        self.q_values = [self.initial_q] * self.n_actions
+        self.n_trials = [self.initial_q] * self.n_actions
 
     def init(self, env):
         self.n_actions = env.n_actions
