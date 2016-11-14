@@ -122,6 +122,7 @@ class BaseEnvironment(object):
 _ENVIRONMENT_MODULE_MAPPING = {
     'ALEEnvironment': 'ale',
     'FlappyBird': 'flappy_bird',
+    'CartPole': 'cart_pole',
 }
 
 
