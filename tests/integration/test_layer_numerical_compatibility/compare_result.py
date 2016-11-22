@@ -51,8 +51,8 @@ def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
     print('  Max relative diff: {}'.format(rel_diff.max()))
     print('  Min relative diff: {}'.format(rel_diff.min()))
     return (
-            (abs_diff > abs_threshold).any() or
-            (rel_diff > relative_threshold).any()
+        (abs_diff > abs_threshold).any() or
+        (rel_diff > relative_threshold).any()
     )
 
 
@@ -66,6 +66,7 @@ def _main():
     if check(data1, data2, relative_threshold=args.threshold):
         raise ValueError('Data are different')
     print('Okay')
+
 
 if __name__ == '__main__':
     _main()

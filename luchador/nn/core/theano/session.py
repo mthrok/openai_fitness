@@ -19,6 +19,7 @@ __all__ = ['Session']
 def _get_full_class(cls):
     return '{}.{}'.format(cls.__module__, cls.__name__)
 
+
 _TENSOR_CLASS_STR = _get_full_class(wrapper.Tensor)
 _OP_CLASS_STR = _get_full_class(wrapper.Operation)
 

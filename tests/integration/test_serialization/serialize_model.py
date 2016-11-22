@@ -163,5 +163,6 @@ def main():
     if args.output:
         serialize(args.output, components, session)
 
+
 if __name__ == '__main__':
     main()

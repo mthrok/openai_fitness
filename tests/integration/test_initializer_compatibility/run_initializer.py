@@ -116,5 +116,6 @@ def main():
 
     _check_dist(value, **cfg['compare_config'])
 
+
 if __name__ == '__main__':
     main()

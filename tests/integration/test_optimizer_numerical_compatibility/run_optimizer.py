@@ -90,13 +90,12 @@ def main():
     result = optimize(
         optimizer=optimizer, loss=formula['loss'],
         wrt=formula['wrt'], n_ite=args.iterations)
-    _LG.info('    Y: {} -> {}'.format(
-        result[0]['loss'], result[-1]['loss']))
-    _LG.info('    X: {} -> {}'.format(
-        result[0]['wrt'], result[-1]['wrt']))
+    _LG.info('    Y: %f -> %f', result[0]['loss'], result[-1]['loss'])
+    _LG.info('    X: %f -> %f', result[0]['wrt'], result[-1]['wrt'])
     if args.output:
         _LG.info('  Saving at {}'.format(args.output))
         save_result(args.output, result)
+
 
 if __name__ == '__main__':
     main()

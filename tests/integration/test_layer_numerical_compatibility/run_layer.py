@@ -154,5 +154,6 @@ def main():
     if args.output:
         save_output(args.output, output)
 
+
 if __name__ == '__main__':
     main()
