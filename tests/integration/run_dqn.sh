@@ -11,4 +11,4 @@ else
     TEST_COMMAND="luchador"
 fi
 
-${TEST_COMMAND} "${DATA_DIR}/ALEEnvironment_train.yml" --agent "${DATA_DIR}/DQNAgent_train.yml" --episodes 20 --steps 500
+${TEST_COMMAND} exercise "${DATA_DIR}/ALEEnvironment_train.yml" --agent "${DATA_DIR}/DQNAgent_train.yml" --episodes 20 --steps 500

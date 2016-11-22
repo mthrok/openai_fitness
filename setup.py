@@ -97,10 +97,11 @@ def do_setup():
             'luchador.env',
             'luchador.env.ale',
             'luchador.env.flappy_bird',
+            'luchador.command'
         ],
         entry_points={
             'console_scripts': [
-                'luchador = luchador.exercise:entry_point',
+                'luchador = luchador.command.main:entry_point',
             ]
         },
         test_suite='tests.unit',
@@ -109,6 +110,8 @@ def do_setup():
             'h5py',
             'pyyaml',
             'pygame',
+            'flask',
+            'cherrypy',
         ],
         package_data={
             'luchador': [

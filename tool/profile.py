@@ -1,3 +1,4 @@
-from luchador.exercise import entry_point
+#!/usr/bin/env python
+from luchador.command import main
 
-entry_point()
+main.entry_point()

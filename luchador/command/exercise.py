@@ -1,18 +1,20 @@
+"""Script to run env-agent scheme as independant program"""
 from __future__ import division
 from __future__ import absolute_import
 
 import logging
+import argparse
 
-from .env import get_env
-from .agent import get_agent
-from .util import load_config
-from .episode_runner import EpisodeRunner
+from luchador.env import get_env
+from luchador.agent import get_agent
+from luchador.util import load_config
+from luchador.episode_runner import EpisodeRunner
 
 _LG = logging.getLogger(__name__)
 
 
 ###############################################################################
-def main(env, agent, episodes, steps, report_every=1000):
+def _main(env, agent, episodes, steps, report_every=1000):
     env = get_env(env['name'])(**env['args'])
     agent = get_agent(agent['name'])(**agent['args'])
     _LG.info('\n%s', env)
@@ -56,10 +58,10 @@ def _format_time(seconds):
 
 ###############################################################################
 def _parse_command_line_arguments():
-    import argparse
     parser = argparse.ArgumentParser(
         description='Run environment with agents.',
     )
+    parser.add_argument('exercise')  # Placeholder for subcommanding
     parser.add_argument(
         'environment',
         help='YAML file contains environment configuration')
@@ -111,4 +113,5 @@ def _parse_config():
 
 
 def entry_point():
-    main(**_parse_config())
+    """Entry porint for `luchador exercise` command"""
+    _main(**_parse_config())

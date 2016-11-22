@@ -3,9 +3,9 @@ from __future__ import absolute_import
 
 import abc
 
-from luchador import common
+import numpy as np
 
-__all__ = ['BaseEnvironment', 'get_env']
+import luchador
 
 
 class Outcome(object):
@@ -27,6 +27,58 @@ class Outcome(object):
         self.observation = observation
         self.terminal = terminal
         self.state = state if state else {}
+
+
+def _serialize_observation(obs):
+    if isinstance(obs, np.ndarray):
+        return {
+            'type': 'np.ndarray',
+            'obj': {
+                'shape': obs.shape,
+                'dtype': str(obs.dtype),
+                'data': obs.tostring().encode('base64'),
+            }
+        }
+    return {
+        'type': 'other',
+        'obj': obs
+    }
+
+
+def _deserialize_observation(obs):
+    if obs['type'] == 'np.ndarray':
+        data, dtype = obs['obj']['data'], obs['obj']['dtype']
+        data = np.fromstring(data.decode('base64'), dtype=dtype)
+        return data.reshape(obs['obj']['shape'])
+    return obs['obj']
+
+
+def serialize_outcome(outcome):
+    """Serialize observation to JSON
+
+    Returns
+    -------
+    dict
+        Outcome components in dictionary format
+    """
+    return {
+        'reward': outcome.reward,
+        'observation': _serialize_observation(outcome.observation),
+        'terminal': outcome.terminal,
+        'state': outcome.state
+    }
+
+
+def deserialize_outcome(obj):
+    """Deserialize Outcome from JSON
+
+    Parameters
+    ----------
+    obj : dict
+        Outcome instance serialized with :any:`serialize_outcome`
+    """
+    obs = _deserialize_observation(obj['observation'])
+    return Outcome(obj['reward'], obs, obj['terminal'], obj['state'])
 
 
 class BaseEnvironment(object):
@@ -84,7 +136,7 @@ def get_env(name):
     ValueError
         When Environment with the given name is not found
     """
-    for class_ in common.get_subclasses(BaseEnvironment):
+    for class_ in luchador.common.get_subclasses(BaseEnvironment):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Environment: {}'.format(name))
