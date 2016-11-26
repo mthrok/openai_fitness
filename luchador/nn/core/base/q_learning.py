@@ -12,18 +12,28 @@ _LG = logging.getLogger(__name__)
 class BaseDeepQLearning(common.StoreMixin, object):
     """Build Q-learning network and optimization operations
 
-    Args:
-      discout_rate (float): Discount rate for computing future reward.
-                            Valid value range is (0.0, 1.0)
+    Parameters
+    ----------
+    discout_rate : float
+        Discount rate for computing future reward. Valid value range is
+        (0.0, 1.0)
 
-      scale_reward (number or None): When given, reward is divided by this
-                                     number before applying min/max threashold
-      min_reward(number or None): When given, clip reward after scaling.
-      max_reward(number or None): See `min_reward`.
+    scale_reward : number or None
+        When given, reward is divided by this number before applying min/max
+        threashold
 
-      min_delta(number or None): When given, error between predicted Q and
-                                 target Q is clipped with this value.
-      max_delta(number or None): See `max_reward`
+    min_reward : number or None
+        When given, clip reward after scaling.
+
+    max_reward : number or None
+        See `min_reward`.
+
+    min_delta : number or None
+        When given, error between predicted Q and target Q is clipped with
+        this value.
+
+    max_delta : number or None
+        See `max_reward`
     """
     __metaclass__ = abc.ABCMeta
 

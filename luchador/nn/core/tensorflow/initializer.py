@@ -1,6 +1,6 @@
 """Implement Initializer module in Tensorflow backend
 
-See :any:`luchador.nn.core.base.initializer` for the interface.
+See :py:mod:`luchador.nn.core.base.initializer` for the interface.
 """
 from __future__ import division
 from __future__ import absolute_import

@@ -164,13 +164,13 @@ class BaseConv2D(BaseLayer):
         #filters (#output channels)
 
     strides : (int, tuple of two ints, or tuple of four ints)
-        * **When given type is int**
-        The output is subsampled by this factor in both width and
-        height direction.
+        ** When given type is int **
+            The output is subsampled by this factor in both width and
+            height direction.
 
-        * **When given type is tuple of two int**
-        The output is subsapmled by ``strides[0]`` in height  and
-        ``striders[1]`` in width.
+        ** When given type is tuple of two int **
+            The output is subsapmled by ``strides[0]`` in height and
+            ``striders[1]`` in width.
 
         Note
             [Tensorflow only]

@@ -242,8 +242,8 @@ class ALEEnvironment(BaseEnvironment):
             self.resize = (h, w) if self.grayscale else (h, w, 3)
 
     ###########################################################################
-    def __repr__(self):
-        return pprint_dict({self.__class__.__name__: {
+    def _get_dict(self):
+        return {self.__class__.__name__: {
             'rom': self.rom_path,
             'mode': self.mode,
             'resize': self.resize,
@@ -260,7 +260,13 @@ class ALEEnvironment(BaseEnvironment):
             'sound': self._ale.getBool('sound'),
             'record_sound_filename':
             self._ale.getString('record_sound_filename'),
-        }})
+        }}
+
+    def __repr__(self):
+        return str(self._get_dict())
+
+    def __str__(self):
+        return pprint_dict(self._get_dict())
 
     ###########################################################################
     @property

@@ -3,18 +3,16 @@
 In this module
 
 - **observation**
-Referes to an observation of environment.
+    Referes to an observation of environment.
 
 - **state**
-Referes to a set of observations combined together as a processing unit
-passed down to further processing pipeline.
+    Referes to a set of observations combined together as a processing unit
+    passed down to further processing pipeline.
 
 - **transition**
-Refers to a set of (original state, action, reward,
-new state, terminal flag).
-
+    Refers to a set of (original state, action, reward, new state, terminal
+    flag).
 """
-
 from __future__ import division
 from __future__ import absolute_import
 
@@ -85,15 +83,16 @@ class EpisodeRecorder(object):
     def _create_state(self, index, length):
         """Create state matrix from observations.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         index : int
             Index for the last observation to include in the
             resulting state.
 
             For performance reason, argument validity check is omitted, but
             arguments must satisfy the following condition:
-              0 <= length - 1 <= index < len(self.actions)
+
+                0 <= length - 1 <= index < len(self.actions)
 
         length : int
             The number of observations included in the state
@@ -108,7 +107,7 @@ class EpisodeRecorder(object):
         return self.observations[i_start:i_end]
 
     def _create_transition(self, index, length):
-        """Create a transition (pre_state, action -> reward, post_state) from history
+        """Create a transition from history
 
         Parameters
         ----------
