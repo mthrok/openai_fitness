@@ -84,6 +84,18 @@ Server API
 |Response   |                                                                 |
 +-----------+-----------------------------------------------------------------+
 
++---------+-------------------------------------------------------------------+
+|**Shut down this environment and stop the server**                           |
++---------+-------------------------------------------------------------------+
+|URL      |``/kill``                                                          |
++---------+-------------------------------------------------------------------+
+|Method   |``POST`` or ``GET``                                                |
++---------+-------------------------------------------------------------------+
+|Success  |**Code**: 200                                                      |
+|Response |                                                                   |
+|         |**Content (JSON)**:                                                |
+|         | ``result``: ``success`` or ``failed``                             |
++---------+-------------------------------------------------------------------+
 """
 from __future__ import absolute_import
 
@@ -122,6 +134,7 @@ def create_env_app(env):
     attr = {
         'outcome': None,
         'env': env,
+        'server': None,
     }
 
     @app.route('/', methods=['POST', 'GET'])
@@ -156,6 +169,17 @@ def create_env_app(env):
         attr['outcome'] = env.step(params['action'])
         return _return_outcome()
 
+    @app.route('/kill', methods=['POST', 'GET'])
+    def _kill():
+        attr['server'].stop()
+        result = 'failed' if attr['server'].ready else 'killed'
+        return _jsonify({'result': result})
+
+    def set_attr(key, value):
+        attr[key] = value
+
+    app.set_attr = set_attr
+    _reset()
     return app
 
 
@@ -172,4 +196,6 @@ def create_server(app, port=5000, host='0.0.0.0'):
     WSGIServer object
     """
     dispatcher = wsgiserver.WSGIPathInfoDispatcher({'/': app})
-    return wsgiserver.CherryPyWSGIServer((host, port), dispatcher)
+    server = wsgiserver.CherryPyWSGIServer((host, port), dispatcher)
+    app.set_attr('server', server)
+    return server

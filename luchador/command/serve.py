@@ -13,16 +13,15 @@ def _start_env_server(env_config, port, host):
     env = luchador.env.get_env(env_config['name'])(**env_config['args'])
     app = luchador.env.server.create_env_app(env)
     server = luchador.env.server.create_server(app, port=port, host=host)
+    _LG.info('Starting environment on port %d', port)
     try:
-        _LG.info('Starting environment on port %d', port)
-        env.reset()
         server.start()
     except KeyboardInterrupt:
-        _LG.info('Stopping environment server')
         server.stop()
     except BaseException:
-        _LG.exception('Stopping environment server')
+        _LG.exception('Unexpected error on port %d', port)
         server.stop()
+    _LG.info('Environment server on port %d stopped.', port)
 
 
 ###############################################################################
