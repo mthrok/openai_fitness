@@ -5,24 +5,22 @@ import logging
 import argparse
 
 import luchador.util
-import luchador.env.server
+import luchador.env.remote
 
 _LG = logging.getLogger(__name__)
 
 
-def _start_env_server(env_config, port, host):
-    env = luchador.env.get_env(env_config['name'])(**env_config['args'])
-    app = luchador.env.server.create_env_app(env)
-    server = luchador.env.server.create_server(app, port=port, host=host)
-    _LG.info('Starting environment on port %d', port)
+def _start_server(app, port, host):
+    server = luchador.env.remote.create_server(app, port=port, host=host)
+    _LG.info('Starting server on port %d', port)
     try:
         server.start()
     except KeyboardInterrupt:
         server.stop()
     except BaseException:
-        _LG.exception('Unexpected error on port %d', port)
+        _LG.exception('Unexpected error on server at port %d', port)
         server.stop()
-    _LG.info('Environment server on port %d stopped.', port)
+    _LG.info('Server on port %d stopped.', port)
 
 
 ###############################################################################
@@ -56,6 +54,9 @@ def entry_point():
         if args.environment is None:
             raise ValueError('Environment config is not given')
         env_config = luchador.util.load_config(args.environment)
-        _start_env_server(env_config, args.port, args.host)
+        env = luchador.env.get_env(env_config['name'])(**env_config['args'])
+        app = luchador.env.remote.create_env_app(env)
     else:
-        raise NotImplementedError('manager is not implemented yet.')
+        app = luchador.env.remote.create_manager_app()
+
+    _start_server(app, args.port, args.host)

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import json
 import requests
 
-from . import base as base_env
+import luchador.env.base as base_env
 
 
 def _extract_outcome(response):

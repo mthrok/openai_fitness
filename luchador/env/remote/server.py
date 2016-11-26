@@ -7,8 +7,8 @@ names and parameters are passed via POST method. Server can be created using
 
 >>> import luchador.env
 >>> env = luchador.env.get_env(name)(**args)
->>> app = luchador.env.server.create_env_app(env)
->>> server = luchador.env.server.create_server(app)
+>>> app = luchador.env.remote.create_env_app(env)
+>>> server = luchador.env.remote.create_server(app)
 >>> server.start()
 
 Server API
@@ -130,7 +130,6 @@ def create_env_app(env):
         Flask application which run the given environment
     """
     app = flask.Flask(__name__)
-
     attr = {
         'outcome': None,
         'env': env,
@@ -180,6 +179,7 @@ def create_env_app(env):
     return app
 
 
+###############################################################################
 def create_server(app, port=5000, host='0.0.0.0'):
     """Mount application on cherrypy WSGI server
 
