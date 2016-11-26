@@ -7,7 +7,7 @@ names and parameters are passed via POST method. Server can be created using
 
 >>> import luchador.env
 >>> env = luchador.env.get_env(name)(**args)
->>> app = luchador.env.server.create_app(env)
+>>> app = luchador.env.server.create_env_app(env)
 >>> server = luchador.env.server.create_server(app)
 >>> server.start()
 
@@ -102,7 +102,7 @@ def _jsonify(obj, code=200):
     return (json.dumps(obj), code, {'mimetype': 'application/json'})
 
 
-def create_app(env):
+def create_env_app(env):
     """Create Flask server for the given Environment
 
     See module documentation for the derail of API call
@@ -156,7 +156,6 @@ def create_app(env):
         attr['outcome'] = env.step(params['action'])
         return _return_outcome()
 
-    _reset()
     return app
 
 
