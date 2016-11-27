@@ -1,3 +1,4 @@
+"""Test each Environment server route"""
 from __future__ import absolute_import
 
 import logging

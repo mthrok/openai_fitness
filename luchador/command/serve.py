@@ -1,3 +1,4 @@
+"""Module to define ``luchador serve`` subcommand"""
 from __future__ import absolute_import
 
 import logging

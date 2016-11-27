@@ -175,10 +175,7 @@ def create_env_app(env):
         result = 'failed' if attr['server'].ready else 'killed'
         return _jsonify({'result': result})
 
-    def set_attr(key, value):
-        attr[key] = value
-
-    app.set_attr = set_attr
+    app.attr = attr
     _reset()
     return app
 
@@ -197,5 +194,5 @@ def create_server(app, port=5000, host='0.0.0.0'):
     """
     dispatcher = wsgiserver.WSGIPathInfoDispatcher({'/': app})
     server = wsgiserver.CherryPyWSGIServer((host, port), dispatcher)
-    app.set_attr('server', server)
+    app.attr['server'] = server
     return server
