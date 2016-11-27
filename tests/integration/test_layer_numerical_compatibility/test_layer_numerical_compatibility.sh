@@ -9,18 +9,15 @@ if [[ ! -f "${CONFIG}" ]]; then
     exit 1
 fi
 
-COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
-if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
-    TEST_COMMAND="coverage run --source luchador -a"
+if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
+    TEST_COMMAND="coverage run --parallel-mode"
 else
     TEST_COMMAND="python"
 fi
-
-LAYER_NAME="$( basename ${CONFIG%.*} )"
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_layer.py ${CONFIG}"
-COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
+LAYER_NAME="$( basename ${CONFIG%.*} )"
 FILE1="tmp/test_layer_numerical_compatibility/${LAYER_NAME}/theano.h5"
 FILE2="tmp/test_layer_numerical_compatibility/${LAYER_NAME}/tensorflow.h5"
 
@@ -33,5 +30,5 @@ LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --ou
 echo "* Running ${LAYER_NAME} with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2}
 echo "* Comparing results"
-${COMPARE_COMMAND} ${FILE1} ${FILE2}
+python "${BASE_DIR}/compare_result.py" ${FILE1} ${FILE2}
 echo ""

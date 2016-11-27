@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eu
 
-pip install --upgrade codacy-coverage
+coverage combine
 coverage xml
+pip install --upgrade codacy-coverage
 python-codacy-coverage -r coverage.xml

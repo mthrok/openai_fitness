@@ -26,7 +26,7 @@ class Outcome(object):
         self.reward = reward
         self.observation = observation
         self.terminal = terminal
-        self.state = state if state else {}
+        self.state = state or {}
 
 
 def _serialize_observation(obs):

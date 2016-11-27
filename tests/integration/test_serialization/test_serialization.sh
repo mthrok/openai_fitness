@@ -7,7 +7,6 @@
 
 set -eu
 
-COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -33,14 +32,12 @@ if [[ -z "${MODEL}" || -z "${OPTIMIZER}" ]]; then
     exit 1
 fi
 
-BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
-    TEST_COMMAND="coverage run --source luchador -a"
+if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
+    TEST_COMMAND="coverage run --parallel-mode"
 else
     TEST_COMMAND="python"
 fi
-
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/serialize_model.py ${MODEL} ${OPTIMIZER}"
 
 OPTIMIZER_NAME=$(basename ${OPTIMIZER%.*})

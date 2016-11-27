@@ -9,7 +9,6 @@
 # --threshold: Maximum relative diff to allow
 set -eu
 
-COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -49,15 +48,13 @@ OPTIMIZER_NAME=$(basename ${OPTIMIZER%.*})
 FILE1="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/theano.csv"
 FILE2="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/tensorflow.csv"
 
-BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
-    TEST_COMMAND="coverage run --source luchador -a"
+if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
+    TEST_COMMAND="coverage run --parallel-mode"
 else
     TEST_COMMAND="python"
 fi
-
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
-COMPARE_COMMAND="python ${BASE_DIR}/compare_result.py"
 
 echo "*** Checking numerical compatibility of ${OPTIMIZER_NAME} on ${FORMULA} ***"
 echo ""
@@ -68,5 +65,5 @@ LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --ou
 echo "* Running $(basename ${OPTIMIZER}) with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2} --iterations ${ITERATIONS}
 echo "* Comparing results"
-${COMPARE_COMMAND} $FILE1 $FILE2 --threshold ${THRESHOLD}
+python "${BASE_DIR}/compare_result.py" $FILE1 $FILE2 --threshold ${THRESHOLD}
 echo ""

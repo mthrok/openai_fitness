@@ -9,13 +9,11 @@ if [[ ! -f "${CONFIG}" ]]; then
     exit 1
 fi
 
-COUNT_INTEGRATION_COVERAGE=${COUNT_INTEGRATION_COVERAGE:-false}
-if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
-    TEST_COMMAND="coverage run --source luchador -a"
+if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
+    TEST_COMMAND="coverage run --parallel-mode"
 else
     TEST_COMMAND="python"
 fi
-
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_initializer.py ${CONFIG}"
 
