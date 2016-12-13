@@ -16,7 +16,7 @@ dependencies:
     - pip install --upgrade numpy
     - pip install --upgrade scipy
     - pip install --upgrade git+git://github.com/Theano/Theano.git
-    - pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0rc0-cp27-none-linux_x86_64.whl
+    - pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl
     # Install luchador in editable mode so that coverage.py can collect data in integration tests
     - pip install --upgrade -e .
   post:
