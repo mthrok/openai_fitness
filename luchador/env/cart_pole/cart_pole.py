@@ -14,6 +14,10 @@ __all__ = ['CartPole']
 
 
 class _State(object):
+    """Physical state of CartPole
+
+    See :any:CartPole for constructor arguments
+    """
     def __init__(self, cart_mass, pole_mass, pole_length, gravity, dt):
         self.x = 0.0
         self.x_dot = 0.0
@@ -30,12 +34,20 @@ class _State(object):
         self.pole_mass_length = self.pole_mass * self.pole_length
 
     def reset(self):
+        """Reset CartPole to the initial position"""
         self.x = 0.0
         self.x_dot = 0.0
         self.theta = 0.0
         self.theta_dot = 0.0
 
     def update(self, force):
+        """Update the CartPole state for one time step
+
+        Parameters
+        ----------
+        force : float
+            The force applied to cart
+        """
         cos = np.cos(self.theta)
         sin = np.sin(self.theta)
 
@@ -57,7 +69,34 @@ def _deg2rad(deg):
 
 
 class CartPole(BaseEnvironment):
-    """Cart-Pole balancing problem from classic RL problem"""
+    """Cart-Pole balancing problem from classic RL problem
+
+    Parameters
+    ----------
+    angle_limit : float
+        Upper limit of angular deviation in degree for teminal state.
+
+    distance_limit : float
+        Upper limit of distance deviation in meter for teminal state.
+
+    cart_mass : float
+        Mass of cart
+
+    pole_mass : float
+        Mass of pole
+
+    pole_length : float
+        Length of pole
+
+    gravity : float
+        Gravity constant. Default: 9.8 [m/ss]
+
+    dt : float
+        Unit time step. Default 0.2 [second]
+
+    display_screen : Boolean
+        Visualize the state when enabled
+    """
     def __init__(self,
                  angle_limit=12,
                  distance_limit=2.4,
@@ -97,6 +136,7 @@ class CartPole(BaseEnvironment):
         }
 
     def reset(self):
+        """Reset environment state."""
         self.state.reset()
         return Outcome(
             reward=0.0, terminal=False, observation=self._get_observation())
@@ -105,8 +145,8 @@ class CartPole(BaseEnvironment):
         self.state.update(10 if action else -10)
 
         terminal = (
-                abs(self.state.x) > self.distance_limit or
-                abs(self.state.theta) > _deg2rad(self.angle_limit)
+            abs(self.state.x) > self.distance_limit or
+            abs(self.state.theta) > _deg2rad(self.angle_limit)
         )
         reward = -1.0 if terminal else 0.0
 
