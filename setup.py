@@ -96,6 +96,7 @@ def do_setup():
             'luchador.agent',
             'luchador.env',
             'luchador.env.ale',
+            'luchador.env.cart_pole',
             'luchador.env.flappy_bird',
             'luchador.command'
         ],
@@ -110,6 +111,7 @@ def do_setup():
             'h5py',
             'pyyaml',
             'pygame',
+            'pyglet',
             'flask',
             'cherrypy',
         ],
