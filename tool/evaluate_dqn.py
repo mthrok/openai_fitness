@@ -22,13 +22,13 @@ from luchador.nn import SummaryWriter
 _LG = logging.getLogger('luchador')
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(description=(
         'Given a set of DQN parameters, evaluate the performace'
     ))
     ap.add_argument(
-        'env', help='Envorinment configuration file'
+        'env', help='Environment configuration file'
     )
     ap.add_argument(
         'agent', help='Agent configuration file'
@@ -54,24 +54,21 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def load_env(cfg_file):
-    cfg = load_config(cfg_file)
-    Environment = get_env(cfg['name'])
-    return Environment(**cfg['args'])
+def _load_env(config_file_path):
+    config = load_config(config_file_path)
+    return get_env(config['name'])(**config['args'])
 
 
-def load_agent(cfg_file):
-    cfg = load_config(cfg_file)
-    Agent = get_agent(cfg['name'])
-    return Agent(**cfg['args'])
+def _load_agent(config_file_path):
+    config = load_config(config_file_path)
+    return get_agent(config['name'])(**config['args'])
 
 
-def get_parameter_files(dir_path, prefix):
+def _get_parameter_files(dir_path, prefix):
     files = []
     for filename in os.listdir(dir_path):
         if not filename.startswith(prefix):
             continue
-
         try:
             ite = int(filename.split('.')[0].split('_')[1])
             f_path = os.path.join(dir_path, filename)
@@ -82,7 +79,7 @@ def get_parameter_files(dir_path, prefix):
     return files
 
 
-def run_single_episode(env, agent, timelimit=300):
+def _run_episode(env, agent, timelimit=300):
     """Run one episode under the given condition
 
     Args:
@@ -114,38 +111,42 @@ def run_single_episode(env, agent, timelimit=300):
     return rewards, steps
 
 
-def run_episodes(env, agent, episodes=30, timelimit=300):
+def _run_episodes(env, agent, episodes=30, timelimit=300):
     rewards, steps = [], []
     _LG.info('  Running %d Episodes', episodes)
     for i in range(episodes):
-        r, s = run_single_episode(env, agent, timelimit)
-        _LG.info('  Ep %d: %8d (%8d steps)'.format(i+1, r, s))
-        rewards.append(r)
-        steps.append(s)
+        t0 = time.time()
+        reward, step = _run_episode(env, agent, timelimit)
+        t1 = time.time()
+        _LG.info('  Ep %4d: Rewards %8d, Steps %8d, Time %8d [sec]',
+                 i+1, reward, step, t1-t0)
+        rewards.append(reward)
+        steps.append(step)
     return rewards, steps
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
 
-    files = get_parameter_files(args.input_dir, args.prefix)
-    env = load_env(args.env)
-    agent = load_agent(args.agent)
-
+    files = _get_parameter_files(args.input_dir, args.prefix)
+    env = _load_env(args.env)
+    agent = _load_agent(args.agent)
     agent.init(env)
+
     writer = SummaryWriter(args.output_dir)
     if agent.session.graph:
         writer.add_graph(agent.session.graph)
     writer.register_stats(['Rewards', 'Steps'])
 
-    for ite, f in files:
-        _LG.info('*** Evaluating %s', f)
-        agent.session.load_from_file(f)
-        rewards, steps = run_episodes(
+    for ite, file_ in files:
+        _LG.info('*** Evaluating %s', file_)
+        agent.session.load_from_file(file_)
+        rewards, steps = _run_episodes(
             env, agent, episodes=args.episodes, timelimit=args.timelimit)
         _LG.info('Average rewards: %s', sum(rewards) / len(rewards))
         _LG.info('Average steps: %s', sum(steps) / len(steps))
         writer.summarize_stats(ite, {'Rewards': rewards, 'Steps': steps})
 
+
 if __name__ == '__main__':
-    main()
+    _main()
