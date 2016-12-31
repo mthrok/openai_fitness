@@ -17,10 +17,10 @@ class SummaryOperation(object):
     """Create placeholder and summary operations for the given names"""
     def __init__(self, summary_type, name):
         summary_funcs = {
-            'scalar': tf.scalar_summary,
-            'image': tf.image_summary,
-            'audio': tf.audio_summary,
-            'histogram': tf.histogram_summary,
+            'scalar': tf.summary.scalar,
+            'image': tf.summary.image,
+            'audio': tf.summary.audio,
+            'histogram': tf.summary.histogram,
         }
         self.pf = tf.placeholder('float32')
         self.op = summary_funcs[summary_type](name, self.pf)
@@ -39,7 +39,7 @@ class SummaryWriter(object):
         self.summary_ops = {}
         self.tags = {}
 
-        self.writer = tf.train.SummaryWriter(self.output_dir)
+        self.writer = tf.summary.FileWriter(self.output_dir)
         self.graph = tf.Graph()
         self.session = tf.Session(graph=self.graph)
 
