@@ -1,11 +1,13 @@
+"""Illustrates how to implement custom agent"""
 from luchador.agent import BaseAgent
 
 import numpy as np
 
 
 class MyRandomAgent(BaseAgent):
+    """Illustrates how to implement custom agent"""
     def __init__(self):
-        pass
+        self.n_actions = 0
 
     def init(self, env):
         self.n_actions = env.n_actions
@@ -16,5 +18,5 @@ class MyRandomAgent(BaseAgent):
     def observe(self, action, outcome):
         pass
 
-    def act(self):
+    def act(self, _):
         return np.random.randint(self.n_actions)

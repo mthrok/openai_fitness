@@ -81,7 +81,7 @@ class NoOpAgent(BaseAgent):
     def observe(self, action, outcome):
         pass
 
-    def act(self):
+    def act(self, _):
         return 0
 
 
