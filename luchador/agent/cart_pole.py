@@ -89,26 +89,25 @@ class CartPoleAgent(BaseAgent):
         self.critic_eligibility = np.zeros((N_BOX,))
 
     def observe(self, action, outcome):
-        self.action_eligibility[self.box] += (1.0 - self.action_decay) * (action - 0.5)
-        self.critic_eligibility[self.box] += (1.0 - self.critic_decay)
-
-        p_pre_action = self.critic_weight[self.box]
-
+        p_prev = self.critic_weight[self.box]
         self.box = _get_box(**outcome.observation)
+        p_current = 0.0 if outcome.terminal else self.critic_weight[self.box]
 
-        p_post_action = 0.0 if outcome.terminal else self.critic_weight[self.box]
+        r_hat = outcome.reward + self.critic_discount * p_current - p_prev
 
-        rhat = outcome.reward + self.critic_discount * p_post_action - p_pre_action
-
-        self.action_weight += self.action_lr * rhat * self.action_eligibility
-        self.critic_weight += self.critic_lr * rhat * self.critic_eligibility
+        self.action_weight += self.action_lr * r_hat * self.action_eligibility
+        self.critic_weight += self.critic_lr * r_hat * self.critic_eligibility
 
         self.action_eligibility *= self.action_decay
         self.critic_eligibility *= self.critic_decay
 
-    def act(self):
+    def act(self, observation):
         prob = _truncated_sigmoid(self.action_weight[self.box])
-        return int(np.random.rand() < prob)
+        action = int(np.random.rand() < prob)
+        update = action - 0.5
+        self.action_eligibility[self.box] += (1.0 - self.action_decay) * update
+        self.critic_eligibility[self.box] += (1.0 - self.critic_decay)
+        return action
 
     def perform_post_episode_task(self, stats):
         pass

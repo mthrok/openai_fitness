@@ -24,23 +24,25 @@ def _main(env, agent, episodes, steps, report_every=1000):
     runner = EpisodeRunner(env, agent, max_steps=steps)
 
     _LG.info('Running %s episodes', episodes)
-    n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
+    n_ep, time_, steps_, rewards_ = 0, 0, 0, 0.0
     for i in range(1, episodes+1):
         stats = runner.run_episode()
 
         n_ep += 1
         time_ += stats['time']
         steps_ += stats['steps']
-        rewards += stats['rewards']
+        rewards_ += stats['rewards']
         if i % report_every == 0 or i == episodes:
             _LG.info('Finished episode: %d', i)
-            _LG.info('  Rewards:     %12.3f [/epi]', rewards / n_ep)
+            _LG.info('  Rewards:     %12.3f', rewards_)
+            _LG.info('               %12.3f [/epi]', rewards_ / n_ep)
+            _LG.info('               %12.3f [/steps]', rewards_ / steps_)
             _LG.info('  Steps:       %8d', steps_)
             _LG.info('               %12.3f [/epi]', steps_ / n_ep)
             _LG.info('               %12.3f [/sec]', steps_ / time_)
             _LG.info('  Total Steps: %8d', runner.steps)
             _LG.info('  Total Time:  %s', _format_time(runner.time))
-            n_ep, time_, steps_, rewards = 0, 0, 0, 0.0
+            n_ep, time_, steps_, rewards_ = 0, 0, 0, 0.
     _LG.info('Done')
 
 
