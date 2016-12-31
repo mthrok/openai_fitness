@@ -1,3 +1,7 @@
+"""Implementation of CartPole Agent from Sutton
+
+https://webdocs.cs.ualberta.ca/~sutton/book/code/pole.c
+"""
 from __future__ import division
 from __future__ import absolute_import
 
@@ -60,6 +64,10 @@ def _truncated_sigmoid(s):
 
 
 class CartPoleAgent(BaseAgent):
+    """Implementation of CartPole Agent from Sutton
+
+    https://webdocs.cs.ualberta.ca/~sutton/book/code/pole.c
+    """
     def __init__(self,
                  action_lr=1000,
                  critic_lr=0.5,
