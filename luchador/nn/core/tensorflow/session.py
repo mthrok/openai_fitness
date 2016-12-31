@@ -135,7 +135,7 @@ class Session(session.BaseSession):
 
     def initialize(self):
         """Initialize all variables"""
-        self.session.run(tf.initialize_all_variables())
+        self.session.run(tf.global_variables_initializer())
 
     ###########################################################################
     def load_dataset(self, dataset, cast=True, strict=True):
