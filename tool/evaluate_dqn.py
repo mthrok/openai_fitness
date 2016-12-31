@@ -68,11 +68,16 @@ def load_agent(cfg_file):
 
 def get_parameter_files(dir_path, prefix):
     files = []
-    for f in os.listdir(dir_path):
-        if f.startswith(prefix):
-            ite = int(f.split('.')[0].split('_')[1])
-            f_path = os.path.join(dir_path, f)
+    for filename in os.listdir(dir_path):
+        if not filename.startswith(prefix):
+            continue
+
+        try:
+            ite = int(filename.split('.')[0].split('_')[1])
+            f_path = os.path.join(dir_path, filename)
             files.append((ite, f_path))
+        except ValueError:
+            _LG.warn('Failed to parse file name %s.', filename)
     files.sort(key=lambda f: f[0])
     return files
 
@@ -86,12 +91,13 @@ def run_single_episode(env, agent, timelimit=300):
       timelimit (int): Time limit of one episode in second
     """
     outcome = env.reset()
-    agent.reset(outcome.observation)
+    last_observation = outcome.observation
+    agent.reset(last_observation)
 
     t0 = time.time()
     rewards, steps = 0, 0
     while not outcome.terminal:
-        action = agent.act()
+        action = agent.act(last_observation)
         outcome = env.step(action)
 
         rewards += outcome.reward
@@ -100,17 +106,20 @@ def run_single_episode(env, agent, timelimit=300):
         agent.observe(action, outcome)
 
         elapsed = time.time() - t0
+        last_observation = outcome.observation
+
         if elapsed > timelimit:
             _LG.info('  Reached time limit')
+
     return rewards, steps
 
 
 def run_episodes(env, agent, episodes=30, timelimit=300):
     rewards, steps = [], []
-    _LG.info('  Running {} Episodes'.format(episodes))
+    _LG.info('  Running %d Episodes', episodes)
     for i in range(episodes):
         r, s = run_single_episode(env, agent, timelimit)
-        _LG.info('  Ep {}: {} ({} steps)'.format(i+1, r, s))
+        _LG.info('  Ep %d: %8d (%8d steps)'.format(i+1, r, s))
         rewards.append(r)
         steps.append(s)
     return rewards, steps
@@ -127,15 +136,15 @@ def main():
     writer = SummaryWriter(args.output_dir)
     if agent.session.graph:
         writer.add_graph(agent.session.graph)
-    writer.register_stats(['Reward', 'Steps'])
+    writer.register_stats(['Rewards', 'Steps'])
 
     for ite, f in files:
-        _LG.info('*** Evaluating {}'.format(f))
+        _LG.info('*** Evaluating %s', f)
         agent.session.load_from_file(f)
         rewards, steps = run_episodes(
             env, agent, episodes=args.episodes, timelimit=args.timelimit)
-        _LG.info('Average rewards: {}'.format(sum(rewards) / len(rewards)))
-        _LG.info('Average steps: {}'.format(sum(steps) / len(steps)))
+        _LG.info('Average rewards: %s', sum(rewards) / len(rewards))
+        _LG.info('Average steps: %s', sum(steps) / len(steps))
         writer.summarize_stats(ite, {'Rewards': rewards, 'Steps': steps})
 
 if __name__ == '__main__':
