@@ -144,8 +144,9 @@ def get_env(name):
         When Environment with the given name is not found
     """
     # Some environments depend on dynamic library, and
-    # importing all of them at global initialization leads to TLS Error.
-    # TLS can be avoided only by upgrading underlying libc version, which
+    # importing all of them at global initialization leads to TLS Error on
+    # Ubuntu 14.04.
+    # TLS Error is avoidable only by upgrading underlying libc version, which
     # is not easy. So we import such environments on-demand.
     if name in _ENVIRONMENT_MODULE_MAPPING:
         module = 'luchador.env.{:s}'.format(_ENVIRONMENT_MODULE_MAPPING[name])
