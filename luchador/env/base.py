@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import abc
+import importlib
 
 import numpy as np
 
@@ -118,6 +119,12 @@ class BaseEnvironment(object):
         pass
 
 
+_ENVIRONMENT_MODULE_MAPPING = {
+    'ALEEnvironment': 'ale',
+    'FlappyBird': 'flappy_bird',
+}
+
+
 def get_env(name):
     """Retrieve Environment class by name
 
@@ -136,7 +143,16 @@ def get_env(name):
     ValueError
         When Environment with the given name is not found
     """
+    # Some environments depend on dynamic library, and
+    # importing all of them at global initialization leads to TLS Error.
+    # TLS can be avoided only by upgrading underlying libc version, which
+    # is not easy. So we import such environments on-demand.
+    if name in _ENVIRONMENT_MODULE_MAPPING:
+        module = 'luchador.env.{:s}'.format(_ENVIRONMENT_MODULE_MAPPING[name])
+        importlib.import_module(module)
+
     for class_ in luchador.common.get_subclasses(BaseEnvironment):
         if class_.__name__ == name:
             return class_
+
     raise ValueError('Unknown Environment: {}'.format(name))
