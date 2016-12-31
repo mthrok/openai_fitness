@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import logging
+import collections
 
 import numpy as np
 import tensorflow as tf
@@ -13,17 +14,19 @@ _LG = logging.getLogger(__name__)
 __all__ = ['SummaryWriter']
 
 
-class SummaryOperation(object):
-    """Create placeholder and summary operations for the given names"""
-    def __init__(self, summary_type, name):
-        summary_funcs = {
-            'scalar': tf.summary.scalar,
-            'image': tf.summary.image,
-            'audio': tf.summary.audio,
-            'histogram': tf.summary.histogram,
-        }
-        self.pf = tf.placeholder('float32')
-        self.op = summary_funcs[summary_type](name, self.pf)
+SummaryOperation = collections.namedtuple('SummaryOperation', ('pf', 'op'))
+
+
+def _create_summary_op(type_, name):
+    summary_funcs = {
+        'scalar': tf.summary.scalar,
+        'image': tf.summary.image,
+        'audio': tf.summary.audio,
+        'histogram': tf.summary.histogram,
+    }
+    pf = tf.placeholder('float32')
+    op = summary_funcs[type_](name, pf)
+    return SummaryOperation(pf, op)
 
 
 class SummaryWriter(object):
@@ -34,7 +37,7 @@ class SummaryWriter(object):
     is handled internally.
 
     """
-    def __init__(self, output_dir, graph=None):
+    def __init__(self, output_dir):
         self.output_dir = output_dir
         self.summary_ops = {}
         self.tags = {}
@@ -55,7 +58,7 @@ class SummaryWriter(object):
 
     def _register(self, summary_type, names, tag):
         for name in names:
-            self.summary_ops[name] = SummaryOperation(summary_type, name)
+            self.summary_ops[name] = _create_summary_op(summary_type, name)
 
         if tag:
             self.tags[tag] = names
