@@ -136,7 +136,7 @@ def _main():
     writer = SummaryWriter(args.output_dir)
     if agent.session.graph:
         writer.add_graph(agent.session.graph)
-    writer.register_stats(['Rewards', 'Steps'])
+    writer.register_stats(['Reward', 'Steps'])
 
     for ite, file_ in files:
         _LG.info('*** Evaluating %s', file_)
@@ -145,7 +145,7 @@ def _main():
             env, agent, episodes=args.episodes, timelimit=args.timelimit)
         _LG.info('Average rewards: %s', sum(rewards) / len(rewards))
         _LG.info('Average steps: %s', sum(steps) / len(steps))
-        writer.summarize_stats(ite, {'Rewards': rewards, 'Steps': steps})
+        writer.summarize_stats(ite, {'Reward': rewards, 'Steps': steps})
 
 
 if __name__ == '__main__':
