@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 import abc
+import importlib
 
 from luchador import common
 
@@ -85,6 +86,11 @@ class NoOpAgent(BaseAgent):
         return 0
 
 
+_AGENT_MODULE_MAPPING = {
+    'DQNAgent': 'dqn',
+}
+
+
 def get_agent(name):
     """Retrieve Agent class by name
 
@@ -103,6 +109,10 @@ def get_agent(name):
     ValueError
         When Agent with the given name is not found
     """
+    if name in _AGENT_MODULE_MAPPING:
+        module = 'luchador.agent.{:s}'.format(_AGENT_MODULE_MAPPING[name])
+        importlib.import_module(module)
+
     for class_ in common.get_subclasses(BaseAgent):
         if class_.__name__ == name:
             return class_
