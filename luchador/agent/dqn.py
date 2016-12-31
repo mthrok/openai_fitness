@@ -138,7 +138,7 @@ class DQNAgent(BaseAgent):
 
     ###########################################################################
     # Methods for `act`
-    def act(self):
+    def act(self, _):
         if (
                 not self.recorder.is_ready() or
                 np.random.rand() < self._get_exploration_probability()
