@@ -1,3 +1,4 @@
+"""Neural Network module backend using Tensorflow"""
 from __future__ import absolute_import
 
 from .session import *  # noqa: F401, E403

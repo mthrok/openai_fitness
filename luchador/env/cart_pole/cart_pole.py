@@ -1,6 +1,15 @@
-"""CartPole controll environment
+"""CartPole controll environment from [1]_ according to [2]_
 
-Taken from https://webdocs.cs.ualberta.ca/~sutton/book/code/pole.c
+References
+----------
+.. [1] A. G. Barto, R. S. Sutton, and C. W. Anderson (1983)
+       Neuronlike adaptive elements that can solve difficult
+       learning control problems
+       IEEE Transactions on Systems, Man, and Cybernetics,
+       vol. SMC-13, pp. 834-846, Sept./Oct. 1983.
+
+.. [2] https://webdocs.cs.ualberta.ca/~sutton/book/code/pole.c
+
 """
 from __future__ import division
 from __future__ import absolute_import
