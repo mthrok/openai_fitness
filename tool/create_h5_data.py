@@ -1,8 +1,9 @@
 import h5py
+# pylint: disable=unused-import,eval-used
 import numpy as np  # noqa
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     import argparse
     ap = argparse.ArgumentParser(
         description=(
@@ -23,19 +24,19 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def save(data, output_file, key='data'):
-    f = h5py.File(output_file, 'a')
-    if key in f:
-        del f[key]
-    f.create_dataset(key, data=data)
-    f.close()
+def _save(data, output_file, key='data'):
+    file_ = h5py.File(output_file, 'a')
+    if key in file_:
+        del file_[key]
+    file_.create_dataset(key, data=data)
+    file_.close()
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
     data = eval('{}'.format(args.expression))
-    save(data, args.output, args.key)
+    _save(data, args.output, args.key)
 
 
 if __name__ == '__main__':
-    main()
+    _main()

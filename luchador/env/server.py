@@ -147,7 +147,7 @@ def create_env_app(env):
         return _jsonify(luchador.env.serialize_outcome(attr['outcome']))
 
     @app.route('/n_actions', methods=['POST', 'GET'])
-    def _n_actions():
+    def _n_actions():  # pylint: disable=unused-variable
         return _jsonify({'n_actions': env.n_actions})
 
     @app.route('/reset', methods=['POST', 'GET'])
@@ -159,7 +159,7 @@ def create_env_app(env):
     def _step():
         try:
             params = flask.request.get_json()
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             _LG.exception('Failed to parse parameter')
             return 'Failed to parse parameter', 400
 
