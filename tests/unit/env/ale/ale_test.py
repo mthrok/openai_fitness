@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from luchador.env import ALEEnvironment as ALE
+from luchador.env.ale import ALEEnvironment as ALE
 
 
 class ALEEnvironmentTest(unittest.TestCase):
