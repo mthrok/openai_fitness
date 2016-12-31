@@ -8,6 +8,7 @@ dependencies:
     - "Arcade-Learning-Environment"
   pre:
     - sudo apt-get update
+    - git fetch --unshallow origin || true
     - ./cci_script/install_dependencies.sh
     - ./cci_script/fix_urllib_sni.sh
   override:
