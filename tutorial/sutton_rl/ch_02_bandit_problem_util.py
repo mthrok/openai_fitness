@@ -13,9 +13,6 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
-import luchador.env
-import luchador.agent
-
 
 def run_episode(env, agent, steps):
     agent.reset(env.reset().observation)
@@ -61,22 +58,3 @@ def plot_result(epsilons, rewards, optimal_action_ratios):
     ax2.legend(loc=4)
     ax2.set_xlabel('Steps')
     ax2.set_ylabel('Optimal Action Ratio [%]')
-
-
-def main():
-    epsilons = [0, 0.1, 0.01]
-    mean_rewards, optimal_actions = [], []
-    for epsilon in epsilons:
-        env = luchador.env.StationaryBandit(n_arms=10, seed=0)
-        agent = luchador.agent.EGreedyAgent(epsilon=epsilon)
-        agent.init(env)
-        rewards, actions = run_episodes(env, agent, episodes=2000, steps=1000)
-        mean_rewards.append(rewards)
-        optimal_actions.append(actions)
-
-    plot_result(epsilons, mean_rewards, optimal_actions)
-    plt.show()
-
-
-if __name__ == '__main__':
-    main()

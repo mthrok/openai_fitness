@@ -51,7 +51,7 @@ class EGreedyAgent(BaseAgent):
         self.q_values[action] += (r - q) * alpha
         self.n_trials[action] += 1
 
-    def act(self):
+    def act(self, _=None):
         """Choose action based on e-greedy policy"""
         if self.rng.rand() < self.epsilon:
             return self.rng.randint(self.n_actions)
