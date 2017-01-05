@@ -15,6 +15,10 @@ class _Normal(object):
         """Sample from Normal distribution"""
         return self.mean + self.stddev * self.rng.randn()
 
+    def __str__(self):
+        return ('Normal Distribution (Mean: {:7.3f}, '
+                'Standard Deviation: {})'.format(self.mean, self.stddev))
+
 
 def _build_distributions(n_dists, rng):
     return [
