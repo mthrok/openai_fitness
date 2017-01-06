@@ -1,7 +1,7 @@
 # <markdowncell>
 
 # # Chapter 2. Bandit Problems
-# In this tutorial, we cover n-Armed Bandit Problem, following Chapter 2 of
+# In this tutorial, we cover $n$-Armed Bandit Problem, following Chapter 2 of
 # `Reinforcement Learning: An Introduction` to study fundamental properties
 # of reinforcement learning, such as evaluative feedback and explotation vs
 # exprolitation.
@@ -10,17 +10,17 @@
 
 # ### Definition of Bandit Problems
 
-# The following is the definicion/explanation of bandit problem from the book.
+# The following is the definition/explanation of bandit problem from the book.
 
 # ---
 
-# *You are faced repeatedly with a choice among n different options, or *
+# *You are faced repeatedly with a choice among $n$ different options, or *
 # *actions. After each choice you receive a numerical reward chosen from a *
 # *stationary probability distribution that depends on the action you *
 # *selected. Your objective is to maximize the expected total reward over *
 # *some time period, for example, over 1000 action selections, or time steps.*
 
-# *This is the original form of the n-armed bandit problem, so named by *
+# *This is the original form of the $n$-armed bandit problem, so named by *
 # *analogy to a slot machine, or "one-armed bandit," except that it has n *
 # *levers instead of one. Each action selection is like a play of one of *
 # *the slot machine's levers, and the rewards are the payoffs for hitting *
@@ -122,6 +122,18 @@ print(bandit)
 # knew these values, then they could solve bandit problem just by selecting
 # the action with the highest value. Agents, however can only estimate these
 # value.
+
+# <markdowncell>
+
+# You can use `step` method to take an action over the environment.
+# The argument to the method in this case is the index of distribution from
+# which reward is drawn.
+
+# <codecell>
+
+for action in range(bandit.n_actions):
+    outcome = bandit.step(action)
+    print(action, outcome.reward)
 
 # <markdowncell>
 
@@ -247,5 +259,19 @@ plt.show()
 
 # <markdowncell>
 
-# ### Imcremental Implementation
-# $$ Q_t(a) = \frac{R_1 +R_2 + \dots +R_{K_a}}{K_a}$$
+# ### Imcremental Implementation to non-stationary extention
+# $Q_t$, estimated value of an action at time step $t$, as mean
+# observed reward can be written in recursive manner as follow
+#
+# \begin{align}
+# Q_t &= \frac{R_1 +R_2 + \dots +R_{K_a}}{K_a} \\
+#     &= \frac{1}{K_a} \sum_{i=1}^{K_a}R_{i} \\
+#     &= \frac{1}{K_a} ( R_{K_a} + \sum_{i=1}^{K_a - 1}R_{i} ) \\
+#     &= \frac{1}{K_a} \left\{ R_{K_a} + ( K_a - 1 )
+#            \frac{1}{K_a - 1}\sum_{i=1}^{K_a - 1}R_{i} \right\} \\
+#     &= \frac{1}{K_a} \left\{ R_{K_a} + ( K_a - 1 ) Q_{t-1} \right\} \\
+#     &= Q_{t-1} + \frac{1}{K_a} ( R_{K_a} - Q_{t-1} )
+# \end{align}
+#
+# This can be generalized iterative update form
+# $$ NewEstimate \leftarrow OldEstimate + StepSize ( Target - OldEstimate ) $$
