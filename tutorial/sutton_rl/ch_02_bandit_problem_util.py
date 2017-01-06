@@ -9,14 +9,15 @@ longe term, which implies the importance of balancing exploitation and
 exploration.
 """
 from __future__ import division
+from __future__ import absolute_import
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def run_episode(env, agent, steps):
+def _run_episode(env, agent, steps):
     agent.reset(env.reset().observation)
-    optimal_action = np.argmax([dist.mean for dist in env.distributions])
+    optimal_action = np.argmax(env.mean)
 
     rewards, optimal_actions = [], []
     for _ in range(steps):
@@ -32,7 +33,7 @@ def run_episode(env, agent, steps):
 def run_episodes(env, agent, episodes, steps):
     mean_rewards, optimal_action_ratio = 0, 0
     for _ in range(episodes):
-        rewards, opt_actions = run_episode(env, agent, steps)
+        rewards, opt_actions = _run_episode(env, agent, steps)
         mean_rewards += np.asarray(rewards) / episodes
         optimal_action_ratio += np.asarray(opt_actions, dtype=float) / episodes
     return mean_rewards, optimal_action_ratio
