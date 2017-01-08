@@ -4,7 +4,8 @@ from __future__ import absolute_import
 import abc
 import importlib
 
-from luchador import common
+import luchador.util
+
 
 __all__ = ['BaseAgent', 'NoOpAgent', 'get_agent']
 
@@ -113,7 +114,7 @@ def get_agent(name):
         module = 'luchador.agent.{:s}'.format(_AGENT_MODULE_MAPPING[name])
         importlib.import_module(module)
 
-    for class_ in common.get_subclasses(BaseAgent):
+    for class_ in luchador.util.get_subclasses(BaseAgent):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Agent: {}'.format(name))

@@ -1,17 +1,16 @@
 """Define common interface for Cost classes"""
-
 from __future__ import absolute_import
 
 import abc
 import logging
 
-from luchador import common
+import luchador.util
 
 
 _LG = logging.getLogger(__name__)
 
 
-class BaseCost(common.StoreMixin, object):
+class BaseCost(luchador.util.StoreMixin, object):
     """Define common interface for cost computation class"""
     __metaclass__ = abc.ABCMeta
 
@@ -71,7 +70,7 @@ def get_cost(name):
     ValueError
         When Cost with the given name is not found
     """
-    for class_ in common.get_subclasses(BaseCost):
+    for class_ in luchador.util.get_subclasses(BaseCost):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Cost: {}'.format(name))

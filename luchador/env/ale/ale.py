@@ -10,7 +10,7 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
-from luchador.common import pprint_dict
+from luchador.util import pprint_dict
 from ..base import BaseEnvironment, Outcome
 
 _LG = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from collections import OrderedDict
 import theano
 import theano.tensor as T
 
-from luchador import common
+import luchador.util
 from ..base import optimizer as base_opt
 from . import scope, initializer, wrapper
 
@@ -21,7 +21,7 @@ class OptimizerMixin(object):
 
     @staticmethod
     def _compute_gradients(loss, wrt, **kwargs):
-        wrt = wrt if common.is_iteratable(wrt) else [wrt]
+        wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
         loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
         grads = theano.grad(loss, wrt)
         return [(grad, var) for grad, var in zip(grads, wrt)]

@@ -4,12 +4,12 @@ from __future__ import absolute_import
 import abc
 import logging
 
-import luchador
+import luchador.util
 
 _LG = logging.getLogger(__name__)
 
 
-class BaseInitializer(luchador.common.SerializeMixin, object):
+class BaseInitializer(luchador.util.SerializeMixin, object):
     """Define Common interface for Initializer classes"""
     __metaclass__ = abc.ABCMeta
 
@@ -66,7 +66,7 @@ def get_initializer(name):
     ValueError
         When Initializer with the given name is not found
     """
-    for class_ in luchador.common.get_subclasses(BaseInitializer):
+    for class_ in luchador.util.get_subclasses(BaseInitializer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Initializer: {}'.format(name))

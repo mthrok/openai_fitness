@@ -3,13 +3,13 @@ from __future__ import absolute_import
 import abc
 import logging
 
-from luchador import common
+import luchador.util
 
 
 _LG = logging.getLogger(__name__)
 
 
-class BaseDeepQLearning(common.StoreMixin, object):
+class BaseDeepQLearning(luchador.util.StoreMixin, object):
     """Build Q-learning network and optimization operations
 
     Parameters

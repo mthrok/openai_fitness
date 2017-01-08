@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador import common
+import luchador.util
 from ..base import optimizer as base_optimizer
 from . import scope, initializer, wrapper
 
@@ -46,7 +46,7 @@ class OptimizerMixin(object):
         return self._apply_gradients(grads_and_vars, **kws2)
 
     def _compute_gradients(self, loss, wrt, **kwargs):
-        wrt = [wrt] if wrt and not common.is_iteratable(wrt) else wrt
+        wrt = [wrt] if wrt and not luchador.util.is_iteratable(wrt) else wrt
         var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
         return self.optimizer.compute_gradients(
             loss=loss.unwrap(), var_list=var_list, **kwargs)

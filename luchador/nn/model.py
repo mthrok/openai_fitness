@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from luchador.common import get_subclasses
+import luchador.util
 from .core import scope as scp
 
 __all__ = [
@@ -31,7 +31,7 @@ def get_model(name):
     ValueError
         When Model class with the given name is not found
     """
-    for class_ in get_subclasses(BaseModel):
+    for class_ in luchador.util.get_subclasses(BaseModel):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown model: {}'.format(name))

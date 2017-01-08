@@ -7,7 +7,7 @@ from tensorflow import (
     Session as TFSession,
 )
 
-from luchador.common import is_iteratable
+import luchador.util
 from ..base import session
 from . import scope, wrapper
 
@@ -29,7 +29,7 @@ def _parse_outputs(outputs):
     if outputs is None:
         return outputs_
 
-    if not is_iteratable(outputs):
+    if not luchador.util.is_iteratable(outputs):
         outputs = [outputs]
 
     for output in outputs:
@@ -47,7 +47,7 @@ def _parse_updates(updates):
     if not updates:
         return ret
 
-    if not is_iteratable(updates):
+    if not luchador.util.is_iteratable(updates):
         updates = [updates]
 
     for update in updates:
@@ -125,7 +125,7 @@ class Session(session.BaseSession):
         fetches = _construct_fetches(outputs, updates)
         feed_dict = _construct_feed_dict(inputs, givens)
         values = self.session.run(fetches, feed_dict=feed_dict)
-        if is_iteratable(outputs):
+        if luchador.util.is_iteratable(outputs):
             return values[:len(outputs)]
         return values[0]
 

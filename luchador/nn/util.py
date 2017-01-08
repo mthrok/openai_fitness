@@ -1,5 +1,8 @@
-"""Utility functions for NN model creation"""
+"""Module to define utility functions used in luchador.nn module
 
+This module is expected to be loaded before other modules are loaded,
+thus should not cause cyclic import.
+"""
 from __future__ import absolute_import
 
 import os

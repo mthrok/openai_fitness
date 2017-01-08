@@ -4,10 +4,10 @@ from __future__ import absolute_import
 
 import abc
 
-from luchador import common
+import luchador.util
 
 
-class BaseOptimizer(common.SerializeMixin):
+class BaseOptimizer(luchador.util.SerializeMixin):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
 
@@ -132,7 +132,7 @@ def get_optimizer(name):
     ValueError
         When Optimizer with the given name is not found
     """
-    for class_ in common.get_subclasses(BaseOptimizer):
+    for class_ in luchador.util.get_subclasses(BaseOptimizer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Optimizer: {}'.format(name))

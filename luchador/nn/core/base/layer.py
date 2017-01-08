@@ -7,12 +7,12 @@ import abc
 import logging
 from collections import OrderedDict
 
-from luchador import common
+import luchador.util
 
 _LG = logging.getLogger(__name__)
 
 
-class BaseLayer(common.SerializeMixin, object):
+class BaseLayer(luchador.util.SerializeMixin, object):
     """Define common interface (``build``, ``parameters`` ...) of Layer"""
     __metaclass__ = abc.ABCMeta
 
@@ -102,9 +102,9 @@ def get_layer(name):
     ValueError
         When Layer with the given name is not found
     """
-    for Class in common.get_subclasses(BaseLayer):
-        if Class.__name__ == name:
-            return Class
+    for class_ in luchador.util.get_subclasses(BaseLayer):
+        if class_.__name__ == name:
+            return class_
     raise ValueError('Unknown Layer: {}'.format(name))
 
 

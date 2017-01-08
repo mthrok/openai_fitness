@@ -9,6 +9,7 @@ import numpy as np
 import luchador
 
 
+# pylint: disable=too-few-public-methods
 class Outcome(object):
     """Outcome when taking a step in environment
 
@@ -28,6 +29,7 @@ class Outcome(object):
         self.observation = observation
         self.terminal = terminal
         self.state = state or {}
+# pylint: enable=too-few-public-methods
 
 
 def _serialize_observation(obs):
@@ -153,7 +155,7 @@ def get_env(name):
         module = 'luchador.env.{:s}'.format(_ENVIRONMENT_MODULE_MAPPING[name])
         importlib.import_module(module)
 
-    for class_ in luchador.common.get_subclasses(BaseEnvironment):
+    for class_ in luchador.util.get_subclasses(BaseEnvironment):
         if class_.__name__ == name:
             return class_
 
