@@ -1,18 +1,27 @@
 from __future__ import print_function
 
-from luchador.common import get_subclasses
+import abc
+
+from luchador.util import get_subclasses
 from luchador.nn import (
     scope,
     Tensor,
     Constant,
 )
 
-
-class Formula(object):
-    pass
+# pylint: disable=invalid-name
 
 
-class x2(Formula):
+class _Formula(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    @staticmethod
+    def get():
+        pass
+
+
+class x2(_Formula):
     """ y = x2 """
     @staticmethod
     def get():
@@ -25,7 +34,7 @@ class x2(Formula):
         }
 
 
-class x6(Formula):
+class x6(_Formula):
     """
     y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
     https://www.google.com/search?q=y+%3D+(x-1.5)(x+-1)(x-1)(x%2B1)(x%2B1)(x%2B1.5)
@@ -46,7 +55,8 @@ class x6(Formula):
 
 
 def print_formulae():
-    print(' '.join([formula.__name__ for formula in get_subclasses(Formula)]))
+    """List up avaialable formulae"""
+    print(' '.join([formula.__name__ for formula in get_subclasses(_Formula)]))
 
 
 if __name__ == '__main__':
