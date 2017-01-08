@@ -1,4 +1,4 @@
-"""Rendering module for CartPole"""
+"""Simple 2D rendering with OpenGL"""
 from __future__ import division
 from __future__ import absolute_import
 
