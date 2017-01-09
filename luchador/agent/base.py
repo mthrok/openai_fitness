@@ -43,14 +43,8 @@ class BaseAgent(object):
         pass
 
     @abc.abstractmethod
-    def act(self, observation):
-        """Choose action.
-
-        Parameters
-        ----------
-        observation
-            Current observation of environment.
-        """
+    def act(self):
+        """Choose action."""
         pass
 
     @abc.abstractmethod
@@ -83,7 +77,7 @@ class NoOpAgent(BaseAgent):
     def observe(self, action, outcome):
         pass
 
-    def act(self, _):
+    def act(self):
         return 0
 
 

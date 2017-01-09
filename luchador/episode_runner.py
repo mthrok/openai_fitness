@@ -1,3 +1,4 @@
+"""Simple episode runner module"""
 from __future__ import absolute_import
 
 import time
@@ -26,7 +27,6 @@ class EpisodeRunner(object):
         outcome = self.env.reset()
         self.agent.reset(outcome.observation)
         self.episode += 1
-        return outcome.observation
 
     def _perform_post_episode_task(self, stats):
         """Perform post episode task"""
@@ -35,12 +35,12 @@ class EpisodeRunner(object):
     def run_episode(self, max_steps=None):
         """Run one episode"""
         max_steps = max_steps or self.max_steps
-        observation = self._reset()
+        self._reset()
 
         steps, rewards = 0, 0
         t_start = time.time()
         for steps in range(1, max_steps+1):
-            action = self.agent.act(observation)
+            action = self.agent.act()
             outcome = self.env.step(action)
 
             self.agent.observe(action, outcome)
@@ -48,7 +48,6 @@ class EpisodeRunner(object):
 
             if outcome.terminal:
                 break
-            observation = outcome.observation
 
         t_elapsed = time.time() - t_start
 

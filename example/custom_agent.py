@@ -18,5 +18,5 @@ class MyRandomAgent(BaseAgent):
     def observe(self, action, outcome):
         pass
 
-    def act(self, _):
+    def act(self):
         return np.random.randint(self.n_actions)

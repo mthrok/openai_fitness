@@ -109,7 +109,7 @@ class CartPoleAgent(BaseAgent):
         self.action_eligibility *= self.action_decay
         self.critic_eligibility *= self.critic_decay
 
-    def act(self, observation):
+    def act(self):
         prob = _truncated_sigmoid(self.action_weight[self.box])
         action = int(np.random.rand() < prob)
         update = action - 0.5
