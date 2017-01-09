@@ -15,9 +15,9 @@ from luchador.nn import (
 class _Formula(object):
     __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
     @staticmethod
     def get():
+        """Return loss nd wrt object"""
         pass
 
 
