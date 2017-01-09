@@ -1,3 +1,11 @@
+"""Vanilla DQNAgent from [1]_:
+
+References
+----------
+.. [1] Mnih, V et. al (2015)
+       Human-level control through deep reinforcement learning
+       https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
+"""
 from __future__ import division
 
 import logging
@@ -30,6 +38,14 @@ _LG = logging.getLogger(__name__)
 
 
 class DQNAgent(BaseAgent):
+    """Implement Vanilla DQNAgent from [1]_:
+
+    References
+    ----------
+    .. [1] Mnih, V et. al (2015)
+           Human-level control through deep reinforcement learning
+            https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
+    """
     def __init__(
             self,
             recorder_config,
@@ -51,6 +67,16 @@ class DQNAgent(BaseAgent):
 
         self.n_total_observations = 0
         self.n_total_trainings = 0
+
+        self._n_actions = None
+        self.recorder = None
+        self.saver = None
+        self.summary_writer = None
+        self.summary_values = None
+        self.ql = None
+        self.optimizer = None
+        self.session = None
+        self.minimize_op = None
 
     ###########################################################################
     # Methods for initialization
@@ -108,14 +134,14 @@ class DQNAgent(BaseAgent):
 
         model_def = get_model_config(model_name, n_actions=self._n_actions)
 
-        def model_maker():
+        def _model_maker():
             dqn = make_model(model_def)
             input_tensor = Input(shape=shape)
             dqn(input_tensor())
             return dqn
 
         self.ql = DeepQLearning(**cfg['args'])
-        self.ql.build(model_maker)
+        self.ql.build(_model_maker)
 
     def _build_optimization(self):
         self.optimizer = get_optimizer(
