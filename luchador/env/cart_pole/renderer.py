@@ -1,3 +1,4 @@
+"""Module to render CartPole"""
 from __future__ import absolute_import
 
 import numpy as np
@@ -6,6 +7,7 @@ import luchador.util.render
 
 
 class CartPoleRenderer(object):
+    """Provide CartPole visualization"""
     def __init__(self, env):
         self._env = env
 
@@ -81,6 +83,7 @@ class CartPoleRenderer(object):
         self._renderer.add_geometry(self._pole)
 
     def render(self):
+        """Render the current CartPole state"""
         self._cart_trans.set_translation(self._env.state.x, 0.0)
         self._pole_trans.set_rotation(-self._env.state.theta)
         self._renderer.render()
