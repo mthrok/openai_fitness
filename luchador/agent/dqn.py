@@ -6,6 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 import luchador
+import luchador.util
 from luchador.nn import (
     Session,
     Input,
@@ -294,7 +295,7 @@ class DQNAgent(BaseAgent):
 
     ###########################################################################
     def __repr__(self):
-        return luchador.common.pprint_dict({
+        return luchador.util.pprint_dict({
             self.__class__.__name__: {
                 'Recorder': self.recorder_config,
                 'Q Network': self.q_network_config,
