@@ -1,5 +1,4 @@
 """Implements interface common for NN backends"""
-
 from __future__ import absolute_import
 
 from .layer import BaseLayer, get_layer  # noqa: F401

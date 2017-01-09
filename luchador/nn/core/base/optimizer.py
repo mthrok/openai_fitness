@@ -139,6 +139,7 @@ def get_optimizer(name):
 
 
 ###############################################################################
+# pylint: disable=abstract-method
 class BaseSGD(BaseOptimizer):
     """Implement Stochastic Gradient Descent
 

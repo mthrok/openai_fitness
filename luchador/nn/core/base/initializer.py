@@ -73,6 +73,7 @@ def get_initializer(name):
 
 
 ###############################################################################
+# pylint: disable=abstract-method
 class BaseConstant(BaseInitializer):
     """Initialize Variale with constant value
 
@@ -127,6 +128,7 @@ class BaseNormal(BaseInitializer):
 
 
 class BaseXavier(BaseInitializer):
+    # pylint: disable=anomalous-backslash-in-string
     """Implement Xavier initialization [1]_ in Tensorflow manner [2]_
 
     Parameters

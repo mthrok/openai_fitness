@@ -77,6 +77,7 @@ def get_cost(name):
 
 
 ###############################################################################
+# pylint: disable=abstract-method
 class BaseSSE2(BaseCost):
     """Compute Sum-Squared-Error / 2.0 for the given target and prediction
 
@@ -102,7 +103,7 @@ class BaseSSE2(BaseCost):
         super(BaseSSE2, self).__init__(
             max_delta=max_delta, min_delta=min_delta, elementwise=elementwise)
 
-    def _validate_args(self, min_delta, max_delta, **kwargs):
+    def _validate_args(self, min_delta, max_delta, **_):
         """Check if constructor arguments are valid. Raise error if invalid.
 
         Called automatically by constructor. Not to be called by user.

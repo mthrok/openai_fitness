@@ -76,13 +76,11 @@ class BaseSession(object):
             which is not defined, then ValueError exception is raised.
             Otherwise it will be skipped.
         """
-        f = h5py.File(filepath, 'r')
+        file_ = h5py.File(filepath, 'r')
         try:
-            data_set = _parse_dataset(f)
-        except Exception:
-            raise
+            data_set = _parse_dataset(file_)
         finally:
-            f.close()
+            file_.close()
 
         if var_names is not None:
             data_set = OrderedDict([(n, data_set[n]) for n in var_names])

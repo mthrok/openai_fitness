@@ -1,3 +1,4 @@
+"""Module for building neural Q learning network"""
 from __future__ import absolute_import
 
 import abc
@@ -70,7 +71,7 @@ class BaseDeepQLearning(luchador.util.StoreMixin, object):
         self.sync_op = None
 
     def _validate_args(self, min_reward=None, max_reward=None,
-                       min_delta=None, max_delta=None, **kwargs):
+                       min_delta=None, max_delta=None, **_):
         if (min_reward and not max_reward) or (max_reward and not min_reward):
             raise ValueError(
                 'When clipping reward, both `min_reward` '

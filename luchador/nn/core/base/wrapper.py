@@ -1,3 +1,4 @@
+"""Module to define common interface for Tensor/Operation wrapping"""
 from __future__ import absolute_import
 
 
@@ -33,4 +34,5 @@ class Operation(object):
         self.op = op
 
     def unwrap(self):
+        """Returns the underlying backend-specific operation object"""
         return self.op

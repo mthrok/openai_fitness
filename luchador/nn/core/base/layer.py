@@ -109,6 +109,7 @@ def get_layer(name):
 
 
 ###############################################################################
+# pylint: disable=abstract-method
 class BaseDense(BaseLayer):
     """Apply 2D affine transformation.
 
