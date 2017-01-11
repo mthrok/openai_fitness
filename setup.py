@@ -55,7 +55,7 @@ class DownloadALECommand(setuptools.Command):
         self.output_dir = os.path.join(BASE_DIR, 'luchador', ALE_ROM_DIR)
 
     def finalize_options(self):
-        # Ensure the target directory exists
+        """Ensure the target directory exists"""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
@@ -64,24 +64,25 @@ class DownloadALECommand(setuptools.Command):
         extract(content, self.output_dir)
 
 
-def get_git_revision(no_commit=False):
+def _get_git_revision(no_commit=False):
     cmd = ['git', '-C', BASE_DIR, 'describe', '--tag']
     if no_commit:
         cmd.append('--abbrev=0')
     return subprocess.check_output(cmd).strip()
 
 
-def write_version_file():
-    filepath = os.path.join(BASE_DIR, 'luchador', 'version.py')
+def _get_version():
+    try:
+        return _get_git_revision(no_commit=True)
+    except Exception as error:
+        print(error)
+        return 'v0.4.0'
 
-    with open(filepath, 'w') as f:
-        f.write("__version__ = '{}'\n".format(get_git_revision()))
 
-
-def do_setup():
+def _setup():
     setuptools.setup(
         name='luchador',
-        version=get_git_revision(no_commit=True),
+        version=_get_version(),
         cmdclass={
             # TODO: Add custom install/build command which run `download_ale`
             'download_ale': DownloadALECommand,
@@ -125,5 +126,4 @@ def do_setup():
 
 
 if __name__ == '__main__':
-    write_version_file()
-    do_setup()
+    _setup()
