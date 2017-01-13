@@ -17,10 +17,10 @@ import matplotlib.pyplot as plt
 
 def _run_episode(env, agent, steps):
     agent.reset(env.reset().observation)
-    optimal_action = np.argmax(env.mean)
 
     rewards, optimal_actions = [], []
     for _ in range(steps):
+        optimal_action = np.argmax(env.mean)
         action = agent.act()
         outcome = env.step(action)
         agent.observe(action, outcome)
@@ -39,7 +39,7 @@ def run_episodes(env, agent, episodes, steps):
     return mean_rewards, optimal_action_ratio
 
 
-def plot_result(epsilons, rewards, optimal_action_ratios):
+def plot_epsilon_comparison(epsilons, rewards, optimal_action_ratios):
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
@@ -50,12 +50,42 @@ def plot_result(epsilons, rewards, optimal_action_ratios):
         ax2.plot(100 * ratio, label=label)
     ax1.set_ylim(ymin=0)
     ax1.set_xlim(xmin=-10)
-    ax1.legend(loc=4)
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     ax1.set_xlabel('Steps')
     ax1.set_ylabel('Average Rewards')
 
     ax2.set_ylim(ymin=0, ymax=100)
     ax2.set_xlim(xmin=-10)
-    ax2.legend(loc=4)
+    box = ax2.get_position()
+    ax2.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax2.set_xlabel('Steps')
+    ax2.set_ylabel('Optimal Action Ratio [%]')
+
+
+def plot_step_size_comparison(epsilon, step_sizes, rewards, optimal_action_ratios):
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+
+    for reward, ratio, step in zip(rewards, optimal_action_ratios, step_sizes):
+        label = 'Epsilon: {:4.2f}, Step Size: {}'.format(epsilon, step)
+        ax1.plot(reward, label=label)
+        ax2.plot(100 * ratio, label=label)
+    ax1.set_ylim(ymin=0)
+    ax1.set_xlim(xmin=-10)
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax1.set_xlabel('Steps')
+    ax1.set_ylabel('Average Rewards')
+
+    ax2.set_ylim(ymin=0, ymax=100)
+    ax2.set_xlim(xmin=-10)
+    box = ax2.get_position()
+    ax2.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     ax2.set_xlabel('Steps')
     ax2.set_ylabel('Optimal Action Ratio [%]')

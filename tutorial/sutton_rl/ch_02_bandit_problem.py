@@ -70,7 +70,7 @@ class Bandit(luchador.env.BaseEnvironment):
     """
     def __init__(self, n_arms, seed=None):
         self.n_arms = n_arms
-        self.rng = np.random.RandomState(seed=seed)
+        self.rng_sample = np.random.RandomState(seed=seed)
 
     @property
     def n_actions(self):
@@ -78,14 +78,14 @@ class Bandit(luchador.env.BaseEnvironment):
 
     def reset(self):
         """Set distribution mean randomly"""
-        self.mean = [self.rng.randn() for _ in range(self.n_arms)]
-        self.stddev = [1 for _ in range(self.n_arms)]
+        self.mean = self.rng_sample.randn(self.n_arms)
+        self.stddev = np.ones(self.n_arms)
         return luchador.env.Outcome(
             reward=0, observation=None, terminal=False)
 
     def step(self, n):
         """Sample reward from the given distribution"""
-        reward = self.rng.normal(loc=self.mean[n], scale=self.stddev[n])
+        reward = self.rng_sample.normal(loc=self.mean[n], scale=self.stddev[n])
         return luchador.env.Outcome(
             reward=reward, observation=None, terminal=False)
 
@@ -133,7 +133,7 @@ print(bandit)
 
 for action in range(bandit.n_actions):
     outcome = bandit.step(action)
-    print(action, outcome.reward)
+    print(action, '{:8.3f}'.format(outcome.reward))
 
 # <markdowncell>
 
@@ -164,7 +164,7 @@ for i in range(bandit.n_actions):
 
 # <markdowncell>
 
-# ### Action-value method and epsilon-greedy policy
+# ### Action-value method and $\epsilon$-greedy policy
 
 # Let's incorperate some action selection into simple average action value
 # gestimation.
@@ -174,15 +174,16 @@ for i in range(bandit.n_actions):
 # 2. Behave like 1 most of the time, but every once in a while, select action
 # randomly with equal probability.
 
-# Rule 2. is called epsilon-greedy method, where epsilon represents the
+# Rule 2. is called $\epsilon$-greedy method, where $\epsilon$ represents the
 # probability of taking random action. Rule 1. is called greedy method but can
-# be considered as a special case of epsilon-greedy method, that is epsilon=0.
+# be considered as a special case of $\epsilon$-greedy method, that is
+# $\epsilon$=0.
 
 # To see the different behavior of these rules, let's run an experiment.
 # In this experiment, we run 2000 independant 10-armed bandit problem.
 
 # Agents estimate action values by tracking average rewards for each action
-# and select the next action based on epsilon-greedy method.
+# and select the next action based on $\epsilon$-greedy method.
 # Such agent can be implemented as following, using base luchador agent class.
 
 # <codecell>
@@ -228,7 +229,7 @@ class EGreedyAgent(luchador.agent.BaseAgent):
         self.q_values[action] += (r - q) * alpha
         self.n_trials[action] += 1
 
-    def act(self, _=None):
+    def act(self):
         """Choose action based on e-greedy policy"""
         if self.rng.rand() < self.epsilon:
             return self.rng.randint(self.n_actions)
@@ -238,7 +239,7 @@ class EGreedyAgent(luchador.agent.BaseAgent):
 
 # <markdowncell>
 
-# Run 10-armed test bed for with different epsilon-greedy method, and
+# Run 10-armed test bed for with different $\epsilon$-greedy method, and
 # plot rewards and the number of optimal actions taken.
 
 # <codecell>
@@ -254,7 +255,7 @@ for eps in epsilons:
     mean_rewards.append(rewards)
     optimal_actions.append(actions)
 
-util.plot_result(epsilons, mean_rewards, optimal_actions)
+util.plot_epsilon_comparison(epsilons, mean_rewards, optimal_actions)
 plt.show()
 
 # <markdowncell>
@@ -264,14 +265,137 @@ plt.show()
 # observed reward can be written in recursive manner as follow
 #
 # \begin{align}
-# Q_t &= \frac{R_1 +R_2 + \dots +R_{K_a}}{K_a} \\
+# Q_k &= \frac{R_1 +R_2 + \dots +R_{K_a}}{K_a} \\
 #     &= \frac{1}{K_a} \sum_{i=1}^{K_a}R_{i} \\
 #     &= \frac{1}{K_a} ( R_{K_a} + \sum_{i=1}^{K_a - 1}R_{i} ) \\
-#     &= \frac{1}{K_a} \left\{ R_{K_a} + ( K_a - 1 )
-#            \frac{1}{K_a - 1}\sum_{i=1}^{K_a - 1}R_{i} \right\} \\
-#     &= \frac{1}{K_a} \left\{ R_{K_a} + ( K_a - 1 ) Q_{t-1} \right\} \\
-#     &= Q_{t-1} + \frac{1}{K_a} ( R_{K_a} - Q_{t-1} )
+#     &= \frac{1}{K_a}
+#          \left\{
+#            R_{K_a} + ( K_a - 1 ) \frac{1}{K_a - 1}\sum_{i=1}^{K_a - 1}R_{i}
+#          \right\} \\
+#     &= \frac{1}{K_a} \left\{ R_{K_a} + ( K_a - 1 ) Q_{k-1} \right\} \\
+#     &= Q_{k-1} + \frac{1}{K_a} ( R_{K_a} - Q_{k-1} )
 # \end{align}
 #
-# This can be generalized iterative update form
+# Where $K_a$ denotest the number of action $a$ was taken.
+#
+# When computing mean value, we need to keep the list of received rewards in
+# non-iterative form. But using iterative form, all we need to store is the
+# latest estimations. Not only this is memory-efficient, but also, this form
+# enables us to extend estimation to non-stationary problem.
+#
+# The form above can be generalized into update expression
+#
 # $$ NewEstimate \leftarrow OldEstimate + StepSize ( Target - OldEstimate ) $$
+#
+# The expression $ ( Target - OldEstimate ) $ is an $ error $ in the estimate.
+# It is reduced by taking a step toward the $Target$.
+# The target is presumed to indicate a desirable direction in which to move,
+# though it may be noisy. In the case above, for example, the target is the
+# $k$-th reward.
+
+# <markdowncell>
+
+# ### Nonstationary Problem
+#
+# In the original mean reward value computation, $StepSize$ parameter, (denoted
+# $\alpha$ from now on) changes from time step to time step.
+#
+# $$ \alpha = \frac{1}{K_{a}} $$
+#
+# The influence of $ \alpha $ becomes clearer by taking iterative form.
+#
+# \begin{align}
+# Q_{k+1}
+#   &= Q_{k} +
+#      \alpha ( R_{k} - Q_{k} ) \\
+#   &= \alpha R_{k} +
+#      (1 - \alpha) Q_{k} \\
+#   &= \alpha R_{k} +
+#      (1 - \alpha) \left\{
+#        \alpha R_{k-1} + (1 - \alpha) Q_{k-1}
+#      \right\} \\
+#   &= \alpha R_{k} +
+#      \alpha (1 - \alpha) R_{k-1} +
+#      (1 - \alpha)^{2} Q_{k-1} \\
+#   &= \alpha R_{k} +
+#      \alpha (1 - \alpha) R_{k-1} +
+#      (1 - \alpha)^{2} \left\{
+#        \alpha R_{k-2} + (1 - \alpha) Q_{k-2}
+#      \right\} \\
+#   &= \alpha R_{k} +
+#      \alpha (1 - \alpha) R_{k-1} +
+#      \alpha (1 - \alpha)^2 R_{k-2} +
+#      (1 - \alpha)^{3} Q_{k-2} \\
+#   &= \alpha R_{k} +
+#      \alpha (1 - \alpha)       R_{k-1} +
+#      \alpha (1 - \alpha)^{2}   R_{k-2} +
+#      \dots +
+#      \alpha (1 - \alpha)^{k-1} R_{1} +
+#      (1 - \alpha)^{k} Q_1 \\
+#   &= (1 - \alpha)^{k} Q_1 +
+#      \sum_{i=1}^{k}
+#        \alpha ( 1 - \alpha) ^ {k-i} R_{i}
+# \end{align}
+#
+# For $ 0 \lt \alpha \lt 1 $,
+# $ (1 - \alpha) + \sum_{i=1}^{k} \alpha ( 1 - \alpha) ^ {k-i} = 1 $ holds.
+# Therefore, the estimation at $ k+1 $ step is weighted average of initial
+# estimation $ Q_1 $ and all rewards received.
+#
+# By using constants value for $\alpha$, the influence from past rewards decay
+# exponentially and new rewards have stronger effect on estimation. This is
+# more suitable in case the problem is not stationary.
+
+# To see the imapct of $ StepSize $ over bahavior, we can modify the `Bandit`
+# class to transition at each time step. (Exercise 2.6)
+
+# <codecell>
+
+
+class RandomWalkBandit(Bandit):
+    """Bandit with true action values taking independent random walks"""
+    def __init__(self, n_arms, seed=None):
+        super(RandomWalkBandit, self).__init__(n_arms, seed)
+
+        # For separating the effect of random walk from and random sampling
+        self.rng_random_walk = np.random.RandomState(seed=0)
+
+    def reset(self):
+        outcome = super(RandomWalkBandit, self).reset()
+        self.mean[:] = 0.000001 * self.rng_sample.randn(self.n_arms)
+        # We could also do `self.mean[:] = 0` but that will cause
+        # optimal action ratio to be 100 % at the beginnig, which is not
+        # our intention.
+        return outcome
+
+    def step(self, n):
+        outcome = super(RandomWalkBandit, self).step(n)
+        # Each time step, action value distribution takes random walk
+        self.mean[:] += self.rng_random_walk.randn(self.n_arms)
+        return outcome
+
+# <markdowncell>
+
+# In `RandomWalkBandit` class, reward distribution at the beginning are no
+# different each other, but each distribution takes random walk at each time
+# step.
+
+# We can run the same procedure as in above.
+
+# <codecell>
+
+
+epsilon = 0.1
+step_sizes = ['average', 0.1]
+mean_rewards, optimal_actions = [], []
+for step_size in step_sizes:
+    print('Running step_size = {}...'.format(step_size))
+    env = RandomWalkBandit(n_arms=10, seed=0)
+    agent = EGreedyAgent(epsilon=epsilon, step_size=step_size)
+    agent.init(env)
+    rewards, actions = util.run_episodes(env, agent, episodes=2000, steps=3000)
+    mean_rewards.append(rewards)
+    optimal_actions.append(actions)
+
+util.plot_step_size_comparison(epsilon, step_sizes, mean_rewards, optimal_actions)
+plt.show()
