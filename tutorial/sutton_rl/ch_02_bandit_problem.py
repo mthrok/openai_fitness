@@ -48,6 +48,7 @@
 # <codecell>
 
 # pylint: disable=invalid-name,attribute-defined-outside-init
+# pylint: disable=redefined-outer-name
 from __future__ import division
 from __future__ import print_function
 
@@ -397,5 +398,49 @@ for step_size in step_sizes:
     mean_rewards.append(rewards)
     optimal_actions.append(actions)
 
-util.plot_step_size_comparison(epsilon, step_sizes, mean_rewards, optimal_actions)
+util.plot_step_size_comparison(
+    epsilon, step_sizes, mean_rewards, optimal_actions)
+plt.show()
+
+# <markdowncell>
+
+# ### Optimistic Initial Values
+
+# The action value estimation discussed so far depends on the initial estimate,
+# $Q_{1}(a)$
+
+# $$
+#   Q_{k+1} = (1 - \alpha)^{k} Q_1 +
+#             \sum_{i=1}^{k} \alpha ( 1 - \alpha) ^ {k-i} R_{i}
+# $$
+
+# Initial action values can be used as a simple way of encouraging exploration.
+# Suppose that instead of setting the initial action values to zero, as we did
+# in the 10-armed testbed, we set them all to +5. Recall that the $q^{*}(a)$
+# in this problem are selected from a normal distribution with mean 0 and
+# variance 1. An initial estimate of +5 is thus wildly optimistic.
+# But this optimism encourages action-value methods to explore.
+# Whichever actions are initially selected, the reward is less than
+# the starting estimates; the learner switches to other actions, being
+# "disappointed" with the rewards it is receiving.
+
+# Let's run experiment, using `Bandit` class
+
+# <codecell>
+
+epsilons = [0, 0.1]
+initial_qs = [5, 0]
+mean_rewards, optimal_actions = [], []
+for epsilon, initial_q in zip(epsilons, initial_qs):
+    print('Running initial Q = {}...'.format(initial_q))
+    env = Bandit(n_arms=10, seed=0)
+    agent = EGreedyAgent(
+        epsilon=epsilon, initial_q=initial_q, step_size=0.1)
+    agent.init(env)
+    rewards, actions = util.run_episodes(env, agent, episodes=2000, steps=1000)
+    mean_rewards.append(rewards)
+    optimal_actions.append(actions)
+
+util.plot_initial_value_comparison(
+    epsilons, initial_qs, mean_rewards, optimal_actions)
 plt.show()
