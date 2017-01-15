@@ -38,7 +38,7 @@ def main(env, agent, episodes, steps):
 Examples of configuration files are found in `example` directory. Let's train [DeepMind's DQN Agent](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf) in Atari environment, using files from them. Run the following command from the top directory of luchador.
 
 ```bash
-luchador example/ALEEnvironment_train.yml --agent example/DQNAgent_train.yml --episodes 100000  --steps 10000
+luchador exercise example/ALEEnvironment_train.yml --agent example/DQNAgent_train.yml --episodes 100000  --steps 10000
 ```
 
 This will let agent play 100000 games (episodes), each of which can have 10000 steps at most. Looking inside of these YAML files, you can tell that agent is playing Space Invaders, that the agent has network architecture defined in `example/vanilla_dqn.yml` which is 3 layers of convolution followed by 2 layers of inner product layers, and such.
@@ -46,7 +46,7 @@ This will let agent play 100000 games (episodes), each of which can have 10000 s
 After the training is done, the trained parameter is saved at `results` directory. It takes about a day on GPU to finish this, so I included the result in `example/space_invaders_vanilla_dqn_99000.h5`, and you can run it by the following command in test mode.
 
 ```bash
-luchador example/ALEEnvironment_test.yml --agent example/DQNAgent_test.yml
+luchador exercise example/ALEEnvironment_test.yml --agent example/DQNAgent_test.yml
 ```
 
 You should be able to see the agent plays Space Invaders effectively.
@@ -116,7 +116,7 @@ args: {}
 You can use the same `luchador` command to run this agent, by giving the location of the file (in Python's dot notation) as `--sources` argument.
 
 ```bash
-luchador example/ALEEnvironment_test.yml --agent example/MyRandomAgent.yml --sources example.custom_agent
+luchador exercise example/ALEEnvironment_test.yml --agent example/MyRandomAgent.yml --sources example.custom_agent
 ```
 
 ### 3. Adding a new environment
@@ -269,6 +269,12 @@ import luchador.nn  # tensorflow backend is loaded
 ## Development Plan
 
 See [project list](https://github.com/mthrok/luchador/projects) for the list of plans.
+
+
+## RL Tutorials
+
+There are tutorials for funcamental concepts of Reinforcement Learning.
+See [tutorial](tutorial) for the detail.
 
 
 ## Bug report
