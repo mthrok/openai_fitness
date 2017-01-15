@@ -31,6 +31,7 @@ def _run_episode(env, agent, steps):
 
 
 def run_episodes(env, agent, episodes, steps):
+    """Run BanditProblem and track mean rewards and optimal action ratio"""
     mean_rewards, optimal_action_ratio = 0, 0
     for _ in range(episodes):
         rewards, opt_actions = _run_episode(env, agent, steps)
@@ -40,6 +41,7 @@ def run_episodes(env, agent, episodes, steps):
 
 
 def plot_epsilon_comparison(epsilons, rewards, optimal_action_ratios):
+    """Plot the impact of different epsilon values"""
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
@@ -67,6 +69,7 @@ def plot_epsilon_comparison(epsilons, rewards, optimal_action_ratios):
 
 def plot_step_size_comparison(
         epsilon, step_sizes, rewards, optimal_action_ratios):
+    """Plot the impact of different step size"""
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
@@ -94,6 +97,7 @@ def plot_step_size_comparison(
 
 def plot_initial_value_comparison(
         epsilons, q_vals, rewards, optimal_action_ratios):
+    """Plot the impact of initial Q values"""
     fig = plt.figure()
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)

@@ -1,3 +1,4 @@
+"""Tutorial for Bandit problem, following Chapter 2 of Sutton"""
 # <markdowncell>
 
 # # Chapter 2. Bandit Problems

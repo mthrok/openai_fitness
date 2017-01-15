@@ -1,3 +1,4 @@
+"""Tutorial for RL introduction, following Chapter 3 of Sutton"""
 # <markdowncell>
 
 # # Chapter 3. Reinforcement Learning Problem
