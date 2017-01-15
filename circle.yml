@@ -1,61 +1,98 @@
-machine:
-  environment:
-    COUNT_INTEGRATION_COVERAGE: 'true'
-
-dependencies:
-  cache_directories:
-    - "luchador/env/ale/rom"
-    - "Arcade-Learning-Environment"
-  pre:
-    - sudo apt-get update
-    - git fetch --unshallow origin || true
-    - ./cci_script/install_dependencies.sh
-    - ./cci_script/fix_urllib_sni.sh
-  override:
-    - ./cci_script/install_ale.sh
-    - ./cci_script/download_atari_roms.sh luchador/env/ale/rom
-    - pip install --upgrade numpy
-    - pip install --upgrade scipy
-    - pip install --upgrade git+git://github.com/Theano/Theano.git@rel-0.9.0beta1
-    - pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl
-    # Install luchador in editable mode so that coverage.py can collect data in integration tests
-    - pip install --upgrade -e .
-  post:
-    - sudo apt-get autoremove
-    - ./cci_script/print_version.sh
-
-test:
-  pre:
-    - pip install --upgrade flake8
-    - pip install --upgrade coverage
-    - coverage erase && rm -rf .coverage.*
-    - mkdir -p tmp
-  override:
-    # Unit tests
-    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --parallel-mode setup.py test
-    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --parallel-mode setup.py test
-    # Integration tests
-    - ./tests/integration/run_serialization_tests.sh
-    - ./tests/integration/run_initializer_compatibility_test.sh
-    - ./tests/integration/run_layer_numerical_compatibility_tests.sh
-    - ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
-    - ./tests/integration/test_server_client/run_server_client.sh
-    - ./tests/integration/test_server_client/run_manager_server.sh
-    - ./tests/integration/run_envs.sh
-    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
-    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
-    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32     ./tests/integration/run_dqn.sh
-    # Style check
-    - flake8 luchador
-    - flake8 tests
-  post:
-    # Report test coverage
-    - if [[ "$CIRCLE_PROJECT_USERNAME" -eq "mthrok" ]]; then ./cci_script/report_codacy_test_coverage.sh; fi
-
-deployment:
-   docs:
-     branch: master
-     owner: mthrok
-     commands:
-       - pip install Sphinx numpydoc sphinx_rtd_theme
-       - ./cci_script/build_docs.sh
+version: 2
+executorType: docker
+containerInfo:
+  - image: continuumio/anaconda
+    env:
+      - COUNT_INTEGRATION_COVERAGE=true
+stages:
+  build:
+    workDir: /src
+    steps:
+      - type: checkout
+      - type: shell
+        name: Install Dependancies
+        command: |
+          apt-get update
+          apt-get -y install g++ git cmake libsdl1.2-dev libsdl-gfx1.2-dev libsdl-image1.2-dev libhdf5-serial-dev xvfb
+      - type: shell
+        name: Install ALE
+        command: ./cci_script/install_ale.sh
+      - type: shell
+        name: Install Python Dependencies
+        command: |
+          conda install libgcc numpy scipy mkl coverage flake8
+          pip install codacy-coverage Sphinx sphinx_rtd_theme
+      - type: shell
+        name: Install Theano
+        command: pip install git+git://github.com/Theano/Theano.git
+      - type: shell
+        name: Install Tensorflow
+        command: pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl
+      - type: shell
+        name: Install Luchador
+        command: |
+          python setup.py download_ale --output-dir=luchador/env/ale/rom
+          pip install .
+      - type: shell
+        name: Print Version
+        command: |
+          g++ --version
+          python -c "import numpy;print('NumPy:', numpy.__version__)"
+          python -c "import scipy;print('SciPy:', scipy.__version__)"
+          python -c "import theano;print('Theano:', theano.__version__)"
+          python -c "import tensorflow;print('Tensorflow:', tensorflow.__version__)"
+          python -c "import luchador;print('luchador:', luchador.__version__)"
+      # Unit Test
+      - type: shell
+        name: Theano Unit Test
+        command: LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --parallel-mode setup.py test
+      - type: shell
+        name: Tensorflow Unit Test
+        command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --parallel-mode setup.py test
+      # Integration Test
+      - type: shell
+        name: Serialization Test
+        command: ./tests/integration/run_serialization_tests.sh
+      - type: shell
+        name: Initializer Numerical Compatibility Test
+        command: ./tests/integration/run_initializer_compatibility_test.sh
+      - type: shell
+        name: Layer Numerical Compatibility Test
+        command: ./tests/integration/run_layer_numerical_compatibility_tests.sh
+      - type: shell
+        name: Optimizer Numerical Compatibility Test
+        command: ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
+      - type: shell
+        name: Server Client Test
+        command: ./tests/integration/test_server_client/run_server_client.sh
+      - type: shell
+        name: Manager Server Test
+        command: ./tests/integration/test_server_client/run_manager_server.sh
+      - type: shell
+        name: Environment Tests
+        command: ./tests/integration/run_envs.sh
+      - type: shell
+        name: DQN Theano 32 bit
+        command: LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
+      - type: shell
+        name: DQN Theano 64 bit
+        command: LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
+      - type: shell
+        name: DQN TensorFlow
+        command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_dqn.sh
+      # Style check
+      - type: shell
+        name: Style Check
+        command: |
+          flake8 luchador
+          flake8 tests
+      # Report coverage
+      - type: shell
+        name: Report Coverage
+        command: ./cci_script/report_codacy_test_coverage.sh
+      # Build doc and push to gh-pages
+      - type: shell
+        name: Build Doc
+        command: |
+          xvfb-run -s "-screen 0 1400x900x24" ./cci_script/build_docs.sh
+          ./cci_script/push_docs.sh
