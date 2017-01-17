@@ -115,13 +115,13 @@ def _transit(position, action):
         return new_position, reward
 
     if action == 0:  # North
-        move = [0, 1]
-    elif action == 1:  # East
-        move = [1, 0]
-    elif action == 2:  # West
         move = [-1, 0]
-    elif action == 3:  # South
+    elif action == 1:  # East
+        move = [0, 1]
+    elif action == 2:  # West
         move = [0, -1]
+    elif action == 3:  # South
+        move = [1, 0]
 
     new_position = new_position + move
     if np.any(new_position < 0) or np.any(new_position > 4):
@@ -162,24 +162,30 @@ class GridWorld(luchador.env.BaseEnvironment):
 
 # <codecell>
 
-
 class GridWorldAgent(luchador.agent.BaseAgent):
-    """Agent walk on GridWorld with equiprobable random policy
+    """Agent walk on GridWorld with equiprobable random policy while
+    estimating the action values
 
     Parameters
     ----------
-    alpha : float
+    step_size : float
         StepSize parameter for estimating action value function
-    gamma : float
+    discount : float
         Discount rate for computing state-value function
+    initial_q : float
+        Initial action value estimation
     """
-    def __init__(self, alpha=0.9, gamma=0.9, seed=None):
-        self.alpha = alpha
-        self.gamma = gamma
+    def __init__(self, step_size=0.9, discount=0.9, initial_q=10):
+        self.step_size = step_size
+        self.discount = discount
 
-        self.position = None
-        self.rng = np.random.RandomState(seed=seed)
-        self.action_values = np.zeros((5, 5, 4))
+        self.position = None  # Pre-action position
+        self.action_values = initial_q * np.ones((5, 5, 4))
+
+    @property
+    def state_values(self):
+        """Current estimated state value mapping"""
+        return np.mean(self.action_values, axis=2)
 
     def init(self, _):
         pass
@@ -188,12 +194,12 @@ class GridWorldAgent(luchador.agent.BaseAgent):
         self.position = observation
 
     def observe(self, action, outcome):
-        pos0 = self.position
-        pos1 = outcome.observation
+        pos0, pos1 = self.position, outcome.observation
 
-        post_state_value = np.mean(self.action_values[pos1[0], pos1[1]])
-        target = outcome.reward + self.gamma * post_state_value
-        self.action_values[pos0[0], pos0[1], action] += self.alpha * (
+        post_state_value = self.state_values[pos1[0], pos1[1]]
+        target = outcome.reward + self.discount * post_state_value
+
+        self.action_values[pos0[0], pos0[1], action] += self.step_size * (
             target - self.action_values[pos0[0], pos0[1], action])
         self.position = pos1
 
@@ -201,18 +207,73 @@ class GridWorldAgent(luchador.agent.BaseAgent):
         return np.random.choice(4)
 
 
-env = GridWorld(seed=0)
-agent = GridWorldAgent(seed=123)
-runner = EpisodeRunner(env, agent)
+# <markdowncell>
 
-runner.run_episode(max_steps=10000)
+# We run the agent in the environment for setps long enough for action value
+# estimation to get close enough to theoritical value as given in the book,
+# Fig.3.5.
 
-state_value = np.mean(agent.action_values, axis=2)
-print('State value:\n', state_value)
+# <codecell>
 
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
-img = ax.imshow(state_value, vmin=-2.0, vmax=9.0,
-                interpolation='nearest', origin='upper', animated=True)
-fig.colorbar(img)
-plt.show(block=False)
+def run_agent(env, agent, episodes=1000, steps=4):
+    """Run agent for the given steps and plot the resulting state value"""
+    runner = EpisodeRunner(env, agent, max_steps=steps)
+
+    for _ in range(episodes):
+        runner.run_episode()
+
+    print('State Value:\n', agent.state_values)
+    for i, action in enumerate(['north', 'east', 'west', 'south']):
+        print('Action Value:', action)
+        print(agent.action_values[:, :, i])
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    img = ax.imshow(agent.state_values, interpolation='nearest', origin='upper')
+    fig.colorbar(img)
+    plt.show(block=False)
+
+
+run_agent(
+    env=GridWorld(seed=0),
+    agent=GridWorldAgent(step_size=0.9, discount=0.9),
+    steps=5, episodes=2000,
+)
+
+
+# <markdowncell>
+
+# Let's compute the state values for optimal policy. $\pi^{*}$
+# Computing optimal policy using Monte Carlo (sampling) approach is not
+# straight forward, as agent has to explore the transitions which are not
+# optimal.
+# To overcome this, we take advantage of
+# - random initialization: All states are visited eventually
+# - Optimal initial value: All actions are tried eventually
+
+# In addition to random initialization, we keep the length of one episode
+# 1 step, so that all the states will be visited evenly.
+
+# <codecell>
+
+
+class GreedyGridWorldAgent(GridWorldAgent):
+    """Agent act on greedy policy"""
+    def __init__(self, step_size=0.9, discount=0.9, initial_q=30):
+        super(GreedyGridWorldAgent, self).__init__(
+            step_size=step_size, discount=discount, initial_q=initial_q)
+
+    @property
+    def state_values(self):
+        return np.max(self.action_values, axis=2)
+
+    def act(self):
+        return np.argmax(
+            self.action_values[self.position[0], self.position[1]])
+
+
+run_agent(
+    env=GridWorld(seed=0),
+    agent=GreedyGridWorldAgent(step_size=0.9, discount=0.9, initial_q=30),
+    steps=1, episodes=10000,
+)
