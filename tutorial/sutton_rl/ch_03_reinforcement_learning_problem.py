@@ -251,9 +251,6 @@ run_agent(
 # - random initialization: All states are visited eventually
 # - Optimal initial value: All actions are tried eventually
 
-# In addition to random initialization, we keep the length of one episode
-# 1 step, so that all the states will be visited evenly.
-
 # <codecell>
 
 
@@ -275,5 +272,5 @@ class GreedyGridWorldAgent(GridWorldAgent):
 run_agent(
     env=GridWorld(seed=0),
     agent=GreedyGridWorldAgent(step_size=0.9, discount=0.9, initial_q=30),
-    steps=1, episodes=10000,
+    steps=100, episodes=100,
 )
