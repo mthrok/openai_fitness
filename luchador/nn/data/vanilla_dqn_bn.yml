@@ -23,7 +23,6 @@ layer_configs:
     name: BatchNormalization
 - scope: layer1/ReLU
   layer:
-    args: {{}}
     name: ReLU
 - scope: layer2/conv2D
   layer:
@@ -40,7 +39,6 @@ layer_configs:
 - scope: layer2/ReLU
   layer:
     name: ReLU
-    args: {{}}
 - scope: layer3/conv2D
   layer:
     name: Conv2D
@@ -56,11 +54,9 @@ layer_configs:
 - scope: layer3/ReLU
   layer:
     name: ReLU
-    args: {{}}
 - scope: layer4/flatten
   layer:
     name: Flatten
-    args: {{}}
 - scope: layer5/dense
   layer:
     name: Dense
@@ -72,7 +68,6 @@ layer_configs:
 - scope: layer5/ReLU
   layer:
     name: ReLU
-    args: {{}}
 - scope: layer6/dense
   layer:
     name: Dense

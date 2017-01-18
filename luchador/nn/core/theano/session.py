@@ -68,17 +68,24 @@ def _parse_updates(updates):
     return ret
 
 
+def _parse_givens(givens):
+    if givens is None:
+        return givens
+    return {key.unwrap(): value for key, value in givens.items()}
+
+
 def _construct_function(inputs, outputs, updates, givens):
     inputs_ = _parse_inputs(inputs)
     outputs_ = _parse_outputs(outputs)
     updates_ = _parse_updates(updates)
-    return theano.function(inputs_, outputs_, updates=updates_, givens=givens)
+    givens_ = _parse_givens(givens)
+    return theano.function(inputs_, outputs_, updates=updates_, givens=givens_)
 
 
 class Session(session.BaseSession):
     """Handles operations and computations in similar way as Tensorflow session
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **_):
         super(Session, self).__init__()
         self.functions = {}
 

@@ -1,5 +1,4 @@
 """Implement Layer classes in Theano"""
-
 from __future__ import division
 from __future__ import absolute_import
 
@@ -25,6 +24,8 @@ __all__ = [
 ]
 
 _LG = logging.getLogger(__name__)
+
+# pylint: disable=too-few-public-methods
 
 
 class LayerMixin(object):
@@ -151,7 +152,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
     See :any:`BaseConv2D` for detail.
     """
-    def _validate_args(self, padding, strides, **kwargs):
+    def _validate_args(self, padding, strides, **_):
         _validate_padding(padding)
         _validate_strides(strides)
 
@@ -316,6 +317,14 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         output_tensor = T.reshape(input_tensor.unwrap(), output_shape)
         _LG.debug('    output_shape: %s', output_shape)
         return _wrap_output(output_tensor, output_shape, 'output')
+
+
+def _validate_shapes(shape0, shape1, axis):
+    for i, (dim1, dim2) in enumerate(zip(shape0, shape1)):
+        if i == axis:
+            continue
+        if not dim1 == dim2:
+            raise ValueError('Inconsistent shape')
 
 
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):

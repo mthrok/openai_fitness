@@ -7,8 +7,7 @@ from collections import namedtuple
 
 import numpy as np
 
-import luchador
-
+import luchador.util
 
 _Outcome = namedtuple('Outcome', ('reward', 'state', 'terminal', 'info'))
 
@@ -123,6 +122,7 @@ _ENVIRONMENT_MODULE_MAPPING = {
     'ALEEnvironment': 'ale',
     'FlappyBird': 'flappy_bird',
     'CartPole': 'cart_pole',
+    'RPiRover': 'rpi_rover',
 }
 
 

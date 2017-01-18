@@ -238,6 +238,7 @@ class BaseTrueDiv(BaseLayer):
         self.denom = None
 
 
+###############################################################################
 class BaseFlatten(BaseLayer):
     """Reshape 4D tensor into 2D tensor"""
     def __init__(self):

@@ -15,8 +15,8 @@ _LG = logging.getLogger(__name__)
 
 ###############################################################################
 def _main(env, agent, episodes, steps, report_every=1000):
-    env = get_env(env['name'])(**env['args'])
-    agent = get_agent(agent['name'])(**agent['args'])
+    env = get_env(env['name'])(**env.get('args', {}))
+    agent = get_agent(agent['name'])(**agent.get('args', {}))
     _LG.info('\n%s', env)
     _LG.info('\n%s', agent)
 

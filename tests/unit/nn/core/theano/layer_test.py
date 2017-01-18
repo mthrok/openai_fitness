@@ -222,27 +222,3 @@ class TestConv2D(unittest.TestCase):
         strides = 5
         self._test_shape_inference(
             input_shape, filter_shape, n_filters, strides, padding)
-
-
-@unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
-class TestFlatten(unittest.TestCase):
-    def setUp(self):
-        from luchador.nn import scope
-        scope._reset()
-
-    def test_flatten(self):
-        """4D input tensor is flattened to 2D tensor"""
-        from luchador import nn
-        input_shape = (32, 4, 77, 84)
-        flatten = nn.Flatten()
-        input_ = nn.Input(shape=input_shape)()
-        output = flatten(input_)
-
-        f = theano.function([input_.unwrap()], output.unwrap())
-        input_value = np.zeros(input_shape)
-        output_value = f(input_value)
-
-        expected = output_value.shape
-        found = output.shape
-        self.assertEqual(
-            expected, found)

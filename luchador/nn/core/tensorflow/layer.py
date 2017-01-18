@@ -1,5 +1,4 @@
 """Implement Layer classes in Tensorflow"""
-
 from __future__ import division
 from __future__ import absolute_import
 
@@ -16,8 +15,6 @@ from ..base import (
 from . import scope, wrapper, initializer
 
 
-_LG = logging.getLogger(__name__)
-
 __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
@@ -26,6 +23,10 @@ __all__ = [
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
+
+_LG = logging.getLogger(__name__)
+
+# pylint: disable=too-few-public-methods
 
 
 class LayerMixin(object):

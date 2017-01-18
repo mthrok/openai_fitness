@@ -6,6 +6,7 @@ thus should not cause cyclic import.
 from __future__ import absolute_import
 
 import os
+import logging
 import StringIO
 
 import yaml
@@ -14,6 +15,7 @@ from luchador.nn import get_model, get_layer
 
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')
+_LG = logging.getLogger(__name__)
 
 
 def make_model(model_config):
@@ -31,9 +33,11 @@ def make_model(model_config):
     """
     model = get_model(model_config['model_type'])()
     for cfg in model_config['layer_configs']:
-        scope = cfg['scope']
-        layer_cfg = cfg['layer']
-        layer = get_layer(layer_cfg['name'])(**layer_cfg['args'])
+        scope, layer_cfg = cfg['scope'], cfg['layer']
+        if 'name' not in layer_cfg:
+            raise RuntimeError('Layer `name` not found')
+        _LG.debug('Constructing: %s', layer_cfg['name'])
+        layer = get_layer(layer_cfg['name'])(**layer_cfg.get('args', {}))
         model.add_layer(layer=layer, scope=scope)
     return model
 
