@@ -24,9 +24,10 @@ class EpisodeRunner(object):
 
     def _reset(self):
         """Reset environment and agent"""
-        outcome = self.env.reset()
-        self.agent.reset(outcome.observation)
         self.episode += 1
+        outcome = self.env.reset()
+        self.agent.reset(outcome.state)
+        return outcome
 
     def _perform_post_episode_task(self, stats):
         """Perform post episode task"""
@@ -34,32 +35,37 @@ class EpisodeRunner(object):
 
     def run_episode(self, max_steps=None):
         """Run one episode"""
-        max_steps = max_steps or self.max_steps
-        self._reset()
+        outcome = self._reset()
+        state0 = outcome.state
 
-        steps, rewards = 0, 0
+        episode_steps, episode_rewards = 0, 0
         t_start = time.time()
-        for steps in range(1, max_steps+1):
+        for _ in range(max_steps or self.max_steps):
             action = self.agent.act()
             outcome = self.env.step(action)
 
-            self.agent.observe(action, outcome)
-            rewards += outcome.reward
+            state1 = outcome.state
+            reward = outcome.reward
+            terminal = outcome.terminal
+            self.agent.learn(
+                state0, action, reward, state1, terminal, outcome.info)
 
-            if outcome.terminal:
+            state0 = state1
+            episode_steps += 1
+            episode_rewards += reward
+
+            if terminal:
                 break
-
         t_elapsed = time.time() - t_start
 
         stats = {
             'episode': self.episode,
-            'rewards': rewards,
-            'steps': steps,
+            'rewards': episode_rewards,
+            'steps': episode_steps,
             'time': t_elapsed,
         }
-        self.time += t_elapsed
-        self.steps += steps
-        self.rewards += rewards
-
         self._perform_post_episode_task(stats)
+        self.time += t_elapsed
+        self.steps += episode_steps
+        self.rewards += episode_rewards
         return stats

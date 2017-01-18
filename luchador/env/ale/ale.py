@@ -149,6 +149,7 @@ class ALEEnvironment(BaseEnvironment):
         self.buffer_frames = buffer_frames
         self.preprocess_mode = preprocess_mode
 
+        self._buffer_index = None
         self._init_buffer()
 
         # Resize method
@@ -274,7 +275,7 @@ class ALEEnvironment(BaseEnvironment):
         return len(self._actions)
 
     ###########################################################################
-    def _get_state(self):
+    def _get_info(self):
         return {
             'lives': self._ale.lives(),
             'total_frame_number': self._ale.getFrameNumber(),
@@ -304,9 +305,9 @@ class ALEEnvironment(BaseEnvironment):
         self.life_lost = False
         return Outcome(
             reward=reward,
-            observation=self._get_observation(),
-            terminal=self._is_terminal(),
             state=self._get_state(),
+            terminal=self._is_terminal(),
+            info=self._get_info(),
         )
 
     ###########################################################################
@@ -329,9 +330,9 @@ class ALEEnvironment(BaseEnvironment):
 
         return Outcome(
             reward=reward,
-            observation=self._get_observation(),
-            terminal=terminal,
             state=self._get_state(),
+            terminal=terminal,
+            info=self._get_info(),
         )
 
     def _step(self, action):
@@ -341,7 +342,7 @@ class ALEEnvironment(BaseEnvironment):
         self._buffer_index = (self._buffer_index + 1) % self.buffer_frames
         return reward
 
-    def _get_observation(self):
+    def _get_state(self):
         screen = self._get_screen()
         if self.resize:
             return imresize(screen, self.resize)

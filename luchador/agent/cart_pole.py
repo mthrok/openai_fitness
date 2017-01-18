@@ -96,16 +96,16 @@ class CartPoleAgent(BaseAgent):
         self.action_eligibility = np.zeros((N_BOX,))
         self.critic_eligibility = np.zeros((N_BOX,))
 
-    def observe(self, action, outcome):
+    def learn(self, state0, action, reward, state1, terminal, info=None):
         update = action - 0.5
         self.action_eligibility[self.box] += (1.0 - self.action_decay) * update
         self.critic_eligibility[self.box] += (1.0 - self.critic_decay)
 
         p_prev = self.critic_weight[self.box]
-        self.box = _get_box(**outcome.observation)
-        p_current = 0.0 if outcome.terminal else self.critic_weight[self.box]
+        self.box = _get_box(**state1)
+        p_current = 0.0 if terminal else self.critic_weight[self.box]
 
-        r_hat = outcome.reward + self.critic_discount * p_current - p_prev
+        r_hat = reward + self.critic_discount * p_current - p_prev
 
         self.action_weight += self.action_lr * r_hat * self.action_eligibility
         self.critic_weight += self.critic_lr * r_hat * self.critic_eligibility

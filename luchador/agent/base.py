@@ -29,16 +29,23 @@ class BaseAgent(object):
         pass
 
     @abc.abstractmethod
-    def observe(self, action, outcome):
+    def learn(self, state0, action, reward, state1, terminal, info):
         """Observe the action and it's outcome.
 
         Parameters
         ----------
-        action : int
-            The action that this agent previously took.
-
-        oucome : Outome
-            Outcome of taking the action
+        state0
+            Environment state before taking action
+        action
+            The action taken
+        reward : float
+            Reward acquired by taking action
+        state1
+            Environment state after taking action
+        terminal : Bool
+            True if state1 is terminal state
+        info
+            Supplemental information of environment
         """
         pass
 
@@ -74,7 +81,7 @@ class NoOpAgent(BaseAgent):
     def reset(self, observation):
         pass
 
-    def observe(self, action, outcome):
+    def learn(self, state0, action, reward, state1, terminal, info=None):
         pass
 
     def act(self):

@@ -30,12 +30,12 @@ class ALEEnvironmentTest(unittest.TestCase):
         )
 
         outcome = ale.reset()
-        lives_before = outcome.state['lives']
+        lives_before = outcome.info['lives']
         while True:
             outcome = ale.step(1)
             if ale._ale.game_over():
                 break
-            lives_after = outcome.state['lives']
+            lives_after = outcome.info['lives']
             if lives_before == lives_after:
                 continue
             lives_before = lives_after
@@ -58,13 +58,13 @@ class ALEEnvironmentTest(unittest.TestCase):
         )
 
         outcome = ale.reset()
-        lives_before = outcome.state['lives']
+        lives_before = outcome.info['lives']
         while True:
             outcome = ale.step(1)
             if ale._ale.game_over():
                 break
 
-            lives_after = outcome.state['lives']
+            lives_after = outcome.info['lives']
             if lives_before == lives_after:
                 continue
             lives_before = lives_after
@@ -86,7 +86,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (210, 160)
-        found = outcome.observation.shape
+        found = outcome.state.shape
         self.assertEqual(
             expected, found,
             'Observation shape must equal to the original screen size, '
@@ -105,7 +105,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (210, 160)
-        found = outcome.observation.shape[:2]
+        found = outcome.state.shape[:2]
         self.assertEqual(
             expected, found,
             'Observation shape must equal to the original screen size, '
@@ -126,7 +126,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (210, width)
-        found = outcome.observation.shape
+        found = outcome.state.shape
         self.assertEqual(
             expected, found,
             'Observation must be resized when width is given.'
@@ -146,7 +146,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (height, 160)
-        found = outcome.observation.shape
+        found = outcome.state.shape
         self.assertEqual(
             expected, found,
             'Observation must be resized when height is given.'
@@ -166,7 +166,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (height, width)
-        found = outcome.observation.shape
+        found = outcome.state.shape
         self.assertEqual(
             expected, found,
             'Observation must be resized when both width and height are given.'
@@ -186,7 +186,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (210, width)
-        found = outcome.observation.shape[:2]
+        found = outcome.state.shape[:2]
         self.assertEqual(
             expected, found,
             'Observation must be resized when width is given.'
@@ -206,7 +206,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (height, 160)
-        found = outcome.observation.shape[:2]
+        found = outcome.state.shape[:2]
         self.assertEqual(
             expected, found,
             'Observation must be resized when height is given.'
@@ -226,7 +226,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale.reset()
         outcome = ale.step(1)
         expected = (height, width)
-        found = outcome.observation.shape[:2]
+        found = outcome.state.shape[:2]
         self.assertEqual(
             expected, found,
             'Observation must be resized when both width and height is given.'
@@ -241,7 +241,7 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale.reset()
         outcome = ale.step(1)
-        observation = outcome.observation
+        observation = outcome.state
         self.assertTrue(len(observation.shape) == 3,
                         'Color channel is missing')
         self.assertTrue(observation.shape[2] == 3,
@@ -257,7 +257,7 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale.reset()
         outcome = ale.step(1)
-        observation = outcome.observation
+        observation = outcome.state
         self.assertTrue(len(observation.shape) == 3,
                         'Color channel is missing')
         self.assertTrue(observation.shape[2] == 3,
@@ -272,7 +272,7 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale.reset()
         outcome = ale.step(1)
-        observation = outcome.observation
+        observation = outcome.state
         self.assertTrue(len(observation.shape) == 2)
 
     def test_grayscale_observation_color_channel_with_resize(self):
@@ -285,7 +285,7 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale.reset()
         outcome = ale.step(1)
-        observation = outcome.observation
+        observation = outcome.state
         self.assertTrue(len(observation.shape) == 2)
 
     def test_repeat_action(self):
@@ -306,7 +306,7 @@ class ALEEnvironmentTest(unittest.TestCase):
                 if outcome.terminal:
                     break
 
-                frame = outcome.state['episode_frame_number']
+                frame = outcome.info['episode_frame_number']
                 self.assertEqual(frame - last_frame, repeat_action)
                 last_frame = frame
 
@@ -373,7 +373,7 @@ class ALEEnvironmentTest(unittest.TestCase):
         checked = [False] * random_start
         for _ in range(n_try):
             outcome = ale.reset()
-            frame = outcome.state['episode_frame_number']
+            frame = outcome.info['episode_frame_number']
             checked[frame - 1] = True
 
             if sum(checked) == random_start:
@@ -398,16 +398,16 @@ class ALEEnvironmentTest(unittest.TestCase):
                 continue
             if ale._ale.game_over():
                 break
-            fr0 = outcome.state['episode_frame_number']
+            fr0 = outcome.info['episode_frame_number']
             outcome = ale.reset()
-            fr1 = outcome.state['episode_frame_number']
+            fr1 = outcome.info['episode_frame_number']
             self.assertEqual(
                 fr1, fr0,
                 'New episode should not start at reset '
                 'when mode==train and not game_over'
             )
         outcome = ale.reset()
-        fr = outcome.state['episode_frame_number']
+        fr = outcome.info['episode_frame_number']
         self.assertEqual(
             fr, 1,
             'New episode should be started when `reset` is called on game_over'

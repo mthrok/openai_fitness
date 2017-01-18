@@ -195,11 +195,11 @@ class DQNAgent(BaseAgent):
         return q_val[0]
 
     ###########################################################################
-    # Methods for `observe`
-    def observe(self, action, outcome):
+    # Methods for `learn`
+    def learn(self, state0, action, reward, state1, terminal, info=None):
         self.recorder.record(
-            action=action, reward=outcome.reward,
-            observation=outcome.observation, terminal=outcome.terminal)
+            action=action, reward=reward,
+            observation=state1, terminal=terminal)
         self.n_total_observations += 1
 
         cfg, n_obs = self.training_config, self.n_total_observations

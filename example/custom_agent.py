@@ -15,7 +15,7 @@ class MyRandomAgent(BaseAgent):
     def reset(self, observation):
         pass
 
-    def observe(self, action, outcome):
+    def learn(self, state0, action, reward, state1, terminal, info):
         pass
 
     def act(self):

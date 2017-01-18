@@ -3,14 +3,17 @@ from __future__ import absolute_import
 
 import abc
 import importlib
+from collections import namedtuple
 
 import numpy as np
 
 import luchador
 
 
-# pylint: disable=too-few-public-methods
-class Outcome(object):
+_Outcome = namedtuple('Outcome', ('reward', 'state', 'terminal', 'info'))
+
+
+class Outcome(_Outcome):
     """Outcome when taking a step in environment
 
     Parameters
@@ -21,18 +24,13 @@ class Outcome(object):
         Observation of environmant state after transition
     terminal : bool
         True if environment is in terminal state
-    state : dict
+    info : dict
         Other environment-specific information
     """
-    def __init__(self, reward, observation, terminal, state=None):
-        self.reward = reward
-        self.observation = observation
-        self.terminal = terminal
-        self.state = state or {}
-# pylint: enable=too-few-public-methods
+    pass
 
 
-def _serialize_observation(obs):
+def _serialize_state(obs):
     if isinstance(obs, np.ndarray):
         return {
             'type': 'np.ndarray',
@@ -48,7 +46,7 @@ def _serialize_observation(obs):
     }
 
 
-def _deserialize_observation(obs):
+def _deserialize_state(obs):
     if obs['type'] == 'np.ndarray':
         data, dtype = obs['obj']['data'], obs['obj']['dtype']
         data = np.fromstring(data.decode('base64'), dtype=dtype)
@@ -66,9 +64,9 @@ def serialize_outcome(outcome):
     """
     return {
         'reward': outcome.reward,
-        'observation': _serialize_observation(outcome.observation),
+        'state': _serialize_state(outcome.state),
         'terminal': outcome.terminal,
-        'state': outcome.state
+        'info': outcome.info
     }
 
 
@@ -80,8 +78,8 @@ def deserialize_outcome(obj):
     obj : dict
         Outcome instance serialized with :any:`serialize_outcome`
     """
-    obs = _deserialize_observation(obj['observation'])
-    return Outcome(obj['reward'], obs, obj['terminal'], obj['state'])
+    obs = _deserialize_state(obj['state'])
+    return Outcome(obj['reward'], obs, obj['terminal'], obj['info'])
 
 
 class BaseEnvironment(object):
