@@ -325,11 +325,9 @@ class TestConcat(unittest.TestCase):
         with luchador.nn.scope.variable_scope(scope2, reuse=False):
             var2 = luchador.nn.scope.get_variable(name=name2, shape=shape2)
         with luchador.nn.scope.variable_scope(base_scope, reuse=False):
-            concat = luchador.nn.Concat(
-                var_list=[(scope1, name1), (scope2, name2)], axis=axis)
-
-        concatenated = concat.build(None)
-        print concatenated
+            var_list = [(scope1, name1), (scope2, name2)]
+            concat = Concat(var_list=var_list, axis=axis)
+            concatenated = concat.build(None)
 
         session = luchador.nn.Session()
         val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)

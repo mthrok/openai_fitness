@@ -10,6 +10,7 @@ from luchador.nn import (
     Sigmoid,
     Softmax,
     Flatten,
+    Concat,
     TrueDiv,
     BatchNormalization,
     NCHW2NHWC,
@@ -18,11 +19,12 @@ from luchador.nn import (
 from tests.unit.fixture import get_all_layers
 
 LAYERS = get_all_layers()
-N_LAYERS = 10
+N_LAYERS = 11
 
 PARAMETERIZED_LAYER_CLASSES = (
     Dense,
     Conv2D,
+    Concat,
     TrueDiv,
     BatchNormalization,
 )
@@ -51,6 +53,13 @@ ARGS1 = {
     'TrueDiv': {
         'denom': 1,
     },
+    'Concat': {
+        'var_list': [
+            ('scope1', 'name1'),
+            ('scope2', 'name2'),
+        ],
+        'axis': 1,
+    },
     'BatchNormalization': {
         'offset': 0.0,
         'scale': 1.0,
@@ -70,6 +79,13 @@ ARGS2 = {
     },
     'TrueDiv': {
         'denom': 255
+    },
+    'Concat': {
+        'var_list': [
+            ('scope1', 'name1'),
+            ('scope2', 'name2'),
+        ],
+        'axis': 2,
     },
     'BatchNormalization': {
         'offset': 0.5,
