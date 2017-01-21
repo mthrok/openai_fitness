@@ -26,7 +26,7 @@ class Outcome(_Outcome):
     info : dict
         Other environment-specific information
     """
-    def __init__(self, reward, state, terminal, info={}):
+    def __init__(self, reward, state, terminal, info=None):
         super(Outcome, self).__init__(
             reward=reward, state=state, terminal=terminal, info=info)
 
