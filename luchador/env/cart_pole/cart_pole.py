@@ -140,7 +140,7 @@ class CartPole(BaseEnvironment):
         return Outcome(
             reward=-1. if terminal else 0.,
             terminal=terminal,
-            observation={
+            state={
                 'x': self.state.x,
                 'x_dot': self.state.x_dot,
                 'theta': self.state.theta,

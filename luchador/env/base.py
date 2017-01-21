@@ -26,7 +26,9 @@ class Outcome(_Outcome):
     info : dict
         Other environment-specific information
     """
-    pass
+    def __init__(self, reward, state, terminal, info={}):
+        super(Outcome, self).__init__(
+            reward=reward, state=state, terminal=terminal, info=info)
 
 
 def _serialize_state(obs):
