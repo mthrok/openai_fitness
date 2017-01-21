@@ -103,7 +103,7 @@ import json
 import logging
 
 import flask
-from cherrypy import wsgiserver
+import cheroot.wsgi
 
 import luchador.env
 
@@ -192,7 +192,7 @@ def create_server(app, port=5000, host='0.0.0.0'):
     -------
     WSGIServer object
     """
-    dispatcher = wsgiserver.WSGIPathInfoDispatcher({'/': app})
-    server = wsgiserver.CherryPyWSGIServer((host, port), dispatcher)
+    dispatcher = cheroot.wsgi.WSGIPathInfoDispatcher({'/': app})
+    server = cheroot.wsgi.WSGIServer((host, port), dispatcher)
     app.attr['server'] = server
     return server
