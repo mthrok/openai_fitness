@@ -2,21 +2,16 @@ from __future__ import absolute_import
 
 import unittest
 
-from luchador.nn import (
-    Dense,
-    Conv2D,
-)
+from luchador import nn
 
-from luchador.nn.model import (
-    Sequential,
-    LayerConfig,
-)
+# pylint: disable=invalid-name
 
 
-def make_layers():
-    conv = Conv2D(filter_height=8, filter_width=8, n_filters=8, strides=4)
-    dense1 = Dense(n_nodes=512)
-    dense2 = Dense(n_nodes=256)
+def _make_layers():
+    conv = nn.layer.Conv2D(
+        filter_height=8, filter_width=8, n_filters=8, strides=4)
+    dense1 = nn.layer.Dense(n_nodes=512)
+    dense2 = nn.layer.Dense(n_nodes=256)
     return conv, dense1, dense2
 
 
@@ -25,30 +20,30 @@ class LayerConfigTest(unittest.TestCase):
 
     def test_LayerConfig_equality(self):
         """LayerConfig with the same scope and layer should equal"""
-        conv, _, _ = make_layers()
-        cfg1 = LayerConfig(layer=conv, scope='foo')
-        cfg2 = LayerConfig(layer=conv, scope='foo')
+        conv, _, _ = _make_layers()
+        cfg1 = nn.model.LayerConfig(layer=conv, scope='foo')
+        cfg2 = nn.model.LayerConfig(layer=conv, scope='foo')
         self.assertEqual(cfg1, cfg2)
 
     def test_LayerConfig_scope_inequality(self):
         """LayerConfig with different scopes should not equal"""
-        conv, _, _ = make_layers()
-        cfg1 = LayerConfig(layer=conv, scope='foo')
-        cfg2 = LayerConfig(layer=conv, scope='bar')
+        conv, _, _ = _make_layers()
+        cfg1 = nn.model.LayerConfig(layer=conv, scope='foo')
+        cfg2 = nn.model.LayerConfig(layer=conv, scope='bar')
         self.assertNotEqual(cfg1, cfg2)
 
     def test_LayerConfig_layer_inequality(self):
         """LayerConfig with different layers should not equal"""
-        _, dense1, dense2 = make_layers()
-        cfg1 = LayerConfig(layer=dense1, scope='foo')
-        cfg2 = LayerConfig(layer=dense2, scope='foo')
+        _, dense1, dense2 = _make_layers()
+        cfg1 = nn.model.LayerConfig(layer=dense1, scope='foo')
+        cfg2 = nn.model.LayerConfig(layer=dense2, scope='foo')
         self.assertNotEqual(cfg1, cfg2)
 
     def test_LayerConfig_layer_scope_inequality(self):
         """LayerConfig with different layers and scopes should not equal"""
-        _, dense1, dense2 = make_layers()
-        cfg1 = LayerConfig(layer=dense1, scope='foo')
-        cfg2 = LayerConfig(layer=dense2, scope='bar')
+        _, dense1, dense2 = _make_layers()
+        cfg1 = nn.model.LayerConfig(layer=dense1, scope='foo')
+        cfg2 = nn.model.LayerConfig(layer=dense2, scope='bar')
         self.assertNotEqual(cfg1, cfg2)
 
 
@@ -57,9 +52,9 @@ class SequentialTest(unittest.TestCase):
 
     def test_sequential_model_equality_identical_layers(self):
         """Sequential Models with the identical layers should be euqal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        conv, dense, _ = make_layers()
+        conv, dense, _ = _make_layers()
 
         m1.add_layer(conv, scope='conv')
         m2.add_layer(conv, scope='conv')
@@ -72,10 +67,10 @@ class SequentialTest(unittest.TestCase):
 
     def test_sequential_model_equality_equal_layers(self):
         """Sequential Models with the same layers should be euqal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        conv1, dense1, _ = make_layers()
-        conv2, dense2, _ = make_layers()
+        conv1, dense1, _ = _make_layers()
+        conv2, dense2, _ = _make_layers()
 
         m1.add_layer(conv1, scope='conv')
         m2.add_layer(conv2, scope='conv')
@@ -88,15 +83,15 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_equality_empty(self):
         """Models without layers should be euqal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
         self.assertEqual(m1, m2, 'Models without layers must be equal')
 
     def test_model_self_equality(self):
         """Sequential model always equal to self"""
-        m = Sequential()
+        m = nn.model.Sequential()
         self.assertEqual(m, m)
 
-        conv, dense1, dense2 = make_layers()
+        conv, dense1, dense2 = _make_layers()
         m.add_layer(conv, scope='conv')
         self.assertEqual(m, m)
 
@@ -108,9 +103,9 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_inequality_type(self):
         """Sequential model do not equal to other types"""
-        m = Sequential()
+        m = nn.model.Sequential()
 
-        conv, dense, _ = make_layers()
+        conv, dense, _ = _make_layers()
 
         m.add_layer(conv, scope='conv')
         m.add_layer(dense, scope='dense')
@@ -128,9 +123,9 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_inequality_number_of_layers(self):
         """Sequential models with different #layers should not equal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        conv, dense, _ = make_layers()
+        conv, dense, _ = _make_layers()
 
         m1.add_layer(conv, scope='conv')
         m2.add_layer(conv, scope='conv')
@@ -142,9 +137,9 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_inequality_layer_types(self):
         """Sequential models with different layers should not equal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        conv, dense, _ = make_layers()
+        conv, dense, _ = _make_layers()
 
         m1.add_layer(conv, scope='conv')
 
@@ -155,9 +150,9 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_inequality_layer_configurations(self):
         """Sequential models with different layers should not equal"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        _, dense1, dense2 = make_layers()
+        _, dense1, dense2 = _make_layers()
 
         m1.add_layer(dense1, scope='dense1')
 
@@ -168,14 +163,14 @@ class SequentialTest(unittest.TestCase):
 
     def test_model_equality_serialized_configurations(self):
         """Configurations serialized from same models are same"""
-        m1, m2 = Sequential(), Sequential()
+        m1, m2 = nn.model.Sequential(), nn.model.Sequential()
 
-        conv, dense1, dense2 = make_layers()
+        conv, dense1, dense2 = _make_layers()
         m1.add_layer(conv, scope='conv')
         m1.add_layer(dense1, scope='dense1')
         m1.add_layer(dense2, scope='dense2')
 
-        conv, dense1, dense2 = make_layers()
+        conv, dense1, dense2 = _make_layers()
         m2.add_layer(conv, scope='conv')
         m2.add_layer(dense1, scope='dense1')
         m2.add_layer(dense2, scope='dense2')

@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 import unittest
 
+from luchador import nn
 from tests.unit.fixture import get_all_optimizers
-from luchador.nn import get_optimizer
+
+# pylint: disable=invalid-name
 
 OPTIMIZERS = get_all_optimizers()
 N_OPTIMIZERS = 6
@@ -110,7 +112,7 @@ class OptimizerTest(unittest.TestCase):
         """get_optimizer returns correct optimizer class"""
         for name, Optimizer in OPTIMIZERS.items():
             expected = Optimizer
-            found = get_optimizer(name)
+            found = nn.get_optimizer(name)
             self.assertEqual(
                 expected, found,
                 'get_optimizer returned wrong optimizer Class. '
@@ -162,7 +164,8 @@ class OptimizerTest(unittest.TestCase):
         """Optimizers recreated with serialize are identical to originals"""
         for optimizer0 in make_optimizers(ARGS1):
             args = optimizer0.serialize()
-            optimizer1 = get_optimizer(args['name'])(**args['args'])
+            optimizer1 = nn.get_optimizer(
+                args['name'])(**args['args'])
             expected = optimizer0
             found = optimizer1
             self.assertEqual(

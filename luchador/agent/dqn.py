@@ -15,18 +15,7 @@ import numpy as np
 
 import luchador
 import luchador.util
-from luchador.nn import (
-    Session,
-    Input,
-    Saver,
-    DeepQLearning,
-    get_optimizer,
-)
-from luchador.nn.util import (
-    make_model,
-    get_model_config,
-)
-from luchador.nn import SummaryWriter
+from luchador import nn
 
 from .base import BaseAgent
 from .recorder import TransitionRecorder
@@ -86,12 +75,12 @@ class DQNAgent(BaseAgent):
 
         self._init_network()
         self._init_summary_writer()
-        self.saver = Saver(**self.save_config['saver_config'])
+        self.saver = nn.Saver(**self.save_config['saver_config'])
         self._summarize_layer_params(0)
 
     def _init_summary_writer(self):
         cfg = self.summary_config
-        self.summary_writer = SummaryWriter(**cfg['writer_config'])
+        self.summary_writer = nn.SummaryWriter(**cfg['writer_config'])
 
         if self.session.graph:
             self.summary_writer.add_graph(self.session.graph)
@@ -132,26 +121,26 @@ class DQNAgent(BaseAgent):
         fmt = luchador.get_nn_conv_format()
         shape = (None, h, w, c) if fmt == 'NHWC' else (None, c, h, w)
 
-        model_def = get_model_config(model_name, n_actions=self._n_actions)
+        model_def = nn.get_model_config(model_name, n_actions=self._n_actions)
 
         def _model_maker():
-            dqn = make_model(model_def)
-            input_tensor = Input(shape=shape)
+            dqn = nn.make_model(model_def)
+            input_tensor = nn.Input(shape=shape)
             dqn(input_tensor())
             return dqn
 
-        self.ql = DeepQLearning(**cfg['args'])
+        self.ql = nn.q_learning.DeepQLearning(**cfg['args'])
         self.ql.build(_model_maker)
 
     def _build_optimization(self):
-        self.optimizer = get_optimizer(
+        self.optimizer = nn.get_optimizer(
             self.optimizer_config['name'])(**self.optimizer_config['args'])
         wrt = self.ql.pre_trans_net.get_parameter_variables()
         self.minimize_op = self.optimizer.minimize(self.ql.error, wrt=wrt)
 
     def _init_session(self):
         cfg = self.q_network_config
-        self.session = Session()
+        self.session = nn.Session()
         if cfg.get('parameter_file'):
             _LG.info('Loading paramter from %s', cfg['parameter_file'])
             self.session.load_from_file(cfg['parameter_file'])

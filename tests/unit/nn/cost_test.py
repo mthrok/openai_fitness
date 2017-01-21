@@ -8,14 +8,7 @@ import numpy as np
 # theano.config.exception_verbosity = 'high'
 
 import luchador
-from luchador.nn import (
-    Input,
-    Session,
-    scope as scp,
-    get_cost,
-    SSE2,
-    SigmoidCrossEntropy,
-)
+from luchador import nn
 from tests.unit.fixture import get_all_costs
 
 
@@ -23,12 +16,12 @@ BE = luchador.get_nn_backend()
 
 
 def _compute_cost(cost, target, logit):
-    target_tensor = Input(shape=target.shape).build()
-    logit_tensor = Input(shape=logit.shape).build()
+    target_tensor = nn.Input(shape=target.shape).build()
+    logit_tensor = nn.Input(shape=logit.shape).build()
 
     output_tensor = cost.build(target_tensor, logit_tensor)
 
-    session = Session()
+    session = nn.Session()
     output_value = session.run(
         outputs=output_tensor,
         inputs={
@@ -44,9 +37,8 @@ class CostTest(unittest.TestCase):
 
     def test_get_cost(self):
         """get_cost returns correct cost class"""
-        for name, Cost in get_all_costs().items():
-            expected = Cost
-            found = get_cost(name)
+        for name, expected in get_all_costs().items():
+            found = nn.get_cost(name)
             self.assertEqual(
                 expected, found,
                 'get_cost returned wrong cost Class. '
@@ -63,8 +55,8 @@ class CostTest(unittest.TestCase):
         target[np.arange(batch), label] = 1
         logit = np.random.randn(*shape)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
-            sce = SigmoidCrossEntropy(elementwise=True)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sce = luchador.nn.cost.SigmoidCrossEntropy(elementwise=True)
             sce_be = _compute_cost(sce, target, logit)
 
         x, z = logit, target
@@ -88,8 +80,8 @@ class CostTest(unittest.TestCase):
         target[np.arange(batch), label] = 1
         logit = np.random.randn(*shape)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
-            sce = SigmoidCrossEntropy(elementwise=False)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sce = luchador.nn.cost.SigmoidCrossEntropy(elementwise=False)
             sce_be = _compute_cost(sce, target, logit)
 
         x, z = logit, target
@@ -112,8 +104,8 @@ class CostTest(unittest.TestCase):
         target = np.random.randn(*shape)
         prediction = np.random.randn(*shape)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
-            sse2 = SSE2(elementwise=True)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sse2 = luchador.nn.cost.SSE2(elementwise=True)
             sse2_be = _compute_cost(sse2, target, prediction)
 
         sse2_np = np.square(target - prediction) / 2
@@ -135,8 +127,8 @@ class CostTest(unittest.TestCase):
         target = np.random.randn(*shape)
         prediction = np.random.randn(*shape)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
-            sse2 = SSE2(
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sse2 = nn.cost.SSE2(
                 max_delta=max_delta, min_delta=min_delta, elementwise=True)
             sse2_be = _compute_cost(sse2, target, prediction)
 
@@ -160,8 +152,8 @@ class CostTest(unittest.TestCase):
         target = np.random.randn(*shape)
         prediction = np.random.randn(*shape)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
-            sse2 = SSE2(elementwise=False)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sse2 = luchador.nn.cost.SSE2(elementwise=False)
             sse2_be = _compute_cost(sse2, target, prediction)
 
         sse2_np = np.square(target - prediction) / 2

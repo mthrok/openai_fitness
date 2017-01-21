@@ -4,26 +4,20 @@ from __future__ import absolute_import
 import unittest
 
 import numpy as np
+
 # import theano
 # theano.config.optimizer = 'None'
 # theano.config.exception_verbosity = 'high'
 
 import luchador
-from luchador.nn import (
-    Input,
-    Session,
-    BatchNormalization,
-    NCHW2NHWC,
-    NHWC2NCHW,
-    Concat,
-    scope as scp
-)
-
+from luchador import nn
 
 BE = luchador.get_nn_backend()
 
+# pylint: disable=invalid-name,too-many-locals
 
-def is_gpu_available():
+
+def _is_gpu_available():
     from tensorflow.python.client import device_lib
     for x in device_lib.list_local_devices():
         if x.device_type == 'GPU':
@@ -33,14 +27,14 @@ def is_gpu_available():
 
 def _normalize_batch(shape, offset, scale):
     _shape = (None,) + shape[1:]
-    input_tensor = Input(shape=_shape).build()
+    input_tensor = nn.Input(shape=_shape).build()
     input_value = np.random.randn(*shape) - 100
 
-    bn = BatchNormalization(
+    bn = nn.layer.BatchNormalization(
         scale=scale, offset=offset, learn=True, decay=0.0)
     normalized = bn(input_tensor)
     updates = bn.get_update_operation()
-    session = Session()
+    session = nn.Session()
     session.initialize()
     return session.run(
         outputs=normalized,
@@ -59,7 +53,7 @@ class BatchNormalizationTest(unittest.TestCase):
         """Output of normalization layer is normalized on 2D array"""
         offset, scale, shape = 10.0, 1.0, (64, 16)
 
-        with scp.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.id().replace('.', '/')):
             output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
@@ -89,13 +83,13 @@ class BatchNormalizationTest(unittest.TestCase):
                 .format(c, expected, found)
             )
 
-    @unittest.skipIf(BE == 'tensorflow' and not is_gpu_available(),
+    @unittest.skipIf(BE == 'tensorflow' and not _is_gpu_available(),
                      'Skipping as no GPU is found in TF backend')
     def test_normalization_4d_NCHW(self):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NCHW')
         offset, scale, shape = 3.0, 7.0, (32, 16, 8, 7)
-        with scp.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.id().replace('.', '/')):
             output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
@@ -130,7 +124,7 @@ class BatchNormalizationTest(unittest.TestCase):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NHWC')
         offset, scale, shape = 3.0, 7.0, (32, 8, 7, 16)
-        with scp.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.id().replace('.', '/')):
             output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
@@ -163,11 +157,11 @@ class BatchNormalizationTest(unittest.TestCase):
     def test_check_stats_regression(self):
         """Layer mean and std regresses to those of sample batch"""
         shape = (32, 5)
-        input_tensor = Input(shape=[None, shape[1]]).build()
+        input_tensor = nn.Input(shape=[None, shape[1]]).build()
 
         scope = self.id().replace('.', '/')
-        with luchador.nn.scope.variable_scope(scope, reuse=False):
-            bn = BatchNormalization(learn=True, decay=0.999)
+        with luchador.nn.variable_scope(scope, reuse=False):
+            bn = nn.layer.BatchNormalization(learn=True, decay=0.999)
             normalized = bn(input_tensor)
 
         mean_tensor = bn.parameter_variables['mean']
@@ -178,7 +172,7 @@ class BatchNormalizationTest(unittest.TestCase):
         true_mean = input_value.mean(axis=0)
         true_var = input_value.var(axis=0)
 
-        session = Session()
+        session = nn.Session()
         session.initialize()
         mean_diff_prev, stdi_diff_prev = None, None
         for i in range(30):
@@ -205,10 +199,10 @@ class BatchNormalizationTest(unittest.TestCase):
 
 
 def _convert(layer, shape):
-    input_tensor = Input(shape=shape).build()
+    input_tensor = nn.Input(shape=shape).build()
     input_value = np.random.randn(*shape) - 100
 
-    session = Session()
+    session = nn.Session()
 
     output_tensor = layer(input_tensor)
     output_value = session.run(
@@ -221,8 +215,9 @@ def _convert(layer, shape):
 class FormatConversionTest(unittest.TestCase):
     def test_NCHW2NHWC(self):
         shape = (32, 4, 7, 8)
-        with scp.variable_scope(self.id().replace('.', '/')):
-            output_value, output_tensor = _convert(NCHW2NHWC(), shape)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            output_value, output_tensor = _convert(
+                nn.layer.NCHW2NHWC(), shape)
 
         expected = (shape[0], shape[2], shape[3], shape[1])
         self.assertEqual(expected, output_value.shape)
@@ -230,8 +225,9 @@ class FormatConversionTest(unittest.TestCase):
 
     def test_NHWC2NCHW(self):
         shape = (32, 8, 7, 4)
-        with scp.variable_scope(self.id().replace('.', '/')):
-            output_value, output_tensor = _convert(NHWC2NCHW(), shape)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            output_value, output_tensor = _convert(
+                nn.layer.NHWC2NCHW(), shape)
 
         expected = (shape[0], shape[3], shape[1], shape[2])
         self.assertEqual(expected, output_value.shape)
@@ -244,12 +240,12 @@ class TestFlatten(unittest.TestCase):
         input_shape = (32, 4, 77, 84)
         input_value = np.zeros(input_shape)
         scope = self.id().replace('.', '/')
-        with luchador.nn.scope.variable_scope(scope, reuse=False):
-            input_tensor = luchador.nn.Input(shape=input_shape)()
-            flatten = luchador.nn.Flatten()
+        with luchador.nn.variable_scope(scope, reuse=False):
+            input_tensor = nn.Input(shape=input_shape)()
+            flatten = nn.layer.Flatten()
             output_tensor = flatten(input_tensor)
 
-        session = luchador.nn.Session()
+        session = nn.Session()
         output_value = session.run(
             outputs=output_tensor, inputs={input_tensor: input_value})
 
@@ -262,13 +258,15 @@ class TestDense(unittest.TestCase):
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
-        input_ = luchador.nn.Input(shape=(None, n_nodes), name='foo')()
+        input_ = nn.Input(shape=(None, n_nodes), name='foo')()
         base_scope = self.id().replace('.', '/')
-        with scp.variable_scope(base_scope, reuse=False):
-            dense1 = luchador.nn.Dense(n_nodes)
+        with nn.variable_scope(base_scope, reuse=False):
+            dense1 = nn.layer.Dense(n_nodes)
             dense1(input_)
-            with scp.variable_scope(scp.get_variable_scope(), reuse=True):
-                dense2 = luchador.nn.Dense(**dense1.serialize()['args'])
+
+            _scope = nn.get_variable_scope()
+            with nn.variable_scope(_scope, reuse=True):
+                dense2 = nn.layer.Dense(**dense1.serialize()['args'])
                 dense2(input_)
 
         vars1 = dense1.parameter_variables
@@ -293,23 +291,23 @@ class TestDense(unittest.TestCase):
         """Copied layer fails to create node when reuse is not True"""
         fmt = luchador.get_nn_conv_format()
         shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
-        input_ = luchador.nn.Input(shape=shape, name='foo')()
+        input_ = nn.Input(shape=shape, name='foo')()
         base_scope = self.id().replace('.', '/')
-        with scp.variable_scope(base_scope, reuse=False):
-            conv = luchador.nn.Conv2D(84, 84, 4, 4)
+        with nn.variable_scope(base_scope, reuse=False):
+            conv = nn.layer.Conv2D(84, 84, 4, 4)
             conv(input_)
             try:
-                conv2 = luchador.nn.Conv2D(**conv.serialize()['args'])
+                conv2 = nn.layer.Conv2D(**conv.serialize()['args'])
                 conv2(input_)
                 self.fail('Copied layer should raise ValueError when '
                           'reuse is not enabled in variable scope.')
             except ValueError:
                 pass
-            except Exception as e:
+            except Exception as error:  # pylint: disable=broad-except
                 self.fail(
                     'Expected ValueError when copied layer tries to '
                     'create node without reuse enabled in variable scope. '
-                    'Found "{}"'.format(e)
+                    'Found "{}"'.format(error)
                 )
 
 
@@ -320,16 +318,16 @@ class TestConcat(unittest.TestCase):
         scope1, name1, shape1 = '{}/scope1'.format(base_scope), 'name1', (2, 5)
         scope2, name2, shape2 = '{}/scope2'.format(base_scope), 'name2', (2, 3)
 
-        with luchador.nn.scope.variable_scope(scope1, reuse=False):
-            var1 = luchador.nn.scope.get_variable(name=name1, shape=shape1)
-        with luchador.nn.scope.variable_scope(scope2, reuse=False):
-            var2 = luchador.nn.scope.get_variable(name=name2, shape=shape2)
-        with luchador.nn.scope.variable_scope(base_scope, reuse=False):
+        with luchador.nn.variable_scope(scope1, reuse=False):
+            var1 = luchador.nn.get_variable(name=name1, shape=shape1)
+        with luchador.nn.variable_scope(scope2, reuse=False):
+            var2 = luchador.nn.get_variable(name=name2, shape=shape2)
+        with luchador.nn.variable_scope(base_scope, reuse=False):
             var_list = [(scope1, name1), (scope2, name2)]
-            concat = Concat(var_list=var_list, axis=axis)
+            concat = nn.layer.Concat(var_list=var_list, axis=axis)
         concatenated = concat.build(None)
 
-        session = luchador.nn.Session()
+        session = nn.Session()
         val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)
         found = session.run(outputs=concatenated, givens={
             var1: val1, var2: val2,

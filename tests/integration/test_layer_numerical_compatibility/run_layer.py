@@ -8,18 +8,14 @@ import numpy as np
 
 from luchador import get_nn_backend, get_nn_conv_format
 import luchador.util
-from luchador.nn import (
-    Input,
-    Session,
-    get_layer,
-)
+from luchador import nn
 
 
 _LG = logging.getLogger('luchador')
 _LG.setLevel(logging.INFO)
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description='Feed batch data to layer and save the output to file'
@@ -39,24 +35,25 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def forward_prop(layer, input_value, parameter_file, n_ite):
-    sess = Session()
-    input_ = Input(shape=input_value.shape, dtype=input_value.dtype)
+def _forward_prop(layer, input_value, parameter_file, n_ite):
+    sess = nn.Session()
+    input_ = nn.Input(
+        shape=input_value.shape, dtype=input_value.dtype)
     output = layer(input_.build())
     if parameter_file:
-        _LG.info('Loading parameter values from {}'.format(parameter_file))
+        _LG.info('Loading parameter values from %s', parameter_file)
         sess.load_from_file(parameter_file, strict=False)
 
-    _LG.info('Running forward path for {} times'.format(n_ite))
+    _LG.info('Running forward path for %s times', n_ite)
     for _ in range(n_ite):
         ret = sess.run(
             outputs=output, inputs={input_: input_value},
             updates=layer.get_update_operation())
-    _LG.info('Run forward path. Output shape: {}'.format(ret.shape))
+    _LG.info('Run forward path. Output shape: %s', ret.shape)
     return ret
 
 
-def transpose_needed(layer, input_shape):
+def _transpose_needed(layer, input_shape):
     def _is_convolution():
         return (
             layer.__class__.__name__ == 'Conv2D' and
@@ -74,86 +71,87 @@ def transpose_needed(layer, input_shape):
     return _is_convolution() or _is_batch_normalization_4d()
 
 
-def run_forward_prop(layer, input_value, parameter_file, iteration=1):
-    if transpose_needed(layer, input_value.shape):
+def _run_forward_prop(layer, input_value, parameter_file, iteration=1):
+    if _transpose_needed(layer, input_value.shape):
         # All the test data is created floowing the Theano format, which
         # is NCHW for input data. So when running this test in Tensorflow
         # backend, we reorder the input data to NHWC
         input_value_ = input_value.transpose((0, 2, 3, 1))
         _LG.info(
-            '  *** Rearranging input shape from {} to {}'
-            .format(input_value.shape, input_value_.shape))
+            '  *** Rearranging input shape from %s to %s',
+            input_value.shape, input_value_.shape)
         input_value = input_value_
 
-    output = forward_prop(layer, input_value, parameter_file, iteration)
+    output = _forward_prop(layer, input_value, parameter_file, iteration)
 
-    if transpose_needed(layer, input_value.shape):
+    if _transpose_needed(layer, input_value.shape):
         # So as to make the output comarison easy, we revert the oreder
         # from NHWC to NCHW.
         output_ = output.transpose((0, 3, 1, 2))
-        _LG.info('  *** Rearranging output shape from {} to {}'
-                 .format(output.shape, output_.shape))
+        _LG.info(
+            '  *** Rearranging output shape from %s to %s',
+            output.shape, output_.shape)
         output = output_
 
     return output
 
 
-def load_layer(cfg):
-    Layer = get_layer(cfg['name'])
-    return Layer(**cfg['args'])
+def _load_layer(cfg):
+    return nn.get_layer(cfg['name'])(**cfg.get('args', {}))
 
 
-def load_input_value(filepath):
-    _LG.info('Loading input value from {}'.format(filepath))
-    f = h5py.File(filepath, 'r')
-    ret = np.asarray(f['input'])
-    f.close()
-    _LG.info('  Shape {}'.format(ret.shape))
-    _LG.info('  Dtype {}'.format(ret.dtype))
+def _load_input_value(filepath):
+    _LG.info('Loading input value from %s', filepath)
+    file_ = h5py.File(filepath, 'r')
+    ret = np.asarray(file_['input'])
+    file_.close()
+    _LG.info('  Shape %s', ret.shape)
+    _LG.info('  Dtype %s', ret.dtype)
     return ret
 
 
-def save_output(filepath, data):
+def _save_output(filepath, data):
     directory = os.path.dirname(filepath)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    _LG.info('Saving output value to {}'.format(filepath))
-    _LG.info('  Shape {}'.format(data.shape))
-    _LG.info('  Dtype {}'.format(data.dtype))
-    f = h5py.File(filepath, 'w')
-    f.create_dataset('output', data=data)
-    f.close()
+    _LG.info('Saving output value to %s', filepath)
+    _LG.info('  Shape %s', data.shape)
+    _LG.info('  Dtype %s', data.dtype)
+    file_ = h5py.File(filepath, 'w')
+    file_.create_dataset('output', data=data)
+    file_.close()
 
 
-def load_config(config_path):
+def _load_config(config_path):
     cfg = luchador.util.load_config(config_path)
 
     cfg_dir = os.path.dirname(config_path)
     input_file = os.path.join(cfg_dir, cfg['input'])
-    param_file = (os.path.join(cfg_dir, cfg['parameter'])
-                  if 'parameter' in cfg else None)
+    param_file = (
+        os.path.join(cfg_dir, cfg['parameter'])
+        if 'parameter' in cfg else None)
     return cfg, input_file, param_file
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
 
     if args.debug:
         _LG.setLevel(logging.DEBUG)
 
-    cfg, input_file, param_file = load_config(args.config)
+    cfg, input_file, param_file = _load_config(args.config)
 
-    output = run_forward_prop(
-        layer=load_layer(cfg['layer']),
-        input_value=load_input_value(input_file),
+    output = _run_forward_prop(
+        layer=_load_layer(cfg['layer']),
+        input_value=_load_input_value(input_file),
         parameter_file=param_file,
         **cfg.get('run', {})
     )
 
     if args.output:
-        save_output(args.output, output)
+        _save_output(args.output, output)
 
 
 if __name__ == '__main__':
-    main()
+    _main()

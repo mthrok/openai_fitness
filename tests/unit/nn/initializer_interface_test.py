@@ -3,7 +3,9 @@ from __future__ import absolute_import
 import unittest
 
 from tests.unit.fixture import get_all_initializers
-from luchador.nn import get_initializer
+from luchador import nn
+
+# pylint: disable=invalid-name
 
 INITIALIZERS = get_all_initializers()
 N_INITIALIZERS = 5
@@ -85,9 +87,8 @@ class InitializerTest(unittest.TestCase):
 
     def test_get_initalizer(self):
         """get_initializer returns correct initalizer class"""
-        for name, Initializer in INITIALIZERS.items():
-            expected = Initializer
-            found = get_initializer(name)
+        for name, expected in INITIALIZERS.items():
+            found = nn.get_initializer(name)
             self.assertEqual(
                 expected, found,
                 'get_initializer returned wrong initializer Class. '
@@ -139,7 +140,8 @@ class InitializerTest(unittest.TestCase):
         """Initializers recreated with serialize are identical to originals"""
         for initializer0 in _make_initializers(ARGS1):
             args = initializer0.serialize()
-            initializer1 = get_initializer(args['name'])(**args['args'])
+            initializer1 = nn.get_initializer(
+                args['name'])(**args['args'])
             expected = initializer0
             found = initializer1
             self.assertEqual(

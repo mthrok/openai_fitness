@@ -3,11 +3,7 @@ from __future__ import print_function
 import abc
 
 from luchador.util import get_subclasses
-from luchador.nn import (
-    scope,
-    Tensor,
-    Constant,
-)
+from luchador import nn
 
 # pylint: disable=invalid-name
 
@@ -25,9 +21,11 @@ class x2(_Formula):
     """ y = x2 """
     @staticmethod
     def get():
-        x = scope.get_variable(name='x', shape=[], initializer=Constant(3))
+        x = nn.scope.get_variable(
+            name='x', shape=[],
+            initializer=nn.initializer.Constant(3))
         x_ = x.unwrap()
-        y = Tensor(x_ * x_, shape=[])
+        y = nn.wrapper.Tensor(x_ * x_, shape=[])
         return {
             'loss': y,
             'wrt': x,
@@ -44,10 +42,12 @@ class x6(_Formula):
     """
     @staticmethod
     def get():
-        x_ = scope.get_variable(name='x', shape=[], initializer=Constant(2.0))
+        x_ = nn.scope.get_variable(
+            name='x', shape=[],
+            initializer=nn.initializer.Constant(2.0))
         x = x_.unwrap()
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
-        y_ = Tensor(y, shape=[])
+        y_ = nn.wrapper.Tensor(y, shape=[])
         return {
             'loss': y_,
             'wrt': x_,

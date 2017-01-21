@@ -8,23 +8,19 @@ import unittest
 # theano.config.exception_verbosity = 'high'
 
 import luchador
-from luchador.nn import (
-    Tensor,
-    Constant,
-    Session,
-    Adam,
-    Adamax,
-    scope as scp
-)
+from luchador import nn
 
 BE = luchador.get_nn_backend()
 
+# pylint: disable=too-many-locals, invalid-name
+
 
 def get_y_equals_x_squared(scope, x_init):
-    with scp.variable_scope(scope):
-        x = scp.get_variable(name='x', shape=(), trainable=True,
-                             initializer=Constant(x_init))
-        y = Tensor(x.unwrap() * x.unwrap(), shape=())
+    with nn.variable_scope(scope):
+        x = nn.get_variable(
+            name='x', shape=(), trainable=True,
+            initializer=nn.initializer.Constant(x_init))
+        y = nn.Tensor(x.unwrap() * x.unwrap(), shape=())
     return x, y
 
 
@@ -46,7 +42,8 @@ class AdamTest(unittest.TestCase):
         """Beta paramete is updated every time update is evaluated"""
         beta1, beta2, x_init_val, name = 0.9, 0.999, 3.0, 'Adam'
 
-        adam = Adam(learning_rate=0.01, beta1=beta1, beta2=beta2, name=name)
+        adam = nn.optimizer.Adam(
+            learning_rate=0.01, beta1=beta1, beta2=beta2, name=name)
 
         x_tensor, y_tensor = get_y_equals_x_squared(
             scope=self.id().replace('.', '/'), x_init=x_init_val)
@@ -57,7 +54,7 @@ class AdamTest(unittest.TestCase):
         m_tensor = get_slot_var(adam, 'm', var_name=x_tensor.name)
         v_tensor = get_slot_var(adam, 'v', var_name=x_tensor.name)
 
-        session = Session()
+        session = nn.Session()
         session.initialize()
 
         x_val_prev, m_val_prev, v_val_prev = x_init_val, 0, 0
@@ -122,7 +119,7 @@ class AdamaxTest(unittest.TestCase):
     def test_beta_power_update(self):
         """Beta parameter is updated every time update is evaluated"""
         beta1, beta2, x_init_val = 0.9, 0.999, 3.0
-        adamax = Adamax(learning_rate=0.01, beta1=beta1)
+        adamax = nn.optimizer.Adamax(learning_rate=0.01, beta1=beta1)
 
         x_tensor, y_tensor = get_y_equals_x_squared(
             scope=self.id().replace('.', '/'), x_init=x_init_val)
@@ -132,7 +129,7 @@ class AdamaxTest(unittest.TestCase):
         m_tensor = get_slot_var(adamax, 'm', var_name=x_tensor.name)
         u_tensor = get_slot_var(adamax, 'u', var_name=x_tensor.name)
 
-        session = Session()
+        session = nn.Session()
         session.initialize()
 
         x_val_prev, m_val_prev, u_val_prev = x_init_val, 0, 0

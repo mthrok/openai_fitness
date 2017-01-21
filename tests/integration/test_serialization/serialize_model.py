@@ -9,14 +9,7 @@ import numpy as np
 
 import luchador
 from luchador.util import load_config
-from luchador.nn import (
-    get_optimizer,
-    Saver,
-    Input,
-    Session,
-    DeepQLearning,
-)
-from luchador.nn.util import make_model, get_model_config
+from luchador import nn
 
 _LG = logging.getLogger('luchador')
 logging.getLogger('luchador.nn.saver').setLevel(logging.DEBUG)
@@ -62,7 +55,7 @@ def parse_command_line_args():
 
 def make_optimizer(filepath):
     cfg = load_config(filepath)
-    return get_optimizer(cfg['name'])(**cfg['args'])
+    return nn.get_optimizer(cfg['name'])(**cfg['args'])
 
 
 def build_network(model_filepath, optimizer_filepath):
@@ -72,14 +65,14 @@ def build_network(model_filepath, optimizer_filepath):
     discount_rate = 0.99
 
     def model_maker():
-        config = get_model_config(model_filepath, n_actions=N_ACTIONS)
-        dqn = make_model(config)
-        input_tensor = Input(shape=SHAPE, name='input')
+        config = nn.get_model_config(model_filepath, n_actions=N_ACTIONS)
+        dqn = nn.make_model(config)
+        input_tensor = nn.Input(shape=SHAPE, name='input')
         dqn(input_tensor())
         return dqn
 
     _LG.info('Building Q networks')
-    ql = DeepQLearning(
+    ql = luchador.nn.q_learning.DeepQLearning(
         discount_rate=discount_rate,
         min_reward=min_reward, max_reward=max_reward,
         min_delta=min_delta, max_delta=max_delta)
@@ -94,8 +87,8 @@ def build_network(model_filepath, optimizer_filepath):
 
 
 def serialize(filepath, components, session):
-    saver = Saver(filepath)
-    _LG.info('Save parameters to {}'.format(filepath))
+    saver = luchador.nn.Saver(filepath)
+    _LG.info('Save parameters to %s', filepath)
     params = []
     for component in components:
         params.extend(component.get_parameter_variables())
@@ -107,7 +100,7 @@ def serialize(filepath, components, session):
 
 
 def deserialize(filepath, components, session):
-    _LG.info('Loading parameters from {}'.format(filepath))
+    _LG.info('Loading parameters from %s', filepath)
     var_names = [
         var.name for component in components
         for var in component.get_parameter_variables()
@@ -145,7 +138,7 @@ def run(session, ql, minimize_op):
 
 def main():
     args = parse_command_line_args()
-    session = Session()
+    session = nn.Session()
     ql, optimizer, minimize_op = build_network(
         model_filepath=args.model,
         optimizer_filepath=args.optimizer,

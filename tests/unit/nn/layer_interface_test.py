@@ -2,40 +2,29 @@ from __future__ import absolute_import
 
 import unittest
 
-from luchador.nn import (
-    get_layer,
-    Dense,
-    Conv2D,
-    ReLU,
-    Sigmoid,
-    Softmax,
-    Flatten,
-    Concat,
-    TrueDiv,
-    BatchNormalization,
-    NCHW2NHWC,
-    NHWC2NCHW,
-)
+from luchador import nn
+
 from tests.unit.fixture import get_all_layers
+
+# pylint: disable=invalid-name
 
 LAYERS = get_all_layers()
 N_LAYERS = 11
 
 PARAMETERIZED_LAYER_CLASSES = (
-    Dense,
-    Conv2D,
-    Concat,
-    TrueDiv,
-    BatchNormalization,
+    nn.layer.Dense,
+    nn.layer.Conv2D,
+    nn.layer.TrueDiv,
+    nn.layer.BatchNormalization,
 )
 
 FIXED_LAYER_CLASSES = (
-    Flatten,
-    ReLU,
-    Sigmoid,
-    Softmax,
-    NCHW2NHWC,
-    NHWC2NCHW,
+    nn.layer.Flatten,
+    nn.layer.ReLU,
+    nn.layer.Sigmoid,
+    nn.layer.Softmax,
+    nn.layer.NCHW2NHWC,
+    nn.layer.NHWC2NCHW,
 )
 
 
@@ -116,9 +105,8 @@ class LayerTest(unittest.TestCase):
 
     def test_get_layer(self):
         """get_layer returns correct layer class"""
-        for name, Layer in get_all_layers().items():
-            expected = Layer
-            found = get_layer(name)
+        for name, expected in get_all_layers().items():
+            found = nn.get_layer(name)
             self.assertEqual(
                 expected, found,
                 'get_layer returned wrong layer Class. '
@@ -172,7 +160,7 @@ class LayerTest(unittest.TestCase):
         """Layers recreated with serialized arguments equal to originals"""
         for layer0 in _make_parameterized_layers(ARGS1):
             args = layer0.serialize()
-            layer1 = get_layer(args['name'])(**args['args'])
+            layer1 = nn.get_layer(args['name'])(**args['args'])
             expected = layer0
             found = layer1
             self.assertEqual(

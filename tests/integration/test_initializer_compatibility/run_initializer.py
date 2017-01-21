@@ -51,7 +51,7 @@ def _run_initializer(initializer, shape):
         # [height, width, #in-channel, #out-channel],
         shape = [shape[2], shape[3], shape[1], shape[0]]
 
-    variable = nn.scope.get_variable(
+    variable = nn.get_variable(
         shape=shape, name='input', initializer=initializer)
     session = nn.Session()
     session.initialize()
@@ -100,9 +100,9 @@ def _save_output(filepath, data, key):
     print('Saving output value to {}'.format(filepath))
     print('  Shape {}'.format(data.shape))
     print('  Dtype {}'.format(data.dtype))
-    f = h5py.File(filepath, 'w')
-    f.create_dataset(key, data=data)
-    f.close()
+    file_ = h5py.File(filepath, 'w')
+    file_.create_dataset(key, data=data)
+    file_.close()
 
 
 def main():

@@ -4,10 +4,7 @@ import unittest
 
 import numpy as np
 
-from luchador.nn import (
-    scope,
-    Session
-)
+from luchador import nn
 
 
 class SessionTest(unittest.TestCase):
@@ -16,11 +13,11 @@ class SessionTest(unittest.TestCase):
         shape = (3, 3)
         target_value = 10
 
-        variable = scope.get_variable(name=name, shape=shape, dtype=dtype1)
+        variable = nn.get_variable(name=name, shape=shape, dtype=dtype1)
         value = target_value * np.ones(shape, dtype=dtype2)
 
-        session = Session()
-        session.load_dataset({name: value}, cast=not(dtype1 == dtype2))
+        session = nn.Session()
+        session.load_dataset({name: value}, cast=not dtype1 == dtype2)
 
         updated_value = session.run(outputs=variable)
         self.assertTrue(np.all(target_value == updated_value))

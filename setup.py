@@ -90,10 +90,9 @@ def _setup():
         packages=[
             'luchador',
             'luchador.nn',
-            'luchador.nn.core',
-            'luchador.nn.core.base',
-            'luchador.nn.core.theano',
-            'luchador.nn.core.tensorflow',
+            'luchador.nn.base',
+            'luchador.nn.theano',
+            'luchador.nn.tensorflow',
             'luchador.agent',
             'luchador.env',
             'luchador.env.ale',
