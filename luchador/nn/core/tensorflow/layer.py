@@ -19,7 +19,7 @@ __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax',
-    'Flatten', 'TrueDiv',
+    'Flatten', 'Concat', 'TrueDiv',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
@@ -274,6 +274,23 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
         out_shape = (-1, n_nodes)
         output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
+        return _wrap_output(output)
+
+
+class Concat(LayerMixin, base_layer.BaseConcat):
+    """Implement Concat in Tensorflow.
+
+    See :any:`BaseConcate` for detail.
+    """
+    def _build(self, _):
+        axis = self.args['axis']
+
+        values = []
+        for scp, name in self.args['var_list']:
+            with scope.variable_scope(scp, reuse=True):
+                var = scope.get_variable(name)
+                values.append(var.unwrap())
+        output = tf.concat_v2(values, axis=axis)
         return _wrap_output(output)
 
 

@@ -15,6 +15,7 @@ from luchador.nn import (
     BatchNormalization,
     NCHW2NHWC,
     NHWC2NCHW,
+    Concat,
     scope as scp
 )
 
@@ -310,3 +311,32 @@ class TestDense(unittest.TestCase):
                     'create node without reuse enabled in variable scope. '
                     'Found "{}"'.format(e)
                 )
+
+
+class TestConcat(unittest.TestCase):
+    def test_concate_2d_axis_1(self):
+        """Concatenate 2D tensors"""
+        base_scope, axis = self.id().replace('.', '/'), 1
+        scope1, name1, shape1 = '{}/scope1'.format(base_scope), 'name1', (2, 5)
+        scope2, name2, shape2 = '{}/scope2'.format(base_scope), 'name2', (2, 3)
+
+        with luchador.nn.scope.variable_scope(scope1, reuse=False):
+            var1 = luchador.nn.scope.get_variable(name=name1, shape=shape1)
+        with luchador.nn.scope.variable_scope(scope2, reuse=False):
+            var2 = luchador.nn.scope.get_variable(name=name2, shape=shape2)
+        with luchador.nn.scope.variable_scope(base_scope, reuse=False):
+            concat = luchador.nn.Concat(
+                var_list=[(scope1, name1), (scope2, name2)], axis=axis)
+
+        concatenated = concat.build(None)
+        print concatenated
+
+        session = luchador.nn.Session()
+        val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)
+        found = session.run(outputs=concatenated, givens={
+            var1: val1, var2: val2,
+        })
+
+        expected = np.concatenate((val1, val2), axis=axis)
+        self.assertEqual(found.shape, expected.shape)
+        self.assertTrue(np.sum(np.square(found - expected)) < 1e-10)

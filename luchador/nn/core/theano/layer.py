@@ -18,7 +18,7 @@ __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax',
-    'Flatten', 'TrueDiv',
+    'Flatten', 'Concat', 'TrueDiv',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
@@ -325,6 +325,32 @@ def _validate_shapes(shape0, shape1, axis):
             continue
         if not dim1 == dim2:
             raise ValueError('Inconsistent shape')
+
+
+class Concat(LayerMixin, base_layer.BaseConcat):
+    """Implement Concat layer in Theano
+
+    See :any: `BaseConcat` for detail.
+    """
+    def _build(self, _):
+        axis = self.args['axis']
+
+        tensor_list = []
+        shape, new_dim = None, 0
+        for scp, name in self.args['var_list']:
+            with scope.variable_scope(scp, reuse=True):
+                var = scope.get_variable(name)
+
+                new_dim += var.shape[axis]
+                if shape is None:
+                    shape = var.shape
+                else:
+                    _validate_shapes(shape, var.shape, axis)
+
+                tensor_list.append(var.unwrap())
+
+        output = T.concatenate(tensor_list=tensor_list, axis=axis)
+        return _wrap_output(output, shape, 'output')
 
 
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
