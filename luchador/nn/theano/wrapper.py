@@ -56,7 +56,45 @@ def _is_same_shape(shape1, shape2):
     return True
 
 
-class Tensor(base_wrapper.BaseTensor):
+class TensorMixin(object):  # pylint: disable=too-few-public-methods
+    """Add elementwise operations to Tensor class"""
+    def _extract_operand(self, other):
+        if isinstance(other, numbers.Number):
+            return other
+        if _is_same_shape(self.shape, other.shape):
+            return other.unwrap()
+        raise ValueError(
+            'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
+        )
+
+    def __neg__(self):
+        return Tensor(tensor=-self._tensor, shape=self.shape)
+
+    def __add__(self, other):
+        return Tensor(tensor=self._tensor + other, shape=self.shape)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        """Scalar subtraction or elementwise subtraction"""
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor-_other, shape=self.shape)
+
+    def __rsub__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=_other-self._tensor, shape=self.shape)
+
+    def __mul__(self, other):
+        """Scalar multiplication or elementwise multiplication"""
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor * _other, shape=self.shape)
+
+    def __rmul__(self, other):
+        return self * other
+
+
+class Tensor(TensorMixin, base_wrapper.BaseTensor):
     """Wrap TensorVariable object for storing computation result"""
     def __init__(self, tensor, shape=None, name=None):
         """Wrap TensorVariable object.
@@ -69,37 +107,8 @@ class Tensor(base_wrapper.BaseTensor):
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 
-    def __mul__(self, other):
-        """Scalar multiplication"""
-        if not isinstance(other, numbers.Number):
-            return NotImplemented
 
-        return Tensor(tensor=self._tensor * other, shape=self.shape)
-
-    def __rmul__(self, other):
-        return self * other
-
-    def __add__(self, other):
-        if isinstance(other, numbers.Number):
-            pass
-        elif not _is_same_shape(other.shape, self.shape):
-            raise ValueError(
-                'Inconsistent shape: {} and {}'
-                .format(self.shape, other.shape)
-            )
-        else:
-            other = other.unwrap()
-
-        return Tensor(tensor=self._tensor + other, shape=self.shape)
-
-    def __radd__(self, other):
-        return self + other
-
-    def __neg__(self):
-        return Tensor(tensor=-self._tensor, shape=self.shape)
-
-
-class Input(base_wrapper.BaseTensor):
+class Input(TensorMixin, base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which is converted to TensorVariable at build time

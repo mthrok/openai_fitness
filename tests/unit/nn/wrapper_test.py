@@ -17,7 +17,7 @@ def _create_ones_tensor(shape):
 
 
 class TestTensorOps(unittest.TestCase):
-    def test_mul(self):
+    def test_mul_numbers(self):
         constant, shape = 10, (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
             output_tensor1 = _create_ones_tensor(shape)
@@ -31,6 +31,18 @@ class TestTensorOps(unittest.TestCase):
         )
         self.assertTrue(np.all(output_val1 * constant == output_val2))
         self.assertTrue(np.all(output_val1 * constant == output_val3))
+
+    def test_mul_tensor(self):
+        # TODO finish this
+        pass
+
+    def test_mul_variable(self):
+        # TODO finish this
+        pass
+
+    def test_mul_input(self):
+        # TODO finish this
+        pass
 
     def test_add_numbers(self):
         constant, shape = 10, (3, 5)
@@ -74,6 +86,10 @@ class TestTensorOps(unittest.TestCase):
         )
         self.assertTrue(np.all(output_val1 + input_val == output_val2))
 
+    def test_add_variable(self):
+        # TODO: finish this
+        pass
+
     def test_neg(self):
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
@@ -85,3 +101,19 @@ class TestTensorOps(unittest.TestCase):
             outputs=[output_tensor1, output_tensor2],
         )
         self.assertTrue(np.all(-output_val1 == output_val2))
+
+    def test_sub_numbers(self):
+        # TODO: finish this
+        pass
+
+    def test_sub_tensor(self):
+        # TODO finish this
+        pass
+
+    def test_sub_input(self):
+        # TODO: finish this
+        pass
+
+    def test_sub_variable(self):
+        # TODO finish this
+        pass

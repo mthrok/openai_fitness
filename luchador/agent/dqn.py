@@ -125,7 +125,7 @@ class DQNAgent(BaseAgent):
 
         def _model_maker():
             dqn = nn.make_model(model_def)
-            input_tensor = nn.Input(shape=shape)
+            input_tensor = nn.Input(shape=shape)()
             dqn(input_tensor())
             return dqn
 

@@ -32,7 +32,46 @@ def retrieve_variable(name):
 ###############################################################################
 
 
-class Variable(base_wrapper.BaseTensor):
+class TensorMixin(object):  # pylint: disable=too-few-public-methods
+    """Add elementwise operations to Tensor class"""
+    def _extract_operand(self, other):
+        if isinstance(other, numbers.Number):
+            return other
+        if self.shape == other.shape:
+            return other.unwrap()
+        raise ValueError(
+            'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
+        )
+
+    def __neg__(self):
+        return Tensor(tensor=-self._tensor)
+
+    def __add__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor + _other)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        """Scalar subtraction or elementwise subtraction"""
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor-_other)
+
+    def __rsub__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=_other-self._tensor)
+
+    def __mul__(self, other):
+        """Scalar multiplication"""
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor * _other)
+
+    def __rmul__(self, other):
+        return self * other
+
+
+class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap Tensorflow Variable object.
@@ -51,7 +90,7 @@ class Variable(base_wrapper.BaseTensor):
         self.trainable = trainable
 
 
-class Tensor(base_wrapper.BaseTensor):
+class Tensor(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Tensor object for storing computation result"""
     def __init__(self, tensor, shape=None, name=None):
         """Wrap Tensorflow Tensor object.
@@ -74,37 +113,8 @@ class Tensor(base_wrapper.BaseTensor):
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
-    def __mul__(self, other):
-        """Scalar multiplication"""
-        if not isinstance(other, numbers.Number):
-            return NotImplemented
 
-        return Tensor(tensor=self._tensor * other)
-
-    def __rmul__(self, other):
-        return self * other
-
-    def __add__(self, other):
-        if isinstance(other, numbers.Number):
-            pass
-        elif not self.shape == other.shape:
-            raise ValueError(
-                'Inconsistent shape: {} and {}'
-                .format(self.shape, other.shape)
-            )
-        else:
-            other = other.unwrap()
-
-        return Tensor(tensor=self._tensor + other)
-
-    def __radd__(self, other):
-        return self + other
-
-    def __neg__(self):
-        return Tensor(tensor=-self._tensor)
-
-
-class Input(base_wrapper.BaseTensor):
+class Input(TensorMixin, base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which is converted to placeholder at build time
