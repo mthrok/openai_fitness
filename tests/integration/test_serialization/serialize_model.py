@@ -68,7 +68,7 @@ def build_network(model_filepath, optimizer_filepath):
         config = nn.get_model_config(model_filepath, n_actions=N_ACTIONS)
         dqn = nn.make_model(config)
         input_tensor = nn.Input(shape=SHAPE, name='input')
-        dqn(input_tensor())
+        dqn(input_tensor)
         return dqn
 
     _LG.info('Building Q networks')

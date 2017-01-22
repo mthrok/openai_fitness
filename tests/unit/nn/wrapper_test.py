@@ -73,7 +73,7 @@ class TestTensorOps(unittest.TestCase):
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
             tensor1 = _create_ones_tensor(shape)
-            input_ = nn.Input(name='input', shape=shape, dtype='int32')()
+            input_ = nn.Input(name='input', shape=shape, dtype='int32')
             tensor2 = tensor1 * input_
             tensor3 = input_ * tensor1
 
@@ -192,7 +192,7 @@ class TestTensorOps(unittest.TestCase):
     def test_sub_input(self):
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
-            input_ = nn.Input(shape=shape, dtype='int32')()
+            input_ = nn.Input(shape=shape, dtype='int32')
             tensor1 = _create_ones_tensor(shape)
             tensor2 = tensor1 - input_
             tensor3 = input_ - tensor1

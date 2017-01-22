@@ -39,7 +39,7 @@ def _forward_prop(layer, input_value, parameter_file, n_ite):
     sess = nn.Session()
     input_ = nn.Input(
         shape=input_value.shape, dtype=input_value.dtype)
-    output = layer(input_.build())
+    output = layer(input_)
     if parameter_file:
         _LG.info('Loading parameter values from %s', parameter_file)
         sess.load_from_file(parameter_file, strict=False)
