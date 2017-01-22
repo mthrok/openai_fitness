@@ -27,7 +27,7 @@ def _is_gpu_available():
 
 def _normalize_batch(shape, offset, scale):
     _shape = (None,) + shape[1:]
-    input_tensor = nn.Input(shape=_shape).build()
+    input_tensor = nn.Input(shape=_shape)
     input_value = np.random.randn(*shape) - 100
 
     bn = nn.layer.BatchNormalization(
@@ -157,7 +157,7 @@ class BatchNormalizationTest(unittest.TestCase):
     def test_check_stats_regression(self):
         """Layer mean and std regresses to those of sample batch"""
         shape = (32, 5)
-        input_tensor = nn.Input(shape=[None, shape[1]]).build()
+        input_tensor = nn.Input(shape=[None, shape[1]])
 
         scope = self.id().replace('.', '/')
         with luchador.nn.variable_scope(scope, reuse=False):
@@ -199,7 +199,7 @@ class BatchNormalizationTest(unittest.TestCase):
 
 
 def _convert(layer, shape):
-    input_tensor = nn.Input(shape=shape).build()
+    input_tensor = nn.Input(shape=shape)
     input_value = np.random.randn(*shape) - 100
 
     session = nn.Session()
@@ -241,7 +241,7 @@ class TestFlatten(unittest.TestCase):
         input_value = np.zeros(input_shape)
         scope = self.id().replace('.', '/')
         with luchador.nn.variable_scope(scope, reuse=False):
-            input_tensor = nn.Input(shape=input_shape)()
+            input_tensor = nn.Input(shape=input_shape)
             flatten = nn.layer.Flatten()
             output_tensor = flatten(input_tensor)
 
@@ -258,7 +258,7 @@ class TestDense(unittest.TestCase):
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
-        input_ = nn.Input(shape=(None, n_nodes), name='foo')()
+        input_ = nn.Input(shape=(None, n_nodes), name='foo')
         base_scope = self.id().replace('.', '/')
         with nn.variable_scope(base_scope, reuse=False):
             dense1 = nn.layer.Dense(n_nodes)
@@ -291,7 +291,7 @@ class TestDense(unittest.TestCase):
         """Copied layer fails to create node when reuse is not True"""
         fmt = luchador.get_nn_conv_format()
         shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
-        input_ = nn.Input(shape=shape, name='foo')()
+        input_ = nn.Input(shape=shape, name='foo')
         base_scope = self.id().replace('.', '/')
         with nn.variable_scope(base_scope, reuse=False):
             conv = nn.layer.Conv2D(84, 84, 4, 4)

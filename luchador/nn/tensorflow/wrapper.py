@@ -117,23 +117,14 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
 class Input(TensorMixin, base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
-        """Creates Input object which is converted to placeholder at build time
+        """Creates Input object which wraps placeholder
 
         Args:
           shape (list): The shape of the resulting object.
           name (str): The name of the resulting object.
           dtype (NumPy dtype or None): If None, default dtype is used
         """
+        _dtype = dtype or luchador.get_nn_dtype()
+        tensor = tf.placeholder(dtype=_dtype, shape=shape, name=name)
         super(Input, self).__init__(
-            tensor=None, shape=shape, name=name, dtype=dtype)
-
-    def __call__(self):
-        return self.build()
-
-    def build(self):
-        """Instantiate underlying Variable"""
-        if self.unwrap() is None:
-            dtype = self.dtype or luchador.get_nn_dtype()
-            pf = tf.placeholder(dtype=dtype, shape=self.shape, name=self.name)
-            self.set(pf)
-        return self
+            tensor=tensor, shape=shape, name=name, dtype=dtype)

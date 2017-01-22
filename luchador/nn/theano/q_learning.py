@@ -59,7 +59,7 @@ class DeepQLearning(BaseDeepQLearning):
     def _build_future_q_value(self):
         self.discount_rate = T.constant(self.args['discount_rate'])
         self.terminals = wrapper.Input(shape=(None,), name='terminals')
-        terminals = self.terminals().unwrap()
+        terminals = self.terminals.unwrap()
 
         q_value = self.post_trans_net.output.unwrap()
         q_value = T.max(q_value, axis=1)
@@ -72,7 +72,7 @@ class DeepQLearning(BaseDeepQLearning):
 
         self.rewards = wrapper.Input(
             dtype='float64', shape=(None,), name='rewards')
-        rewards = self.rewards().unwrap()
+        rewards = self.rewards.unwrap()
         if self.args['scale_reward']:
             scale_reward = T.constant(self.args['scale_reward'])
             rewards = rewards / scale_reward
@@ -90,7 +90,7 @@ class DeepQLearning(BaseDeepQLearning):
         self.actions = wrapper.Input(
             dtype='uint16', shape=(None,), name='actions')
 
-        actions = self.actions().unwrap()
+        actions = self.actions.unwrap()
         mask_on = T.extra_ops.to_one_hot(actions, n_actions)
         mask_off = 1.0 - mask_on
         current = self.pre_trans_net.output.unwrap()

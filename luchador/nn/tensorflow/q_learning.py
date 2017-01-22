@@ -58,7 +58,7 @@ class DeepQLearning(base_q_learning.BaseDeepQLearning):
         self.discount_rate = tf.constant(
             self.args['discount_rate'], name='discount_rate')
         self.terminals = wrapper.Input(shape=(None,), name='terminals')
-        terminals = self.terminals().unwrap()
+        terminals = self.terminals.unwrap()
 
         q_value = self.post_trans_net.output.unwrap()
         q_value = tf.reduce_max(q_value, reduction_indices=1)
@@ -71,7 +71,7 @@ class DeepQLearning(base_q_learning.BaseDeepQLearning):
             post_q = self._get_future_q_value()
 
         self.rewards = wrapper.Input(shape=(None,), name='rewards')
-        rewards = self.rewards().unwrap()
+        rewards = self.rewards.unwrap()
         if self.args['scale_reward']:
             scale_reward = tf.constant(
                 self.args['scale_reward'], name='scale_reward')
@@ -91,7 +91,7 @@ class DeepQLearning(base_q_learning.BaseDeepQLearning):
 
         self.actions = wrapper.Input(
             dtype='int32', shape=(None,), name='actions')
-        actions = self.actions().unwrap()
+        actions = self.actions.unwrap()
         with tf.name_scope('reshape_current_q_value'):
             mask_off = tf.one_hot(actions, depth=n_actions, on_value=0.,
                                   off_value=1., name='actions_not_taken')

@@ -118,7 +118,7 @@ class TestTensorOps(unittest.TestCase):
     def test_add_input(self):
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
-            input_ = nn.Input(shape=shape, dtype='int32')()
+            input_ = nn.Input(shape=shape, dtype='int32')
             tensor1 = _create_ones_tensor(shape)
             tensor2 = tensor1 + input_
             tensor3 = input_ + tensor1

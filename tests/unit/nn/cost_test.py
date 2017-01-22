@@ -16,8 +16,8 @@ BE = luchador.get_nn_backend()
 
 
 def _compute_cost(cost, target, logit):
-    target_tensor = nn.Input(shape=target.shape).build()
-    logit_tensor = nn.Input(shape=logit.shape).build()
+    target_tensor = nn.Input(shape=target.shape)
+    logit_tensor = nn.Input(shape=logit.shape)
 
     output_tensor = cost.build(target_tensor, logit_tensor)
 

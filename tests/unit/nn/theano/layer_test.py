@@ -37,7 +37,7 @@ class TestConv2D(unittest.TestCase):
             n_filters=n_filters, strides=strides, padding=padding)
 
         with nn.scope.variable_scope(uuid.uuid4()):
-            input_variable = nn.wrapper.Input(shape=input_shape)()
+            input_variable = nn.wrapper.Input(shape=input_shape)
             output_variable = conv2d(input_variable)
 
         session = nn.session.Session()

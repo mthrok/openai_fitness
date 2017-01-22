@@ -109,39 +109,36 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 
 
+def _get_tensor(dtype, shape, name):
+    """Instantiate underlying Variable"""
+    dtype = dtype or theano.config.floatX
+    if not shape:
+        return T.scalar(name=name, dtype=dtype)
+
+    dim = len(shape)
+    if dim == 1:
+        tensor = T.vector(name=name, dtype=dtype)
+    elif dim == 2:
+        tensor = T.matrix(name=name, dtype=dtype)
+    elif dim == 3:
+        tensor = T.tensor3(name=name, dtype=dtype)
+    elif dim == 4:
+        tensor = T.tensor4(name=name, dtype=dtype)
+    else:
+        raise ValueError('shape length must be smaller than 5')
+    return tensor
+
+
 class Input(TensorMixin, base_wrapper.BaseTensor):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
-        """Creates Input object which is converted to TensorVariable at build time
+        """Creates Input object which wraps TensorVariable
 
         Args:
           shape (list): The shape of the resulting object.
           name (str): The name of the resulting object.
           dtype (NumPy dtype or None): If None, default dtype(floatX) is used
         """
+        tensor = _get_tensor(dtype, shape, name)
         super(Input, self).__init__(
-            tensor=None, shape=shape, name=name, dtype=dtype)
-
-    def __call__(self):
-        return self.build()
-
-    def build(self):
-        """Instantiate underlying Variable"""
-        dtype = self.dtype or theano.config.floatX
-        if not self.shape:
-            self.set(T.scalar(name=self.name, dtype=dtype))
-            return self
-
-        dim = len(self.shape)
-        if dim == 1:
-            tensor = T.vector(name=self.name, dtype=dtype)
-        elif dim == 2:
-            tensor = T.matrix(name=self.name, dtype=dtype)
-        elif dim == 3:
-            tensor = T.tensor3(name=self.name, dtype=dtype)
-        elif dim == 4:
-            tensor = T.tensor4(name=self.name, dtype=dtype)
-        else:
-            raise ValueError('shape length must be smaller than 5')
-        self.set(tensor)
-        return self
+            tensor=tensor, shape=shape, name=name, dtype=dtype)
