@@ -1,6 +1,8 @@
 """Module for defining input variable/tensor/input wrapper"""
 from __future__ import absolute_import
 
+import numbers
+
 import theano
 import theano.tensor as T
 
@@ -42,6 +44,18 @@ class Variable(base_wrapper.BaseTensor):
         self.trainable = trainable
 
 
+def _is_same_shape(shape1, shape2):
+    if not len(shape1) == len(shape2):
+        return False
+
+    for dim1, dim2 in zip(shape1, shape2):
+        if dim1 in [None, -1] or dim2 in [None, -1]:
+            continue
+        if not dim1 == dim2:
+            return False
+    return True
+
+
 class Tensor(base_wrapper.BaseTensor):
     """Wrap TensorVariable object for storing computation result"""
     def __init__(self, tensor, shape=None, name=None):
@@ -54,6 +68,35 @@ class Tensor(base_wrapper.BaseTensor):
         """
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
+
+    def __mul__(self, other):
+        """Scalar multiplication"""
+        if not isinstance(other, numbers.Number):
+            return NotImplemented
+
+        return Tensor(tensor=self._tensor * other, shape=self.shape)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __add__(self, other):
+        if isinstance(other, numbers.Number):
+            pass
+        elif not _is_same_shape(other.shape, self.shape):
+            raise ValueError(
+                'Inconsistent shape: {} and {}'
+                .format(self.shape, other.shape)
+            )
+        else:
+            other = other.unwrap()
+
+        return Tensor(tensor=self._tensor + other, shape=self.shape)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __neg__(self):
+        return Tensor(tensor=-self._tensor, shape=self.shape)
 
 
 class Input(base_wrapper.BaseTensor):

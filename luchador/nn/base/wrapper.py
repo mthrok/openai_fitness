@@ -27,6 +27,21 @@ class BaseTensor(object):
         return repr({
             'name': self.name, 'shape': self.shape, 'dtype': self.dtype})
 
+    def __mul__(self, other):
+        raise NotImplementedError()
+
+    def __rmul__(self, other):
+        raise NotImplementedError()
+
+    def __add__(self, other):
+        raise NotImplementedError()
+
+    def __radd__(self, other):
+        raise NotImplementedError()
+
+    def __neg__(self):
+        raise NotImplementedError()
+
 
 class Operation(object):
     """Wrapps theano updates or tensorflow operation"""

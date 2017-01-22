@@ -1,6 +1,8 @@
 """Module for defining input variable/tensor/input wrapper"""
 from __future__ import absolute_import
 
+import numbers
+
 import tensorflow as tf
 
 import luchador
@@ -71,6 +73,35 @@ class Tensor(base_wrapper.BaseTensor):
         dtype = tensor.dtype.as_numpy_dtype
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
+
+    def __mul__(self, other):
+        """Scalar multiplication"""
+        if not isinstance(other, numbers.Number):
+            return NotImplemented
+
+        return Tensor(tensor=self._tensor * other)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __add__(self, other):
+        if isinstance(other, numbers.Number):
+            pass
+        elif not self.shape == other.shape:
+            raise ValueError(
+                'Inconsistent shape: {} and {}'
+                .format(self.shape, other.shape)
+            )
+        else:
+            other = other.unwrap()
+
+        return Tensor(tensor=self._tensor + other)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __neg__(self):
+        return Tensor(tensor=-self._tensor)
 
 
 class Input(base_wrapper.BaseTensor):
