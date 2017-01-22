@@ -25,25 +25,6 @@ def retrieve_variable(name):
     return _VARIABLES.get(name)
 
 
-class Variable(base_wrapper.BaseTensor):
-    """Wrap SharedVariable object for storing network parameters"""
-    def __init__(self, variable, name=None, trainable=True):
-        """Wrap SharedVariable object.
-
-        Args:
-          variable (SharedVariable): theano.tensor.SharedVariable object
-          name (str or None): When given, the name of the resulting wrapper is
-            overwritten with this name, otherwise, name is constructed in the
-            manner as Tensorflow.
-        """
-        name = name or variable.name
-        val = variable.get_value()
-        super(Variable, self).__init__(
-            tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
-        _register_variable(name, self)
-        self.trainable = trainable
-
-
 def _is_same_shape(shape1, shape2):
     if not len(shape1) == len(shape2):
         return False
@@ -71,7 +52,8 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=-self._tensor, shape=self.shape)
 
     def __add__(self, other):
-        return Tensor(tensor=self._tensor + other, shape=self.shape)
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor + _other, shape=self.shape)
 
     def __radd__(self, other):
         return self + other
@@ -92,6 +74,25 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
 
     def __rmul__(self, other):
         return self * other
+
+
+class Variable(TensorMixin, base_wrapper.BaseTensor):
+    """Wrap SharedVariable object for storing network parameters"""
+    def __init__(self, variable, name=None, trainable=True):
+        """Wrap SharedVariable object.
+
+        Args:
+          variable (SharedVariable): theano.tensor.SharedVariable object
+          name (str or None): When given, the name of the resulting wrapper is
+            overwritten with this name, otherwise, name is constructed in the
+            manner as Tensorflow.
+        """
+        name = name or variable.name
+        val = variable.get_value()
+        super(Variable, self).__init__(
+            tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
+        _register_variable(name, self)
+        self.trainable = trainable
 
 
 class Tensor(TensorMixin, base_wrapper.BaseTensor):

@@ -21,11 +21,10 @@ class x2(_Formula):
     """ y = x2 """
     @staticmethod
     def get():
-        x = nn.scope.get_variable(
+        x = nn.get_variable(
             name='x', shape=[],
             initializer=nn.initializer.Constant(3))
-        x_ = x.unwrap()
-        y = nn.wrapper.Tensor(x_ * x_, shape=[])
+        y = x * x
         return {
             'loss': y,
             'wrt': x,
@@ -42,15 +41,13 @@ class x6(_Formula):
     """
     @staticmethod
     def get():
-        x_ = nn.scope.get_variable(
+        x = nn.get_variable(
             name='x', shape=[],
             initializer=nn.initializer.Constant(2.0))
-        x = x_.unwrap()
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
-        y_ = nn.wrapper.Tensor(y, shape=[])
         return {
-            'loss': y_,
-            'wrt': x_,
+            'loss': y,
+            'wrt': x,
         }
 
 
