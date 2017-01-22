@@ -6,7 +6,7 @@ import logging
 import tensorflow as tf
 
 from luchador.nn.base import q_learning as base_q_learning
-from . import wrapper, cost
+from . import wrapper, cost, misc
 
 __all__ = ['DeepQLearning']
 
@@ -112,9 +112,7 @@ class DeepQLearning(base_q_learning.BaseDeepQLearning):
     def _build_sync_op(self):
         src_vars = self.pre_trans_net.get_parameter_variables()
         tgt_vars = self.post_trans_net.get_parameter_variables()
-        ops = [tgt.unwrap().assign(src.unwrap())
-               for src, tgt in zip(src_vars, tgt_vars)]
-        self.sync_op = wrapper.Operation(op=tf.group(*ops, name='sync'))
+        self.sync_op = misc.build_sync_op(src_vars, tgt_vars, name='sync')
 
     def _build_error(self):
         min_delta, max_delta = self.args['min_delta'], self.args['max_delta']

@@ -6,8 +6,8 @@ import numbers
 import tensorflow as tf
 
 import luchador
+import luchador.util
 from luchador.nn.base import wrapper as base_wrapper
-from luchador.nn.base.wrapper import Operation
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -128,3 +128,12 @@ class Input(TensorMixin, base_wrapper.BaseTensor):
         tensor = tf.placeholder(dtype=_dtype, shape=shape, name=name)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
+
+
+class Operation(base_wrapper.Operation):
+    """Wrap tensorflow operations"""
+    def __init__(self, op, name=None):
+        if luchador.util.is_iteratable(op):
+            op = tf.group(*op, name=name)
+
+        super(Operation, self).__init__(op=op, name=name)

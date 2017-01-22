@@ -2,7 +2,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-from collections import OrderedDict
 
 import theano.tensor as T
 
@@ -11,6 +10,7 @@ from . import (
     scope,
     wrapper,
     cost,
+    misc,
 )
 
 _LG = logging.getLogger(__name__)
@@ -105,12 +105,9 @@ class DeepQLearning(BaseDeepQLearning):
 
     ###########################################################################
     def _build_sync_op(self):
-        sync_op = OrderedDict()
         src_vars = self.pre_trans_net.get_parameter_variables()
         tgt_vars = self.post_trans_net.get_parameter_variables()
-        for src, tgt in zip(src_vars, tgt_vars):
-            sync_op[tgt.unwrap()] = src.unwrap()
-        self.sync_op = wrapper.Operation(op=sync_op)
+        self.sync_op = misc.build_sync_op(src_vars, tgt_vars, name='sync')
 
     def _build_error(self):
         min_delta, max_delta = self.args['min_delta'], self.args['max_delta']

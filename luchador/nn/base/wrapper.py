@@ -45,8 +45,9 @@ class BaseTensor(object):
 
 class Operation(object):
     """Wrapps theano updates or tensorflow operation"""
-    def __init__(self, op):
+    def __init__(self, op, name=None):
         self.op = op
+        self.name = name
 
     def unwrap(self):
         """Returns the underlying backend-specific operation object"""
