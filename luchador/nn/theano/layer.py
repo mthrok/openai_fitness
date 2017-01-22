@@ -329,22 +329,18 @@ class Concat(LayerMixin, base_layer.BaseConcat):
 
     See :any: `BaseConcat` for detail.
     """
-    def _build(self, _):
+    def _build(self, var_list):
         axis = self.args['axis']
 
         tensor_list = []
         shape, new_dim = None, 0
-        for scp, name in self.args['var_list']:
-            with scope.variable_scope(scp, reuse=True):
-                var = scope.get_variable(name)
-
-                new_dim += var.shape[axis]
-                if shape is None:
-                    shape = var.shape
-                else:
-                    _validate_shapes(shape, var.shape, axis)
-
-                tensor_list.append(var.unwrap())
+        for var in var_list:
+            new_dim += var.shape[axis]
+            if shape is None:
+                shape = var.shape
+            else:
+                _validate_shapes(shape, var.shape, axis)
+            tensor_list.append(var.unwrap())
 
         output = T.concatenate(tensor_list=tensor_list, axis=axis)
         return _wrap_output(output, shape, 'output')

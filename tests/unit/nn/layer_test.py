@@ -314,18 +314,11 @@ class TestDense(unittest.TestCase):
 class TestConcat(unittest.TestCase):
     def test_concate_2d_axis_1(self):
         """Concatenate 2D tensors"""
-        base_scope, axis = self.id().replace('.', '/'), 1
-        scope1, name1, shape1 = '{}/scope1'.format(base_scope), 'name1', (2, 5)
-        scope2, name2, shape2 = '{}/scope2'.format(base_scope), 'name2', (2, 3)
-
-        with luchador.nn.variable_scope(scope1, reuse=False):
-            var1 = luchador.nn.get_variable(name=name1, shape=shape1)
-        with luchador.nn.variable_scope(scope2, reuse=False):
-            var2 = luchador.nn.get_variable(name=name2, shape=shape2)
-        with luchador.nn.variable_scope(base_scope, reuse=False):
-            var_list = [(scope1, name1), (scope2, name2)]
-            concat = nn.layer.Concat(var_list=var_list, axis=axis)
-        concatenated = concat.build(None)
+        axis, shape1, shape2 = 1, (2, 5), (2, 3)
+        with nn.variable_scope(self.id().replace('.', '/'), reuse=False):
+            var1 = nn.get_variable(name='name1', shape=shape1)
+            var2 = nn.get_variable(name='name2', shape=shape2)
+            concatenated = nn.layer.Concat(axis=axis).build([var1, var2])
 
         session = nn.Session()
         val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)

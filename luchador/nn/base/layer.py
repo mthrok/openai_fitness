@@ -247,8 +247,8 @@ class BaseFlatten(BaseLayer):
 
 class BaseConcat(BaseLayer):
     """Concatenate variables"""
-    def __init__(self, var_list, axis=1):
-        super(BaseConcat, self).__init__(var_list=var_list, axis=axis)
+    def __init__(self, axis=1):
+        super(BaseConcat, self).__init__(axis=axis)
 
 
 ###############################################################################

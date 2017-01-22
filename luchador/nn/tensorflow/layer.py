@@ -281,15 +281,9 @@ class Concat(LayerMixin, base_layer.BaseConcat):
 
     See :any:`BaseConcate` for detail.
     """
-    def _build(self, _):
-        axis = self.args['axis']
-
-        values = []
-        for scp, name in self.args['var_list']:
-            with scope.variable_scope(scp, reuse=True):
-                var = scope.get_variable(name)
-                values.append(var.unwrap())
-        output = tf.concat_v2(values, axis=axis)
+    def _build(self, var_list):
+        values = [var.unwrap() for var in var_list]
+        output = tf.concat_v2(values, axis=self.args['axis'])
         return _wrap_output(output)
 
 

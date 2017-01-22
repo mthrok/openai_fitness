@@ -43,10 +43,6 @@ ARGS1 = {
         'denom': 1,
     },
     'Concat': {
-        'var_list': [
-            ('scope1', 'name1'),
-            ('scope2', 'name2'),
-        ],
         'axis': 1,
     },
     'BatchNormalization': {
@@ -70,10 +66,6 @@ ARGS2 = {
         'denom': 255
     },
     'Concat': {
-        'var_list': [
-            ('scope1', 'name1'),
-            ('scope2', 'name2'),
-        ],
         'axis': 2,
     },
     'BatchNormalization': {
