@@ -9,7 +9,7 @@ from tests.unit.fixture import get_all_layers
 # pylint: disable=invalid-name
 
 LAYERS = get_all_layers()
-N_LAYERS = 11
+N_LAYERS = 12
 
 PARAMETERIZED_LAYER_CLASSES = (
     nn.layer.Dense,
@@ -22,6 +22,7 @@ FIXED_LAYER_CLASSES = (
     nn.layer.Flatten,
     nn.layer.ReLU,
     nn.layer.Sigmoid,
+    nn.layer.Tanh,
     nn.layer.Softmax,
     nn.layer.NCHW2NHWC,
     nn.layer.NHWC2NCHW,

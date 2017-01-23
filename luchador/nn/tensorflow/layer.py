@@ -253,6 +253,16 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
         return _wrap_output(output)
 
 
+class Tanh(LayerMixin, base_layer.BaseTanh):
+    """Implement Tanh in Tensorflow.
+
+    See :any:`BaseTanh` for detail.
+    """
+    def _build(self, input_tensor):
+        output = tf.tanh(input_tensor.unwrap(), 'output')
+        return _wrap_output(output)
+
+
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """Implement Softmax in Tensorflow.
 

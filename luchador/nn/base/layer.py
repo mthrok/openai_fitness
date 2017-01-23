@@ -215,6 +215,12 @@ class BaseSigmoid(BaseLayer):
         super(BaseSigmoid, self).__init__()
 
 
+class BaseTanh(BaseLayer):
+    """Apply tanh activation elementwise"""
+    def __init__(self):
+        super(BaseTanh, self).__init__()
+
+
 class BaseSoftmax(BaseLayer):
     """Apply softmax activation elementwise"""
     def __init__(self):

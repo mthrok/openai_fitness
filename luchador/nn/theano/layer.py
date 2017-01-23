@@ -286,6 +286,17 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
+class Tanh(LayerMixin, base_layer.BaseTanh):
+    """Implement Tanh layer in Theano.
+
+    See :any:`BaseTanh` for detail.
+    """
+    def _build(self, input_tensor):
+        input_shape = input_tensor.shape
+        output_tensor = T.tanh(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
+
+
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """Implement Softmax layer in Theano.
 
