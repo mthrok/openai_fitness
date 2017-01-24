@@ -1,3 +1,4 @@
+"""Module for implelemting customizable ReplayMemory mechanism"""
 from __future__ import division
 from __future__ import absolute_import
 
@@ -15,7 +16,10 @@ class Buffer(object):
     Parameters
     ----------
     stack : int
-        The number of observations included in the state
+        The number of datum included in one stack
+
+    stansition : int
+        The number of stacked data to fetch
     """
     def __init__(self, stack, transition):
         self.data = []
@@ -71,6 +75,7 @@ class Buffer(object):
             return self._get(index)
 
     def get_last_stack(self):
+        """Fetch the latest data and stack if necessary"""
         if self.stack:
             return self.data[-self.stack:]
         else:
@@ -82,6 +87,17 @@ class Buffer(object):
 
 
 class EpisodeRecorder(object):
+    """Record/Sample multiple data stream for an episode
+
+    Parameters
+    ----------
+    buffer_configs : dict
+        key is the name of data to record, value is dict containing
+        'stack' and 'transition', which are passed to Buffer constructor
+
+    initial_data : dict
+        Initial data to stored in recorders. key is the name of recorder
+    """
     def __init__(self, buffer_configs, initial_data):
         self.buffers = {
             name: Buffer(
@@ -138,7 +154,20 @@ class EpisodeRecorder(object):
 
 
 class TransitionRecorder(object):
-    def __init__(self, memory_size, buffer_config, batch_size):
+    """Record/Sample records across episodes
+
+    Parameters
+    ----------
+    memory_size : int
+        The number of records to retain.
+
+    buffer_config : dict
+        See :class:`EpisodeRecorder`
+
+    batch_size : int
+        Buffer size for sampling
+    """
+    def __init__(self, memory_size, buffer_config, batch_size=32):
         self.memory_size = memory_size
         self.buffer_config = buffer_config
         self.batch_size = batch_size
