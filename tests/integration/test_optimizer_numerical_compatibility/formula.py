@@ -1,3 +1,4 @@
+"""Define/list up formulae to use in optimizer integration test"""
 from __future__ import print_function
 
 import abc

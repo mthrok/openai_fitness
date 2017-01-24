@@ -37,6 +37,7 @@ class Color(Attribute):
         gl.glColor4f(self.red, self.green, self.blue, self.alpha)
 
     def set_color(self, red, green, blue, alpha):
+        """Update color property"""
         self.red = red
         self.green = green
         self.blue = blue

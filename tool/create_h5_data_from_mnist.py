@@ -1,3 +1,6 @@
+"""Create sample batch HDF5 data from MNIST dataset"""
+from __future__ import absolute_import
+
 import os
 import gzip
 import cPickle as pickle
@@ -6,7 +9,7 @@ import h5py
 import numpy as np
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description=(
@@ -29,54 +32,54 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def load_data(filepath):
-    with gzip.open(filepath, 'rb') as f:
-        return pickle.load(f)[0]
+def _load_data(filepath):
+    with gzip.open(filepath, 'rb') as file_:
+        return pickle.load(file_)[0]
 
 
-def process(dataset, channel=4, height=28, width=27):
-    b, ret, sample = 0, [], []
+def _process(dataset, channel=4, height=28, width=27):
+    batch, ret, sample = 0, [], []
     for datum, label in zip(*dataset):
-        if label == b:
+        if label == batch:
             sample.append(datum.reshape((28, 28))[:height, :width])
         if len(sample) == channel:
             ret.append(sample)
             sample = []
-            b += 1
+            batch += 1
     return np.asarray(ret, dtype=np.float32)
 
 
-def plot(batch):
+def _plot(batch):
     import matplotlib.pyplot as plt
 
     n_channels = batch.shape[1]
     n_row = np.ceil(np.sqrt(n_channels))
     n_col = n_channels // n_row
-    for b, sample in enumerate(batch):
+    for batch, sample in enumerate(batch):
         fig = plt.figure()
-        for c, channel in enumerate(sample):
-            ax = fig.add_subplot(n_row, n_col, c+1)
-            ax.imshow(255 * channel, cmap='Greys')
-            ax.set_title('Batch: {}, Channel: {}'.format(b, c))
+        for channel, data in enumerate(sample):
+            ax = fig.add_subplot(n_row, n_col, channel+1)
+            ax.imshow(255 * data, cmap='Greys')
+            ax.set_title('Batch: {}, Channel: {}'.format(batch, channel))
     plt.show()
 
 
-def save_data(key, data, filepath):
-    f = h5py.File(filepath, 'a')
-    if key in f:
-        del f[key]
-    f.create_dataset(key, data=data)
-    f.close()
+def _save_data(key, data, filepath):
+    file_ = h5py.File(filepath, 'a')
+    if key in file_:
+        del file_[key]
+    file_.create_dataset(key, data=data)
+    file_.close()
 
 
-def main():
-    args = parse_command_line_args()
-    data = process(load_data(args.input),
-                   args.channel, args.height, args.width)
+def _main():
+    args = _parse_command_line_args()
+    data = _process(
+        _load_data(args.input), args.channel, args.height, args.width)
     if args.plot:
-        plot(data)
-    save_data(args.key, data, args.output)
+        _plot(data)
+    _save_data(args.key, data, args.output)
 
 
 if __name__ == '__main__':
-    main()
+    _main()

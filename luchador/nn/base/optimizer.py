@@ -1,5 +1,4 @@
 """Define common interface of Optimizer"""
-
 from __future__ import absolute_import
 
 import abc

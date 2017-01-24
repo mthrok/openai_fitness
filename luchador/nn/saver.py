@@ -1,3 +1,4 @@
+"""Implements parameter saver"""
 from __future__ import division
 from __future__ import absolute_import
 
@@ -41,6 +42,24 @@ def _write_data_to_file(file_, data):
 
 
 class Saver(object):
+    """Save set of NumPy arrays into HDF5 format
+
+    Works in the way similar to tensorflow Saver
+
+    Parameters
+    ----------
+    output_dir : str
+        Directory to save the resulting data
+
+    max_to_keep : int
+        The number of the latest save data to keep
+
+    keep_every_n_hours : float
+        Keep file every this hour
+
+    prefix : str
+        file name prefix
+    """
     def __init__(self, output_dir, max_to_keep=5,
                  keep_every_n_hours=1.0, prefix='save'):
         try:
@@ -59,7 +78,20 @@ class Saver(object):
         self.last_back_up = None
 
     def save(self, data, global_step, now=None):
-        # `now` should be used only for testing
+        """Save data to HDF5 file
+
+        Parameters
+        ----------
+        data : dict
+            keys are the name of variables
+            values are NumPy data
+
+        global_step : int
+            global step at the time this data was created
+
+        now : int
+            unix time. only used for test
+        """
         filename = '{}_{}.h5'.format(self.prefix, global_step)
         filepath = os.path.join(self.output_dir, filename)
 

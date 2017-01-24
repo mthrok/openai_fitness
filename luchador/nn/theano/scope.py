@@ -1,3 +1,4 @@
+"""Scoping mechanism similar to Tensorflow"""
 from __future__ import absolute_import
 
 import logging
@@ -57,12 +58,14 @@ class _NameScope(object):  # pylint: disable=too-few-public-methods
         pass
 
 
-def name_scope(name, default_name=None, values=None):
+def name_scope(  # pylint: disable=unused-argument
+        name, default_name=None, values=None):
     """Mock Tensorflow name_scope function. Does nothing."""
     return _NameScope()
 
 
 class VariableScope(object):
+    """Mock Tensorflow's VariableScope to provide variable name space"""
     def __init__(self, reuse, name=''):
         self.name = name
         self.reuse = reuse
@@ -72,6 +75,7 @@ class VariableScope(object):
 
     @staticmethod
     def reuse_variables():
+        """Set reuse flag to True"""
         _set_flag(True)
 
     def _open(self):
@@ -95,6 +99,7 @@ class VariableScope(object):
 
 
 def variable_scope(name_or_scope, reuse=None):
+    """Create new VariableScope object"""
     if isinstance(name_or_scope, VariableScope):
         if reuse:
             return VariableScope(reuse, name_or_scope.name)
@@ -112,8 +117,13 @@ def get_variable_scope():
     return VariableScope(_get_flag(), _get_scope())
 
 
-def get_variable(name, shape=None, dtype=None,
-                 initializer=None, regularizer=None, trainable=True, **kwargs):
+def get_variable(
+        name, shape=None, dtype=None, initializer=None,
+        regularizer=None, trainable=True, **kwargs):
+    """Create/Fetch variable in the current scope
+
+    regularizer is not supported and has no effect.
+    """
     if regularizer:
         warnings.warn('`regularizer` is not implemented in Theano backend.')
 

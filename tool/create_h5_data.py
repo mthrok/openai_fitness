@@ -1,4 +1,6 @@
+"""Create HDF5 batch data using NumPy NDArray"""
 import h5py
+
 # pylint: disable=unused-import,eval-used
 import numpy as np  # noqa
 

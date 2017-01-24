@@ -17,6 +17,7 @@ def init_logger(
         msg_fmt=_DEFAULT_MSG,
         level=_DEFAULT_LEVEL,
         propagate=False):
+    """Initialize luchador logger"""
     logger = logging.getLogger(name)
     handler = logging.StreamHandler()
     formatter = logging.Formatter(msg_fmt)

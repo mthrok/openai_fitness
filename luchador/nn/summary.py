@@ -48,9 +48,11 @@ class SummaryWriter(object):
     ###########################################################################
     # Basic functionalitites
     def add_graph(self, graph=None, global_step=None):
+        """Add graph summary. Affective only in tensorflow backend"""
         self.writer.add_graph(graph, global_step=global_step)
 
     def register(self, summary_type, names, tag=None):
+        """Create set of summary operation"""
         with self.graph.as_default():
             with self.graph.device('/cpu:0'):
                 self._register(summary_type, names, tag=tag)

@@ -1,16 +1,17 @@
+"""Define base network model structure and fetch method"""
 from __future__ import absolute_import
+
+import abc
 
 import luchador.util
 import luchador.nn
 
-__all__ = [
-    'BaseModel', 'get_model', 'Sequential',
-]
+__all__ = ['BaseModel', 'get_model', 'Sequential']
 
 
-class BaseModel(object):
+class BaseModel(object):  # pylint: disable=too-few-public-methods
     """Base Model class"""
-    pass
+    __metaclass__ = abc.ABCMeta
 
 
 def get_model(name):
@@ -37,8 +38,7 @@ def get_model(name):
     raise ValueError('Unknown model: {}'.format(name))
 
 
-###############################################################################
-class LayerConfig(object):
+class LayerConfig(object):  # pylint: disable=too-few-public-methods
     """Class to hold complementary info for Layer class"""
     def __init__(self, layer, scope, input_=None, output=None):
         self.layer = layer
@@ -167,7 +167,7 @@ class Sequential(BaseModel):
         return self
 
     def __add__(self, other):
-        """Create new model which contains layers from other model after this model
+        """Create new model which contains layers from other after this model
 
         Parameters
         ----------
@@ -216,8 +216,8 @@ class Sequential(BaseModel):
         tensor = self.input = input_tensor
         for cfg in self.layer_configs:
             cfg.input = tensor
-            scope = cfg.scope or luchador.nn.scope.get_variable_scope()
-            with luchador.nn.scope.variable_scope(scope):
+            scope = cfg.scope or luchador.nn.get_variable_scope()
+            with luchador.nn.variable_scope(scope):
                 tensor = cfg.layer(tensor)
             cfg.output = tensor
         self.output = tensor

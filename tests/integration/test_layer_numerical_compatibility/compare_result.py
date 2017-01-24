@@ -1,3 +1,4 @@
+"""Compare results of layer IO test over backends"""
 from __future__ import division
 from __future__ import print_function
 
@@ -5,7 +6,7 @@ import h5py
 import numpy as np
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description='Load two files and check if their values are similar'
@@ -24,13 +25,13 @@ def parse_command_line_args():
 
 
 def _load_result(filepath):
-    f = h5py.File(filepath, 'r')
-    ret = np.asarray(f['output'])
-    f.close()
+    file_ = h5py.File(filepath, 'r')
+    ret = np.asarray(file_['output'])
+    file_.close()
     return ret
 
 
-def print_stats(*arrs):
+def _print_stats(*arrs):
     print('{sum:>10}  {max:>10}  {min:>10}  {mean:>10}'
           .format(sum='sum', max='max', min='min', mean='mean'))
     for arr in arrs:
@@ -40,8 +41,8 @@ def print_stats(*arrs):
     print('')
 
 
-def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
-    print_stats(arr1, arr2)
+def _check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
+    _print_stats(arr1, arr2)
     abs_diff = np.absolute(arr1 - arr2)
     rel_diff = abs(abs_diff / (arr1 + arr2 + 1))
     print('  Ave absolute diff: {}'.format(abs_diff.mean()))
@@ -57,13 +58,13 @@ def check(arr1, arr2, abs_threshold=0.00015, relative_threshold=1e-1):
 
 
 def _main():
-    args = parse_command_line_args()
+    args = _parse_command_line_args()
     print('Comparing {} and {}. (Threshold: {} [%])'
           .format(args.input1, args.input2, 100 * args.threshold))
     data1 = _load_result(args.input1)
     data2 = _load_result(args.input2)
 
-    if check(data1, data2, relative_threshold=args.threshold):
+    if _check(data1, data2, relative_threshold=args.threshold):
         raise ValueError('Data are different')
     print('Okay')
 

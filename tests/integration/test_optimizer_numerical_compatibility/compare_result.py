@@ -1,10 +1,11 @@
+"""Compare optimization test result from both backends"""
 from __future__ import division
 from __future__ import print_function
 
 import csv
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description='Load two files and check if their values are similar'
@@ -31,7 +32,7 @@ def _load_data(filepath):
         return {'loss': loss, 'wrt': wrt}
 
 
-def check(series1, series2, abs_threshold=0.00015, relative_threshold=1e-1):
+def _check(series1, series2, abs_threshold=0.00015, relative_threshold=1e-1):
     """Check if the given two series are close enough"""
     res = []
     for i, (val1, val2) in enumerate(zip(series1[1:], series2[1:])):
@@ -45,24 +46,26 @@ def check(series1, series2, abs_threshold=0.00015, relative_threshold=1e-1):
     return res
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
     print('Comparing {} and {}. (Threshold: {} [%])'
           .format(args.input1, args.input2, 100 * args.threshold))
     data1 = _load_data(args.input1)
     data2 = _load_data(args.input2)
 
     message = ''
-    res = check(data1['loss'], data2['loss'],
-                relative_threshold=args.threshold)
+    res = _check(
+        data1['loss'], data2['loss'],
+        relative_threshold=args.threshold)
     error_ratio = len(res) / len(data1['loss'])
     if res:
         message += 'Loss are different\n'
         for i, val1, val2 in res:
             message += 'Line {}: {}, {}\n'.format(i, val1, val2)
 
-    res = check(data1['wrt'], data2['wrt'],
-                relative_threshold=args.threshold)
+    res = _check(
+        data1['wrt'], data2['wrt'],
+        relative_threshold=args.threshold)
     if res:
         message += 'wrt are different\n'
         for i, val1, val2 in res:
@@ -79,4 +82,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    _main()

@@ -1,3 +1,7 @@
+"""Run environment and save the state in HDF5"""
+from __future__ import print_function
+from __future__ import absolute_import
+
 import h5py
 import numpy as np
 
@@ -5,10 +9,10 @@ from luchador.env import get_env
 from luchador.util import load_config
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
-        description='Create ALE Environment state data'
+        description='Create state data from environment'
     )
     ap.add_argument('env', help='YAML file contains environment config')
     ap.add_argument('output', help='Output HDF5 file name')
@@ -21,13 +25,12 @@ def parse_command_line_args():
 def create_env(cfg_file):
     """Load Environment config file and instantiate"""
     cfg = load_config(cfg_file)
-    Environment = get_env(cfg['name'])
-    env = Environment(**cfg['args'])
+    env = get_env(cfg['name'])(**cfg['args'])
     print('\n{}'.format(env))
     return env
 
 
-def create_data(env, channel, batch):
+def _create_data(env, channel, batch):
     samples = []
     env.reset()
     for _ in range(batch):
@@ -41,21 +44,20 @@ def create_data(env, channel, batch):
     return np.asarray(samples, dtype=np.uint8)
 
 
-def save(data, output_file, key='data'):
-    f = h5py.File(output_file, 'a')
-    if key in f:
-        del f[key]
-    f.create_dataset(key, data=data)
-    f.close()
+def _save(data, output_file, key='data'):
+    file_ = h5py.File(output_file, 'a')
+    if key in file_:
+        del file_[key]
+    file_.create_dataset(key, data=data)
+    file_.close()
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
     env = create_env(args.env)
-    data = create_data(env, args.channel, args.batch)
-
-    save(data, args.output, args.key)
+    data = _create_data(env, args.channel, args.batch)
+    _save(data, args.output, args.key)
 
 
 if __name__ == '__main__':
-    main()
+    _main()

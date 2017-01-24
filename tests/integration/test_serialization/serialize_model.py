@@ -1,3 +1,4 @@
+"""Build network model and run optimization, then saven variables"""
 import logging
 from collections import OrderedDict
 
@@ -26,7 +27,7 @@ SHAPE = (
 )
 
 
-def parse_command_line_args():
+def _parse_command_line_args():
     from argparse import ArgumentParser as AP
     ap = AP(
         description=(
@@ -53,18 +54,18 @@ def parse_command_line_args():
     return ap.parse_args()
 
 
-def make_optimizer(filepath):
+def _make_optimizer(filepath):
     cfg = load_config(filepath)
     return nn.get_optimizer(cfg['name'])(**cfg['args'])
 
 
-def build_network(model_filepath, optimizer_filepath):
+def _build_network(model_filepath, optimizer_filepath):
     max_reward, min_reward = 1.0, -1.0
     max_delta, min_delta = 1.0, -1.0
 
     discount_rate = 0.99
 
-    def model_maker():
+    def _model_maker():
         config = nn.get_model_config(model_filepath, n_actions=N_ACTIONS)
         dqn = nn.make_model(config)
         input_tensor = nn.Input(shape=SHAPE, name='input')
@@ -76,17 +77,17 @@ def build_network(model_filepath, optimizer_filepath):
         discount_rate=discount_rate,
         min_reward=min_reward, max_reward=max_reward,
         min_delta=min_delta, max_delta=max_delta)
-    ql.build(model_maker)
+    ql.build(_model_maker)
 
     _LG.info('Building Optimization')
-    optimizer = make_optimizer(optimizer_filepath)
+    optimizer = _make_optimizer(optimizer_filepath)
     minimize_op = optimizer.minimize(
         ql.error, wrt=ql.pre_trans_net.get_parameter_variables())
 
     return ql, optimizer, minimize_op
 
 
-def serialize(filepath, components, session):
+def _serialize(filepath, components, session):
     saver = luchador.nn.Saver(filepath)
     _LG.info('Save parameters to %s', filepath)
     params = []
@@ -99,7 +100,7 @@ def serialize(filepath, components, session):
         ]), global_step=0)
 
 
-def deserialize(filepath, components, session):
+def _deserialize(filepath, components, session):
     _LG.info('Loading parameters from %s', filepath)
     var_names = [
         var.name for component in components
@@ -108,10 +109,10 @@ def deserialize(filepath, components, session):
     session.load_from_file(filepath, var_names)
 
 
-def run(session, ql, minimize_op):
+def _run(session, qln, minimize_op):
     _LG.info('Running minimization op')
 
-    session.run(updates=ql.sync_op)
+    session.run(updates=qln.sync_op)
     pre_states = np.random.randint(
         low=0, high=256, size=SHAPE, dtype=np.uint8)
     post_states = np.random.randint(
@@ -126,36 +127,36 @@ def run(session, ql, minimize_op):
     session.run(
         name='minibatch',
         inputs={
-            ql.pre_states: pre_states,
-            ql.actions: actions,
-            ql.rewards: rewards,
-            ql.post_states: post_states,
-            ql.terminals: terminals,
+            qln.pre_states: pre_states,
+            qln.actions: actions,
+            qln.rewards: rewards,
+            qln.post_states: post_states,
+            qln.terminals: terminals,
         },
         updates=minimize_op
     )
 
 
-def main():
-    args = parse_command_line_args()
+def _main():
+    args = _parse_command_line_args()
     session = nn.Session()
-    ql, optimizer, minimize_op = build_network(
+    ql, optimizer, minimize_op = _build_network(
         model_filepath=args.model,
         optimizer_filepath=args.optimizer,
     )
 
     components = [ql.pre_trans_net, optimizer]
     if args.input:
-        deserialize(args.input, components, session)
+        _deserialize(args.input, components, session)
     else:
         _LG.info('Initializing Session')
         session.initialize()
 
-    run(session, ql, minimize_op)
+    _run(session, ql, minimize_op)
 
     if args.output:
-        serialize(args.output, components, session)
+        _serialize(args.output, components, session)
 
 
 if __name__ == '__main__':
-    main()
+    _main()
