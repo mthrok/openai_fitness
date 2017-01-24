@@ -459,7 +459,7 @@ class TestTransitionRecorder(unittest.TestCase):
         dt = (time.time() - t0) / n_repeats
         print('{} [sec]'.format(dt))
 
-        threshold = 0.0010 if 'CIRCLECI' in os.environ else 0.0005
+        threshold = 0.0013 if 'CIRCLECI' in os.environ else 0.0008
         self.assertTrue(
             dt < threshold,
             'Sampling is taking too much time ({} sec). '
