@@ -11,7 +11,7 @@ from tests.unit import fixture
 class TestMisc(unittest.TestCase):
     def _test_mean(self, axis, shape, keep_dims):
         with nn.variable_scope(self.id().replace('.', '/')):
-            tensor0 = fixture.create_tensor(shape)
+            tensor0 = fixture.create_tensor(shape, dtype='float32')
             tensor1 = nn.mean(tensor0, axis=axis, keep_dims=keep_dims)
 
         session = nn.Session()

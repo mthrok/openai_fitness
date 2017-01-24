@@ -58,7 +58,7 @@ def get_all_costs():
 
 
 ###############################################################################
-def create_variable(shape, value=7, dtype='int32', name='var'):
+def create_variable(shape, dtype, value=7, name='var'):
     """Create Variable for test"""
     return nn.get_variable(
         name=name, shape=shape, dtype=dtype,
@@ -66,7 +66,7 @@ def create_variable(shape, value=7, dtype='int32', name='var'):
     )
 
 
-def create_tensor(shape, dtype='int32', name='tensor'):
+def create_tensor(shape, dtype, name='tensor'):
     """Create Tensor for test"""
     if luchador.get_nn_backend() == 'theano':
         import theano.tensor as be
