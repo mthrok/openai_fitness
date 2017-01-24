@@ -11,7 +11,7 @@ def _extract_outcome(response):
     return base_env.deserialize_outcome(response.json())
 
 
-class EnvClient(object):
+class RemoteEnv(base_env.BaseEnvironment):
     """Simple interface to access remote Environment server
 
     Parameters

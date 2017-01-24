@@ -172,7 +172,7 @@ def create_env_app(env):
     @app.route('/kill', methods=['POST', 'GET'])
     def _kill():
         attr['server'].stop()
-        result = 'failed' if attr['server'].ready else 'killed'
+        result = 'failed' if attr['server'].ready else 'success'
         return _jsonify({'result': result})
 
     app.attr = attr

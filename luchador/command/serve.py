@@ -66,4 +66,4 @@ def entry_point():
         env_config = luchador.util.load_config(args.environment)
         _start_env_server(env_config, args.port, args.host)
     else:
-        pass
+        raise NotImplementedError('manager is not implemented yet.')

@@ -15,11 +15,6 @@ _LG = logging.getLogger(__name__)
 
 ###############################################################################
 def _main(env, agent, episodes, steps, report_every=1000):
-    env = get_env(env['name'])(**env.get('args', {}))
-    agent = get_agent(agent['name'])(**agent.get('args', {}))
-    _LG.info('\n%s', env)
-    _LG.info('\n%s', agent)
-
     agent.init(env)
     runner = EpisodeRunner(env, agent, max_steps=steps)
 
@@ -65,7 +60,7 @@ def _parse_command_line_arguments():
     )
     parser.add_argument('exercise')  # Placeholder for subcommanding
     parser.add_argument(
-        'environment',
+        'env',
         help='YAML file contains environment configuration')
     parser.add_argument(
         '--agent',
@@ -82,6 +77,14 @@ def _parse_command_line_arguments():
     parser.add_argument(
         '--sources', nargs='+', default=[],
         help='Source files that contain custom Agent/Env etc')
+    parser.add_argument(
+        '--port',
+        help='If environment is RemoteEnv, overwrite port number'
+    )
+    parser.add_argument(
+        '--kill', action='store_true',
+        help='If environment is RemoveEnv, kill server after finish'
+    )
     parser.add_argument('--debug', action='store_true')
     return parser.parse_args()
 
@@ -97,23 +100,41 @@ def _load_additional_sources(*files):
         exec('import {}'.format(file_))  # pylint: disable=exec-used
 
 
-def _parse_config():
-    args = _parse_command_line_arguments()
+def _make_agent(config_file):
+    config = (
+        load_config(config_file) if config_file else
+        {'name': 'NoOpAgent', 'args': {}}
+    )
+    return get_agent(config['name'])(**config.get('args', {}))
 
-    _set_logging_level(args.debug)
-    _load_additional_sources(*args.sources)
 
-    config = {
-        'env': load_config(args.environment),
-        'agent': (load_config(args.agent) if args.agent else
-                  {'name': 'NoOpAgent', 'args': {}}),
-        'episodes': args.episodes,
-        'steps': args.steps,
-        'report_every': args.report,
-    }
-    return config
+def _make_env(config_file, port):
+    config = load_config(config_file)
+    if config['name'] == 'RemoveEnv':
+        config['args']['port'] = port
+    return get_env(config['name'])(**config.get('args', {}))
 
 
 def entry_point():
     """Entry porint for `luchador exercise` command"""
-    _main(**_parse_config())
+    args = _parse_command_line_arguments()
+    env = _make_env(args.env, args.port)
+    agent = _make_agent(args.agent)
+
+    _LG.info('\n%s', env)
+    _LG.info('\n%s', agent)
+
+    try:
+        _main(
+            env, agent, episodes=args.episodes,
+            steps=args.steps, report_every=args.report)
+    except Exception:  # pylint: disable=broad-except
+        _LG.exception('Exception Occured')
+
+    if env.__class__.__name__ == 'RemoteEnv' and args.kill:
+        _LG.info('Killing environment server')
+        success = env.kill()
+        _LG.info(
+            'Environment %s',
+            'killed' if success else 'failed to terminate'
+        )
