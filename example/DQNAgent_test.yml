@@ -1,18 +1,35 @@
+alias:
+  width: &width 84
+  height: &height 84
+  stack: &stack 4
+  batch: &batch 32
+
 name: DQNAgent
 args:
   recorder_config:
     memory_size: 100
-    state_width: &state_width 84
-    state_height: &state_height 84
-    state_length: &state_length 4
-    batch_size: &batch_size 32
+    batch_size: *batch
+    buffer_config:
+      state:
+        shape:
+          - *height
+          - *width
+        dtype: uint8
+        stack: *stack
+        transition: 2
+      action:
+        dtype: uint8
+      reward:
+        dtype: float
+      terminal:
+        dtype: bool
 
   q_network_config:
     model_name: example/vanilla_dqn.yml
     parameter_file: example/space_invaders_vanilla_dqn_99000.h5
-    state_width: *state_width
-    state_height: *state_height
-    state_length: *state_length
+    state_width: *width
+    state_height: *height
+    state_length: *stack
     args:
       discount_rate: 0.99
       # reward is clipped between the following min and max
@@ -42,7 +59,7 @@ args:
     train_frequency: 4
     # Sync networks every this number of observations are made
     sync_frequency: 10000
-    n_samples: *batch_size
+    n_samples: *batch
 
   save_config:
     # Save network parameter every once after this #trainings

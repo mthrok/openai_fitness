@@ -18,7 +18,7 @@ import luchador.util
 from luchador import nn
 
 from .base import BaseAgent
-from .recorder import TransitionRecorder
+from .recorder2 import TransitionRecorder
 
 __all__ = ['DQNAgent']
 
@@ -150,7 +150,8 @@ class DQNAgent(BaseAgent):
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
-        self.recorder.reset(initial_observation)
+        self.recorder.reset(
+            initial_data={'state': initial_observation})
 
     ###########################################################################
     # Methods for `act`
@@ -186,9 +187,9 @@ class DQNAgent(BaseAgent):
     ###########################################################################
     # Methods for `learn`
     def learn(self, state0, action, reward, state1, terminal, info=None):
-        self.recorder.record(
-            action=action, reward=reward,
-            observation=state1, terminal=terminal)
+        self.recorder.record({
+            'action': action, 'reward': reward,
+            'state': state1, 'terminal': terminal})
         self.n_total_observations += 1
 
         cfg, n_obs = self.training_config, self.n_total_observations
@@ -227,11 +228,11 @@ class DQNAgent(BaseAgent):
         error = self.session.run(
             outputs=self.ql.error,
             inputs={
-                self.ql.pre_states: samples['pre_states'],
-                self.ql.actions: samples['actions'],
-                self.ql.rewards: samples['rewards'],
-                self.ql.post_states: samples['post_states'],
-                self.ql.terminals: samples['terminals'],
+                self.ql.pre_states: samples['state'][0],
+                self.ql.actions: samples['action'],
+                self.ql.rewards: samples['reward'],
+                self.ql.post_states: samples['state'][1],
+                self.ql.terminals: samples['terminal'],
             },
             updates=updates,
             name='minibatch_training',
@@ -282,7 +283,7 @@ class DQNAgent(BaseAgent):
         outputs = self.ql.pre_trans_net.get_output_tensors()
         output_vals = self.session.run(
             outputs=outputs,
-            inputs={self.ql.pre_states: sample['pre_states']},
+            inputs={self.ql.pre_states: sample['state'][0]},
             name='pre_trans_outputs'
         )
         output_data = {
