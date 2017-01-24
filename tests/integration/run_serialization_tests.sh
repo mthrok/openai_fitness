@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eux
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_DIR="${BASE_DIR}/test_serialization"

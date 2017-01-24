@@ -1,11 +1,10 @@
 #!/bin/bash
-
-set -e
+set -eux
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DATA_DIR="${BASE_DIR}/data/dqn"
 
-if [ "${COUNT_INTEGRATION_COVERAGE}" = true ]; then
+if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
     TEST_COMMAND="coverage run --source luchador -a tool/profile.py"
 else
     TEST_COMMAND="luchador"

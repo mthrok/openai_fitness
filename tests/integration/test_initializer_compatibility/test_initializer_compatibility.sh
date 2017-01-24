@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script runs the initialization of tensorflow and theano backend separately and write the result to files.
 # Then check if the difference between the results are within threshold
-set -u
+set -eux
 
 CONFIG=$1
 if [[ ! -f "${CONFIG}" ]]; then
