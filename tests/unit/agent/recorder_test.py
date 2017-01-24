@@ -15,43 +15,84 @@ from luchador.agent.recorder import (
     TransitionRecorder,
 )
 
+base_state = create_image(height=3, width=5, channel=None)
+
+
+def _make_episode_recorder(stack, transition=2):
+    """Create Episoderecorder with the same configuration/initial data
+    as the original implementation"""
+    er = EpisodeRecorder(
+        buffer_configs={
+            'state': {'stack': stack, 'transition': transition},
+            'action': {'stack': None, 'transition': None},
+            'reward': {'stack': None, 'transition': None},
+            'terminal': {'stack': None, 'transition': None},
+        },
+        initial_data={
+            'state': 0*base_state,
+        }
+    )
+    return er
+
+
+def _create_transition_recorder(memory_size, batch_size=32, stack=4):
+    return TransitionRecorder(
+        memory_size=memory_size,
+        buffer_config={
+            'state': {
+                'stack': stack, 'transition': 2,
+                'shape': base_state.shape, 'dtype': 'uint8'
+            },
+            'action': {
+                'stack': None, 'transition': None,
+                'dtype': 'uint8'
+            },
+            'reward': {'dtype': 'float32'},
+            'terminal': {'dtype': 'bool'},
+        },
+        batch_size=batch_size,
+    )
+
+# pylint: disable=protected-access
+
 
 class TestEpisodeRecorder(unittest.TestCase):
     def test_record(self):
         """EpisodeRecorder correctly records histories"""
-        ones = create_image(height=19, width=37, channel=None)
-        er = EpisodeRecorder(initial_observation=(0*ones))
+        er = _make_episode_recorder(stack=11)
 
-        observation_unit = 11
-        n_actions = 5 * observation_unit
-        for i in range(1, n_actions + 1):
-            observation = i * ones
+        n_actions = 5 * er.max_stack
+        for i in range(n_actions):
             action, reward, terminal = i, 2 * i, bool(i % 3)
-            er.record(action, observation, reward, terminal)
+            state = (i+1) * base_state
+            er.put({
+                'action': action, 'reward': reward,
+                'state': state, 'terminal': terminal
+            })
 
-        for i in range(n_actions + 1):
-            expected = i * ones
-            found = er.observations[i]
+        for i in range(n_actions):
+            expected = i * base_state
+            found = er.buffers['state'].data[i]
             self.assertTrue(
                 (found == expected).all(),
                 'Observation is not correctly recorded. '
                 'Expected: {}, Found: {}.'.format(expected, found))
 
-        for i in range(1, n_actions + 1):
+        for i in range(n_actions):
             expected = i
-            found = er.actions[i]
+            found = er.buffers['action'].data[i]
             self.assertEqual(
                 expected, found,
                 'Action is not correctly recorded. '
                 'Expected: {}, Found: {}.'.format(expected, found))
             expected = 2 * i
-            found = er.rewards[i]
+            found = er.buffers['reward'].data[i]
             self.assertEqual(
                 expected, found,
                 'Reward is not correctly recorded. '
                 'Expected: {}, Found: {}.'.format(expected, found))
             expected = bool(i % 3)
-            found = er.terminals[i]
+            found = er.buffers['terminal'].data[i]
             self.assertEqual(
                 expected, found,
                 'Terminal is not correctly recorded. '
@@ -59,22 +100,31 @@ class TestEpisodeRecorder(unittest.TestCase):
 
     def test_create_state(self):
         """EpisodeRecorder correctly creates state from observations"""
-        ones = create_image(height=19, width=37, channel=None)
-        er = EpisodeRecorder(initial_observation=0 * ones)
+        er = _make_episode_recorder(stack=5)
 
-        state_length = 5
-        n_actions = 3 * state_length
-        for i in range(1, n_actions+1):
-            observation = i * ones
+        n_actions = 3 * er.max_stack
+        for i in range(n_actions):
             action, reward, terminal = i, 2 * i, bool(i % 3)
-            er.record(action, observation, reward, terminal)
+            state = (i+1) * base_state
+            er.put({
+                'action': action, 'reward': reward,
+                'state': state, 'terminal': terminal,
+            })
 
-        for i in range(state_length-1, n_actions):
-            state = er._create_state(i, state_length)
-            j_start = i - state_length + 1
-            for j in range(state_length):
-                expected = (j_start + j) * ones
-                found = state[j]
+        for i in range(er.max_stack-1, n_actions):
+            transition = er.get(i)
+            state0 = transition['state'][0]
+            state1 = transition['state'][1]
+            j_start = i - er.max_stack + 1
+            for j in range(er.max_stack):
+                expected = (j_start + j) * base_state
+                found = state0[j]
+                self.assertTrue(
+                    (found == expected).all(),
+                    'State is not properly created for index {} slice {}. '
+                    'Expected: {}, Found: {}'.format(i, j, expected, found))
+                expected = (j_start + j + 1) * base_state
+                found = state1[j]
                 self.assertTrue(
                     (found == expected).all(),
                     'State is not properly created for index {} slice {}. '
@@ -82,29 +132,31 @@ class TestEpisodeRecorder(unittest.TestCase):
 
     def test_create_transition(self):
         """EpisodeRecorder correctly creates transitions from histories"""
-        ones = create_image(height=19, width=37, channel=None)
-        er = EpisodeRecorder(initial_observation=0*ones)
+        er = _make_episode_recorder(stack=13)
 
-        state_length = 13
-        n_actions = 3 * state_length
-        for i in range(1, n_actions + 1):
-            observation = i * ones
+        n_actions = 3 * er.max_stack
+        for i in range(n_actions):
             action, reward, terminal = i, 2*i, bool(i % 3)
-            er.record(action, observation, reward, terminal)
-
-        for i in range(state_length, n_actions+1):
-            transition = er._create_transition(i, state_length)
-            j_start = i - state_length + 1
-            for j in range(state_length):
-                expected = (j_start + j - 1) * ones
-                found = transition['pre_state'][j]
+            state = (i+1) * base_state
+            er.put({
+                'action': action, 'reward': reward,
+                'state': state, 'terminal': terminal
+            })
+        for i in range(er.max_stack-1, n_actions):
+            transition = er.get(i)
+            j_start = i - er.max_stack + 1
+            state0 = transition['state'][0]
+            state1 = transition['state'][1]
+            for j in range(er.max_stack):
+                expected = (j_start + j) * base_state
+                found = state0[j]
                 self.assertTrue(
                     (expected == found).all(),
                     'Transition was not proeperly created. '
                     'state0 for index {}, slice {} is not correct. '
                     'Expected: {}, Found: {}'.format(i, j, expected, found))
-                expected = (j_start + j) * ones
-                found = transition['post_state'][j]
+                expected = (j_start + j + 1) * base_state
+                found = state1[j]
                 self.assertTrue(
                     (expected == found).all(),
                     'Transition was not proeperly created. '
@@ -134,42 +186,41 @@ class TestEpisodeRecorder(unittest.TestCase):
 
     def test_sample(self):
         """EpisodeRecorder correctly samples a transition"""
-        ones = create_image(height=19, width=37, channel=None)
-        er = EpisodeRecorder(initial_observation=0 * ones)
+        er = _make_episode_recorder(stack=5)
 
-        state_length = 5
-        n_actions = 3 * state_length
+        n_actions = 3 * er.max_stack
         for i in range(1, n_actions+1):
-            er.record(i, i * ones, i, bool(i))
+            action, reward, terminal = i, 2*i, bool(i % 3)
+            state = (i+1) * base_state
+            er.put({
+                'action': action, 'reward': reward,
+                'state': state, 'terminal': terminal,
+            })
 
         for _ in range(1000):
-            transition = er.sample(state_length)
-            state0 = transition['pre_state']
+            transition = er.sample()
+            state0 = transition['state'][0]
             action = transition['action']
             reward = transition['reward']
-            state1 = transition['post_state']
+            state1 = transition['state'][1]
             terminal = transition['terminal']
-            self.assertTrue((action == state0[-1] + 1).all())
-            self.assertEqual(action, reward)
-            self.assertEqual(bool(action), terminal)
-            self.assertTrue((action == state1[-1]).all())
+            self.assertTrue((action == state0[-1]).all())
+            self.assertEqual(2 * action, reward)
+            self.assertEqual(bool(action % 3), terminal)
+            self.assertEqual(state0[1:], state1[:-1])
 
 
 class TestTransitionRecorder(unittest.TestCase):
     def test_reset(self):
         """`reset` should create new EpisodeRecorder with empty record"""
-        obs = create_image(height=19, width=37, channel=None)
         n_episodes = 100
         timesteps = 100
 
-        tr = TransitionRecorder(
-            state_length=4,
-            memory_size=n_episodes * timesteps)
-
+        tr = _create_transition_recorder(memory_size=n_episodes * timesteps)
         for _ in range(n_episodes):
-            tr.reset(initial_observation=obs)
+            tr.reset(initial_data={'state': 0*base_state})
             expected = 0
-            found = len(tr.recorder)
+            found = tr._recorder.n_data
             self.assertEqual(
                 expected, found,
                 '`recorder` is not properly reset. '
@@ -178,49 +229,53 @@ class TestTransitionRecorder(unittest.TestCase):
 
     def test_truncate_recorders(self):
         """`truncate` should put current recorder to recorder archives"""
-        obs = create_image(height=19, width=37, channel=None)
         n_episodes = 100
-        timesteps = 100
+        timesteps = 10
 
-        tr = TransitionRecorder(
-            state_length=4,
-            memory_size=n_episodes * timesteps)
-
+        tr = _create_transition_recorder(memory_size=n_episodes*timesteps+1)
+        self.assertEqual(0, len(tr._recorders))
         for i in range(n_episodes):
-            tr.reset(initial_observation=obs)
-            expected = i
-            found = len(tr.recorders)
+            tr.reset(initial_data={'state': 0*base_state})
+            for j in range(timesteps):
+                tr.record({
+                    'state': j * base_state,
+                    'action': j,
+                    'reward': 2 * j,
+                    'terminal': bool(j % 3)
+                })
+            tr.truncate()
+
+            expected = i + 1
+            found = len(tr._recorders)
             self.assertEqual(
                 expected, found,
                 '`recorder` was not properly put into `recorders`. '
                 '#recorders expected is {}, instead of {}.'
                 .format(expected, found))
 
-            for _ in range(timesteps):
-                tr.record(1, obs, 1, True)
-            tr.truncate()
-
     def test_truncate(self):
         """`truncate` retains at least one recorder or maximum records"""
-        obs = create_image(height=19, width=37, channel=None)
         memory_size = 100
-        tr = TransitionRecorder(
-            memory_size=memory_size,
-            state_length=4)
+        tr = _create_transition_recorder(memory_size=memory_size)
 
         # Let's say we went through 10 episodes and we observed 10 actions in
         # each episode
         for i in range(10):
-            tr.reset(initial_observation=obs)
-            for _ in range(10):
-                tr.record(1, obs, 1, True)
+            tr.reset(initial_data={'state': 0*base_state})
+            for j in range(10):
+                tr.record({
+                    'state': j * base_state,
+                    'action': j,
+                    'reward': 2 * j,
+                    'terminal': bool(j % 3)
+                })
             tr.truncate()
 
             # At the end of each episode, #actions we observed through all the
             # episodes is smaller than memory_size, so no recorder
             # should be removed.
             expected = i + 1
-            found = len(tr.recorders)
+            found = len(tr._recorders)
             self.assertEqual(
                 expected, found,
                 '`truncate` method should not alter recorders when '
@@ -230,13 +285,18 @@ class TestTransitionRecorder(unittest.TestCase):
 
         # Let's go through another episode with 50 actions.
         # After `truncate`, records from old episode should be removed.
-        tr.reset(initial_observation=obs)
-        for _ in range(50):
-            tr.record(1, obs, 1, True)
+        tr.reset(initial_data={'state': 0*base_state})
+        for j in range(50):
+            tr.record({
+                'state': j * base_state,
+                'action': j,
+                'reward': 2 * j,
+                'terminal': bool(j % 3)
+            })
         tr.truncate()
 
         expected = 6  # The last six episodes: 10 + 10 + 10 + 10 + 10 + 50
-        found = len(tr.recorders)
+        found = len(tr._recorders)
         self.assertEqual(
             expected, found,
             '`truncate` method should retain the latest recorders when '
@@ -249,13 +309,18 @@ class TestTransitionRecorder(unittest.TestCase):
         # After `truncate`, only records from the last espisode should
         # be left.
         n_actions_to_add = memory_size + 1
-        tr.reset(initial_observation=obs)
+        tr.reset(initial_data={'state': 0*base_state})
         for _ in range(n_actions_to_add):
-            tr.record(1, obs, 1, True)
+            tr.record({
+                'state': j * base_state,
+                'action': j,
+                'reward': 2 * j,
+                'terminal': bool(j % 3)
+            })
         tr.truncate()
 
         expected = 1
-        found = len(tr.recorders)
+        found = len(tr._recorders)
         self.assertEqual(
             expected, found,
             '`truncate` method should retain the latest recorder when '
@@ -264,7 +329,7 @@ class TestTransitionRecorder(unittest.TestCase):
             .format(expected, found))
 
         expected = n_actions_to_add
-        found = len(tr)
+        found = tr.n_records
         self.assertEqual(
             expected, found,
             '`truncate` method should retain the latest recorder when '
@@ -274,123 +339,117 @@ class TestTransitionRecorder(unittest.TestCase):
 
     def test_sampling_raises(self):
         """Sampling raises ValueError when there is no record"""
-        n_samples = 33
-        tr = TransitionRecorder()
+        n_samples = 32
+        tr = _create_transition_recorder(memory_size=10)
         try:
             tr.sample(n_samples=n_samples)
         except ValueError:
             pass
-        except Exception as e:
-            self.fail('Expected `ValueError` but got {}'.format(e))
+        except Exception as error:  # pylint: disable=broad-except
+            self.fail('Expected `ValueError` but got {}'.format(error))
         else:
             self.fail('Expected `ValueError` but no error was raised.')
 
-    def _test_sampling(self, fmt):
-        height, width = 19, 37
-        n_samples, state_length = 33, 4
-        ones = create_image(height=height, width=width, channel=None)
-        tr = TransitionRecorder(
-            memory_size=3*n_samples,
-            state_length=state_length,
-            state_width=width, state_height=height,
-            batch_size=n_samples, data_format=fmt)
+    def test_sampling(self):
+        n_samples = 32
+        tr = _create_transition_recorder(memory_size=3*n_samples)
 
         for _ in range(10):
-            tr.reset(ones)
+            i = np.random.randint(255)
+            tr.reset(initial_data={'state': i*base_state})
             for _ in range(n_samples):
-                i = np.random.randint(255)
-                tr.record(i, i*ones, i, bool(i % 3))
+                j = np.random.randint(255)
+                tr.record({
+                    'action': i,
+                    'reward': i,
+                    'state': j * base_state,
+                    'terminal': bool(i % 3),
+                })
+                i = j
             tr.truncate()
 
         samples = tr.sample(n_samples=n_samples)
-        keys = ['pre_states', 'actions', 'rewards', 'post_states', 'terminals']
-        data = [samples[k] for k in keys]
-        for pre, action, reward, post, terminal in zip(*data):
-            last_obs = post[..., -1] if fmt == 'NHWC' else post[-1, ...]
-            common_pre = pre[..., 1:] if fmt == 'NHWC' else pre[1:, ...]
-            common_post = post[..., :-1] if fmt == 'NHWC' else post[:-1, ...]
-            self.assertEqual(action, reward,
-                             'Incorrect action-reward pair is found.')
-            self.assertEqual(bool(action % 3), terminal,
-                             'Incorrect action-terminal pair is found.')
-            self.assertTrue((action == last_obs).all(),
-                            'Incorrect action-observation pair is found.')
-            self.assertTrue((common_pre == common_post).all(),
-                            'Incorrect pre_state-post_state pair is found.')
+        data = [
+            samples['state'][0],
+            samples['action'],
+            samples['reward'],
+            samples['state'][1],
+            samples['terminal'],
+        ]
+        for state0, action, reward, state1, terminal in zip(*data):
+            self.assertEqual(
+                action, reward,
+                'Incorrect action-reward pair is found.')
+            self.assertEqual(
+                bool(action % 3), terminal,
+                'Incorrect action-terminal pair is found.')
+            self.assertTrue(
+                (action == state0[-1, ...]).all(),
+                'Incorrect action-observation pair is found.')
+            self.assertTrue(
+                (state0[1:, ...] == state1[:-1, ...]).all(),
+                'Incorrect pre_state-post_state pair is found.')
 
-    def test_sampling_nchw(self):
-        """Samples the correct set of transitions when format is "NCHW" """
-        self._test_sampling('NCHW')
+    def test_get_current_state(self):
+        stack, transition = 4, 2
+        tr = _create_transition_recorder(
+            memory_size=200, batch_size=32, stack=stack)
 
-    def test_sampling_nhwc(self):
-        """Samples the correct set of transitions when format is "NHWC" """
-        self._test_sampling('NHWC')
+        tr.reset(initial_data={'state': 0*base_state})
+        n_actions = stack + transition
+        for i in range(n_actions):
+            tr.record({
+                'action': i,
+                'reward': i,
+                'state': (i+1) * base_state,
+                'terminal': bool(i % 3),
+            })
 
-    def _test_get_current_state(self, fmt):
-        height, width = 19, 37
-        state_length = 4
-        ones = create_image(height=height, width=width, channel=None)
-        tr = TransitionRecorder(
-            memory_size=200,
-            state_length=state_length,
-            state_width=width, state_height=height,
-            batch_size=31, data_format=fmt)
-
-        tr.reset(0*ones)
-        n_actions = 2 * state_length
-        for i in range(1, n_actions + 1):
-            observation = i * ones
-            tr.record(0, observation, 0, True)
-
-        state = tr.get_current_state()
-        for i in range(state_length):
-            expected = n_actions + 1 - state_length + i
-            found = state[:, i, ...] if fmt == 'NCHW' else state[..., i]
+        stacks = tr.get_last_stack()
+        for i in range(stack):
+            expected = n_actions - stack + i + 1
+            found = stacks['state'][i]
             self.assertTrue(
                 (expected == found).all(),
                 'The last observations were not correctly converted to state. '
                 'Value expected: {}, Found: {}.'.format(expected, found)
             )
 
-        tr.reset(0 * ones)
+        tr.reset(initial_data={'state': 0*base_state})
         n_actions2 = n_actions * 2
-        for i in range(n_actions + 1, n_actions2):
-            observation = i * ones
-            tr.record(0, observation, 0, True)
+        for i in range(n_actions, n_actions2):
+            tr.record({
+                'action': i,
+                'reward': i,
+                'state': (i+1) * base_state,
+                'terminal': bool(i % 3),
+            })
 
-        state = tr.get_current_state()
-        for i in range(state_length):
-            expected = n_actions2 - state_length + i
-            found = state[0, i, ...] if fmt == 'NCHW' else state[0, ..., i]
+        stacks = tr.get_last_stack()
+        for i in range(stack):
+            expected = n_actions2 - stack + i + 1
+            found = stacks['state'][i]
             self.assertTrue(
                 (expected == found).all(),
                 'The last observations were not converted to state. '
                 'Value expected: {}, Found: {}.'.format(expected, found)
             )
 
-    def test_get_current_state_nchw(self):
-        """Last observations are retrieved in "NCHW" format"""
-        self._test_get_current_state('NCHW')
-
-    def test_get_current_state_nhwc(self):
-        """Last observations are retrieved in "NHWC" format"""
-        self._test_get_current_state('NHWC')
-
     def test_sampling_time(self):
         """Sampling should finish in reasonable time."""
-        height, width = 1, 1
-        n_samples, state_length = 33, 4
-        ones = create_image(height=height, width=width, channel=None)
-        tr = TransitionRecorder(
-            memory_size=1000000,
-            state_length=state_length,
-            state_width=width, state_height=height,
-            batch_size=n_samples)
+        n_samples, stack = 32, 4
+        tr = _create_transition_recorder(
+            memory_size=1000000, batch_size=n_samples, stack=stack)
 
         for i in range(10000):
-            tr.reset(ones)
+            tr.reset(initial_data={'state': 0*base_state})
             for _ in range(100):
-                tr.record(i, ones, i, True)
+                tr.record({
+                    'action': i,
+                    'reward': i,
+                    'state': (i+1) * base_state,
+                    'terminal': bool(i % 3),
+                })
             tr.truncate()
 
         n_repeats = 1000
@@ -400,7 +459,7 @@ class TestTransitionRecorder(unittest.TestCase):
         dt = (time.time() - t0) / n_repeats
         print('{} [sec]'.format(dt))
 
-        threshold = 0.0010 if 'CIRCLECI' in os.environ else 0.0005
+        threshold = 0.0013 if 'CIRCLECI' in os.environ else 0.0008
         self.assertTrue(
             dt < threshold,
             'Sampling is taking too much time ({} sec). '

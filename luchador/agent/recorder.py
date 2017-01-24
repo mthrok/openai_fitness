@@ -1,18 +1,3 @@
-"""Provide efficient replay recorder
-
-In this module
-
-- **observation**
-    Referes to an observation of environment.
-
-- **state**
-    Referes to a set of observations combined together as a processing unit
-    passed down to further processing pipeline.
-
-- **transition**
-    Refers to a set of (original state, action, reward, new state, terminal
-    flag).
-"""
 from __future__ import division
 from __future__ import absolute_import
 
@@ -21,294 +6,266 @@ from collections import deque
 
 import numpy as np
 
-import luchador
-
 _LG = logging.getLogger(__name__)
 
 
-__all__ = ['EpisodeRecorder', 'TransitionRecorder']
+class Buffer(object):
+    """Handles recording and sampling of data
+
+    Parameters
+    ----------
+    stack : int
+        The number of observations included in the state
+    """
+    def __init__(self, stack, transition):
+        self.data = []
+        self.stack = stack
+        self.transition = transition
+
+    def put(self, datum):
+        """Append data to the end"""
+        self.data.append(datum)
+
+    def _get(self, index):
+        """Fetch data from buffer and stack
+
+        Parameters
+        ----------
+        index : int
+            Index for the last datum to include in the resulting data.
+
+            For performance reason, argument validity check is omitted, but
+            arguments must satisfy the following condition:
+
+                0 <= stack - 1 <= index < len(self.data)
+
+        Returns
+        -------
+        list
+            data stored in the corresponding index
+        """
+        if self.stack:
+            i_start, i_end = index - self.stack + 1, index + 1
+            return self.data[i_start:i_end]
+        else:
+            return self.data[index]
+
+    def get(self, index):
+        """Fetch multiple stacked data from buffer
+
+        Parameters
+        ----------
+        index : int
+            Index for the last datum to include in the first data to be
+            fetched.
+
+            This index has stronger restriction than ``_get`` method,
+            as this method fetches multiple stacked data.
+
+                0 <= stack - 1 <= index < len(self.data) - self.transition
+
+        """
+        if self.transition:
+            return [self._get(index+i) for i in range(self.transition)]
+        else:
+            return self._get(index)
+
+    def get_last_stack(self):
+        if self.stack:
+            return self.data[-self.stack:]
+        else:
+            return self.data[-1]
+
+    def __str__(self):
+        return 'Buffer: <stack: {}, transition: {} > (#Records: {})'.format(
+            self.stack, self.transition, len(self.data))
 
 
 class EpisodeRecorder(object):
-    """Class for recording a **single** episode.
+    def __init__(self, buffer_configs, initial_data):
+        self.buffers = {
+            name: Buffer(
+                stack=cfg.get('stack'), transition=cfg.get('transition'))
+            for name, cfg in buffer_configs.items()
+        }
+        self.n_data = 0
 
-    .. automethod:: __init__
+        for name, data in initial_data.items():
+            self.buffers[name].put(data)
 
-    .. automethod:: _create_state
+        # Max stack size and transition size of underlying buffer.
+        # These are used to compute valid sampling index
+        self.max_stack = max([
+            buf.stack for buf in self.buffers.values()])
+        self.max_transition = max([
+            buf.transition for buf in self.buffers.values()])
 
-    .. automethod:: _create_transition
+    def put(self, data):
+        """Put data to underlying buffers"""
+        for name, buffer_ in self.buffers.items():
+            buffer_.put(data[name])
+        self.n_data += 1
 
-    """
-    def __init__(self, initial_observation):
-        """Initialize history
-
-        Parameters
-        ----------
-        initial_observation : NumPy Array
-            Initial observation observed when environment is reset
-        """
-        # So as to keep all the histories the same length all the time, fill
-        # dummy action and reward at the beginning
-        self.actions = [0]
-        self.rewards = [0]
-        self.terminals = [False]
-        self.observations = [initial_observation]
-
-    def __len__(self):
-        """Return the number of actions recorded"""
-        return len(self.actions) - 1
-
-    def record(self, action, observation, reward, terminal):
-        """Add the given values to history
-
-        Parameters
-        ----------
-        action : int
-            action taken
-
-        observation : NumPy Array
-            Observation of environment after action is taken
-
-        reward : float
-            Reward achieved by taking action and reaching observed state
-
-        terminal : bool
-            True if the episode was ended by this action.
-        """
-        self.actions.append(action)
-        self.observations.append(observation)
-        self.rewards.append(reward)
-        self.terminals.append(terminal)
-
-    def _create_state(self, index, length):
-        """Create state matrix from observations.
-
-        Parameters
-        ----------
-        index : int
-            Index for the last observation to include in the
-            resulting state.
-
-            For performance reason, argument validity check is omitted, but
-            arguments must satisfy the following condition:
-
-                0 <= length - 1 <= index < len(self.actions)
-
-        length : int
-            The number of observations included in the state
-
-        Returns
-        -------
-        NumPy Array
-            Where the length of the first axis equals to the given length, and
-            the other axis corresponds to the shape observation.
-        """
-        i_start, i_end = index - length + 1, index + 1
-        return self.observations[i_start:i_end]
-
-    def _create_transition(self, index, length):
-        """Create a transition from history
-
-        Parameters
-        ----------
-        index : int
-            Index of action history.
-
-            For performance reason, argument validity check is omitted, but
-            arguments must satisfy the following condition:
-
-                0 < length <= index < len(self.actions)
-
-        length : int
-            The number of observations included in the state
-
-        Returns
-        -------
-        dictionary :
-            action : int
-                The action stored at given index.
-            pre_state : NumPy Array with shape (n_observations, height, width)
-                The state which contains the `n_observations` observations
-                before the action is taken.
-            reward : float
-                The reward achieved by the taken action and the post state
-                reached.
-            post_state : NumPy Array with shape (n_observations, height, width)
-                The states which includes the state reached by taking the
-                action at pre_state, and `n_observations - 1` states before
-                the action was taken.
-            terminal : Bool
-                True if the `post_state` is the end of episode, otherwise False
-        """
+    def get(self, index):
+        """Get data from underlying buffers"""
         return {
-            # 'index': index,  # For debug
-            'pre_state': self._create_state(index-1, length),
-            'action': self.actions[index],
-            'reward': self.rewards[index],
-            'post_state': self._create_state(index, length),
-            'terminal': self.terminals[index],
+            name: buffer_.get(index)
+            for name, buffer_ in self.buffers.items()
         }
 
-    def sample(self, state_length):
-        """Sample one transition from record
+    def enough_data(self):
+        """Check if there is enough data to create transition"""
+        return self.n_data > self.max_stack + self.max_transition
 
-        Parameters
-        ----------
-        state_length : int
-            The number of obervations to combine
+    def sample(self):
+        """Sample transition randomly"""
+        index = np.random.randint(
+            self.max_stack - 1, self.n_data - self.max_transition + 1)
+        return self.get(index)
 
-        Returns
-        -------
-        dictionary :
-            action : int
-                The action stored at given index.
-            pre_state : NumPy Array with shape (n_observations, height, width)
-                The state which contains the `n_observations` observations
-                before the action is taken.
-            reward : float
-                The reward achieved by the taken action and the post state
-                reached.
-            post_state : NumPy Array with shape (n_observations, height, width)
-                The states which includes the state reached by taking the
-                action at pre_state, and `n_observations - 1` states before
-                the action was taken.
-            terminal : Bool
-                True if the `post_state` is the end of episode, otherwise False
+    def get_last_stack(self):
+        """Get the latest transition"""
+        return {
+            name: buffer_.get_last_stack()
+            for name, buffer_ in self.buffers.items()
+        }
 
-        See Also
-        --------
-        :any:`_create_transition` : Method to create transition
-        """
-        index = np.random.randint(state_length, len(self.actions))
-        return self._create_transition(index, state_length)
+    def __str__(self):
+        return 'EpisodeRecorder:\n' + '\n'.join([
+            '  {}: {}'.format(name, buffer_)
+            for name, buffer_ in self.buffers.items()
+        ])
 
 
 class TransitionRecorder(object):
-    """Class for recording and sampling state transition
-
-    .. automethod:: __init__
-    """
-    def __init__(
-            self, memory_size=1000000,
-            state_length=4, state_width=84, state_height=84, batch_size=32,
-            data_format=None):
-        """
-        Initialize TransitionRecorder class
-
-        Parameters
-        ----------
-        state_length : int
-            The number of observations in state.
-        n_obaservations_to_retaion : int
-            The number of latest observations to keep in memory
-        """
+    def __init__(self, memory_size, buffer_config, batch_size):
         self.memory_size = memory_size
-        self.state_length = state_length
+        self.buffer_config = buffer_config
+        self.batch_size = batch_size
 
-        # EpisodeRecorder which records the current episode
-        self.recorder = None
-        # Set of recorders from past episodes
-        self.recorders = deque()
-        # Buffer for storing sampled mini-batch
-        self.batch = None
+        self._recorder = None
+        self._recorders = deque()
 
-        self._init_batch(width=state_width, height=state_height,
-                         batch=batch_size, data_format=data_format)
+        self._batch = {}
+        self._init_batch()
 
-    def _init_batch(self, width, height, batch, data_format):
-        n, c = batch, self.state_length
-        state_shape = (n, c, height, width)
-        self.batch = {
-            '_pre_states': np.empty(state_shape, dtype=np.uint8),
-            'actions': np.empty((n,), dtype=np.uint8),
-            'rewards': np.empty((n,), dtype=np.float32),
-            '_post_states': np.empty(state_shape, dtype=np.uint8),
-            'terminals': np.empty((n,), dtype=np.bool_),
-        }
+    def _init_batch(self):
+        for name, cfg in self.buffer_config.items():
+            shape = list(cfg.get('shape', []))
+            stack = cfg.get('stack')
+            transition = cfg.get('transition')
+            if stack:
+                shape = [stack] + shape
+            shape = [self.batch_size] + shape
+            if transition:
+                self._batch[name] = [
+                    np.empty(shape=shape, dtype=cfg['dtype'])
+                    for _ in range(cfg['transition'])
+                ]
+            else:
+                self._batch[name] = np.empty(
+                    shape=shape, dtype=cfg['dtype'])
 
-        data_format = data_format or luchador.get_nn_conv_format()
-        self.batch['pre_states'] = (
-            self.batch['_pre_states'] if data_format == 'NCHW' else
-            self.batch['_pre_states'].transpose((0, 2, 3, 1)))
-        self.batch['post_states'] = (
-            self.batch['_post_states'] if data_format == 'NCHW' else
-            self.batch['_post_states'].transpose((0, 2, 3, 1)))
+    def reset(self, initial_data):
+        """Renew recorder for the current episode"""
+        self._recorder = EpisodeRecorder(self.buffer_config, initial_data)
 
-    def __len__(self):
-        """Return the total number of actions stored"""
-        return sum(len(r) for r in self.recorders)
-
-    def reset(self, initial_observation):
-        """Initialize recorder with new EpisodeRecorder"""
-        self.recorder = EpisodeRecorder(initial_observation)
-
-    def record(self, action, observation, reward, terminal):
-        """Add the given values to history
+    def record(self, data):
+        """Record data
 
         Parameters
         ----------
-        action : int
-            action taken
-
-        observation : NumPy Array
-            Observation of environment after action is taken
-
-        reward : float
-            Reward achieved by taking action and reaching observed state
-
-        terminal : bool
-            True if the episode was ended by this action.
+        data : dict
+            keys are the name of buffers and
+            values are the actual data to put in buffer
         """
-        self.recorder.record(
-            action=action, observation=observation,
-            reward=reward, terminal=terminal)
+        self._recorder.put(data)
+
+    @property
+    def n_records(self):
+        """Get the number of records in archive. Not include current episode"""
+        return sum([recorder.n_data for recorder in self._recorders])
 
     def truncate(self):
-        """Retain only recorders containing the latest records"""
-        self.recorders.append(self.recorder)
-        self.recorder = None
+        """Put current recorder in archive and discard old recordes
+        which surpasses the defined memory size"""
+        self._recorders.append(self._recorder)
+        self._recorder = None
 
-        n_records = len(self)
-        n_recorders = len(self.recorders)
+        n_records = self.n_records
+        n_recorders = len(self._recorders)
+
+        _LG.debug('  Before truncate:')
+        _LG.debug('  # records  : %s', n_records)
+        _LG.debug('  # recorders: %s', n_recorders)
+
         while n_recorders > 1 and n_records > self.memory_size:
-            poped = self.recorders.popleft()
-            n_records -= len(poped)
+            poped = self._recorders.popleft()
+            n_records -= poped.n_data
             n_recorders -= 1
 
         _LG.debug('  After truncate:')
         _LG.debug('  # records  : %s', n_records)
         _LG.debug('  # recorders: %s', n_recorders)
 
-    def is_ready(self):
-        """True if the current episode recorder has sufficient records"""
-        return len(self.recorder) > self.state_length
-
-    def get_current_state(self):
-        """Get the latest state
-
-        Returns
-        -------
-        NumPy Array with shape (state length, observation height, width)
-            The most recent state
-        """
-        n_obs = self.state_length
-        self.batch['_pre_states'][0] = self.recorder.observations[-n_obs:]
-        return self.batch['pre_states'][0:1]
+    def _set_batch(self, data, i_batch):
+        for name in self._batch:
+            transition = self.buffer_config[name].get('transition')
+            if transition:
+                for j in range(transition):
+                    self._batch[name][j][i_batch] = data[name][j]
+            else:
+                self._batch[name][i_batch] = data[name]
 
     def sample(self, n_samples):
-        """Sample state transitions into given batch"""
-        i = 0
-        while i < n_samples:
-            i_recorder = np.random.randint(len(self.recorders))
-            recorder = self.recorders[i_recorder]
-            if len(recorder) < self.state_length:
-                continue
-            transition = recorder.sample(self.state_length)
-            # self.batch['index'][i] = transition['index']  # For debug
-            self.batch['_pre_states'][i] = transition['pre_state']
-            self.batch['actions'][i] = transition['action']
-            self.batch['rewards'][i] = transition['reward']
-            self.batch['_post_states'][i] = transition['post_state']
-            self.batch['terminals'][i] = transition['terminal']
-            i += 1
-        return self.batch
+        """Sample transitions from the past episodes
+
+        Parameters
+        ----------
+        n_samples : int
+            Must be smaller than or equal to batch size
+
+        Return
+        ------
+        dict
+            Contains sampled data
+        """
+        n_recorders = len(self._recorders)
+        i_batch = 0
+        while i_batch < n_samples:
+            recorder = self._recorders[np.random.randint(n_recorders)]
+            if recorder.enough_data():
+                data = recorder.sample()
+                self._set_batch(data, i_batch)
+                i_batch += 1
+        return self._batch
+
+    def get_last_stack(self):
+        """Get the latest state"""
+        data = self._recorder.get_last_stack()
+        ret = {}
+        for name in self._batch:
+            transition = self.buffer_config[name].get('transition')
+            if transition:
+                self._batch[name][-1][0] = data[name]
+                ret[name] = self._batch[name][-1][0]
+            else:
+                self._batch[name][0] = data[name]
+                ret[name] = self._batch[name][0]
+        return ret
+
+    def is_ready(self):
+        """True if the current episode recorder has sufficient records"""
+        return self._recorder.enough_data()
+
+    def __str__(self):
+        return (
+            'TransitionRecorder:\n'
+            'Archived recorders:\n'
+            '  #recorders: {}\n'
+            '  #records: {})\n'
+            'Current recorder:\n'
+            '{}'
+        ).format(
+            len(self._recorders), self.n_records, self._recorder
+        )

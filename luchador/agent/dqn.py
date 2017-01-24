@@ -18,12 +18,16 @@ import luchador.util
 from luchador import nn
 
 from .base import BaseAgent
-from .recorder2 import TransitionRecorder
+from .recorder import TransitionRecorder
 
 __all__ = ['DQNAgent']
 
 
 _LG = logging.getLogger(__name__)
+
+
+def _transpose(state):
+    return state.transpose((0, 2, 3, 1))
 
 
 class DQNAgent(BaseAgent):
@@ -176,7 +180,9 @@ class DQNAgent(BaseAgent):
 
     def _predict_q(self):
         # _LG.debug('Predicting Q value from NN')
-        state = self.recorder.get_current_state()
+        state = self.recorder.get_last_stack()['state'][None, ...]
+        if luchador.get_nn_conv_format() == 'NHWC':
+            state = _transpose(state)
         q_val = self.session.run(
             outputs=self.ql.predicted_q,
             inputs={self.ql.pre_states: state},
@@ -225,13 +231,19 @@ class DQNAgent(BaseAgent):
         samples = self.recorder.sample(n_samples)
         updates = self.ql.pre_trans_net.get_update_operations() + [
             self.minimize_op]
+
+        pre_state = samples['state'][0]
+        post_state = samples['state'][1]
+        if luchador.get_nn_conv_format() == 'NHWC':
+            pre_state = _transpose(pre_state)
+            post_state = _transpose(post_state)
         error = self.session.run(
             outputs=self.ql.error,
             inputs={
-                self.ql.pre_states: samples['state'][0],
+                self.ql.pre_states: pre_state,
                 self.ql.actions: samples['action'],
                 self.ql.rewards: samples['reward'],
-                self.ql.post_states: samples['state'][1],
+                self.ql.post_states: post_state,
                 self.ql.terminals: samples['terminal'],
             },
             updates=updates,
@@ -281,9 +293,13 @@ class DQNAgent(BaseAgent):
     def _summarize_layer_outputs(self, episode):
         sample = self.recorder.sample(32)
         outputs = self.ql.pre_trans_net.get_output_tensors()
+
+        state = sample['state'][0]
+        if luchador.get_nn_conv_format() == 'NHWC':
+            state = _transpose(state)
         output_vals = self.session.run(
             outputs=outputs,
-            inputs={self.ql.pre_states: sample['state'][0]},
+            inputs={self.ql.pre_states: state},
             name='pre_trans_outputs'
         )
         output_data = {

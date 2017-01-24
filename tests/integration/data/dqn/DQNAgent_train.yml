@@ -48,8 +48,8 @@ args:
 
   action_config:
     exploration_period: 1000
-    initial_exploration_rate: 1.0
-    terminal_exploration_rate: 1.0
+    initial_exploration_rate: 0.5
+    terminal_exploration_rate: 0.5
 
   training_config:
     # Training starts after this number of transitions are recorded
