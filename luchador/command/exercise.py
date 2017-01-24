@@ -90,8 +90,8 @@ def _parse_command_line_arguments():
 
 
 def _set_logging_level(debug):
-    logging.getLogger('luchador').setLevel(
-        logging.DEBUG if debug else logging.INFO)
+    level = logging.DEBUG if debug else logging.INFO
+    logging.getLogger('luchador').setLevel(level)
 
 
 def _load_additional_sources(*files):
@@ -118,6 +118,7 @@ def _make_env(config_file, port):
 def entry_point():
     """Entry porint for `luchador exercise` command"""
     args = _parse_command_line_arguments()
+    _set_logging_level(args.debug)
     env = _make_env(args.env, args.port)
     agent = _make_agent(args.agent)
 
