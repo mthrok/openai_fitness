@@ -327,12 +327,16 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-def _validate_shapes(shape0, shape1, axis):
+def _concatenate_shapes(shape0, shape1, axis):
+    new_shape = []
     for i, (dim1, dim2) in enumerate(zip(shape0, shape1)):
         if i == axis:
-            continue
-        if not dim1 == dim2:
+            new_shape.append(dim1 + dim2)
+        elif dim1 == dim2:
+            new_shape.append(dim1)
+        else:
             raise ValueError('Inconsistent shape')
+    return new_shape
 
 
 class Concat(LayerMixin, base_layer.BaseConcat):
@@ -350,7 +354,7 @@ class Concat(LayerMixin, base_layer.BaseConcat):
             if shape is None:
                 shape = var.shape
             else:
-                _validate_shapes(shape, var.shape, axis)
+                shape = _concatenate_shapes(shape, var.shape, axis)
             tensor_list.append(var.unwrap())
 
         output = T.concatenate(tensor_list=tensor_list, axis=axis)

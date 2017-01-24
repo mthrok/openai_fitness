@@ -318,14 +318,18 @@ class TestConcat(unittest.TestCase):
         with nn.variable_scope(self.id().replace('.', '/'), reuse=False):
             var1 = nn.get_variable(name='name1', shape=shape1)
             var2 = nn.get_variable(name='name2', shape=shape2)
-            concatenated = nn.layer.Concat(axis=axis).build([var1, var2])
+            conc_var = nn.layer.Concat(axis=axis).build([var1, var2])
 
         session = nn.Session()
         val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)
-        found = session.run(outputs=concatenated, givens={
+        conc_val = session.run(outputs=conc_var, givens={
             var1: val1, var2: val2,
         })
 
+        expected = conc_val.shape
+        found = conc_var.shape
+        self.assertEqual(found, expected)
+
         expected = np.concatenate((val1, val2), axis=axis)
-        self.assertEqual(found.shape, expected.shape)
+        found = conc_val
         self.assertTrue(np.sum(np.square(found - expected)) < 1e-10)
