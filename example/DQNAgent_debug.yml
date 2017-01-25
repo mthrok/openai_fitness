@@ -52,6 +52,7 @@ args:
 
   action_config:
     # Exploration period in which exploration rate is annealed.
+    annealing_method: linear
     exploration_period: 500
     initial_exploration_rate: 1.0
     terminal_exploration_rate: 0.1

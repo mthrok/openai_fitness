@@ -47,7 +47,8 @@ args:
       learning_rate: 0.00025
 
   action_config:
-    exploration_period: 1
+    annealing_method: linear
+    exploration_period: 0
     initial_exploration_rate: 0.05
     terminal_exploration_rate: 0.05
 

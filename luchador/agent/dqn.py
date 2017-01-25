@@ -19,6 +19,7 @@ from luchador import nn
 
 from .base import BaseAgent
 from .recorder import TransitionRecorder
+from .misc import EGreedy
 
 __all__ = ['DQNAgent']
 
@@ -67,6 +68,7 @@ class DQNAgent(BaseAgent):
         self.summary_writer = None
         self.summary_values = None
         self.ql = None
+        self._eg = None
         self.optimizer = None
         self.session = None
         self.minimize_op = None
@@ -81,6 +83,12 @@ class DQNAgent(BaseAgent):
         self._init_summary_writer()
         self.saver = nn.Saver(**self.save_config['saver_config'])
         self._summarize_layer_params(0)
+        self._eg = EGreedy(
+            epsilon_init=self.action_config['initial_exploration_rate'],
+            epsilon_term=self.action_config['terminal_exploration_rate'],
+            duration=self.action_config['exploration_period'],
+            method=self.action_config['annealing_method'],
+        )
 
     def _init_summary_writer(self):
         cfg = self.summary_config
@@ -162,21 +170,12 @@ class DQNAgent(BaseAgent):
     def act(self):
         if (
                 not self.recorder.is_ready() or
-                np.random.rand() < self._get_exploration_probability()
+                self._eg.act_random()
         ):
             return np.random.randint(self._n_actions)
 
         q_val = self._predict_q()
         return np.argmax(q_val)
-
-    def _get_exploration_probability(self):
-        r_init = self.action_config['initial_exploration_rate']
-        r_term = self.action_config['terminal_exploration_rate']
-        t_end = self.action_config['exploration_period']
-        t_now = self.n_total_observations
-        if t_now < t_end:
-            return r_init - t_now * (r_init - r_term) / t_end
-        return r_term
 
     def _predict_q(self):
         # _LG.debug('Predicting Q value from NN')
