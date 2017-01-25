@@ -129,13 +129,11 @@ def entry_point():
         _main(
             env, agent, episodes=args.episodes,
             steps=args.steps, report_every=args.report)
-    except Exception:  # pylint: disable=broad-except
-        _LG.exception('Exception Occured')
-
-    if env.__class__.__name__ == 'RemoteEnv' and args.kill:
-        _LG.info('Killing environment server')
-        success = env.kill()
-        _LG.info(
-            'Environment %s',
-            'killed' if success else 'failed to terminate'
-        )
+    finally:
+        if env.__class__.__name__ == 'RemoteEnv' and args.kill:
+            _LG.info('Killing environment server')
+            success = env.kill()
+            _LG.info(
+                'Environment %s',
+                'killed' if success else 'failed to terminate'
+            )

@@ -9,7 +9,7 @@ import numpy as np
 
 import luchador.util
 
-_Outcome = namedtuple('Outcome', ('reward', 'state', 'terminal', 'info'))
+_Outcome = namedtuple('_Outcome', ('reward', 'state', 'terminal', 'info'))
 
 
 class Outcome(_Outcome):
@@ -26,9 +26,9 @@ class Outcome(_Outcome):
     info : dict
         Other environment-specific information
     """
-    def __init__(self, reward, state, terminal, info=None):
-        super(Outcome, self).__init__(
-            reward=reward, state=state, terminal=terminal, info=info)
+    def __new__(cls, reward, state, terminal, info=None):
+        return super(Outcome, cls).__new__(
+            cls, reward=reward, state=state, terminal=terminal, info=info)
 
 
 def _serialize_state(obs):
