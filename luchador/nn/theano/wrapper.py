@@ -89,6 +89,18 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return self * other
 
     def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
+        """Compute mean across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to reduce. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+        """
         _tensor = self._tensor.mean(axis=axis, keepdims=keep_dims, dtype=dtype)
         _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
         return Tensor(tensor=_tensor, shape=_shape, name=name)
