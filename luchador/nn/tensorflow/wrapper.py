@@ -70,6 +70,23 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
     def __rmul__(self, other):
         return self * other
 
+    def mean(self, axis=None, keep_dims=False, name=None):
+        """Compute mean across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to reduce. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+        """
+        _tensor = tf.reduce_mean(
+            self._tensor, axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""

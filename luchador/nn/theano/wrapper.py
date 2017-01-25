@@ -6,6 +6,7 @@ import numbers
 import theano
 import theano.tensor as T
 
+import luchador.util
 from luchador.nn.base import wrapper as base_wrapper
 from luchador.nn.base.wrapper import Operation
 
@@ -35,6 +36,18 @@ def _is_same_shape(shape1, shape2):
         if not dim1 == dim2:
             return False
     return True
+
+
+def _compute_reduced_shape(axis, shape, keep_dims):
+    if not luchador.util.is_iteratable(axis):
+        axis = [axis]
+    if keep_dims:
+        return [
+            (1 if i in axis else dim)
+            for i, dim in enumerate(shape)]
+    return [
+        dim for i, dim in enumerate(shape)
+        if i not in axis]
 
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
@@ -74,6 +87,11 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
 
     def __rmul__(self, other):
         return self * other
+
+    def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
+        _tensor = self._tensor.mean(axis=axis, keepdims=keep_dims, dtype=dtype)
+        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
