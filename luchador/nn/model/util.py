@@ -37,9 +37,9 @@ def make_model(model_config):
         scope, layer_cfg = cfg['scope'], cfg['layer']
         if 'name' not in layer_cfg:
             raise RuntimeError('Layer `name` not found')
-        _LG.debug('Constructing: %s', layer_cfg['name'])
-        layer = get_layer(layer_cfg['name'])(
-            **layer_cfg.get('args', {}))
+        args = layer_cfg.get('args', {})
+        _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
+        layer = get_layer(layer_cfg['name'])(**args)
         model.add_layer(layer=layer, scope=scope)
     return model
 

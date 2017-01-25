@@ -7,7 +7,7 @@
 # --optimizer: Name of optimizer configurations. See optimizer directory for the list of valid configurations.
 # --iterations: #parameter updates to execute before comparing the parameters. Default: 1000
 # --threshold: Maximum relative diff to allow
-set -eux
+set -eu
 
 while [[ $# -gt 0 ]]
 do
@@ -56,7 +56,8 @@ fi
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_optimizer.py ${FORMULA} ${OPTIMIZER}"
 
-echo "*** Checking numerical compatibility of ${OPTIMIZER_NAME} on ${FORMULA} ***"
+echo "********************************************************************************"
+echo "***** Checking numerical compatibility of ${OPTIMIZER_NAME} on ${FORMULA}"
 echo ""
 cat ${OPTIMIZER}
 echo ""
@@ -66,4 +67,5 @@ echo "* Running $(basename ${OPTIMIZER}) with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2} --iterations ${ITERATIONS}
 echo "* Comparing results"
 python "${BASE_DIR}/compare_result.py" $FILE1 $FILE2 --threshold ${THRESHOLD}
+echo "********************************************************************************"
 echo ""

@@ -19,7 +19,7 @@ from . import scope, wrapper, initializer
 __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
-    'ReLU', 'Sigmoid', 'Softmax',
+    'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
     'Flatten', 'Concat', 'TrueDiv',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
@@ -270,6 +270,16 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """
     def _build(self, input_tensor):
         output = tf.nn.softmax(input_tensor.unwrap())
+        return _wrap_output(output)
+
+
+class Softplus(LayerMixin, base_layer.BaseSoftplus):
+    """Implement Softplus in Tensorflow.
+
+    See :any:`BaseSoftplus` for detail.
+    """
+    def _build(self, input_tensor):
+        output = tf.nn.softplus(input_tensor.unwrap())
         return _wrap_output(output)
 
 

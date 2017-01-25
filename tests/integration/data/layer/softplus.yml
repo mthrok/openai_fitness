@@ -1,4 +1,4 @@
 layer:
-  name: Sigmoid
+  name: Softplus
 
 input: input_randn_5x3.h5

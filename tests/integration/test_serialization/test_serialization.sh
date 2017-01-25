@@ -4,7 +4,7 @@
 # Arguments:
 # --model: Name of model to tests [de]serialization.
 # --optimizer: Name of optimizer to test [de]serialization.
-set -eux
+set -eu
 
 while [[ $# -gt 0 ]]
 do
@@ -46,7 +46,8 @@ BACKENDS=( "theano" "tensorflow" )
 CONV_FORMATS=( "NCHW" "NHWC" )
 BASE_OUTPUT_DIR="tmp/test_serialization/${MODEL_NAME}_${OPTIMIZER_NAME}"
 
-echo "*** Checking serialization compatiblity of ${MODEL_NAME} + ${OPTIMIZER_NAME}"
+echo "********************************************************************************"
+echo "***** Checking serialization compatiblity of ${MODEL_NAME} + ${OPTIMIZER_NAME}"
 for i in {0..1}
 do
     BACKEND="${BACKENDS[${i}]}"
@@ -69,4 +70,5 @@ echo "* Deserializing Theano param on Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${THEANO_PARAM}
 echo "* Deserializing Tensorflow param on Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --input ${TENSORFLOW_PARAM}
+echo "********************************************************************************"
 echo ""

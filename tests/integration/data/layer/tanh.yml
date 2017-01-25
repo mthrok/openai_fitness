@@ -1,5 +1,4 @@
 layer:
   name: Tanh
-  args: {}
 
 input: input_randn_5x3.h5

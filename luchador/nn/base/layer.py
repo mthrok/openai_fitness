@@ -227,6 +227,12 @@ class BaseSoftmax(BaseLayer):
         super(BaseSoftmax, self).__init__()
 
 
+class BaseSoftplus(BaseLayer):
+    """Apply softplus activation elementwise"""
+    def __init__(self):
+        super(BaseSoftplus, self).__init__()
+
+
 ###############################################################################
 class BaseTrueDiv(BaseLayer):
     """Apply real-valued division to input tensor elementwise

@@ -74,11 +74,11 @@ def _main():
     if message:
         print(message)
         raise ValueError(
-            'Data are different at {} % points'
+            '-> Data are different at {} % points'
             .format(100 * error_ratio)
         )
     else:
-        print('Okay')
+        print('-> OKAY')
 
 
 if __name__ == '__main__':

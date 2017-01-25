@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eux
+set -eu
 
 if [ ${COUNT_INTEGRATION_COVERAGE:-false} = true ]; then
     TEST_COMMAND="coverage run --parallel-mode tool/profile.py"

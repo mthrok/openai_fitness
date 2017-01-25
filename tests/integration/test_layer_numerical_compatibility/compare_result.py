@@ -65,8 +65,8 @@ def _main():
     data2 = _load_result(args.input2)
 
     if _check(data1, data2, relative_threshold=args.threshold):
-        raise ValueError('Data are different')
-    print('Okay')
+        raise ValueError('-> DATA ARE DIFFERENT!')
+    print('-> OKAY!')
 
 
 if __name__ == '__main__':

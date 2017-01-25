@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script runs the initialization of tensorflow and theano backend separately and write the result to files.
 # Then check if the difference between the results are within threshold
-set -eux
+set -eu
 
 CONFIG=$1
 if [[ ! -f "${CONFIG}" ]]; then
@@ -18,7 +18,8 @@ BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TEST_COMMAND="${TEST_COMMAND} ${BASE_DIR}/run_initializer.py ${CONFIG}"
 
 CONFIG_NAME=$(basename ${CONFIG%.*})
-echo "*** Checking numerical compatibility of ${CONFIG_NAME} ***"
+echo "********************************************************************************"
+echo "***** Checking numerical compatibility of ${CONFIG_NAME}"
 echo ""
 cat ${CONFIG}
 echo ""
@@ -32,7 +33,7 @@ echo ""
 echo "* Running ${CONFIG_NAME} with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND}
 if [[ ! $? = 0 ]]; then RETURN=1; fi
+echo "********************************************************************************"
 echo ""
-
 
 exit ${RETURN}

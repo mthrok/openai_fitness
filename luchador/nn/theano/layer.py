@@ -16,7 +16,7 @@ from . import scope, wrapper, initializer
 __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
-    'ReLU', 'Sigmoid', 'Softmax',
+    'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
     'Flatten', 'Concat', 'TrueDiv',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
@@ -305,6 +305,17 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
+
+
+class Softplus(LayerMixin, base_layer.BaseSoftplus):
+    """Implemente Softplus layer in Theano.
+
+    See :any:`BaseSoftplus` for detail.
+    """
+    def _build(self, input_tensor):
+        input_shape = input_tensor.shape
+        output_tensor = T.nnet.softplus(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 
