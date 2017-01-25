@@ -37,8 +37,8 @@ class DQNAgent(BaseAgent):
     References
     ----------
     .. [1] Mnih, V et. al (2015)
-           Human-level control through deep reinforcement learning
-            https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
+        Human-level control through deep reinforcement learning
+        https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
     """
     def __init__(
             self,

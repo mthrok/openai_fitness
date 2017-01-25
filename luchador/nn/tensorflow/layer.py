@@ -299,7 +299,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
 class Concat(LayerMixin, base_layer.BaseConcat):
     """Implement Concat in Tensorflow.
 
-    See :any:`BaseConcate` for detail.
+    See :any:`BaseConcat` for detail.
     """
     def _build(self, var_list):
         values = [var.unwrap() for var in var_list]

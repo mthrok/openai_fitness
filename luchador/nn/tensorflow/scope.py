@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 
 import tensorflow as tf
-from tensorflow import VariableScope
 
 import luchador
 from luchador.nn.base import initializer as base_initializer
@@ -39,6 +38,11 @@ def variable_scope(
 def get_variable_scope():
     """Wrap Tensorflow get_variable_scope function"""
     return tf.get_variable_scope()
+
+
+class VariableScope(tf.VariableScope):
+    """Wrap Tensorflow VariableScope class."""
+    pass
 
 
 ###############################################################################

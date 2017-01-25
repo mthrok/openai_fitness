@@ -140,7 +140,7 @@ class EpisodeRecorder(object):
         return self.get(index)
 
     def get_last_stack(self):
-        """Get the latest transition"""
+        """Get the latest record stack"""
         return {
             name: buffer_.get_last_stack()
             for name, buffer_ in self.buffers.items()
@@ -276,11 +276,11 @@ class TransitionRecorder(object):
         for name in self._batch:
             transition = self.buffer_config[name].get('transition')
             if transition:
-                self._batch[name][-1][0] = data[name]
-                ret[name] = self._batch[name][-1][0]
+                bucket = self._batch[name][0]
             else:
-                self._batch[name][0] = data[name]
-                ret[name] = self._batch[name][0]
+                bucket = self._batch[name]
+            bucket[0] = data[name]
+            ret[name] = bucket[0]
         return ret
 
     def is_ready(self):
