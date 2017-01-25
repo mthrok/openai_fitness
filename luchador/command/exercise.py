@@ -85,13 +85,7 @@ def _parse_command_line_arguments():
         '--kill', action='store_true',
         help='If environment is RemoveEnv, kill server after finish'
     )
-    parser.add_argument('--debug', action='store_true')
-    return parser.parse_args()
-
-
-def _set_logging_level(debug):
-    level = logging.DEBUG if debug else logging.INFO
-    logging.getLogger('luchador').setLevel(level)
+    return parser.parse_known_args()[0]
 
 
 def _load_additional_sources(*files):
@@ -118,7 +112,6 @@ def _make_env(config_file, port):
 def entry_point():
     """Entry porint for `luchador exercise` command"""
     args = _parse_command_line_arguments()
-    _set_logging_level(args.debug)
     env = _make_env(args.env, args.port)
     agent = _make_agent(args.agent)
 

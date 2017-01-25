@@ -1,4 +1,4 @@
-"""Defines methods and mixins used acroos the submodules in Luchador"""
+"""Defines methods used acroos the submodules in Luchador"""
 from __future__ import absolute_import
 
 __all__ = ['is_iteratable', 'get_subclasses']

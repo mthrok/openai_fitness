@@ -46,20 +46,12 @@ def _parse_command_line_arguments():
     parser.add_argument(
         '--host', default='0.0.0.0',
         help='Host to run server')
-    parser.add_argument('--debug', action='store_true')
-    return parser.parse_args()
-
-
-def _set_logging_level(debug):
-    level = logging.DEBUG if debug else logging.INFO
-    logging.getLogger('luchador').setLevel(level)
+    return parser.parse_known_args()[0]
 
 
 def entry_point():
     """Entry porint for `luchador exercise` command"""
     args = _parse_command_line_arguments()
-    _set_logging_level(args.debug)
-
     if args.type == 'env':
         if args.environment is None:
             raise ValueError('Environment config is not given')
