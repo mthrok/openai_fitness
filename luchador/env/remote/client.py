@@ -97,3 +97,6 @@ class RemoteEnv(base_env.BaseEnvironment):
         """
         res = requests.post('{}/kill'.format(self._url))
         return res.json()['result'] == 'success'
+
+    def __str__(self):
+        return 'RemoteEnv: Host: {}, Port: {}'.format(self.host, self.port)
