@@ -72,8 +72,8 @@ def create_manager_app():
 
         try:
             env, host, port = _parse_params(params)
-        except ValueError as e:
-            return e.args[0], 400
+        except ValueError as error:
+            return error.args[0], 400
 
         file_ = _create_temp_environment_file(env)
         cmd = ['luchador', 'serve', 'env',
