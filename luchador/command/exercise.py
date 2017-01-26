@@ -104,7 +104,7 @@ def _make_agent(config_file):
 
 def _make_env(config_file, port):
     config = load_config(config_file)
-    if config['name'] == 'RemoveEnv':
+    if config['name'] == 'RemoteEnv' and port:
         config['args']['port'] = port
     return get_env(config['name'])(**config.get('args', {}))
 

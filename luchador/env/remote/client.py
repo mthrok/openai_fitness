@@ -41,6 +41,7 @@ class RemoteEnv(base_env.BaseEnvironment):
         res = requests.post('{}/info'.format(self._url))
         return json.loads(res.json()['environment'])
 
+    @property
     def n_actions(self):
         """Get #valid actions by calling ``/n_actions`` route
 

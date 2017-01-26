@@ -10,8 +10,8 @@ import luchador.env.remote
 _LG = logging.getLogger(__name__)
 
 
-def _start_server(app, port, host):
-    server = luchador.env.remote.create_server(app, port=port, host=host)
+def _start_server(app, port):
+    server = luchador.env.remote.create_server(app, port=port)
     _LG.info('Starting server on port %d', port)
     try:
         server.start()
@@ -41,9 +41,6 @@ def _parse_command_line_arguments():
     parser.add_argument(
         '--port', type=int, default=5000,
         help='Port number to run server')
-    parser.add_argument(
-        '--host', default='0.0.0.0',
-        help='Host to run server')
     return parser.parse_known_args()[0]
 
 
@@ -59,4 +56,4 @@ def entry_point():
     else:
         app = luchador.env.remote.create_manager_app()
 
-    _start_server(app, args.port, args.host)
+    _start_server(app, args.port)
