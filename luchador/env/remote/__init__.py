@@ -1,3 +1,4 @@
+"""Define utility func/Env for remote environment"""
 from __future__ import absolute_import
 
 from .client import RemoteEnv  # noqa: F401
