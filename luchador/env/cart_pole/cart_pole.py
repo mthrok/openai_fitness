@@ -160,3 +160,16 @@ class CartPole(BaseEnvironment):
             self._renderer.render()
 
         return self._get_outcome()
+
+    def __str__(self):
+        return '\n'.join([
+            'CartPole Env:',
+            '    angle_limit: {}'.format(self.angle_limit),
+            '    distance_limit: {}'.format(self.distance_limit),
+            '    cart_mass: {}'.format(self.state.cart_mass),
+            '    pole_mass: {}'.format(self.state.pole_mass),
+            '    pole_length: {}'.format(self.state.pole_length),
+            '    gravity: {}'.format(self.state.gravity),
+            '    dt: {}'.format(self.state.dt),
+            '    display_screen: {}'.format(self.display_screen),
+        ])

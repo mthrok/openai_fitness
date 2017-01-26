@@ -87,6 +87,9 @@ class NoOpAgent(BaseAgent):
     def act(self):
         return 0
 
+    def __str__(self):
+        return 'NoOpAgent'
+
 
 _AGENT_MODULE_MAPPING = {
     'DQNAgent': 'dqn',

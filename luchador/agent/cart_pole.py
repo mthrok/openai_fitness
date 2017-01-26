@@ -119,3 +119,13 @@ class CartPoleAgent(BaseAgent):
 
     def perform_post_episode_task(self, stats):
         pass
+
+    def __str__(self):
+        return '\n'.join([
+            'CartPole Agent:',
+            '    action_lr: {}'.format(self.action_lr),
+            '    critic_lr: {}'.format(self.critic_lr),
+            '    critic_discount: {}'.format(self.critic_discount),
+            '    action_decay: {}'.format(self.action_decay),
+            '    critic_decay: {}'.format(self.critic_decay),
+        ])
