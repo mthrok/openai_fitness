@@ -87,19 +87,7 @@ def _setup():
             # TODO: Add custom install/build command which run `download_ale`
             'download_ale': DownloadALECommand,
         },
-        packages=[
-            'luchador',
-            'luchador.nn',
-            'luchador.nn.base',
-            'luchador.nn.theano',
-            'luchador.nn.tensorflow',
-            'luchador.agent',
-            'luchador.env',
-            'luchador.env.ale',
-            'luchador.env.cart_pole',
-            'luchador.env.flappy_bird',
-            'luchador.command'
-        ],
+        packages=setuptools.find_packages(),
         entry_points={
             'console_scripts': [
                 'luchador = luchador.command.main:entry_point',
@@ -114,6 +102,7 @@ def _setup():
             'pyglet',
             'flask',
             'cheroot',
+            'requests',
         ],
         package_data={
             'luchador': [

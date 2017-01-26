@@ -40,7 +40,7 @@ def get_variable_scope():
     return tf.get_variable_scope()
 
 
-class VariableScope(tf.VariableScope):
+class VariableScope(tf.VariableScope):  # pylint: disable=R0903
     """Wrap Tensorflow VariableScope class."""
     pass
 
