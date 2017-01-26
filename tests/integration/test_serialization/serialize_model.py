@@ -9,11 +9,10 @@ import numpy as np
 # theano.config.exception_verbosity = 'high'
 
 import luchador
-from luchador.util import load_config
+from luchador.util import load_config, initialize_logger
 from luchador import nn
 
 _LG = logging.getLogger('luchador')
-logging.getLogger('luchador.nn.saver').setLevel(logging.DEBUG)
 
 WIDTH = 84
 HEIGHT = 84
@@ -137,8 +136,17 @@ def _run(session, qln, minimize_op):
     )
 
 
+def _initialize_logger():
+    initialize_logger(
+        name='luchador', level=logging.INFO,
+        message_format='%(asctime)s: %(levelname)5s: %(message)s')
+    logging.getLogger('luchador.nn.saver').setLevel(logging.DEBUG)
+
+
 def _main():
     args = _parse_command_line_args()
+    _initialize_logger()
+
     session = nn.Session()
     ql, optimizer, minimize_op = _build_network(
         model_filepath=args.model,
