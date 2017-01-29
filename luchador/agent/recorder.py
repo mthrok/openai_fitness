@@ -254,8 +254,8 @@ class TransitionRecorder(object):
         n_samples : int
             Must be smaller than or equal to batch size
 
-        Return
-        ------
+        Returns
+        -------
         dict
             Contains sampled data
         """
