@@ -5,10 +5,11 @@ import json
 import requests
 
 import luchador.env.base as base_env
+from .util import deserialize_outcome
 
 
 def _extract_outcome(response):
-    return base_env.deserialize_outcome(response.json())
+    return deserialize_outcome(response.json())
 
 
 class RemoteEnv(base_env.BaseEnvironment):

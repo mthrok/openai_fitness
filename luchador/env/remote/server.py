@@ -105,7 +105,7 @@ import logging
 import flask
 import cheroot.wsgi
 
-import luchador.env
+from .util import serialize_outcome
 
 _LG = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ def create_env_app(env):
 
     @app.route('/outcome', methods=['POST', 'GET'])
     def _return_outcome():
-        return _jsonify(luchador.env.serialize_outcome(attr['outcome']))
+        return _jsonify(serialize_outcome(attr['outcome']))
 
     @app.route('/n_actions', methods=['POST', 'GET'])
     def _n_actions():  # pylint: disable=unused-variable

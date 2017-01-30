@@ -5,8 +5,6 @@ import abc
 import importlib
 from collections import namedtuple
 
-import numpy as np
-
 import luchador.util
 
 _Outcome = namedtuple('_Outcome', ('reward', 'state', 'terminal', 'info'))
@@ -29,58 +27,6 @@ class Outcome(_Outcome):
     def __new__(cls, reward, state, terminal, info=None):
         return super(Outcome, cls).__new__(
             cls, reward=reward, state=state, terminal=terminal, info=info)
-
-
-def _serialize_state(obs):
-    if isinstance(obs, np.ndarray):
-        return {
-            'type': 'np.ndarray',
-            'obj': {
-                'shape': obs.shape,
-                'dtype': str(obs.dtype),
-                'data': obs.tostring().encode('base64'),
-            }
-        }
-    return {
-        'type': 'other',
-        'obj': obs
-    }
-
-
-def _deserialize_state(obs):
-    if obs['type'] == 'np.ndarray':
-        data, dtype = obs['obj']['data'], obs['obj']['dtype']
-        data = np.fromstring(data.decode('base64'), dtype=dtype)
-        return data.reshape(obs['obj']['shape'])
-    return obs['obj']
-
-
-def serialize_outcome(outcome):
-    """Serialize observation to JSON
-
-    Returns
-    -------
-    dict
-        Outcome components in dictionary format
-    """
-    return {
-        'reward': outcome.reward,
-        'state': _serialize_state(outcome.state),
-        'terminal': outcome.terminal,
-        'info': outcome.info
-    }
-
-
-def deserialize_outcome(obj):
-    """Deserialize Outcome from JSON
-
-    Parameters
-    ----------
-    obj : dict
-        Outcome instance serialized with :any:`serialize_outcome`
-    """
-    obs = _deserialize_state(obj['state'])
-    return Outcome(obj['reward'], obs, obj['terminal'], obj['info'])
 
 
 class BaseEnvironment(object):
