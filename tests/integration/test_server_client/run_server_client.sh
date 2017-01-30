@@ -9,6 +9,6 @@ else
     PORT="12345"
 fi
 
-${TEST_COMMAND} serve env --environment example/ALEEnvironment_train.yml --port ${PORT} &
+${TEST_COMMAND} serve env example/ALEEnvironment_train.yml --port ${PORT} &
 sleep 5;
 ${TEST_COMMAND} exercise example/RemoteEnv.yml --episode 1 --port ${PORT} --kill

@@ -53,12 +53,11 @@ def _parse_params(params):
         raise ValueError('Missing parameter; "environment"')
 
     try:
-        port = str(params.get('port', 'auto'))
-        host = str(params.get('host', '0.0.0.0'))
+        port = str(params.get('port'))
     except ValueError:
-        raise ValueError('"port" and "host" must be string type')
+        raise ValueError('"port" must be string type')
 
-    return params['environment'], host, port
+    return params['environment'], port
 
 
 def create_manager_app():
@@ -71,15 +70,12 @@ def create_manager_app():
         params = flask.request.get_json()
 
         try:
-            env, host, port = _parse_params(params)
+            env, port = _parse_params(params)
         except ValueError as error:
             return error.args[0], 400
 
         file_ = _create_temp_environment_file(env)
-        cmd = ['luchador', 'serve', 'env',
-               '--environment', file_.name,
-               '--port', port,
-               '--host', host]
+        cmd = ['luchador', 'serve', 'env', file_.name, '--port', port]
         _LG.info('Starting environment server: %s', cmd)
         # For portable way to start independent process
         # see http://stackoverflow.com/a/13256908

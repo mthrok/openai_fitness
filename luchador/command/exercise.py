@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-import argparse
 
 from luchador.env import get_env
 from luchador.agent import get_agent
@@ -54,40 +53,6 @@ def _format_time(seconds):
 
 
 ###############################################################################
-def _parse_command_line_arguments():
-    parser = argparse.ArgumentParser(
-        description='Run environment with agents.',
-    )
-    parser.add_argument('exercise')  # Placeholder for subcommanding
-    parser.add_argument(
-        'env',
-        help='YAML file contains environment configuration')
-    parser.add_argument(
-        '--agent',
-        help='YAML file contains agent configuration')
-    parser.add_argument(
-        '--episodes', type=int, default=1000,
-        help='Run this number of episodes.')
-    parser.add_argument(
-        '--report', type=int, default=1000,
-        help='Report run stats every this number of episodes')
-    parser.add_argument(
-        '--steps', type=int, default=10000,
-        help='Set max steps for each episode.')
-    parser.add_argument(
-        '--sources', nargs='+', default=[],
-        help='Source files that contain custom Agent/Env etc')
-    parser.add_argument(
-        '--port',
-        help='If environment is RemoteEnv, overwrite port number'
-    )
-    parser.add_argument(
-        '--kill', action='store_true',
-        help='If environment is RemoveEnv, kill server after finish'
-    )
-    return parser.parse_known_args()[0]
-
-
 def _load_additional_sources(*files):
     for file_ in files:
         _LG.info('Loading additional source file: %s', file_)
@@ -109,10 +74,9 @@ def _make_env(config_file, port):
     return get_env(config['name'])(**config.get('args', {}))
 
 
-def entry_point():
+def entry_point(args):
     """Entry porint for `luchador exercise` command"""
-    args = _parse_command_line_arguments()
-    env = _make_env(args.env, args.port)
+    env = _make_env(args.environment, args.port)
     agent = _make_agent(args.agent)
 
     _LG.info('\n%s', env)

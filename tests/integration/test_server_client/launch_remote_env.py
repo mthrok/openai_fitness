@@ -29,7 +29,6 @@ def _main():
                 }
             },
             'port': args.env_port,
-            'host': '0.0.0.0',
         }
     )
     if res.status_code == 200:
