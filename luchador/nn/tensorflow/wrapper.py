@@ -103,6 +103,28 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             self._tensor, axis=axis, keep_dims=keep_dims, name=name)
         return Tensor(tensor=_tensor, name=name)
 
+    def sum(self, axis=None, keep_dims=False, name=None):
+        """Compute sum across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute sum. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.reduce_sum(
+            self._tensor, axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
     def max(self, axis=None, keep_dims=False, name=None):
         """Compute max across the given axis
 
