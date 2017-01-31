@@ -60,8 +60,7 @@ class DeepQLearning(base_q_learning.BaseDeepQLearning):
         self.terminals = wrapper.Input(shape=(None,), name='terminals')
         terminals = self.terminals.unwrap()
 
-        q_value = self.post_trans_net.output.unwrap()
-        q_value = tf.reduce_max(q_value, reduction_indices=1)
+        q_value = self.post_trans_net.output.max(axis=1).unwrap()
         q_value = tf.mul(q_value, self.discount_rate)
         q_value = tf.mul(q_value, 1.0 - terminals)
         return q_value

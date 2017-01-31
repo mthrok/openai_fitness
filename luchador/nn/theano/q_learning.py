@@ -61,8 +61,7 @@ class DeepQLearning(BaseDeepQLearning):
         self.terminals = wrapper.Input(shape=(None,), name='terminals')
         terminals = self.terminals.unwrap()
 
-        q_value = self.post_trans_net.output.unwrap()
-        q_value = T.max(q_value, axis=1)
+        q_value = self.post_trans_net.output.max(axis=1).unwrap()
         q_value = q_value * self.discount_rate
         q_value = q_value * (1.0 - terminals)
         return q_value
