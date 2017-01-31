@@ -535,3 +535,34 @@ class TestTensorOps(unittest.TestCase):
         self._test_reshape(in_shape, out_shape, in_val=in_val, dtype=dtype)
         in_val = np.random.random((5, 8)).astype(dtype)
         self._test_reshape(in_shape, out_shape, in_val=in_val, dtype=dtype)
+
+    def _test_tile(self, in_shape, pattern, dtype='float32', in_val=None):
+        """Test tile"""
+        with nn.variable_scope(self.id().replace('.', '/')):
+            input_ = nn.Input(shape=in_shape, dtype=dtype)
+            tensor = input_.tile(pattern=pattern)
+
+        session = nn.Session()
+
+        if in_val is None:
+            in_val = np.random.random(in_shape).astype(dtype)
+        out_val = session.run(
+            outputs=tensor,
+            givens={
+                input_: in_val,
+            },
+        )
+        self.assertEqual(out_val.dtype, dtype)
+        expected = np.tile(in_val, pattern)
+        np.testing.assert_equal(out_val, expected)
+
+    def test_tile(self):
+        """Test tile"""
+        in_shape, pattern = (2, 3), (3, 4)
+        self._test_tile(in_shape, pattern)
+
+    def test_tile_none(self):
+        """Test tile array with None in shape"""
+        dtype, in_shape, pattern = 'float32', (None, 8), (3, 4)
+        in_val = np.random.random((3, 8)).astype(dtype)
+        self._test_tile(in_shape, pattern, in_val=in_val, dtype=dtype)
