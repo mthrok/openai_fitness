@@ -1,4 +1,5 @@
 """Module for defining input variable/tensor/input wrapper"""
+from __future__ import division
 from __future__ import absolute_import
 
 import numbers
@@ -34,11 +35,6 @@ def retrieve_variable(name):
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
     """Add elementwise operations to Tensor class"""
-    @property
-    def size(self):
-        """Return the number of elements in tensor"""
-        return reduce(lambda x, y: x*y, self.shape, 1)
-
     def _extract_operand(self, other):
         """Extract operand for elementwise operation"""
         if isinstance(other, numbers.Number):
@@ -51,15 +47,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
         )
 
-    def __neg__(self):
-        return Tensor(tensor=-self._tensor)
-
     def __add__(self, other):
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor + _other)
-
-    def __radd__(self, other):
-        return self + other
 
     def __sub__(self, other):
         """Scalar subtraction or elementwise subtraction"""
@@ -75,30 +65,21 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor * _other)
 
-    def __rmul__(self, other):
-        return self * other
-
-    def __div__(self, other):
-        return self.__truediv__(other)
-
-    def __rdiv__(self, other):
-        return self.__rtruediv__(other)
-
     def __truediv__(self, other):
         _other = self._extract_operand(other)
-        return Tensor(tensor=tf.truediv(self._tensor, _other))
+        return Tensor(tensor=self._tensor/_other)
 
     def __rtruediv__(self, other):
         _other = self._extract_operand(other)
-        return Tensor(tensor=tf.truediv(_other, self._tensor))
+        return Tensor(tensor=_other/self._tensor)
 
     def __floordiv__(self, other):
         _other = self._extract_operand(other)
-        return Tensor(tensor=tf.floordiv(self._tensor, _other))
+        return Tensor(tensor=self._tensor//_other)
 
     def __rfloordiv__(self, other):
         _other = self._extract_operand(other)
-        return Tensor(tensor=tf.floordiv(_other, self._tensor))
+        return Tensor(tensor=_other//self._tensor)
 
     def mean(self, axis=None, keep_dims=False, name=None):
         """Compute mean across the given axis

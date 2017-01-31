@@ -53,11 +53,6 @@ def _compute_reduced_shape(axis, shape, keep_dims):
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
     """Add elementwise operations to Tensor class"""
-    @property
-    def size(self):
-        """Return the number of elements in tensor"""
-        return reduce(lambda x, y: x*y, self.shape, 1)
-
     def _extract_operand(self, other):
         if isinstance(other, numbers.Number):
             return other
@@ -69,15 +64,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
         )
 
-    def __neg__(self):
-        return Tensor(tensor=-self._tensor, shape=self.shape)
-
     def __add__(self, other):
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor + _other, shape=self.shape)
-
-    def __radd__(self, other):
-        return self + other
 
     def __sub__(self, other):
         """Scalar subtraction or elementwise subtraction"""
@@ -92,15 +81,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         """Scalar multiplication or elementwise multiplication"""
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor * _other, shape=self.shape)
-
-    def __rmul__(self, other):
-        return self * other
-
-    def __div__(self, other):
-        return self.__truediv__(other)
-
-    def __rdiv__(self, other):
-        return self.__rtruediv__(other)
 
     def __truediv__(self, other):
         _other = self._extract_operand(other)

@@ -27,20 +27,43 @@ class BaseTensor(object):
         return repr({
             'name': self.name, 'shape': self.shape, 'dtype': self.dtype})
 
-    def __mul__(self, other):
-        raise NotImplementedError()
-
-    def __rmul__(self, other):
-        raise NotImplementedError()
-
-    def __add__(self, other):
-        raise NotImplementedError()
-
-    def __radd__(self, other):
-        raise NotImplementedError()
+    @property
+    def size(self):
+        """Return the number of elements in tensor"""
+        return reduce(lambda x, y: x*y, self.shape, 1)
 
     def __neg__(self):
-        raise NotImplementedError()
+        raise type(self)(tensor=-self._tensor, shape=self.shape)
+
+    def __add__(self, other):
+        return NotImplemented
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return NotImplemented
+
+    def __rsub__(self, other):
+        return NotImplemented
+
+    def __mul__(self, other):
+        return NotImplemented
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __rdiv__(self, other):
+        return self.__rtruediv__(other)
+
+    def __truediv__(self, other):
+        return NotImplemented
+
+    def __rtruediv__(self, other):
+        return NotImplemented
 
 
 class Operation(object):
