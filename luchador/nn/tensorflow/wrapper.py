@@ -147,6 +147,37 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             name=name)
         return Tensor(tensor=_tensor, name=name)
 
+    def one_hot(self, n_classes, dtype=None, name=None):
+        """Convert to one-hot encoding.
+
+        Parameters
+        ----------
+        n_classes : int
+            Number of label to encode
+
+        dtype : str
+             The dtype of the resulting Tensor. Default to floatX
+
+        name : str
+             Name of operation
+
+        Returns
+        -------
+        Tensor
+            Tensor with shape ``(self.shape[0], n_classes)``
+
+        Note
+        ----
+        The Tensor must be either vector or 2D matrix
+        """
+        if not self.ndim == 1:
+            raise ValueError('Tensor must be 1D.')
+
+        _dtype = dtype or luchador.get_nn_dtype()
+        _tensor = tf.one_hot(
+            self._tensor, depth=n_classes, dtype=_dtype, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""

@@ -460,3 +460,38 @@ class TestTensorOps(unittest.TestCase):
         )
         expected = np.clip(val0, a_max=max_value, a_min=min_value)
         np.testing.assert_almost_equal(val1, expected)
+
+    def _test_one_hot(self, shape, n_classes, out_dtype):
+        with nn.variable_scope(self.id().replace('.', '/')):
+            input_ = nn.Input(shape=shape, dtype='int64')
+            tensor = input_.one_hot(n_classes=n_classes, dtype=out_dtype)
+
+        session = nn.Session()
+
+        in_val = np.random.randint(0, n_classes, size=shape)
+        out_val = session.run(
+            outputs=tensor,
+            givens={
+                input_: in_val,
+            },
+        )
+        self.assertEqual(out_val.dtype, out_dtype)
+        expected = np.zeros(shape=(shape[0], n_classes), dtype=out_dtype)
+        expected[np.arange(shape[0]), in_val] = 1
+        np.testing.assert_equal(out_val, expected)
+
+    def test_one_hot_int32(self):
+        """Test one hot conversion"""
+        self._test_one_hot(shape=[10], n_classes=4, out_dtype='int32')
+
+    def test_one_hot_int64(self):
+        """Test one hot conversion"""
+        self._test_one_hot(shape=[10], n_classes=4, out_dtype='int64')
+
+    def test_one_hot_float32(self):
+        """Test one hot conversion"""
+        self._test_one_hot(shape=[10], n_classes=4, out_dtype='float32')
+
+    def test_one_hot_float64(self):
+        """Test one hot conversion"""
+        self._test_one_hot(shape=[10], n_classes=4, out_dtype='float64')
