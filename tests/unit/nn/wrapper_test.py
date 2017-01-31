@@ -495,3 +495,43 @@ class TestTensorOps(unittest.TestCase):
     def test_one_hot_float64(self):
         """Test one hot conversion"""
         self._test_one_hot(shape=[10], n_classes=4, out_dtype='float64')
+
+    def _test_reshape(
+            self, in_shape, out_shape, dtype='float32', in_val=None):
+        """Test rehsape"""
+        with nn.variable_scope(self.id().replace('.', '/')):
+            input_ = nn.Input(shape=in_shape, dtype=dtype)
+            tensor = input_.reshape(out_shape)
+
+        session = nn.Session()
+
+        if in_val is None:
+            in_val = np.random.random(in_shape).astype(dtype)
+        out_val = session.run(
+            outputs=tensor,
+            givens={
+                input_: in_val,
+            },
+        )
+        self.assertEqual(out_val.dtype, dtype)
+        expected = in_val.reshape(out_shape)
+        np.testing.assert_equal(out_val, expected)
+
+    def test_reshape(self):
+        """Test rehsape"""
+        in_shape, out_shape = (3, 8), (1, 2, 2, 6)
+        self._test_reshape(in_shape, out_shape)
+
+    def test_reshape_minus_1(self):
+        """Test rehsape with -1"""
+        in_shape, out_shape = (3, 8), (1, 2, 2, -1)
+        self._test_reshape(in_shape, out_shape)
+
+    def test_reshape_with_none(self):
+        """Test rehsape with None"""
+        dtype = 'float32'
+        in_shape, out_shape = (None, 8), (1, 2, 2, -1)
+        in_val = np.random.random((3, 8)).astype(dtype)
+        self._test_reshape(in_shape, out_shape, in_val=in_val, dtype=dtype)
+        in_val = np.random.random((5, 8)).astype(dtype)
+        self._test_reshape(in_shape, out_shape, in_val=in_val, dtype=dtype)
