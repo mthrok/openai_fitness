@@ -58,7 +58,7 @@ class TestTensorOps(unittest.TestCase):
             outputs=[tensor1, tensor2, tensor3, variable],
         )
         np.testing.assert_equal(val1 * val0, val2)
-        np.testing.assert_equal(val0 * val1, val2)
+        np.testing.assert_equal(val0 * val1, val3)
 
     def test_mul_input(self):
         """Tensor * Input is correct elementwise"""
