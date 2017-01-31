@@ -351,6 +351,35 @@ class TestTensorOps(unittest.TestCase):
         """Test mean with multiple axes, dropping axis"""
         self._test_mean((1, 2), (3, 4, 5, 6), True)
 
+    def _test_sum(self, axis, shape, keep_dims):
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
+            tensor1 = tensor0.sum(axis=axis, keep_dims=keep_dims)
+
+        session = nn.Session()
+
+        val0, val1 = session.run(
+            outputs=[tensor0, tensor1],
+        )
+        expected = val0.sum(axis=axis, keepdims=keep_dims)
+        np.testing.assert_equal(val1, expected)
+
+    def test_sum(self):
+        """Test sum with single axis, dropping axis"""
+        self._test_sum(0, (3, 5), False)
+
+    def test_sum_keep_dim(self):
+        """Test sum with single axis, dropping axis"""
+        self._test_sum(0, (3, 5), True)
+
+    def test_sum_multi(self):
+        """Test sum with multiple axes, dropping axis"""
+        self._test_sum((1, 2), (3, 4, 5, 6), False)
+
+    def test_sum_multi_keep_dim(self):
+        """Test sum with multiple axes, dropping axis"""
+        self._test_sum((1, 2), (3, 4, 5, 6), True)
+
     def _test_max(self, axis, shape, keep_dims):
         with nn.variable_scope(self.id().replace('.', '/')):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
