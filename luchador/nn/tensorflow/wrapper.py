@@ -34,10 +34,18 @@ def retrieve_variable(name):
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
     """Add elementwise operations to Tensor class"""
+    @property
+    def size(self):
+        """Return the number of elements in tensor"""
+        return reduce(lambda x, y: x*y, self.shape, 1)
+
     def _extract_operand(self, other):
+        """Extract operand for elementwise operation"""
         if isinstance(other, numbers.Number):
             return other
         if self.shape == other.shape:
+            return other.unwrap()
+        if self.size == 1 or other.size == 1:
             return other.unwrap()
         raise ValueError(
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
@@ -69,6 +77,28 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
 
     def __rmul__(self, other):
         return self * other
+
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __rdiv__(self, other):
+        return self.__rtruediv__(other)
+
+    def __truediv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=tf.truediv(self._tensor, _other))
+
+    def __rtruediv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=tf.truediv(_other, self._tensor))
+
+    def __floordiv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=tf.floordiv(self._tensor, _other))
+
+    def __rfloordiv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=tf.floordiv(_other, self._tensor))
 
     def mean(self, axis=None, keep_dims=False, name=None):
         """Compute mean across the given axis

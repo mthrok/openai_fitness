@@ -65,20 +65,118 @@ class TestTensorOps(unittest.TestCase):
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
-            input_ = nn.Input(name='input', shape=shape, dtype='int32')
+            input_ = nn.Input(name='input', shape=[], dtype='int32')
             tensor2 = tensor1 * input_
             tensor3 = input_ * tensor1
 
         session = nn.Session()
         session.initialize()
 
-        input_val = 5 * np.ones(shape, dtype='int32')
+        input_val = np.array(5, dtype='int32')
         val1, val2, val3 = session.run(
             outputs=[tensor1, tensor2, tensor3],
             givens={input_: input_val}
         )
         np.testing.assert_equal(val1 * input_val, val2)
-        np.testing.assert_equal(input_val * val1, val2)
+        np.testing.assert_equal(input_val * val1, val3)
+
+    def test_truediv_numbers(self):
+        """Tensor / number is correct elementwise"""
+        constant, shape = 10., (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            tensor2 = tensor1 / constant
+            tensor3 = constant / tensor1
+
+        session = nn.Session()
+
+        val1, val2, val3 = session.run(
+            outputs=[tensor1, tensor2, tensor3],
+        )
+        np.testing.assert_equal(np.true_divide(val1, constant), val2)
+        np.testing.assert_equal(np.true_divide(constant, val1), val3)
+
+    def test_floordiv_numbers(self):
+        """Tensor // number is correct elementwise"""
+        constant, shape = 10., (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            tensor2 = tensor1 // constant
+            tensor3 = constant // tensor1
+
+        session = nn.Session()
+
+        val1, val2, val3 = session.run(
+            outputs=[tensor1, tensor2, tensor3],
+        )
+        np.testing.assert_equal(np.floor_divide(val1, constant), val2)
+        np.testing.assert_equal(np.floor_divide(constant, val1), val3)
+
+    def test_truediv_tensor(self):
+        """Tensor / Tensor is correct elementwise"""
+        shape = (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            tensor2 = tensor1 / tensor1
+
+        session = nn.Session()
+
+        val1, val2 = session.run(
+            outputs=[tensor1, tensor2],
+        )
+        np.testing.assert_equal(np.true_divide(val1, val1), val2)
+
+    def test_floordiv_tensor(self):
+        """Tensor // Tensor is correct elementwise"""
+        shape = (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            tensor2 = tensor1 // tensor1
+
+        session = nn.Session()
+
+        val1, val2 = session.run(
+            outputs=[tensor1, tensor2],
+        )
+        np.testing.assert_equal(np.floor_divide(val1, val1), val2)
+
+    def test_truediv_input(self):
+        """Tensor / Input is correct elementwise"""
+        constant, shape = 10., (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            input1 = nn.Input(shape=[], dtype='float32')
+            tensor2 = tensor1 / input1
+            tensor3 = input1 / tensor1
+
+        session = nn.Session()
+        session.initialize()
+
+        val1, val2, val3 = session.run(
+            outputs=[tensor1, tensor2, tensor3],
+            givens={input1: np.array(constant, dtype='float32')}
+        )
+        np.testing.assert_equal(np.true_divide(val1, constant), val2)
+        np.testing.assert_equal(np.true_divide(constant, val1), val3)
+
+    def test_floordiv_input(self):
+        """Tensor // Input is correct elementwise"""
+        constant, shape = 10., (3, 5)
+        with nn.variable_scope(self.id().replace('.', '/')):
+            tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
+            input1 = nn.Input(shape=[], dtype='float32')
+            tensor2 = tensor1 // input1
+            tensor3 = input1 // tensor1
+
+        session = nn.Session()
+        session.initialize()
+
+        val1, val2, val3 = session.run(
+            outputs=[tensor1, tensor2, tensor3],
+            givens={input1: np.array(constant, dtype='float32')}
+        )
+        np.testing.assert_equal(np.floor_divide(val1, constant), val2)
+        np.testing.assert_equal(np.floor_divide(constant, val1), val3)
 
     def test_add_numbers(self):
         """Tensor + number is correct elementwise"""
@@ -113,13 +211,13 @@ class TestTensorOps(unittest.TestCase):
         """Tensor + Input is correct elementwise"""
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
-            input_ = nn.Input(shape=shape, dtype='int32')
+            input_ = nn.Input(shape=[], dtype='int32')
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 + input_
             tensor3 = input_ + tensor1
 
         session = nn.Session()
-        val0 = 10 * np.ones(shape, dtype='int32')
+        val0 = np.array(10, dtype='int32')
         val1, val2, val3 = session.run(
             outputs=[tensor1, tensor2, tensor3],
             givens={input_: val0}
@@ -192,13 +290,13 @@ class TestTensorOps(unittest.TestCase):
         """Tensor - Input is correct elementwise"""
         shape = (3, 5)
         with nn.variable_scope(self.id().replace('.', '/')):
-            input_ = nn.Input(shape=shape, dtype='int32')
+            input_ = nn.Input(shape=[], dtype='int32')
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 - input_
             tensor3 = input_ - tensor1
 
         session = nn.Session()
-        val0 = 10 * np.ones(shape, dtype='int32')
+        val0 = np.array(10, dtype='int32')
         val1, val2, val3 = session.run(
             outputs=[tensor1, tensor2, tensor3],
             givens={input_: val0}
@@ -281,19 +379,6 @@ class TestTensorOps(unittest.TestCase):
     def test_max_multi_keep_dim(self):
         """Test max with multiple axes, dropping axis"""
         self._test_max((1, 2), (3, 4, 5, 6), True)
-
-    def _test_clip(self, min_value, max_value):
-        with nn.variable_scope(self.id().replace('.', '/')):
-            tensor0 = fixture.create_random_variable((10, 10), dtype='float32')
-            tensor1 = tensor0.clip(max_value=max_value, min_value=min_value)
-
-        session = nn.Session()
-
-        val0, val1 = session.run(
-            outputs=[tensor0, tensor1],
-        )
-        expected = np.clip(val0, a_max=max_value, a_min=min_value)
-        np.testing.assert_almost_equal(val1, expected)
 
     def test_clip_number(self):
         """Test clip with float"""

@@ -1,4 +1,5 @@
 """Module for defining input variable/tensor/input wrapper"""
+from __future__ import division
 from __future__ import absolute_import
 
 import numbers
@@ -52,10 +53,17 @@ def _compute_reduced_shape(axis, shape, keep_dims):
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
     """Add elementwise operations to Tensor class"""
+    @property
+    def size(self):
+        """Return the number of elements in tensor"""
+        return reduce(lambda x, y: x*y, self.shape, 1)
+
     def _extract_operand(self, other):
         if isinstance(other, numbers.Number):
             return other
         if _is_same_shape(self.shape, other.shape):
+            return other.unwrap()
+        if self.size == 1 or other.size == 1:
             return other.unwrap()
         raise ValueError(
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
@@ -87,6 +95,28 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
 
     def __rmul__(self, other):
         return self * other
+
+    def __div__(self, other):
+        return self.__truediv__(other)
+
+    def __rdiv__(self, other):
+        return self.__rtruediv__(other)
+
+    def __truediv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor/_other, shape=self.shape)
+
+    def __rtruediv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=_other/self._tensor, shape=self.shape)
+
+    def __floordiv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=self._tensor//_other, shape=self.shape)
+
+    def __rfloordiv__(self, other):
+        _other = self._extract_operand(other)
+        return Tensor(tensor=_other//self._tensor, shape=self.shape)
 
     def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
         """Compute mean across the given axis
