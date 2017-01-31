@@ -58,7 +58,7 @@ def get_all_costs():
 
 
 ###############################################################################
-def create_variable(shape, dtype, value=7, name='var'):
+def create_constant_variable(shape, dtype, value=7, name='constant_varriable'):
     """Create Variable for test"""
     return nn.get_variable(
         name=name, shape=shape, dtype=dtype,
@@ -66,8 +66,17 @@ def create_variable(shape, dtype, value=7, name='var'):
     )
 
 
-def create_tensor(shape, dtype, name='tensor'):
-    """Create Tensor for test"""
+def create_random_variable(
+        shape, dtype, min_val=0, max_val=1, name='random_variable'):
+    """Create Variable with uniform randoml values for test"""
+    return nn.get_variable(
+        name=name, shape=shape, dtype=dtype,
+        initializer=nn.initializer.Uniform(minval=min_val, maxval=max_val)
+    )
+
+
+def create_ones_tensor(shape, dtype, name='ones_tensor'):
+    """Create ones Tensor for test"""
     if luchador.get_nn_backend() == 'theano':
         import theano.tensor as be
     else:

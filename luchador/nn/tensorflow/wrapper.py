@@ -86,7 +86,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Returns
         -------
         Tensor
-            Tensor containign the result
+            The resulting Tensor
         """
         _tensor = tf.reduce_mean(
             self._tensor, axis=axis, keep_dims=keep_dims, name=name)
@@ -108,10 +108,32 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Returns
         -------
         Tensor
-            Tensor containign the result
+            The resulting Tensor
         """
         _tensor = tf.reduce_max(
             self._tensor, axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
+    def clip(self, max_value, min_value, name=None):
+        """Clip value elementwise
+
+        Parameters
+        ----------
+        max_value, min_value : number or Wrapper
+            Clip values
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        if isinstance(max_value, base_wrapper.BaseTensor):
+            max_value = max_value.unwrap()
+        if isinstance(min_value, base_wrapper.BaseTensor):
+            min_value = min_value.unwrap()
+        _tensor = tf.clip_by_value(
+            self._tensor, clip_value_min=min_value, clip_value_max=max_value,
+            name=name)
         return Tensor(tensor=_tensor, name=name)
 
 
