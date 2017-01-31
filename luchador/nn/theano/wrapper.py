@@ -192,6 +192,30 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         shape = [self.shape[0], n_classes]
         return Tensor(tensor=_tensor, shape=shape, name=name)
 
+    def reshape(self, new_shape, name=None):
+        """Reshape tensor.
+
+        Parameters
+        ----------
+        new_shape : tuple
+            new shape
+
+        name : str
+             Name of operation
+
+        Returns
+        -------
+        Tensor
+            Tensor with new shape
+
+        Note
+        ----
+        This function is for conveniently invoke underlying reshap function.
+        Shape-checking and inference is not carried out.
+        """
+        _tensor = T.reshape(self._tensor, newshape=new_shape)
+        return Tensor(tensor=_tensor, shape=new_shape, name=name)
+
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap SharedVariable object for storing network parameters"""

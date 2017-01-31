@@ -178,6 +178,25 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             self._tensor, depth=n_classes, dtype=_dtype, name=name)
         return Tensor(tensor=_tensor, name=name)
 
+    def reshape(self, new_shape, name=None):
+        """Reshape tensor.
+
+        Parameters
+        ----------
+        new_shape : tuple
+            new shape
+
+        name : str
+             Name of operation
+
+        Returns
+        -------
+        Tensor
+            Tensor with new shape
+        """
+        _tensor = tf.reshape(self._tensor, shape=new_shape)
+        return Tensor(tensor=_tensor, name=name)
+
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""
