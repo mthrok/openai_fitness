@@ -317,9 +317,9 @@ class TestTensorOps(unittest.TestCase):
         with nn.variable_scope(self.id().replace('.', '/')):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             min_variable = fixture.create_constant_variable(
-                shape=[], dtype='float32', value=min_value, name='min_variable')
+                shape=[], dtype='float32', value=min_value, name='min_var')
             max_variable = fixture.create_constant_variable(
-                shape=[], dtype='float32', value=max_value, name='max_variable')
+                shape=[], dtype='float32', value=max_value, name='max_var')
             tensor1 = variable0.clip(
                 max_value=max_variable, min_value=min_variable)
 
