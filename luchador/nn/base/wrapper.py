@@ -33,7 +33,7 @@ class BaseTensor(object):
         return reduce(lambda x, y: x*y, self.shape, 1)
 
     def __neg__(self):
-        raise type(self)(tensor=-self._tensor, shape=self.shape)
+        return type(self)(tensor=-self._tensor, shape=self.shape)
 
     def __add__(self, other):
         return NotImplemented
