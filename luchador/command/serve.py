@@ -9,16 +9,13 @@ import luchador.env.remote
 _LG = logging.getLogger(__name__)
 
 
-def _start_server(app, port):
+def _run_server(app, port):
     server = luchador.env.remote.create_server(app, port=port)
     _LG.info('Starting server on port %d', port)
     try:
         server.start()
     except KeyboardInterrupt:
         pass
-    except BaseException:
-        _LG.exception('Unexpected error on server at port %d', port)
-        raise
     finally:
         server.stop()
         _LG.info('Server on port %d stopped.', port)
@@ -32,10 +29,10 @@ def entry_point_env(args):
     env_config = luchador.util.load_config(args.environment)
     env = luchador.env.get_env(env_config['name'])(**env_config['args'])
     app = luchador.env.remote.create_env_app(env)
-    _start_server(app, args.port)
+    _run_server(app, args.port)
 
 
 def entry_point_manager(args):
     """Entry porint for `luchador serve manager` command"""
     app = luchador.env.remote.create_manager_app()
-    _start_server(app, args.port)
+    _run_server(app, args.port)
