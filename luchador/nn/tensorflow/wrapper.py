@@ -76,14 +76,41 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         axis : int, list or None
-            The dimensions to reduce. If None (the default),
+            The dimensions to compute mean. If None (the default),
             reduces all dimensions.
         keep_dims: bool
             If true, retains reduced dimensions with length 1.
         name: str
             A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            Tensor containign the result
         """
         _tensor = tf.reduce_mean(
+            self._tensor, axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
+    def max(self, axis=None, keep_dims=False, name=None):
+        """Compute max across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute max. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            Tensor containign the result
+        """
+        _tensor = tf.reduce_max(
             self._tensor, axis=axis, keep_dims=keep_dims, name=name)
         return Tensor(tensor=_tensor, name=name)
 
