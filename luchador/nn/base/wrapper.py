@@ -32,6 +32,11 @@ class BaseTensor(object):
         """Return the number of elements in tensor"""
         return reduce(lambda x, y: x*y, self.shape, 1)
 
+    @property
+    def ndim(self):
+        """Return the number of array dimension in tensor"""
+        return len(self.shape)
+
     def __neg__(self):
         return type(self)(tensor=-self._tensor, shape=self.shape)
 

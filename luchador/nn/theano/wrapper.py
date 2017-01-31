@@ -196,20 +196,18 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 
 
-def _get_tensor(dtype, shape, name):
+def _get_tensor(dtype, ndim, name):
     """Instantiate underlying Variable"""
     dtype = dtype or theano.config.floatX
-    if not shape:
-        return T.scalar(name=name, dtype=dtype)
-
-    dim = len(shape)
-    if dim == 1:
+    if ndim == 0:
+        tensor = T.scalar(name=name, dtype=dtype)
+    elif ndim == 1:
         tensor = T.vector(name=name, dtype=dtype)
-    elif dim == 2:
+    elif ndim == 2:
         tensor = T.matrix(name=name, dtype=dtype)
-    elif dim == 3:
+    elif ndim == 3:
         tensor = T.tensor3(name=name, dtype=dtype)
-    elif dim == 4:
+    elif ndim == 4:
         tensor = T.tensor4(name=name, dtype=dtype)
     else:
         raise ValueError('shape length must be smaller than 5')
@@ -226,6 +224,6 @@ class Input(TensorMixin, base_wrapper.BaseTensor):
           name (str): The name of the resulting object.
           dtype (NumPy dtype or None): If None, default dtype(floatX) is used
         """
-        tensor = _get_tensor(dtype, shape, name)
+        tensor = _get_tensor(dtype, len(shape), name)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
