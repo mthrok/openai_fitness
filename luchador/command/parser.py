@@ -46,12 +46,13 @@ def _add_exercise_subcommand_parser(subparsers):
         help='Source files that contain custom Agent/Env etc')
     parser.add_argument(
         '--port',
-        help='If environment is RemoteEnv, overwrite port number'
-    )
+        help='If environment is RemoteEnv, overwrite port number')
+    parser.add_argument(
+        '--host',
+        help='If environment is RemoteEnv, overwrite host')
     parser.add_argument(
         '--kill', action='store_true',
-        help='If environment is RemoveEnv, kill server after finish'
-    )
+        help='If environment is RemoveEnv, kill server after finish')
     _append_debug_flag(parser)
     parser.set_defaults(func=exercise.entry_point)
 

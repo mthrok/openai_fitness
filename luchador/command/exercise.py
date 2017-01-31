@@ -67,16 +67,19 @@ def _make_agent(config_file):
     return get_agent(config['name'])(**config.get('args', {}))
 
 
-def _make_env(config_file, port):
+def _make_env(config_file, host, port):
     config = load_config(config_file)
-    if config['name'] == 'RemoteEnv' and port:
-        config['args']['port'] = port
+    if config['name'] == 'RemoteEnv':
+        if port:
+            config['args']['port'] = port
+        if host:
+            config['args']['host'] = host
     return get_env(config['name'])(**config.get('args', {}))
 
 
 def entry_point(args):
     """Entry porint for `luchador exercise` command"""
-    env = _make_env(args.environment, args.port)
+    env = _make_env(args.environment, args.host, args.port)
     agent = _make_agent(args.agent)
 
     _LG.info('\n%s', env)
