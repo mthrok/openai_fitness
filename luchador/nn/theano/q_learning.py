@@ -3,23 +3,16 @@ from __future__ import absolute_import
 
 import logging
 
-import theano.tensor as T
-
 from luchador.nn.base.q_learning import BaseDeepQLearning
-from . import (
-    scope,
-    wrapper,
-    cost,
-    misc,
-)
-
-_LG = logging.getLogger(__name__)
+from . import scope, wrapper, cost, misc
 
 __all__ = ['DeepQLearning']
 
+_LG = logging.getLogger(__name__)
+
 
 class DeepQLearning(BaseDeepQLearning):
-    """Implement DeepQLearning in Theano.
+    """Implement DeepQLearning
 
     See :any:`BaseDeepQLearning` for detail.
     """
@@ -47,60 +40,25 @@ class DeepQLearning(BaseDeepQLearning):
 
     ###########################################################################
     def _build_target_q_value(self):
-        future = self._get_future_reward()
-        target_q = self._get_target_q_value(future)
-
-        # TODO: Add shape inference
-        n_actions = self.pre_trans_net.output.shape[1]
-        self.future_reward = wrapper.Tensor(tensor=future, shape=(-1, ))
-        self.target_q = wrapper.Tensor(tensor=target_q, shape=(-1, n_actions))
+        self.terminals = wrapper.Input(
+            shape=(None,), name='terminals')
+        self.rewards = wrapper.Input(
+            shape=(None,), name='rewards')
         self.predicted_q = self.pre_trans_net.output
 
-    def _build_future_q_value(self):
-        self.discount_rate = T.constant(self.args['discount_rate'])
-        self.terminals = wrapper.Input(shape=(None,), name='terminals')
-        terminals = self.terminals.unwrap()
-
-        q_value = self.post_trans_net.output.max(axis=1).unwrap()
-        q_value = q_value * self.discount_rate
-        q_value = q_value * (1.0 - terminals)
-        return q_value
-
-    def _get_future_reward(self):
-        post_q = self._build_future_q_value()
-
-        self.rewards = wrapper.Input(
-            dtype='float64', shape=(None,), name='rewards')
-        rewards = self.rewards.unwrap()
+        rewards = self.rewards
         if self.args['scale_reward']:
-            scale_reward = T.constant(self.args['scale_reward'])
-            rewards = rewards / scale_reward
+            rewards = rewards / self.args['scale_reward']
         if self.args['min_reward'] and self.args['max_reward']:
-            min_reward = T.constant(self.args['min_reward'])
-            max_reward = T.constant(self.args['max_reward'])
-            rewards = rewards.clip(min_reward, max_reward)
+            min_val, max_val = self.args['min_reward'], self.args['max_reward']
+            rewards = rewards.clip(min_value=min_val, max_value=max_val)
 
-        future = rewards + post_q
-        return future
+        max_q = self.post_trans_net.output.max(axis=1)
+        discounted = max_q * self.args['discount_rate']
+        target_q = rewards + (1.0 - self.terminals) * discounted
 
-    def _get_target_q_value(self, future):
         n_actions = self.pre_trans_net.output.shape[1]
-
-        self.actions = wrapper.Input(
-            dtype='uint16', shape=(None,), name='actions')
-
-        actions = self.actions.unwrap()
-        mask_on = T.extra_ops.to_one_hot(actions, n_actions)
-        mask_off = 1.0 - mask_on
-        current = self.pre_trans_net.output.unwrap()
-        current = current * mask_off
-
-        future = T.reshape(future, (-1, 1))
-        future = T.tile(future, [1, n_actions])
-        future = future * mask_on
-
-        target_q = current + future
-        return target_q
+        self.target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
 
     ###########################################################################
     def _build_sync_op(self):
@@ -109,6 +67,14 @@ class DeepQLearning(BaseDeepQLearning):
         self.sync_op = misc.build_sync_op(src_vars, tgt_vars, name='sync')
 
     def _build_error(self):
-        min_delta, max_delta = self.args['min_delta'], self.args['max_delta']
-        sse2 = cost.SSE2(min_delta=min_delta, max_delta=max_delta)
-        self.error = sse2(self.target_q, self.predicted_q)
+        self.actions = wrapper.Input(
+            shape=(None,), dtype='uint8', name='actions')
+
+        min_, max_ = self.args['min_delta'], self.args['max_delta']
+        sse2 = cost.SSE2(min_delta=min_, max_delta=max_, elementwise=True)
+        error = sse2(self.target_q, self.predicted_q)
+
+        n_actions = self.pre_trans_net.output.shape[1]
+        mask = self.actions.one_hot(n_classes=n_actions)
+
+        self.error = (mask * error).mean()

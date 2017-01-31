@@ -188,4 +188,5 @@ class Session(BaseSession):
                             .format(src_shape, tgt_shape)
                         )
                 ops.append(variable.unwrap().assign(value))
-        self.run(name=None, updates=wrapper.Operation(tf.group(*ops)))
+            updates = wrapper.Operation(tf.group(*ops, name='load_dataset'))
+        self.run(updates=updates)
