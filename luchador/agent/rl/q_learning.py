@@ -26,6 +26,21 @@ def _validate_q_learning_config(
             'and `max_delta` must be provided.')
 
 
+def _make_model(model_def, scope):
+    with nn.variable_scope(scope):
+        model = nn.make_model(model_def)
+        state = model.input
+        action_value = model.output
+    return model, state, action_value
+
+
+def _build_sync_op(src_model, tgt_model, scope):
+    with nn.variable_scope(scope):
+        src_vars = src_model.get_parameter_variables()
+        tgt_vars = tgt_model.get_parameter_variables()
+        return nn.build_sync_op(src_vars, tgt_vars, name='sync')
+
+
 class DeepQLearning(luchador.util.StoreMixin, object):
     """Build Q-learning network and optimization operations
 
@@ -53,32 +68,21 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         See `max_reward`
     """
     def __init__(
-            self, q_learning_config, optimizer_config,
-            saver_config, summary_writer_config, session_config):
+            self, model_config, q_learning_config, cost_config,
+            optimizer_config, saver_config, summary_writer_config,
+            session_config):
         self._store_args(
+            model_config=model_config,
             q_learning_config=q_learning_config,
+            cost_config=cost_config,
             optimizer_config=optimizer_config,
             summary_writer_config=summary_writer_config,
             saver_config=saver_config,
             session_config=session_config
         )
-        self.vars = {
-            'state0': None,
-            'action': None,
-            'reward': None,
-            'state1': None,
-            'terminal': None,
-            'action_value_0': None,
-            'target_q': None,
-            'error': None,
-        }
-        self.models = {
-            'pre_trans': None,
-            'post_trans': None,
-        }
-        self.ops = {
-            'sync': None,
-        }
+        self.vars = None
+        self.models = None
+        self.ops = None
         self.optimizer = None
         self.session = None
         self.saver = nn.Saver(**saver_config)
@@ -99,7 +103,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """
         self.build(q_network_maker)
 
-    def build(self, model_def):
+    def build(self, n_actions):
         """Build computation graph (error and sync ops) for Q learning
 
         Parameters
@@ -107,75 +111,88 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         model_def: dict
             NN model definition which map input state to action value
         """
-        with nn.variable_scope('pre_trans'):
-            self.models['pre_trans'] = nn.make_model(model_def)
-            self.vars['state0'] = self.models['pre_trans'].input
-        with nn.variable_scope('post_trans'):
-            self.models['post_trans'] = nn.make_model(model_def)
-            self.vars['state1'] = self.models['post_trans'].input
+        model_def = self._gen_model_def(n_actions)
+        model_0, state_0, action_value_0 = _make_model(model_def, 'pre_trans')
+        model_1, state_1, action_value_1 = _make_model(model_def, 'post_trans')
+        sync_op = _build_sync_op(model_0, model_1, 'sync')
+
         with nn.variable_scope('target_q_value'):
-            self._build_target_q_value()
-        with nn.variable_scope('sync'):
-            self._build_sync_op()
+            reward = nn.Input(shape=(None,), name='rewards')
+            terminal = nn.Input(shape=(None,), name='terminal')
+            target_q = self._build_target_q_value(
+                action_value_1, reward, terminal)
+
         with nn.variable_scope('error'):
-            self._build_error()
+            action = nn.Input(shape=(None,), dtype='uint8', name='action')
+            error = self._build_error(target_q, action_value_0, action)
 
-        self._build_optimization_op()
+        self._init_optimizer()
+        optimize_op = self.optimizer.minimize(
+            error, wrt=model_0.get_parameter_variables())
         self._init_session()
-        self._init_summary_writer()
-        return self
+        self._init_summary_writer(model_0)
 
-    ###########################################################################
-    def _build_target_q_value(self):
-        self.vars['terminal'] = terminal = nn.Input(
-            shape=(None,), name='terminal')
-        self.vars['reward'] = reward = nn.Input(
-            shape=(None,), name='rewards')
-        self.vars['action_value_0'] = self.models['pre_trans'].output
+        self.models = {
+            'model_0': model_0,
+            'model_1': model_1,
+        }
+        self.vars = {
+            'state_0': state_0,
+            'state_1': state_1,
+            'action_value_0': action_value_0,
+            'action_value_1': action_value_1,
+            'action': action,
+            'reward': reward,
+            'terminal': terminal,
+            'target_q': target_q,
+            'error': error,
+        }
+        self.ops = {
+            'sync': sync_op,
+            'optimize': optimize_op,
+        }
 
-        cfg = self.args['q_learning_config']
+    def _gen_model_def(self, n_actions):
+        cfg = self.args['model_config']
+        fmt = luchador.get_nn_conv_format()
+        w, h, c = cfg['input_width'], cfg['input_height'], cfg['input_channel']
+        shape = (
+            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
+            '[null, {}, {}, {}]'.format(c, h, w)
+        )
+        return nn.get_model_config(
+            cfg['name'], n_actions=n_actions, input_shape=shape)
 
-        if 'scale_reward' in cfg:
-            reward = reward / cfg['scale_reward']
-        if 'min_reward' in cfg and 'max_reward' in cfg:
-            min_val, max_val = cfg['min_reward'], cfg['max_reward']
+    def _build_target_q_value(self, action_value, reward, terminal):
+        config = self.args['q_learning_config']
+        # Clip rewrads
+        if 'scale_reward' in config:
+            reward = reward / config['scale_reward']
+        if 'min_reward' in config and 'max_reward' in config:
+            min_val, max_val = config['min_reward'], config['max_reward']
             reward = reward.clip(min_value=min_val, max_value=max_val)
 
-        max_q = self.models['post_trans'].output.max(axis=1)
-        discounted = max_q * cfg['discount_rate']
-        target_q = reward + (1.0 - terminal) * discounted
+        # Build Target Q
+        max_q = action_value.max(axis=1)
+        discounted_q = max_q * config['discount_rate']
+        target_q = reward + (1.0 - terminal) * discounted_q
 
-        n_actions = self.models['pre_trans'].output.shape[1]
+        n_actions = action_value.shape[1]
         target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
-        self.vars['target_q'] = target_q
+        return target_q
 
-    def _build_error(self):
-        self.vars['action'] = action = nn.Input(
-            shape=(None,), dtype='uint8', name='action')
-
-        cfg = self.args['q_learning_config']
-        min_, max_ = cfg.get('min_delta', None), cfg.get('max_delta', None)
-        sse2 = nn.cost.SSE2(min_delta=min_, max_delta=max_, elementwise=True)
-        error = sse2(self.vars['target_q'], self.vars['action_value_0'])
-
-        n_actions = self.models['pre_trans'].output.shape[1]
-        mask = action.one_hot(n_classes=n_actions)
-
-        self.vars['error'] = (mask * error).mean()
-
-    def _build_optimization_op(self):
-        cfg = self.args['optimizer_config']
-        self.optimizer = nn.get_optimizer(cfg['name'])(**cfg['args'])
-        wrt = self.models['pre_trans'].get_parameter_variables()
-        self.ops['optimize'] = self.optimizer.minimize(
-            self.vars['error'], wrt=wrt)
-
-    def _build_sync_op(self):
-        src_vars = self.models['pre_trans'].get_parameter_variables()
-        tgt_vars = self.models['post_trans'].get_parameter_variables()
-        self.ops['sync'] = nn.build_sync_op(src_vars, tgt_vars, name='sync')
+    def _build_error(self, target_q, action_value_0, action):
+        config = self.args['cost_config']
+        sse2 = nn.get_cost(config['name'])(elementwise=True, **config['args'])
+        error = sse2(target_q, action_value_0)
+        mask = action.one_hot(n_classes=action_value_0.shape[1])
+        return (mask * error).mean()
 
     ###########################################################################
+    def _init_optimizer(self):
+        cfg = self.args['optimizer_config']
+        self.optimizer = nn.get_optimizer(cfg['name'])(**cfg['args'])
+
     def _init_session(self):
         cfg = self.args['session_config']
         self.session = nn.Session()
@@ -186,27 +203,28 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             self.session.initialize()
 
     ###########################################################################
-    def predict_action_value(self, state0):
+    def predict_action_value(self, state):
         return self.session.run(
             outputs=self.vars['action_value_0'],
-            inputs={self.vars['state0']: state0},
+            inputs={self.vars['state_0']: state},
             name='action_value0',
         )
 
     def sync_network(self):
+        """Synchronize parameters of model_1 with those of model_0"""
         self.session.run(updates=self.ops['sync'], name='sync')
 
-    def train(self, state0, action, reward, state1, terminal):
-        updates = self.models['pre_trans'].get_update_operations()
+    def train(self, state_0, action, reward, state_1, terminal):
+        updates = self.models['model_0'].get_update_operations()
         updates += [self.ops['optimize']]
         self.n_trainings += 1
         return self.session.run(
             outputs=self.vars['error'],
             inputs={
-                self.vars['state0']: state0,
+                self.vars['state_0']: state_0,
                 self.vars['action']: action,
                 self.vars['reward']: reward,
-                self.vars['state1']: state1,
+                self.vars['state_1']: state_1,
                 self.vars['terminal']: terminal,
             },
             updates=updates,
@@ -217,21 +235,22 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     def save(self):
         """Save network parameter to file"""
         params = (
-            self.models['pre_trans'].get_parameter_variables() +
-            self.optimizer.get_parameter_variables())
-        params_val = self.session.run(outputs=params, name='pre_trans_params')
+            self.models['model_0'].get_parameter_variables() +
+            self.optimizer.get_parameter_variables()
+        )
+        params_val = self.session.run(outputs=params, name='save_params')
         self.saver.save(OrderedDict([
             (var.name, val) for var, val in zip(params, params_val)
         ]), global_step=self.n_trainings)
 
     ###########################################################################
-    def _init_summary_writer(self):
+    def _init_summary_writer(self, model_0):
         """Initialize SummaryWriter and create set of summary operations"""
         if self.session.graph:
             self.summary_writer.add_graph(self.session.graph)
 
-        params = self.models['pre_trans'].get_parameter_variables()
-        outputs = self.models['pre_trans'].get_output_tensors()
+        params = model_0.get_parameter_variables()
+        outputs = model_0.get_output_tensors()
         self.summary_writer.register(
             'histogram', tag='params',
             names=['/'.join(v.name.split('/')[1:]) for v in params])
@@ -247,8 +266,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     def summarize_layer_params(self):
         """Summarize paramters of each layer"""
-        params = self.models['pre_trans'].get_parameter_variables()
-        params_vals = self.session.run(outputs=params, name='pre_trans_params')
+        params = self.models['model_0'].get_parameter_variables()
+        params_vals = self.session.run(outputs=params, name='model_0_params')
         params_data = {
             '/'.join(v.name.split('/')[1:]): val
             for v, val in zip(params, params_vals)
@@ -263,11 +282,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         state : NumPy ND Array
             Input to model0 (pre-transition model)
         """
-        outputs = self.models['pre_trans'].get_output_tensors()
+        outputs = self.models['model_0'].get_output_tensors()
         output_vals = self.session.run(
             outputs=outputs,
-            inputs={self.vars['state0']: state},
-            name='pre_trans_outputs'
+            inputs={self.vars['state_0']: state},
+            name='model_0_outputs'
         )
         output_data = {
             '/'.join(v.name.split('/')[1:]): val

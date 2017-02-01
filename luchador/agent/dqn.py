@@ -78,29 +78,21 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._n_actions = env.n_actions
         self._recorder = TransitionRecorder(**self.args['recorder_config'])
 
-        self._init_network()
+        self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
 
-    def _init_network(self):
+    def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
-        w, h, c = cfg['state_width'], cfg['state_height'], cfg['state_length']
-
-        fmt = luchador.get_nn_conv_format()
-        shape = (
-            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
-            '[null, {}, {}, {}]'.format(c, h, w)
-        )
-        model_def = nn.get_model_config(
-            cfg['model_name'], n_actions=self._n_actions, input_shape=shape)
-
         self._ql = DeepQLearning(
+            model_config=cfg['model_config'],
             q_learning_config=cfg['q_learning_config'],
+            cost_config=cfg['cost_config'],
             optimizer_config=cfg['optimizer_config'],
             summary_writer_config=cfg['summary_writer_config'],
             saver_config=cfg['saver_config'],
             session_config=cfg['session_config']
         )
-        self._ql.build(model_def)
+        self._ql.build(n_actions=n_actions)
         self._ql.sync_network()
         self._ql.summarize_layer_params()
 

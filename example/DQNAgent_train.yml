@@ -28,10 +28,12 @@ args:
         dtype: bool
 
   q_network_config:
-    model_name: vanilla_dqn
-    state_width: *width
-    state_height: *height
-    state_length: *stack
+    model_config:
+      name: vanilla_dqn
+      initial_parameter: *initial_parameter
+      input_channel: *stack
+      input_height: *height
+      input_width: *width
     q_learning_config:
       discount_rate: 0.99
       # reward is clipped between the following min and max

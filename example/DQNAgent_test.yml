@@ -28,19 +28,23 @@ args:
         dtype: bool
 
   q_network_config:
-    model_name: example/vanilla_dqn.yml
-    parameter_file: *initial_parameter
-    state_width: *width
-    state_height: *height
-    state_length: *stack
+    model_config:
+      name: example/vanilla_dqn.yml
+      initial_parameter: *initial_parameter
+      input_height: *height
+      input_width: *width
+      input_channel: *stack
     q_learning_config:
       discount_rate: 0.99
       # reward is clipped between the following min and max
       min_reward: -1.0
       max_reward: 1.0
-      # error between predicted Q value and target Q value is clipped by the following min and max
-      min_delta: -1.0
-      max_delta: 1.0
+    cost_config:
+      name: SSE2
+      args:
+        # error between predicted Q value and target Q value is clipped by the following min and max
+        min_delta: -1.0
+        max_delta: 1.0
     optimizer_config:
       name: NeonRMSProp
       args:
