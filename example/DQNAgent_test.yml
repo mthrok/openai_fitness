@@ -66,10 +66,10 @@ args:
     interval: -1
 
   action_config:
-    annealing_method: linear
-    exploration_period: 0
-    initial_exploration_rate: 0.05
-    terminal_exploration_rate: 0.05
+    method: linear
+    duration: 0
+    epsilon_init: 0.05
+    epsilon_term: 0.05
 
   training_config:
     # Training starts after this number of transitions are recorded

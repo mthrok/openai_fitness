@@ -66,10 +66,10 @@ args:
     interval: 250000
 
   action_config:
-    annealing_method: linear
-    exploration_period: 1000000
-    initial_exploration_rate: 1.0
-    terminal_exploration_rate: 0.1
+    method: linear
+    duration: 1000000
+    epsilon_init: 1.0
+    epsilon_term: 0.1
 
   training_config:
     # Training starts after this number of transitions are recorded
@@ -80,4 +80,3 @@ args:
     # Sync networks every this number of observations are made
     sync_frequency: 10000
     n_samples: *batch
-

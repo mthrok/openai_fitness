@@ -1,6 +1,8 @@
 """Defines mixins used acroos the submodules in Luchador"""
 from __future__ import absolute_import
 
+from .yaml_util import pprint_dict
+
 __all__ = ['StoreMixin', 'CompareMixin', 'SerializeMixin']
 
 # pylint: disable=too-few-public-methods
@@ -55,6 +57,9 @@ class StoreMixin(object):
 
     def __repr__(self):
         return repr({'name': self.__class__.__name__, 'args':  self.args})
+
+    def __str__(self):
+        return pprint_dict({self.__class__.__name__: self.args})
 
 
 class CompareMixin(StoreMixin):

@@ -57,10 +57,10 @@ args:
       parameter_file: *initial_parameter
 
   action_config:
-    annealing_method: linear
-    exploration_period: 1000
-    initial_exploration_rate: 0.5
-    terminal_exploration_rate: 0.5
+    epsilon_init: 0.5
+    epsilon_term: 0.5
+    duration: 1000
+    method: linear
 
   training_config:
     # Training starts after this number of transitions are recorded

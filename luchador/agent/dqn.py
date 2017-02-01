@@ -31,7 +31,7 @@ def _transpose(state):
     return state.transpose((0, 2, 3, 1))
 
 
-class DQNAgent(BaseAgent):
+class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     """Implement Vanilla DQNAgent from [1]_:
 
     References
@@ -50,19 +50,20 @@ class DQNAgent(BaseAgent):
             training_config,
     ):
         super(DQNAgent, self).__init__()
-        self.recorder_config = recorder_config
-        self.q_network_config = q_network_config
-        self.save_config = save_config
-        self.summary_config = summary_config
-        self.action_config = action_config
-        self.training_config = training_config
-
-        self.n_observations = 0
-        self.n_trainings = 0
-
+        self._store_args(
+            recorder_config=recorder_config,
+            q_network_config=q_network_config,
+            save_config=save_config,
+            summary_config=summary_config,
+            action_config=action_config,
+            training_config=training_config,
+        )
+        self._n_obs = 0
+        self._n_train = 0
         self._n_actions = None
-        self.recorder = None
-        self.ql = None
+
+        self._recorder = None
+        self._ql = None
         self._eg = None
         self._summary_values = {
             'errors': [],
@@ -75,26 +76,14 @@ class DQNAgent(BaseAgent):
     # Methods for initialization
     def init(self, env):
         self._n_actions = env.n_actions
-        self.recorder = TransitionRecorder(**self.recorder_config)
+        self._recorder = TransitionRecorder(**self.args['recorder_config'])
 
         self._init_network()
-
-        self.ql.summarize_layer_params()
-        self._eg = EGreedy(
-            epsilon_init=self.action_config['initial_exploration_rate'],
-            epsilon_term=self.action_config['terminal_exploration_rate'],
-            duration=self.action_config['exploration_period'],
-            method=self.action_config['annealing_method'],
-        )
+        self._eg = EGreedy(**self.args['action_config'])
 
     def _init_network(self):
-        self._build_network()
-        self.ql.sync_network()
-
-    def _build_network(self):
-        cfg = self.q_network_config
+        cfg = self.args['q_network_config']
         w, h, c = cfg['state_width'], cfg['state_height'], cfg['state_length']
-        model_name = cfg['model_name']
 
         fmt = luchador.get_nn_conv_format()
         shape = (
@@ -102,28 +91,30 @@ class DQNAgent(BaseAgent):
             '[null, {}, {}, {}]'.format(c, h, w)
         )
         model_def = nn.get_model_config(
-            model_name, n_actions=self._n_actions, input_shape=shape)
+            cfg['model_name'], n_actions=self._n_actions, input_shape=shape)
 
-        self.ql = DeepQLearning(
+        self._ql = DeepQLearning(
             q_learning_config=cfg['q_learning_config'],
             optimizer_config=cfg['optimizer_config'],
             summary_writer_config=cfg['summary_writer_config'],
             saver_config=cfg['saver_config'],
             session_config=cfg['session_config']
         )
-        self.ql.build(model_def)
+        self._ql.build(model_def)
+        self._ql.sync_network()
+        self._ql.summarize_layer_params()
 
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
-        self.recorder.reset(
+        self._recorder.reset(
             initial_data={'state': initial_observation})
 
     ###########################################################################
     # Methods for `act`
     def act(self):
         if (
-                not self.recorder.is_ready() or
+                not self._recorder.is_ready() or
                 self._eg.act_random()
         ):
             return np.random.randint(self._n_actions)
@@ -133,20 +124,20 @@ class DQNAgent(BaseAgent):
 
     def _predict_q(self):
         # _LG.debug('Predicting Q value from NN')
-        state = self.recorder.get_last_stack()['state'][None, ...]
+        state = self._recorder.get_last_stack()['state'][None, ...]
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
-        return self.ql.predict_action_value(state)[0]
+        return self._ql.predict_action_value(state)[0]
 
     ###########################################################################
     # Methods for `learn`
     def learn(self, state0, action, reward, state1, terminal, info=None):
-        self.recorder.record({
+        self._recorder.record({
             'action': action, 'reward': reward,
             'state': state1, 'terminal': terminal})
-        self.n_observations += 1
+        self._n_obs += 1
 
-        cfg, n_obs = self.training_config, self.n_observations
+        cfg, n_obs = self.args['training_config'], self._n_obs
         if cfg['train_start'] < 0 or n_obs < cfg['train_start']:
             return
 
@@ -154,45 +145,45 @@ class DQNAgent(BaseAgent):
             _LG.info('Starting DQN training')
 
         if n_obs % cfg['sync_frequency'] == 0:
-            self.ql.sync_network()
+            self._ql.sync_network()
 
         if n_obs % cfg['train_frequency'] == 0:
             error = self._train(cfg['n_samples'])
-            self.n_trainings += 1
+            self._n_train += 1
             self._summary_values['errors'].append(error)
 
-            interval = self.save_config['interval']
-            if interval > 0 and self.n_trainings % interval == 0:
+            interval = self.args['save_config']['interval']
+            if interval > 0 and self._n_train % interval == 0:
                 _LG.info('Saving parameters')
-                self.ql.save()
+                self._ql.save()
 
-            interval = self.summary_config['interval']
-            if interval > 0 and self.n_trainings % interval == 0:
+            interval = self.args['summary_config']['interval']
+            if interval > 0 and self._n_train % interval == 0:
                 _LG.info('Summarizing Network')
-                self.ql.summarize_layer_params()
+                self._ql.summarize_layer_params()
                 self._summarize_layer_outputs()
                 self._summarize_history()
 
     def _train(self, n_samples):
-        samples = self.recorder.sample(n_samples)
+        samples = self._recorder.sample(n_samples)
         state0 = samples['state'][0]
         state1 = samples['state'][1]
         if luchador.get_nn_conv_format() == 'NHWC':
             state0 = _transpose(state0)
             state1 = _transpose(state1)
-        return self.ql.train(
+        return self._ql.train(
             state0, samples['action'], samples['reward'],
             state1, samples['terminal'])
 
     def _summarize_layer_outputs(self):
-        sample = self.recorder.sample(32)
+        sample = self._recorder.sample(32)
         state = sample['state'][0]
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
-        self.ql.summarize_layer_outputs(state)
+        self._ql.summarize_layer_outputs(state)
 
     def _summarize_history(self):
-        self.ql.summarize_stats(**self._summary_values)
+        self._ql.summarize_stats(**self._summary_values)
         self._summary_values['errors'] = []
         self._summary_values['rewards'] = []
         self._summary_values['steps'] = []
@@ -200,20 +191,7 @@ class DQNAgent(BaseAgent):
     ###########################################################################
     # Methods for post_episode_action
     def perform_post_episode_task(self, stats):
-        self.recorder.truncate()
+        self._recorder.truncate()
         self._summary_values['rewards'].append(stats['rewards'])
         self._summary_values['steps'].append(stats['steps'])
         self._summary_values['episode'] = stats['episode']
-
-    ###########################################################################
-    def __repr__(self):
-        return luchador.util.pprint_dict({
-            self.__class__.__name__: {
-                'Recorder': self.recorder_config,
-                'Q Network': self.q_network_config,
-                'Action': self.action_config,
-                'Training': self.training_config,
-                'Save': self.save_config,
-                'Summary': self.summary_config,
-                }
-        })
