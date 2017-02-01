@@ -170,7 +170,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         ----
         The Tensor must be either vector or 2D matrix
         """
-        if not self.ndim == 1:
+        if not self.n_dim == 1:
             raise ValueError('Tensor must be 1D.')
 
         _dtype = dtype or luchador.get_nn_dtype()

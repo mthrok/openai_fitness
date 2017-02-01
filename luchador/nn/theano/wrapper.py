@@ -185,7 +185,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         ----
         The Tensor must be either vector or 2D matrix
         """
-        if not self.ndim == 1:
+        if not self.n_dim == 1:
             raise ValueError('Tensor must be 1D.')
 
         _tensor = T.extra_ops.to_one_hot(self._tensor, n_classes, dtype=dtype)
