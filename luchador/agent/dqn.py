@@ -142,7 +142,7 @@ class DQNAgent(BaseAgent):
             dqn(input_tensor)
             return dqn
 
-        self.ql = DeepQLearning(q_learning_config=cfg['args'])
+        self.ql = DeepQLearning(q_learning_config=cfg['q_learning_config'])
         self.ql.build(_model_maker)
 
     def _build_optimization(self):

@@ -30,7 +30,7 @@ args:
     state_width: *width
     state_height: *height
     state_length: *stack
-    args:
+    q_learning_config:
       discount_rate: 0.99
       # reward is clipped between the following min and max
       min_reward: -1.0

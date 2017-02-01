@@ -31,7 +31,7 @@ args:
     state_width: *width
     state_height: *height
     state_length: *stack
-    args:
+    q_learning_config:
       discount_rate: 0.99
       # Divide reward befor clipping
       scale_reward: 1.0
