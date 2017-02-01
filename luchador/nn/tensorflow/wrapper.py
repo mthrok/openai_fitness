@@ -217,7 +217,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             prepend = (1, ) * (len(pattern) - self.n_dim)
             tensor = self.reshape(prepend + self.shape).unwrap()
         else:
-            prepend = (1, ) * (tensor.n_dim - len(pattern))
+            prepend = (1, ) * (self.n_dim - len(pattern))
             pattern = prepend + pattern
             tensor = self.unwrap()
         return Tensor(tf.tile(tensor, pattern, name), name=name)
