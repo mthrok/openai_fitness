@@ -99,19 +99,19 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """
         self.build(q_network_maker)
 
-    def build(self, model_maker):
+    def build(self, model_def):
         """Build computation graph (error and sync ops) for Q learning
 
-        Args:
-          q_network(TFModel): TFModel which represetns Q network.
-            Model must be pre-built since this function needs shape
-            information.
+        Parameters
+        ----------
+        model_def: dict
+            NN model definition which map input state to action value
         """
         with nn.variable_scope('pre_trans'):
-            self.models['pre_trans'] = model_maker()
+            self.models['pre_trans'] = nn.make_model(model_def)
             self.vars['state0'] = self.models['pre_trans'].input
         with nn.variable_scope('post_trans'):
-            self.models['post_trans'] = model_maker()
+            self.models['post_trans'] = nn.make_model(model_def)
             self.vars['state1'] = self.models['post_trans'].input
         with nn.variable_scope('target_q_value'):
             self._build_target_q_value()

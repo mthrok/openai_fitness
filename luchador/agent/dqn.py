@@ -97,15 +97,12 @@ class DQNAgent(BaseAgent):
         model_name = cfg['model_name']
 
         fmt = luchador.get_nn_conv_format()
-        shape = (None, h, w, c) if fmt == 'NHWC' else (None, c, h, w)
-
-        model_def = nn.get_model_config(model_name, n_actions=self._n_actions)
-
-        def _model_maker():
-            dqn = nn.make_model(model_def)
-            input_tensor = nn.Input(shape=shape)
-            dqn(input_tensor)
-            return dqn
+        shape = (
+            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
+            '[null, {}, {}, {}]'.format(c, h, w)
+        )
+        model_def = nn.get_model_config(
+            model_name, n_actions=self._n_actions, input_shape=shape)
 
         self.ql = DeepQLearning(
             q_learning_config=cfg['q_learning_config'],
@@ -114,7 +111,7 @@ class DQNAgent(BaseAgent):
             saver_config=cfg['saver_config'],
             session_config=cfg['session_config']
         )
-        self.ql.build(_model_maker)
+        self.ql.build(model_def)
 
     ###########################################################################
     # Methods for `reset`

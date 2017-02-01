@@ -1,100 +1,104 @@
 model_type: Sequential
+input:
+  dtype: uint8
+  shape: {input_shape}
+  name: state
 layer_configs:
-- scope: layer0/preprocessing
-  layer:
-    name: TrueDiv
-    args:
-      denom: 255
-- scope: layer1/conv2D
-  layer:
-    name: Conv2D
-    args:
-      n_filters: 32
-      filter_width: 8
-      filter_height: 8
-      strides: 4
-      padding: valid
-      initializers:
-        bias: &initializer1
-          name: Uniform
-          args:
-            # 1 / sqrt(8 * 8 * 32) = 0.022097
-            maxval: 0.022
-            minval: -0.022
-        weight: *initializer1
-- scope: layer1/ReLU
-  layer:
-    name: ReLU
-- scope: layer2/conv2D
-  layer:
-    name: Conv2D
-    args:
-      n_filters: 64
-      filter_width: 4
-      filter_height: 4
-      strides: 2
-      padding: valid
-      initializers:
-        bias: &initializer2
-          name: Uniform
-          args:
-            # 1 / sqrt(4 * 4 * 64) = 0.03125
-            maxval: 0.031
-            minval: -0.031
-        weight: *initializer2
-- scope: layer2/ReLU
-  layer:
-    name: ReLU
-- scope: layer3/conv2D
-  layer:
-    name: Conv2D
-    args:
-      filter_width: 3
-      filter_height: 3
-      n_filters: 64
-      strides: 1
-      padding: valid
-      initializers:
-        bias: &initializer3
-          name: Uniform
-          args:
-            # 1 / sqrt(3 * 3 * 64) = 0.04166
-            maxval: 0.042
-            minval: -0.042
-        weight: *initializer3
-- scope: layer3/ReLU
-  layer:
-    name: ReLU
-- scope: layer4/flatten
-  layer:
-    name: Flatten
-- scope: layer5/dense
-  layer:
-    name: Dense
-    args:
-      n_nodes: 512
-      initializers:
-        bias: &initializer5
-          name: Uniform
-          args:
-            # 1 / sqrt(3136) = 0.01785
-            # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
-            maxval: 0.018
-            minval: -0.018
-        weight: *initializer5
-- scope: layer5/ReLU
-  layer:
-    name: ReLU
-- scope: layer6/dense
-  layer:
-    name: Dense
-    args:
-      n_nodes: {n_actions}
-      initializers:
-        bias: &initializer6
-          name: Uniform
-          args:
-            # 1 / sqrt(512) = 0.04419
-            maxval: 0.044
-            minval: -0.044
-        weight: *initializer6
+  - scope: layer0/preprocessing
+    layer:
+      name: TrueDiv
+      args:
+        denom: 255
+  - scope: layer1/conv2D
+    layer:
+      name: Conv2D
+      args:
+        n_filters: 32
+        filter_width: 8
+        filter_height: 8
+        strides: 4
+        padding: valid
+        initializers:
+          bias: &initializer1
+            name: Uniform
+            args:
+              # 1 / sqrt(8 * 8 * 32) = 0.022097
+              maxval: 0.022
+              minval: -0.022
+          weight: *initializer1
+  - scope: layer1/ReLU
+    layer:
+      name: ReLU
+  - scope: layer2/conv2D
+    layer:
+      name: Conv2D
+      args:
+        n_filters: 64
+        filter_width: 4
+        filter_height: 4
+        strides: 2
+        padding: valid
+        initializers:
+          bias: &initializer2
+            name: Uniform
+            args:
+              # 1 / sqrt(4 * 4 * 64) = 0.03125
+              maxval: 0.031
+              minval: -0.031
+          weight: *initializer2
+  - scope: layer2/ReLU
+    layer:
+      name: ReLU
+  - scope: layer3/conv2D
+    layer:
+      name: Conv2D
+      args:
+        filter_width: 3
+        filter_height: 3
+        n_filters: 64
+        strides: 1
+        padding: valid
+        initializers:
+          bias: &initializer3
+            name: Uniform
+            args:
+              # 1 / sqrt(3 * 3 * 64) = 0.04166
+              maxval: 0.042
+              minval: -0.042
+          weight: *initializer3
+  - scope: layer3/ReLU
+    layer:
+      name: ReLU
+  - scope: layer4/flatten
+    layer:
+      name: Flatten
+  - scope: layer5/dense
+    layer:
+      name: Dense
+      args:
+        n_nodes: 512
+        initializers:
+          bias: &initializer5
+            name: Uniform
+            args:
+              # 1 / sqrt(3136) = 0.01785
+              # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
+              maxval: 0.018
+              minval: -0.018
+          weight: *initializer5
+  - scope: layer5/ReLU
+    layer:
+      name: ReLU
+  - scope: layer6/dense
+    layer:
+      name: Dense
+      args:
+        n_nodes: {n_actions}
+        initializers:
+          bias: &initializer6
+            name: Uniform
+            args:
+              # 1 / sqrt(512) = 0.04419
+              maxval: 0.044
+              minval: -0.044
+          weight: *initializer6
