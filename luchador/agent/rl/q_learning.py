@@ -38,17 +38,9 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     max_delta : number or None
         See `max_reward`
     """
-    def __init__(
-            self, discount_rate, scale_reward=None,
-            min_reward=None, max_reward=None,
-            min_delta=None, max_delta=None):
+    def __init__(self, q_learning_config):
         self._store_args(
-            discount_rate=discount_rate,
-            scale_reward=scale_reward,
-            min_reward=min_reward,
-            max_reward=max_reward,
-            min_delta=min_delta,
-            max_delta=max_delta,
+            q_learning_config=q_learning_config,
         )
         self.vars = {
             'state0': None,
@@ -118,14 +110,16 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             shape=(None,), name='rewards')
         self.vars['action_value_0'] = self.models['pre_trans'].output
 
-        if self.args['scale_reward']:
-            reward = reward / self.args['scale_reward']
-        if self.args['min_reward'] and self.args['max_reward']:
-            min_val, max_val = self.args['min_reward'], self.args['max_reward']
+        cfg = self.args['q_learning_config']
+
+        if 'scale_reward' in cfg:
+            reward = reward / cfg['scale_reward']
+        if 'min_reward' in cfg and 'max_reward' in cfg:
+            min_val, max_val = cfg['min_reward'], cfg['max_reward']
             reward = reward.clip(min_value=min_val, max_value=max_val)
 
         max_q = self.models['post_trans'].output.max(axis=1)
-        discounted = max_q * self.args['discount_rate']
+        discounted = max_q * cfg['discount_rate']
         target_q = reward + (1.0 - terminal) * discounted
 
         n_actions = self.models['pre_trans'].output.shape[1]
@@ -142,7 +136,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.vars['action'] = action = nn.Input(
             shape=(None,), dtype='uint8', name='action')
 
-        min_, max_ = self.args['min_delta'], self.args['max_delta']
+        cfg = self.args['q_learning_config']
+        min_, max_ = cfg.get('min_delta', None), cfg.get('max_delta', None)
         sse2 = nn.cost.SSE2(min_delta=min_, max_delta=max_, elementwise=True)
         error = sse2(self.vars['target_q'], self.vars['action_value_0'])
 
