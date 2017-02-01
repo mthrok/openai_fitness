@@ -3,6 +3,9 @@ alias:
   height: &height 84
   stack: &stack 4
   batch: &batch 32
+  save_dir: &save_dir results
+  save_prefix: &save_prefix DQN_integration_test
+  initial_parameter: &initial_parameter example/space_invaders_vanilla_dqn_99000.h5
 
 name: DQNAgent
 args:
@@ -26,7 +29,7 @@ args:
 
   q_network_config:
     model_name: example/vanilla_dqn.yml
-    parameter_file: example/space_invaders_vanilla_dqn_99000.h5
+    parameter_file: *initial_parameter
     state_width: *width
     state_height: *height
     state_length: *stack
@@ -38,13 +41,29 @@ args:
       # error between predicted Q value and target Q value is clipped by the following min and max
       min_delta: -1.0
       max_delta: 1.0
+    optimizer_config:
+      name: NeonRMSProp
+      args:
+        decay: 0.95
+        epsilon: 0.000001
+        learning_rate: 0.00025
+    saver_config:
+      output_dir: *save_dir
+      max_to_keep: 10
+      keep_every_n_hours: 1.0
+      prefix: *save_prefix
+    summary_writer_config:
+      output_dir: *save_dir
 
-  optimizer_config:
-    name: NeonRMSProp
-    args:
-      decay: 0.95
-      epsilon: 0.000001
-      learning_rate: 0.00025
+  summary_config:
+    # Summarize network every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: -1
+
+  save_config:
+    # Save network parameter every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: -1
 
   action_config:
     annealing_method: linear
@@ -61,20 +80,3 @@ args:
     # Sync networks every this number of observations are made
     sync_frequency: 10000
     n_samples: *batch
-
-  save_config:
-    # Save network parameter every once after this #trainings
-    # Giving non-positive value effectively disable save functionality
-    interval: -1
-    saver_config:
-      output_dir: &output_dir results
-      max_to_keep: 10
-      keep_every_n_hours: 1.0
-      prefix: DQN
-
-  summary_config:
-    # Summarize network every once after this #trainings
-    # Giving non-positive value effectively disable save functionality
-    interval: -1
-    writer_config:
-      output_dir: *output_dir
