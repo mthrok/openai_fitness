@@ -55,14 +55,14 @@ def _compute_tile_shape(shape, pattern):
     if len(shape) > len(pattern):
         return _compute_tile_shape(pattern, shape)
 
-    shape = list(pattern)
+    _shape = list(pattern)
     offset = len(pattern) - len(shape)
     for i, val in enumerate(shape):
-        if shape[offset + i] is None:
+        if _shape[offset + i] is None:
             continue
         if val is not None:
-            shape[offset + i] *= val
-    return shape
+            _shape[offset + i] *= val
+    return _shape
 
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
@@ -228,10 +228,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Shape-checking and inference is not carried out.
         """
         _tensor = T.reshape(self._tensor, newshape=new_shape)
-
-        if -1 in new_shape:
-            new_shape = [None if val < 0 else val for val in new_shape]
-
         return Tensor(tensor=_tensor, shape=new_shape, name=name)
 
     def tile(self, pattern, name=None):
@@ -291,6 +287,8 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
           shape (list): Shape of the tensor being wrapped.
           name (str or None): Name of the resulting wrapper for convenience.
         """
+        if -1 in shape:
+            shape = [None if val < 0 else val for val in shape]
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 

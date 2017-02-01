@@ -30,6 +30,8 @@ class BaseTensor(object):
     @property
     def size(self):
         """Return the number of elements in tensor"""
+        if None in self.shape:
+            return None
         return reduce(lambda x, y: x*y, self.shape, 1)
 
     @property
