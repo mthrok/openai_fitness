@@ -38,9 +38,10 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     max_delta : number or None
         See `max_reward`
     """
-    def __init__(self, discount_rate, scale_reward=None,
-                 min_reward=None, max_reward=None,
-                 min_delta=None, max_delta=None):
+    def __init__(
+            self, discount_rate, scale_reward=None,
+            min_reward=None, max_reward=None,
+            min_delta=None, max_delta=None):
         self._store_args(
             discount_rate=discount_rate,
             scale_reward=scale_reward,
@@ -49,26 +50,23 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             min_delta=min_delta,
             max_delta=max_delta,
         )
-        # Inputs to the network
-        self.pre_states = None
-        self.actions = None
-        self.rewards = None
-        self.post_states = None
-        self.terminals = None
-
-        # Actual NN models
-        self.pre_trans_net = None
-        self.post_trans_net = None
-
-        # Q values
-        self.future_reward = None
-        self.predicted_q = None
-        self.target_q = None
-        self.error = None
-        self.discount_rate = None
-
-        # Sync operation
-        self.sync_op = None
+        self.vars = {
+            'state0': None,
+            'action': None,
+            'reward': None,
+            'state1': None,
+            'terminal': None,
+            'action_value_0': None,
+            'target_q': None,
+            'error': None,
+        }
+        self.models = {
+            'pre_trans': None,
+            'post_trans': None,
+        }
+        self.ops = {
+            'sync': None,
+        }
 
     def _validate_args(self, min_reward=None, max_reward=None,
                        min_delta=None, max_delta=None, **_):
@@ -99,11 +97,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             information.
         """
         with nn.variable_scope('pre_trans'):
-            self.pre_trans_net = model_maker()
-            self.pre_states = self.pre_trans_net.input
+            self.models['pre_trans'] = model_maker()
+            self.vars['state0'] = self.models['pre_trans'].input
         with nn.variable_scope('post_trans'):
-            self.post_trans_net = model_maker()
-            self.post_states = self.post_trans_net.input
+            self.models['post_trans'] = model_maker()
+            self.vars['state1'] = self.models['post_trans'].input
         with nn.variable_scope('target_q_value'):
             self._build_target_q_value()
         with nn.variable_scope('sync'):
@@ -114,41 +112,41 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     ###########################################################################
     def _build_target_q_value(self):
-        self.terminals = nn.Input(
-            shape=(None,), name='terminals')
-        self.rewards = nn.Input(
+        self.vars['terminal'] = terminal = nn.Input(
+            shape=(None,), name='terminal')
+        self.vars['reward'] = reward = nn.Input(
             shape=(None,), name='rewards')
-        self.predicted_q = self.pre_trans_net.output
+        self.vars['action_value_0'] = self.models['pre_trans'].output
 
-        rewards = self.rewards
         if self.args['scale_reward']:
-            rewards = rewards / self.args['scale_reward']
+            reward = reward / self.args['scale_reward']
         if self.args['min_reward'] and self.args['max_reward']:
             min_val, max_val = self.args['min_reward'], self.args['max_reward']
-            rewards = rewards.clip(min_value=min_val, max_value=max_val)
+            reward = reward.clip(min_value=min_val, max_value=max_val)
 
-        max_q = self.post_trans_net.output.max(axis=1)
+        max_q = self.models['post_trans'].output.max(axis=1)
         discounted = max_q * self.args['discount_rate']
-        target_q = rewards + (1.0 - self.terminals) * discounted
+        target_q = reward + (1.0 - terminal) * discounted
 
-        n_actions = self.pre_trans_net.output.shape[1]
-        self.target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
+        n_actions = self.models['pre_trans'].output.shape[1]
+        target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
+        self.vars['target_q'] = target_q
 
     ###########################################################################
     def _build_sync_op(self):
-        src_vars = self.pre_trans_net.get_parameter_variables()
-        tgt_vars = self.post_trans_net.get_parameter_variables()
-        self.sync_op = nn.build_sync_op(src_vars, tgt_vars, name='sync')
+        src_vars = self.models['pre_trans'].get_parameter_variables()
+        tgt_vars = self.models['post_trans'].get_parameter_variables()
+        self.ops['sync'] = nn.build_sync_op(src_vars, tgt_vars, name='sync')
 
     def _build_error(self):
-        self.actions = nn.Input(
-            shape=(None,), dtype='uint8', name='actions')
+        self.vars['action'] = action = nn.Input(
+            shape=(None,), dtype='uint8', name='action')
 
         min_, max_ = self.args['min_delta'], self.args['max_delta']
         sse2 = nn.cost.SSE2(min_delta=min_, max_delta=max_, elementwise=True)
-        error = sse2(self.target_q, self.predicted_q)
+        error = sse2(self.vars['target_q'], self.vars['action_value_0'])
 
-        n_actions = self.pre_trans_net.output.shape[1]
-        mask = self.actions.one_hot(n_classes=n_actions)
+        n_actions = self.models['pre_trans'].output.shape[1]
+        mask = action.one_hot(n_classes=n_actions)
 
-        self.error = (mask * error).mean()
+        self.vars['error'] = (mask * error).mean()

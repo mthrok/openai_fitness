@@ -98,8 +98,8 @@ class DQNAgent(BaseAgent):
         if self.session.graph:
             self.summary_writer.add_graph(self.session.graph)
 
-        params = self.ql.pre_trans_net.get_parameter_variables()
-        outputs = self.ql.pre_trans_net.get_output_tensors()
+        params = self.ql.models['pre_trans'].get_parameter_variables()
+        outputs = self.ql.models['pre_trans'].get_output_tensors()
         self.summary_writer.register(
             'histogram', tag='params',
             names=['/'.join(v.name.split('/')[1:]) for v in params])
@@ -148,8 +148,8 @@ class DQNAgent(BaseAgent):
     def _build_optimization(self):
         self.optimizer = nn.get_optimizer(
             self.optimizer_config['name'])(**self.optimizer_config['args'])
-        wrt = self.ql.pre_trans_net.get_parameter_variables()
-        self.minimize_op = self.optimizer.minimize(self.ql.error, wrt=wrt)
+        wrt = self.ql.models['pre_trans'].get_parameter_variables()
+        self.minimize_op = self.optimizer.minimize(self.ql.vars['error'], wrt=wrt)
 
     def _init_session(self):
         cfg = self.q_network_config
@@ -184,8 +184,8 @@ class DQNAgent(BaseAgent):
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
         q_val = self.session.run(
-            outputs=self.ql.predicted_q,
-            inputs={self.ql.pre_states: state},
+            outputs=self.ql.vars['action_value_0'],
+            inputs={self.ql.vars['state0']: state},
             name='action_value',
         )
         return q_val[0]
@@ -225,11 +225,11 @@ class DQNAgent(BaseAgent):
                 self._summarize(self.n_total_trainings)
 
     def _sync_network(self):
-        self.session.run(updates=self.ql.sync_op, name='sync')
+        self.session.run(updates=self.ql.ops['sync'], name='sync')
 
     def _train(self, n_samples):
         samples = self.recorder.sample(n_samples)
-        updates = self.ql.pre_trans_net.get_update_operations() + [
+        updates = self.ql.models['pre_trans'].get_update_operations() + [
             self.minimize_op]
 
         pre_state = samples['state'][0]
@@ -238,13 +238,13 @@ class DQNAgent(BaseAgent):
             pre_state = _transpose(pre_state)
             post_state = _transpose(post_state)
         error = self.session.run(
-            outputs=self.ql.error,
+            outputs=self.ql.vars['error'],
             inputs={
-                self.ql.pre_states: pre_state,
-                self.ql.actions: samples['action'],
-                self.ql.rewards: samples['reward'],
-                self.ql.post_states: post_state,
-                self.ql.terminals: samples['terminal'],
+                self.ql.vars['state0']: pre_state,
+                self.ql.vars['action']: samples['action'],
+                self.ql.vars['reward']: samples['reward'],
+                self.ql.vars['state1']: post_state,
+                self.ql.vars['terminal']: samples['terminal'],
             },
             updates=updates,
             name='minibatch_training',
@@ -253,7 +253,7 @@ class DQNAgent(BaseAgent):
 
     def _save(self, episode):
         """Save network parameter to file"""
-        params = (self.ql.pre_trans_net.get_parameter_variables() +
+        params = (self.ql.models['pre_trans'].get_parameter_variables() +
                   self.optimizer.get_parameter_variables())
         params_val = self.session.run(outputs=params, name='pre_trans_params')
         self.saver.save(OrderedDict([
@@ -292,14 +292,14 @@ class DQNAgent(BaseAgent):
 
     def _summarize_layer_outputs(self, episode):
         sample = self.recorder.sample(32)
-        outputs = self.ql.pre_trans_net.get_output_tensors()
+        outputs = self.ql.models['pre_trans'].get_output_tensors()
 
         state = sample['state'][0]
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
         output_vals = self.session.run(
             outputs=outputs,
-            inputs={self.ql.pre_states: state},
+            inputs={self.ql.vars['state0']: state},
             name='pre_trans_outputs'
         )
         output_data = {
@@ -309,7 +309,7 @@ class DQNAgent(BaseAgent):
         self.summary_writer.summarize(episode, output_data)
 
     def _summarize_layer_params(self, episode):
-        params = self.ql.pre_trans_net.get_parameter_variables()
+        params = self.ql.models['pre_trans'].get_parameter_variables()
         params_vals = self.session.run(outputs=params, name='pre_trans_params')
         params_data = {
             '/'.join(v.name.split('/')[1:]): val
