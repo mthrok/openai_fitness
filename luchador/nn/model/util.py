@@ -11,12 +11,21 @@ import StringIO
 
 import yaml
 
+from luchador.util import get_subclasses
 from luchador.nn import get_layer
+from luchador.nn.base.wrapper import BaseTensor
 from .model import get_model
 
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')
 _LG = logging.getLogger(__name__)
+
+
+def _get_input():
+    for class_ in get_subclasses(BaseTensor):
+        if class_.__name__ == 'Input':
+            return class_
+    raise ValueError('`Input` class is not defined in cullent backend.')
 
 
 def make_model(model_config):
@@ -34,13 +43,16 @@ def make_model(model_config):
     """
     model = get_model(model_config['model_type'])()
     for cfg in model_config['layer_configs']:
-        scope, layer_cfg = cfg['scope'], cfg['layer']
+        layer_cfg = cfg['layer']
         if 'name' not in layer_cfg:
-            raise RuntimeError('Layer `name` not found')
+            raise RuntimeError('Layer name is not given')
         args = layer_cfg.get('args', {})
         _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
         layer = get_layer(layer_cfg['name'])(**args)
-        model.add_layer(layer=layer, scope=scope)
+        model.add_layer(layer=layer, scope=cfg.get('scope', ''))
+    if 'input' in model_config:
+        input_ = _get_input()(**model_config['input'])
+        model(input_)
     return model
 
 
