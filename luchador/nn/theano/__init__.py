@@ -7,7 +7,6 @@ from . import (  # noqa: F401
     layer,
     cost,
     optimizer,
-    q_learning,
 )
 from .scope import (  # noqa: F401
     VariableScope,

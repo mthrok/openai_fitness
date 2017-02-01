@@ -20,6 +20,7 @@ from luchador import nn
 from .base import BaseAgent
 from .recorder import TransitionRecorder
 from .misc import EGreedy
+from .rl import DeepQLearning
 
 __all__ = ['DQNAgent']
 
@@ -141,7 +142,7 @@ class DQNAgent(BaseAgent):
             dqn(input_tensor)
             return dqn
 
-        self.ql = nn.q_learning.DeepQLearning(**cfg['args'])
+        self.ql = DeepQLearning(**cfg['args'])
         self.ql.build(_model_maker)
 
     def _build_optimization(self):
