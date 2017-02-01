@@ -33,7 +33,7 @@ class BaseTensor(object):
         return reduce(lambda x, y: x*y, self.shape, 1)
 
     @property
-    def ndim(self):
+    def n_dim(self):
         """Return the number of array dimension in tensor"""
         return len(self.shape)
 
