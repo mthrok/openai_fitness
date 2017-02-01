@@ -213,14 +213,14 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             raise ValueError('`pattern` must be iteratable')
         pattern = tuple(pattern)
 
-        tensor = self
-        if len(pattern) > tensor.n_dim:
-            prepend = (1, ) * (len(pattern) - tensor.n_dim)
-            tensor = tensor.reshape(prepend + tensor.shape)
+        if len(pattern) > self.n_dim:
+            prepend = (1, ) * (len(pattern) - self.n_dim)
+            tensor = self.reshape(prepend + self.shape).unwrap()
         else:
             prepend = (1, ) * (tensor.n_dim - len(pattern))
             pattern = prepend + pattern
-        return Tensor(tf.tile(tensor.unwrap(), pattern, name), name=name)
+            tensor = self.unwrap()
+        return Tensor(tf.tile(tensor, pattern, name), name=name)
 
 
 class Variable(TensorMixin, base_wrapper.BaseTensor):
