@@ -81,7 +81,6 @@ def _build_network(model_filepath, optimizer_filepath, initial_parameter):
             },
         },
         optimizer_config=load_config(optimizer_filepath),
-        summary_writer_config={},
     )
     dql.build(n_actions=N_ACTIONS)
     _LG.info('Syncing models')
@@ -126,7 +125,7 @@ def _main():
 
     if args.output:
         saver = nn.Saver(output_dir=args.output)
-        saver.save(dql.fetch_parameters(), global_step=1)
+        saver.save(dql.fetch_all_parameters(), global_step=1)
 
 
 if __name__ == '__main__':

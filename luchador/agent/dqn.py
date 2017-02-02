@@ -34,14 +34,37 @@ def _transpose(state):
 class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     """Implement Vanilla DQNAgent from [1]_:
 
-    # TODO: Complete this
     Parameters
     ----------
+    recorder_config : dict
+        Constructor arguments for
+        :class:`luchador.agent.recorder.TransitionRecorder`
+
+    q_network_config : dict
+        Constructor arguments for
+        :class:`luchador.agent.rl.q_learning.DeepQLearning`
 
     saver_config : dict
         Constructor arguments for :class:`luchador.nn.saver.Saver`
 
+    summary_writer_config : dict
+        Constructor arguments for :class:`luchador.nn.summary.SummaryWriter`
 
+    action_config : dict
+        Constructor arguments for :class:`luchador.agent.misc.EGreedy`
+
+    training_config : dict
+        Configuration for training
+
+        train_start : int
+            Training starts after this number of transitions are recorded
+            Giving negative value effectively disable training and network sync
+        train_frequency : int
+            Train network every this number of observations are made
+        sync_frequency : int
+            Sync networks every this number of observations are made
+        n_samples : int
+            Batch size
 
     References
     ----------
@@ -57,18 +80,19 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             training_config,
             saver_config,
             save_config,
+            summary_writer_config,
             summary_config,
-
     ):
         super(DQNAgent, self).__init__()
         self._store_args(
             recorder_config=recorder_config,
             q_network_config=q_network_config,
-            save_config=save_config,
-            summary_config=summary_config,
             action_config=action_config,
             training_config=training_config,
             saver_config=saver_config,
+            save_config=save_config,
+            summary_writer_config=summary_writer_config,
+            summary_config=summary_config,
         )
         self._n_obs = 0
         self._n_train = 0
@@ -78,6 +102,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._saver = None
         self._ql = None
         self._eg = None
+        self._summary_writer = None
         self._summary_values = {
             'errors': [],
             'rewards': [],
@@ -94,6 +119,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
         self._init_saver()
+        self._init_summary_writer()
 
     def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
@@ -102,16 +128,38 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             q_learning_config=cfg['q_learning_config'],
             cost_config=cfg['cost_config'],
             optimizer_config=cfg['optimizer_config'],
-            summary_writer_config=cfg['summary_writer_config'],
         )
         self._ql.build(n_actions=n_actions)
         self._ql.sync_network()
-        self._ql.summarize_layer_params()
+        self._summarize_layer_params()
 
     def _init_saver(self):
         config = self.args['saver_config']
-        if config.get('output_dir'):
-            self.saver = nn.Saver(**config)
+        self._saver = nn.Saver(**config)
+
+    def _init_summary_writer(self):
+        """Initialize SummaryWriter and create set of summary operations"""
+        config = self.args['summary_writer_config']
+        self._summary_writer = nn.SummaryWriter(**config)
+
+        if self._ql.session.graph:
+            self._summary_writer.add_graph(self._ql.session.graph)
+
+        model_0 = self._ql.models['model_0']
+        params = model_0.get_parameter_variables()
+        outputs = model_0.get_output_tensors()
+        self._summary_writer.register(
+            'histogram', tag='params',
+            names=['/'.join(v.name.split('/')[1:]) for v in params])
+        self._summary_writer.register(
+            'histogram', tag='outputs',
+            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
+        self._summary_writer.register(
+            'histogram', tag='training',
+            names=['Training/Error', 'Training/Reward', 'Training/Steps']
+        )
+        self._summary_writer.register_stats(['Error', 'Reward', 'Steps'])
+        self._summary_writer.register('scalar', ['Episode'])
 
     ###########################################################################
     # Methods for `reset`
@@ -169,7 +217,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             interval = self.args['summary_config']['interval']
             if interval > 0 and self._n_train % interval == 0:
                 _LG.info('Summarizing Network')
-                self._ql.summarize_layer_params()
+                self._summarize_layer_params()
                 self._summarize_layer_outputs()
                 self._summarize_history()
 
@@ -185,18 +233,47 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             state1, samples['terminal'])
 
     def _save(self):
-        data = self._ql.fetch_parameters()
-        self.saver.save(data, global_step=self._n_train)
+        data = self._ql.fetch_all_parameters()
+        self._saver.save(data, global_step=self._n_train)
+
+    def _summarize_layer_params(self):
+        dataset = self._ql.fetch_layer_params()
+        self._summary_writer.summarize(
+            global_step=self._n_train, dataset=dataset)
 
     def _summarize_layer_outputs(self):
         sample = self._recorder.sample(32)
         state = sample['state'][0]
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
-        self._ql.summarize_layer_outputs(state)
+        dataset = self._ql.fetch_layer_outputs(state)
+        self._summary_writer.summarize(
+            global_step=self._n_train, dataset=dataset)
 
     def _summarize_history(self):
-        self._ql.summarize_stats(**self._summary_values)
+        steps = self._summary_values['steps']
+        errors = self._summary_values['errors']
+        rewards = self._summary_values['rewards']
+        episode = self._summary_values['episode']
+        self._summary_writer.summarize(
+            global_step=self._n_train, tag='training',
+            dataset=[errors, rewards, steps],
+        )
+        self._summary_writer.summarize(
+            global_step=self._n_train, dataset={'Episode': episode}
+        )
+        if rewards:
+            self._summary_writer.summarize_stats(
+                global_step=self._n_train, dataset={'Reward': rewards}
+            )
+        if errors:
+            self._summary_writer.summarize_stats(
+                global_step=self._n_train, dataset={'Error': errors}
+            )
+        if steps:
+            self._summary_writer.summarize_stats(
+                global_step=self._n_train, dataset={'Steps': steps}
+            )
         self._summary_values['errors'] = []
         self._summary_values['rewards'] = []
         self._summary_values['steps'] = []
