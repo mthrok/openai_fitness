@@ -256,8 +256,8 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
             overwritten with this name.
         """
         name = name or variable.op.name
-        shape = variable.get_shape().as_list()
-        dtype = variable.dtype.as_numpy_dtype
+        shape = tuple(variable.get_shape().as_list())
+        dtype = variable.dtype.as_numpy_dtype().dtype.name
         super(Variable, self).__init__(
             tensor=variable, shape=shape, name=name, dtype=dtype)
         _register_variable(name, self)
@@ -282,8 +282,8 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             overwritten with this name.
         """
         name = name or tensor.name
-        shape = tensor.get_shape().as_list()
-        dtype = tensor.dtype.as_numpy_dtype
+        shape = tuple(tensor.get_shape().as_list())
+        dtype = tensor.dtype.as_numpy_dtype().dtype.name
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
