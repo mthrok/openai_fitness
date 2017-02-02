@@ -14,7 +14,6 @@ import numpy as np
 
 import luchador
 import luchador.util
-from luchador import nn
 
 from .base import BaseAgent
 from .recorder import TransitionRecorder
