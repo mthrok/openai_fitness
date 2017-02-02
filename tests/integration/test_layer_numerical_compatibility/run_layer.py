@@ -6,13 +6,11 @@ import logging
 import h5py
 import numpy as np
 
-from luchador import get_nn_backend, get_nn_conv_format
+import luchador
 import luchador.util
 from luchador import nn
 
-
 _LG = logging.getLogger('luchador')
-_LG.setLevel(logging.INFO)
 
 
 def _parse_command_line_args():
@@ -37,8 +35,7 @@ def _parse_command_line_args():
 
 def _forward_prop(layer, input_value, parameter_file, n_ite):
     sess = nn.Session()
-    input_ = nn.Input(
-        shape=input_value.shape, dtype=input_value.dtype)
+    input_ = nn.Input(shape=input_value.shape)
     output = layer(input_)
     if parameter_file:
         _LG.info('Loading parameter values from %s', parameter_file)
@@ -47,7 +44,7 @@ def _forward_prop(layer, input_value, parameter_file, n_ite):
     _LG.info('Running forward path for %s times', n_ite)
     for _ in range(n_ite):
         ret = sess.run(
-            outputs=output, inputs={input_: input_value},
+            outputs=output, inputs={input_: input_value.astype(input_.dtype)},
             updates=layer.get_update_operation())
     _LG.info('Run forward path. Output shape: %s', ret.shape)
     return ret
@@ -57,16 +54,16 @@ def _transpose_needed(layer, input_shape):
     def _is_convolution():
         return (
             layer.__class__.__name__ == 'Conv2D' and
-            get_nn_backend() == 'tensorflow' and
-            get_nn_conv_format() == 'NHWC'
+            luchador.get_nn_backend() == 'tensorflow' and
+            luchador.get_nn_conv_format() == 'NHWC'
         )
 
     def _is_batch_normalization_4d():
         return (
             layer.__class__.__name__ == 'BatchNormalization' and
             len(input_shape) > 2 and
-            get_nn_backend() == 'tensorflow' and
-            get_nn_conv_format() == 'NHWC'
+            luchador.get_nn_backend() == 'tensorflow' and
+            luchador.get_nn_conv_format() == 'NHWC'
         )
     return _is_convolution() or _is_batch_normalization_4d()
 
@@ -134,11 +131,21 @@ def _load_config(config_path):
     return cfg, input_file, param_file
 
 
+def _init_logger(debug):
+    from luchador.util import initialize_logger
+    message_format = (
+        '%(asctime)s: %(levelname)5s: %(funcName)10s: %(message)s'
+        if debug else '%(asctime)s: %(levelname)5s: %(message)s'
+    )
+    level = logging.DEBUG if debug else logging.INFO
+    initialize_logger(
+        name='luchador', message_format=message_format, level=level)
+
+
 def _main():
     args = _parse_command_line_args()
 
-    if args.debug:
-        _LG.setLevel(logging.DEBUG)
+    _init_logger(args.debug)
 
     cfg, input_file, param_file = _load_config(args.config)
 

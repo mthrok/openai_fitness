@@ -27,10 +27,10 @@ echo ""
 cat ${CONFIG}
 echo ""
 echo "* Running ${LAYER_NAME} with Theano backend"
-LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --output ${FILE1}
+LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float32' ${TEST_COMMAND} --output ${FILE1}
 echo "* Running ${LAYER_NAME} with Tensorflow backend"
-LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ${TEST_COMMAND} --output ${FILE2}
+LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32     ${TEST_COMMAND} --output ${FILE2}
 echo "* Comparing results"
-python "${BASE_DIR}/compare_result.py" ${FILE1} ${FILE2}
+python "${BASE_DIR}/compare_result.py" ${FILE1} ${FILE2} --threshold 1.5e-2
 echo "********************************************************************************"
 echo ""

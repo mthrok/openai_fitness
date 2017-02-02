@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 import logging
 
-from theano import config as theano_config
 import theano.tensor as T
 
 from luchador.nn.base import (
@@ -65,20 +64,20 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
     See :any:`BaseDense` for detail.
     """
-    def _instantiate_parameters(self, n_inputs):
+    def _instantiate_parameters(self, n_inputs, dtype):
         initializers = _get_initializers(
             self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = (n_inputs, self.args['n_nodes'])
         w_init = initializers['weight']
         self._add_parameter('weight', scope.get_variable(
-            name='weight', shape=w_shape, initializer=w_init))
+            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_nodes'],)
             b_init = initializers['bias']
             self._add_parameter('bias', scope.get_variable(
-                name='bias', shape=b_shape, initializer=b_init))
+                name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
@@ -88,7 +87,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
                              'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameters(input_shape[1])
+            self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         weight = self._get_parameter('weight').unwrap()
         output_tensor = T.dot(input_tensor.unwrap(), weight)
@@ -154,7 +153,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         _validate_strides(strides)
 
     ###########################################################################
-    def _instantiate_parameters(self, n_inputs):
+    def _instantiate_parameters(self, n_inputs, dtype):
         initializers = _get_initializers(
             self.args.get('initializers') or {}, self.args['with_bias'])
 
@@ -162,13 +161,13 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
                    self.args['filter_height'], self.args['filter_width'])
         w_init = initializers['weight']
         self._add_parameter('weight', scope.get_variable(
-            name='weight', shape=w_shape, initializer=w_init))
+            name='weight', shape=w_shape, initializer=w_init, dtype=dtype))
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
             b_init = initializers['bias']
             self._add_parameter('bias', scope.get_variable(
-                name='bias', shape=b_shape, initializer=b_init))
+                name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
 
     def _get_subsample(self):
         if isinstance(self.args['strides'], int):
@@ -241,7 +240,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
                              'Insted of {}'.format(len(input_shape)))
 
         if not self.parameter_variables:
-            self._instantiate_parameters(input_shape[1])
+            self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         filters = self._get_parameter('weight').unwrap()
         filter_shape = filters.get_value().shape
@@ -377,15 +376,14 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
 
     See :any:`BaseTrueDiv` for detail.
     """
-    def _instantiate_denominator(self):
-        dtype = self.args['dtype'] or theano_config.floatX
+    def _instantiate_denominator(self, dtype):
         self.denom = T.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
     def _build(self, input_tensor):
         if self.denom is None:
-            self._instantiate_denominator()
-        output_tensor = input_tensor.unwrap() / self.args['denom']
+            self._instantiate_denominator(input_tensor.dtype)
+        output_tensor = input_tensor.unwrap() / self.denom
         return _wrap_output(output_tensor, input_tensor.shape, 'output')
 
 
@@ -395,7 +393,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
     See :any:`BaseBatchNormalization` for detail.
     """
-    def _instantiate_parameters(self, input_shape):
+    def _instantiate_parameters(self, input_shape, dtype):
         dim = len(input_shape)
         shape = tuple(input_shape[i] for i in range(dim) if i == 1)
         self._axes = tuple(i for i in range(dim) if not i == 1)
@@ -407,17 +405,17 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
         mean = scope.get_variable(
             name='mean', shape=shape, trainable=False,
-            initializer=initializer.Constant(0))
+            initializer=initializer.Constant(0), dtype=dtype)
         var = scope.get_variable(
             name='var', shape=shape, trainable=False,
-            initializer=initializer.Constant(1))
+            initializer=initializer.Constant(1), dtype=dtype)
 
         scale = scope.get_variable(
             name='scale', shape=shape, trainable=True,
-            initializer=initializer.Constant(self.args['scale']))
+            initializer=initializer.Constant(self.args['scale']), dtype=dtype)
         offset = scope.get_variable(
             name='offset', shape=shape, trainable=True,
-            initializer=initializer.Constant(self.args['offset']))
+            initializer=initializer.Constant(self.args['offset']), dtype=dtype)
 
         self._add_parameter('mean', mean)
         self._add_parameter('var', var)
@@ -426,7 +424,8 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
     def _build(self, input_tensor):
         if not self.parameter_variables:
-            self._instantiate_parameters(input_tensor.shape)
+            self._instantiate_parameters(
+                input_tensor.shape, input_tensor.dtype)
 
         input_tensor_ = input_tensor.unwrap()
 

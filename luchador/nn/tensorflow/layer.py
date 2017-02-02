@@ -68,24 +68,27 @@ class Dense(LayerMixin, base_layer.BaseDense):
 
     See :any:`BaseDense` for detail.
     """
-    def _instantiate_parameters(self, n_inputs):
+    def _instantiate_parameters(self, n_inputs, dtype):
         initializers = _get_initializers(
             self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = (n_inputs, self.args['n_nodes'])
-        w_init = initializers['weight']
-        self._add_parameter('weight', scope.get_variable(
-            name='weight', shape=w_shape, initializer=w_init))
+        weight = scope.get_variable(
+            name='weight', shape=w_shape, dtype=dtype,
+            initializer=initializers['weight'])
+        self._add_parameter('weight', weight)
 
         if self.args['with_bias']:
             b_shape = (self.args['n_nodes'],)
-            b_init = initializers['bias']
-            self._add_parameter('bias', scope.get_variable(
-                name='bias', shape=b_shape, initializer=b_init))
+            bias = scope.get_variable(
+                name='bias', shape=b_shape, dtype=dtype,
+                initializer=initializers['bias'])
+            self._add_parameter('bias', bias)
 
     def _build(self, input_tensor):
         if not self.parameter_variables:
-            self._instantiate_parameters(input_tensor.shape[1])
+            self._instantiate_parameters(
+                input_tensor.shape[1], input_tensor.dtype)
 
         weight = self._get_parameter('weight').unwrap()
         output = tf.matmul(input_tensor.unwrap(), weight)
@@ -194,26 +197,29 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
             )
 
     ###########################################################################
-    def _instantiate_parameters(self, input_shape):
-        _LG.debug('    Input shape: %s', input_shape)
+    def _instantiate_parameters(self, input_shape, input_dtype):
+        _LG.debug('    Input: shape %s, dtype %s', input_shape, input_dtype)
         initializers = _get_initializers(
             self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = self._get_weight_shape(input_shape)
         self._check_filter_shape(input_shape, w_shape)
-        w_init = initializers['weight']
-        self._add_parameter('weight', scope.get_variable(
-            name='weight', shape=w_shape, initializer=w_init))
+        weight = scope.get_variable(
+            name='weight', shape=w_shape, dtype=input_dtype,
+            initializer=initializers['weight'])
+        self._add_parameter('weight', weight)
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
-            b_init = initializers['bias']
-            self._add_parameter('bias', scope.get_variable(
-                name='bias', shape=b_shape, initializer=b_init))
+            bias = scope.get_variable(
+                name='bias', shape=b_shape, dtype=input_dtype,
+                initializer=initializers['bias'])
+            self._add_parameter('bias', bias)
 
     def _build(self, input_tensor):
         if not self.parameter_variables:
-            self._instantiate_parameters(input_tensor.shape)
+            self._instantiate_parameters(
+                input_tensor.shape, input_tensor.dtype)
 
         weight = self._get_parameter('weight').unwrap()
         strides = self._get_strides()
@@ -312,15 +318,21 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
 
     See :any:`BaseTrueDiv` for detail.
     """
-    def _instantiate_denominator(self):
-        dtype = self.args['dtype'] or luchador.get_nn_dtype()
+    def _instantiate_denominator(self, dtype):
         self.denom = tf.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
     def _build(self, input_tensor):
+        dtype = input_tensor.dtype
+        tensor = input_tensor.unwrap()
+        if 'int' in input_tensor.dtype:
+            dtype = luchador.get_nn_dtype()
+            tensor = tf.cast(tensor, dtype)
+
         if self.denom is None:
-            self._instantiate_denominator()
-        output = tf.truediv(input_tensor.unwrap(), self.denom, 'ouptut')
+            self._instantiate_denominator(dtype)
+
+        output = tf.truediv(tensor, self.denom, 'ouptut')
         return _wrap_output(output)
 
 

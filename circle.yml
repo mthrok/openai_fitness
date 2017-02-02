@@ -42,8 +42,9 @@ test:
     - ./tests/integration/test_server_client/run_server_client.sh
     - ./tests/integration/test_server_client/run_manager_server.sh
     - ./tests/integration/run_envs.sh
-    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW ./tests/integration/run_dqn.sh
-    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC ./tests/integration/run_dqn.sh
+    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
+    - LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
+    - LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32     ./tests/integration/run_dqn.sh
     # Style check
     - flake8 luchador
     - flake8 tests

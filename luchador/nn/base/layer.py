@@ -241,12 +241,9 @@ class BaseTrueDiv(BaseLayer):
     ----------
     denom : float
         The value of denominator
-
-    dtype : str
-        The data type of denominator Tensor
     """
-    def __init__(self, denom, dtype=None):
-        super(BaseTrueDiv, self).__init__(denom=denom, dtype=dtype)
+    def __init__(self, denom):
+        super(BaseTrueDiv, self).__init__(denom=denom)
         self.denom = None
 
 

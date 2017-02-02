@@ -23,7 +23,7 @@ args:
       action:
         dtype: uint8
       reward:
-        dtype: float
+        dtype: float32
       terminal:
         dtype: bool
 

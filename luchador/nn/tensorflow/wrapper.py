@@ -245,6 +245,10 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tf.tile(tensor, pattern, name), name=name)
 
 
+def _get_dtype_str(tensor):
+    return tensor.dtype.as_numpy_dtype().dtype.name
+
+
 class Variable(TensorMixin, base_wrapper.BaseTensor):
     """Wrap tf.Variable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
@@ -257,7 +261,7 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
         """
         name = name or variable.op.name
         shape = tuple(variable.get_shape().as_list())
-        dtype = variable.dtype.as_numpy_dtype().dtype.name
+        dtype = _get_dtype_str(variable)
         super(Variable, self).__init__(
             tensor=variable, shape=shape, name=name, dtype=dtype)
         _register_variable(name, self)
@@ -283,7 +287,7 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
         """
         name = name or tensor.name
         shape = tuple(tensor.get_shape().as_list())
-        dtype = tensor.dtype.as_numpy_dtype().dtype.name
+        dtype = _get_dtype_str(tensor)
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
@@ -300,6 +304,7 @@ class Input(TensorMixin, base_wrapper.BaseTensor):
         """
         _dtype = dtype or luchador.get_nn_dtype()
         tensor = tf.placeholder(dtype=_dtype, shape=shape, name=name)
+        dtype = _get_dtype_str(tensor)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 

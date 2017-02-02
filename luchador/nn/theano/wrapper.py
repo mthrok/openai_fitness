@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 import numbers
 
-import theano
 import theano.tensor as T
 
 import luchador.util
@@ -317,7 +316,6 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
 
 def _get_tensor(dtype, n_dim, name):
     """Instantiate underlying Variable"""
-    dtype = dtype or theano.config.floatX
     if n_dim == 0:
         tensor = T.scalar(name=name, dtype=dtype)
     elif n_dim == 1:
@@ -345,4 +343,4 @@ class Input(TensorMixin, base_wrapper.BaseTensor):
         """
         tensor = _get_tensor(dtype, len(shape), name)
         super(Input, self).__init__(
-            tensor=tensor, shape=shape, name=name, dtype=dtype)
+            tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)

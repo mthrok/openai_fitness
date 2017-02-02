@@ -9,7 +9,6 @@ layer_configs:
       name: TrueDiv
       args:
         denom: 255
-        dtype: uint8
   - scope: layer1/conv2D
     layer:
       name: Conv2D

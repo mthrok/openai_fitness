@@ -23,7 +23,7 @@ args:
       action:
         dtype: uint8
       reward:
-        dtype: float
+        dtype: float32
       terminal:
         dtype: bool
 
@@ -70,7 +70,7 @@ args:
     # Summarize network every once after this #trainings
     # Giving non-positive value effectively disable save functionality
     interval: 50000
-    
+
   action_config:
     method: linear
     duration: 1000000
