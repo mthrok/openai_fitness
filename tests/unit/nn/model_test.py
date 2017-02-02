@@ -11,7 +11,8 @@ class UtilTest(unittest.TestCase):
 
     def test_create_model(self):
         """Deserialized model is equal to the original"""
-        cfg1 = nn.get_model_config('vanilla_dqn', n_actions=5)
+        cfg1 = nn.get_model_config(
+            'vanilla_dqn', n_actions=5, input_shape='[null, 4, 84, 84]')
         m1 = nn.make_model(cfg1)
         m2 = nn.make_model(m1.serialize())
         self.assertEqual(m1, m2)
