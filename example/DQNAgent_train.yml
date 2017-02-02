@@ -51,13 +51,14 @@ args:
         decay: 0.95
         epsilon: 0.000001
         learning_rate: 0.00025
-    saver_config:
-      output_dir: *save_dir
-      max_to_keep: 10
-      keep_every_n_hours: 0.5
-      prefix: *save_prefix
     summary_writer_config:
       output_dir: *save_dir
+
+  saver_config:
+    output_dir: *save_dir
+    max_to_keep: 10
+    keep_every_n_hours: 0.5
+    prefix: *save_prefix
 
   save_config:
     # Save network parameter every once after this #trainings

@@ -88,30 +88,25 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         args : dict
             Configuration for the optimizer class
 
-    saver_config : dict
-        Constructor arguments for :class:`luchador.nn.saver.Saver`
-
     summary_writer_config : dict
-        Constructor arguments for :class:`luchador.nn.saver.Saver`
+        Constructor arguments for :class:`luchador.nn.summary.SummaryWriter`
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(
             self, model_config, q_learning_config, cost_config,
-            optimizer_config, saver_config, summary_writer_config):
+            optimizer_config, summary_writer_config):
         self._store_args(
             model_config=model_config,
             q_learning_config=q_learning_config,
             cost_config=cost_config,
             optimizer_config=optimizer_config,
             summary_writer_config=summary_writer_config,
-            saver_config=saver_config,
         )
         self.vars = None
         self.models = None
         self.ops = None
         self.optimizer = None
         self.session = None
-        self.saver = None
         self.summary_writer = None
         self.n_trainings = 0
 
@@ -157,7 +152,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             error, wrt=model_0.get_parameter_variables())
         self._init_session()
         self._init_summary_writer(model_0)
-        self._init_saver()
 
         self.models = {
             'model_0': model_0,
@@ -216,11 +210,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         return (mask * error).mean()
 
     ###########################################################################
-    def _init_saver(self):
-        config = self.args['saver_config']
-        if config.get('output_dir'):
-            self.saver = nn.Saver(**config)
-
     def _init_optimizer(self):
         cfg = self.args['optimizer_config']
         self.optimizer = nn.get_optimizer(cfg['name'])(**cfg['args'])
@@ -327,16 +316,16 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         )
 
     ###########################################################################
-    def save(self):
-        """Save network parameter to file"""
+    def fetch_parameters(self):
+        """Fetch network parameters for saving"""
         params = (
             self.models['model_0'].get_parameter_variables() +
             self.optimizer.get_parameter_variables()
         )
         params_val = self.session.run(outputs=params, name='save_params')
-        self.saver.save(OrderedDict([
+        return OrderedDict([
             (var.name, val) for var, val in zip(params, params_val)
-        ]), global_step=self.n_trainings)
+        ])
 
     ###########################################################################
     def summarize_layer_params(self):

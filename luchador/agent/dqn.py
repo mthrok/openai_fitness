@@ -14,6 +14,7 @@ import numpy as np
 
 import luchador
 import luchador.util
+from luchador import nn
 
 from .base import BaseAgent
 from .recorder import TransitionRecorder
@@ -33,6 +34,15 @@ def _transpose(state):
 class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     """Implement Vanilla DQNAgent from [1]_:
 
+    # TODO: Complete this
+    Parameters
+    ----------
+
+    saver_config : dict
+        Constructor arguments for :class:`luchador.nn.saver.Saver`
+
+
+
     References
     ----------
     .. [1] Mnih, V et. al (2015)
@@ -43,10 +53,12 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             self,
             recorder_config,
             q_network_config,
-            save_config,
-            summary_config,
             action_config,
             training_config,
+            saver_config,
+            save_config,
+            summary_config,
+
     ):
         super(DQNAgent, self).__init__()
         self._store_args(
@@ -56,12 +68,14 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             summary_config=summary_config,
             action_config=action_config,
             training_config=training_config,
+            saver_config=saver_config,
         )
         self._n_obs = 0
         self._n_train = 0
         self._n_actions = None
 
         self._recorder = None
+        self._saver = None
         self._ql = None
         self._eg = None
         self._summary_values = {
@@ -79,6 +93,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
 
         self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
+        self._init_saver()
 
     def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
@@ -88,11 +103,15 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             cost_config=cfg['cost_config'],
             optimizer_config=cfg['optimizer_config'],
             summary_writer_config=cfg['summary_writer_config'],
-            saver_config=cfg['saver_config'],
         )
         self._ql.build(n_actions=n_actions)
         self._ql.sync_network()
         self._ql.summarize_layer_params()
+
+    def _init_saver(self):
+        config = self.args['saver_config']
+        if config.get('output_dir'):
+            self.saver = nn.Saver(**config)
 
     ###########################################################################
     # Methods for `reset`
@@ -145,7 +164,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             interval = self.args['save_config']['interval']
             if interval > 0 and self._n_train % interval == 0:
                 _LG.info('Saving parameters')
-                self._ql.save()
+                self._save()
 
             interval = self.args['summary_config']['interval']
             if interval > 0 and self._n_train % interval == 0:
@@ -164,6 +183,10 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         return self._ql.train(
             state0, samples['action'], samples['reward'],
             state1, samples['terminal'])
+
+    def _save(self):
+        data = self._ql.fetch_parameters()
+        self.saver.save(data, global_step=self._n_train)
 
     def _summarize_layer_outputs(self):
         sample = self._recorder.sample(32)

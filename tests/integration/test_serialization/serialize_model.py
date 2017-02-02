@@ -58,8 +58,7 @@ def _make_optimizer(filepath):
     return nn.get_optimizer(cfg['name'])(**cfg['args'])
 
 
-def _build_network(
-        model_filepath, optimizer_filepath, initial_parameter, output_dir):
+def _build_network(model_filepath, optimizer_filepath, initial_parameter):
     _LG.info('Building Q networks')
     dql = DeepQLearning(
         model_config={
@@ -82,13 +81,7 @@ def _build_network(
             },
         },
         optimizer_config=load_config(optimizer_filepath),
-        saver_config={
-            'output_dir': output_dir,
-            'prefix': 'save',
-        },
-        summary_writer_config={
-            'output_dir': output_dir,
-        },
+        summary_writer_config={},
     )
     dql.build(n_actions=N_ACTIONS)
     _LG.info('Syncing models')
@@ -127,13 +120,13 @@ def _main():
         model_filepath=args.model,
         optimizer_filepath=args.optimizer,
         initial_parameter=args.input,
-        output_dir=args.output
     )
 
     _run(dql)
 
     if args.output:
-        dql.save()
+        saver = nn.Saver(output_dir=args.output)
+        saver.save(dql.fetch_parameters(), global_step=1)
 
 
 if __name__ == '__main__':
