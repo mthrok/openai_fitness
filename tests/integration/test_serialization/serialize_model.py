@@ -1,6 +1,5 @@
 """Build network model and run optimization, then saven variables"""
 import logging
-from collections import OrderedDict
 
 import numpy as np
 
