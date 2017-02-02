@@ -46,27 +46,59 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     Parameters
     ----------
-    discout_rate : float
-        Discount rate for computing future reward. Valid value range is
-        (0.0, 1.0)
+    model_config : dict
+        Configuration for model definition.
 
-    scale_reward : number or None
-        When given, reward is divided by this number before applying min/max
-        threashold
+        name : str
+            The name of network model or path to model definition file.
+        initial_parameter : str
+            Path to the file contain the initial parameter
+        input_channel, input_height, input_width : int
+            The shape of input to the network
 
-    min_reward : number or None
-        When given, clip reward after scaling.
+    q_learning_config : dict
+        Configuration for building target Q value.
 
-    max_reward : number or None
-        See `min_reward`.
+        discout_rate : float
+            Discount rate for computing future reward. Valid value range is
+            (0.0, 1.0)
+        scale_reward : number or None
+            When given, reward is divided by this number before applying
+            min/max threashold
+        min_reward : number or None
+            When given, clip reward after scaling.
+        max_reward : number or None
+            See `min_reward`.
 
-    min_delta : number or None
-        When given, error between predicted Q and target Q is clipped with
-        this value.
+    cost_config : dict
+        Configuration for defining error between predicted Q and target Q
 
-    max_delta : number or None
-        See `max_reward`
+        name: str
+            The name of cost class. See :py:mod:`luchador.nn.base.cost`
+            for the list of available costs.
+        args : dict
+            Configuration for the cost class
+
+    optimizer_config : dict
+        Configuration for optimizer
+
+        name: str
+            The name of cost class. See :py:mod:`luchador.nn.base.optimizer`
+            for the list of available classes.
+        args : dict
+            Configuration for the optimizer class
+
+    saver_config : dict
+        Constructor arguments for :class:`luchador.nn.saver.Saver`
+
+    summary_writer_config : dict
+        Constructor arguments for :class:`luchador.nn.saver.Saver`
+
+    session_config: dict
+        parameter_file : str or None
+            HDF5 file which contain the initial parameter values.
     """
+    # pylint: disable=too-many-instance-attributes
     def __init__(
             self, model_config, q_learning_config, cost_config,
             optimizer_config, saver_config, summary_writer_config,
@@ -108,9 +140,10 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
         Parameters
         ----------
-        model_def: dict
-            NN model definition which map input state to action value
+        n_actions: int
+            The number of available actions in the environment.
         """
+        # pylint: disable=too-many-locals
         model_def = self._gen_model_def(n_actions)
         model_0, state_0, action_value_0 = _make_model(model_def, 'pre_trans')
         model_1, state_1, action_value_1 = _make_model(model_def, 'post_trans')
@@ -204,6 +237,18 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     ###########################################################################
     def predict_action_value(self, state):
+        """Predict action values
+
+        Parameters
+        ----------
+        state : NumPy ND Array
+            Environment state
+
+        Returns
+        -------
+        NumPy ND Array
+            Action values
+        """
         return self.session.run(
             outputs=self.vars['action_value_0'],
             inputs={self.vars['state_0']: state},
@@ -215,6 +260,31 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.session.run(updates=self.ops['sync'], name='sync')
 
     def train(self, state_0, action, reward, state_1, terminal):
+        """Train model network
+
+        Parameters
+        ----------
+        state_0 : NumPy ND Array
+            Environment states before taking actions
+
+        action : NumPy ND Array
+            Actions taken
+
+        reward : NumPy ND Array
+            Rewards obtained by taking the actions.
+
+        state_1 : NumPy ND Array
+            Environment states after actions are taken
+
+        terminal : NumPy ND Array
+            Flags for marking corresponding states in state_1 are
+            terminal states.
+
+        Returns
+        -------
+        NumPy ND Array
+            Mean error between Q prediction and target Q
+        """
         updates = self.models['model_0'].get_update_operations()
         updates += [self.ops['optimize']]
         self.n_trainings += 1
@@ -280,7 +350,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         Parameters
         ----------
         state : NumPy ND Array
-            Input to model0 (pre-transition model)
+            Input to model_0 (pre-transition model)
         """
         outputs = self.models['model_0'].get_output_tensors()
         output_vals = self.session.run(
