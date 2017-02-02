@@ -190,7 +190,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         return nn.get_model_config(
             cfg['name'], n_actions=n_actions, input_shape=shape)
 
-    def _build_target_q_value(self, action_value, reward, terminal):
+    def _build_target_q_value(self, action_value_1, reward, terminal):
         config = self.args['q_learning_config']
         # Clip rewrads
         if 'scale_reward' in config:
@@ -200,11 +200,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             reward = reward.clip(min_value=min_val, max_value=max_val)
 
         # Build Target Q
-        max_q = action_value.max(axis=1)
+        max_q = action_value_1.max(axis=1)
         discounted_q = max_q * config['discount_rate']
         target_q = reward + (1.0 - terminal) * discounted_q
 
-        n_actions = action_value.shape[1]
+        n_actions = action_value_1.shape[1]
         target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
         return target_q
 
