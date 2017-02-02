@@ -35,23 +35,25 @@ args:
     input_width: *width
 
   q_network_config:
-    q_learning_config:
-      discount_rate: 0.99
-      # reward is clipped between the following min and max
-      min_reward: -1.0
-      max_reward: 1.0
-    cost_config:
-      typename: SSE2
-      args:
-        # error between predicted Q value and target Q value is clipped by the following min and max
-        min_delta: -1.0
-        max_delta: 1.0
-    optimizer_config:
-      typename: RMSProp
-      args:
-        decay: 0.95
-        epsilon: 0.000001
-        learning_rate: 0.00025
+    typename: DeepQLearning
+    args:
+      q_learning_config:
+        discount_rate: 0.99
+        # reward is clipped between the following min and max
+        min_reward: -1.0
+        max_reward: 1.0
+      cost_config:
+        typename: SSE2
+        args:
+          # error between predicted Q value and target Q value is clipped by the following min and max
+          min_delta: -1.0
+          max_delta: 1.0
+      optimizer_config:
+        typename: RMSProp
+        args:
+          decay: 0.95
+          epsilon: 0.000001
+          learning_rate: 0.00025
 
   saver_config:
     output_dir: *save_dir
@@ -59,14 +61,24 @@ args:
     keep_every_n_hours: 1.0
     prefix: *save_prefix
 
+  save_config:
+    # Save network parameter every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: 100
+
   summary_writer_config:
     output_dir: *save_dir
 
+  summary_config:
+    # Summarize network every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: 100
+
   action_config:
+    method: linear
+    duration: 1000
     epsilon_init: 0.5
     epsilon_term: 0.5
-    duration: 1000
-    method: linear
 
   training_config:
     # Training starts after this number of transitions are recorded
@@ -77,13 +89,3 @@ args:
     # Sync networks every this number of observations are made
     sync_frequency: 4
     n_samples: *batch
-
-  save_config:
-    # Save network parameter every once after this #trainings
-    # Giving non-positive value effectively disable save functionality
-    interval: 100
-
-  summary_config:
-    # Summarize network every once after this #trainings
-    # Giving non-positive value effectively disable save functionality
-    interval: 100

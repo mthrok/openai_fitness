@@ -5,12 +5,14 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
+import numpy as np
+
 import luchador.util
 from luchador import nn
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['DeepQLearning']
+__all__ = ['DeepQLearning', 'DoubleDeepQLearning']
 
 
 def _validate_q_learning_config(
@@ -42,7 +44,7 @@ def _build_sync_op(src_model, tgt_model, scope):
 
 
 class DeepQLearning(luchador.util.StoreMixin, object):
-    """Build Q-learning network and optimization operations
+    """Implement Neural Network part of DQN [1]_:
 
     Parameters
     ----------
@@ -77,6 +79,12 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             for the list of available classes.
         args : dict
             Configuration for the optimizer class
+
+    References
+    ----------
+    .. [1] Mnih, V et. al (2015)
+        Human-level control through deep reinforcement learning
+        https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -112,11 +120,12 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         with nn.variable_scope('target_q_value'):
             reward = nn.Input(shape=(None,), name='rewards')
             terminal = nn.Input(shape=(None,), name='terminal')
-            target_q = self._build_target_q_value(
+            target_q, post_q = self._build_target_q_value(
                 action_value_1, reward, terminal)
 
         with nn.variable_scope('error'):
-            action_0 = nn.Input(shape=(None,), dtype='uint8', name='action_0')
+            action_0 = nn.Input(
+                shape=(None,), dtype='int32', name='action_0')
             error = self._build_error(target_q, action_value_0, action_0)
 
         self._init_optimizer()
@@ -136,6 +145,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             'action_0': action_0,
             'reward': reward,
             'terminal': terminal,
+            'post_q': post_q,
             'target_q': target_q,
             'error': error,
         }
@@ -154,20 +164,21 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             reward = reward.clip(min_value=min_val, max_value=max_val)
 
         # Build Target Q
-        max_q = action_value_1.max(axis=1)
-        discounted_q = max_q * config['discount_rate']
+        post_q = action_value_1.max(axis=1)
+        discounted_q = post_q * config['discount_rate']
         target_q = reward + (1.0 - terminal) * discounted_q
 
         n_actions = action_value_1.shape[1]
         target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
-        return target_q
+        return target_q, post_q
 
     def _build_error(self, target_q, action_value_0, action):
+        n_actions = action_value_0.shape[1]
         config = self.args['cost_config']
         args = config['args']
         cost = nn.get_cost(config['typename'])(elementwise=True, **args)
         error = cost(target_q, action_value_0)
-        mask = action.one_hot(n_classes=action_value_0.shape[1])
+        mask = action.one_hot(n_classes=n_actions, dtype=error.dtype)
         return (mask * error).mean()
 
     ###########################################################################
@@ -288,3 +299,70 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             '/'.join(v.name.split('/')[1:]): val
             for v, val in zip(outputs, output_vals)
         }
+
+
+class DoubleDeepQLearning(DeepQLearning):
+    """Implement Neural Network part of Double DQN [1]_:
+
+    References
+    ----------
+    .. [1] Hasselt, H et. al (2015)
+        Deep Reinforcement Learning with Double Q-learning
+        https://arxiv.org/abs/1509.06461
+    """
+    def train(self, state_0, action_0, reward, state_1, terminal):
+        """Train model network
+
+        Parameters
+        ----------
+        state_0 : NumPy ND Array
+            Environment states before taking actions
+
+        action_0 : NumPy ND Array
+            Actions taken in state_0
+
+        reward : NumPy ND Array
+            Rewards obtained by taking the action_0.
+
+        state_1 : NumPy ND Array
+            Environment states after action_0 are taken
+
+        terminal : NumPy ND Array
+            Flags for marking corresponding states in state_1 are
+            terminal states.
+
+        Returns
+        -------
+        NumPy ND Array
+            Mean error between Q prediction and target Q
+        """
+        # Find the best action after state_1 by feeding state_1 to model_0
+        action_value_1_0, action_value_1 = self.session.run(
+            outputs=[
+                self.vars['action_value_0'],
+                self.vars['action_value_1'],
+            ],
+            inputs={
+                self.vars['state_0']: state_1,
+                self.vars['state_1']: state_1,
+            },
+            name='fetch_action',
+        )
+        post_q = action_value_1[
+            [i for i in range(action_value_1.shape[0])],
+            np.argmax(action_value_1_0, axis=1)
+        ]
+        updates = self.models['model_0'].get_update_operations()
+        updates += [self.ops['optimize']]
+        return self.session.run(
+            outputs=self.vars['error'],
+            inputs={
+                self.vars['state_0']: state_0,
+                self.vars['action_0']: action_0,
+                self.vars['post_q']: post_q,
+                self.vars['reward']: reward,
+                self.vars['terminal']: terminal,
+            },
+            updates=updates,
+            name='minibatch_training',
+        )

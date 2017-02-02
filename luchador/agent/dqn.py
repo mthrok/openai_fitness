@@ -1,11 +1,4 @@
-"""Vanilla DQNAgent from [1]_:
-
-References
-----------
-.. [1] Mnih, V et. al (2015)
-       Human-level control through deep reinforcement learning
-       https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
-"""
+"""Implement Agent part of Deep Q Learning"""
 from __future__ import division
 
 import logging
@@ -19,7 +12,7 @@ from luchador import nn
 from .base import BaseAgent
 from .recorder import TransitionRecorder
 from .misc import EGreedy
-from .rl import DeepQLearning
+from .rl import DeepQLearning, DoubleDeepQLearning
 
 __all__ = ['DQNAgent']
 
@@ -32,7 +25,7 @@ def _transpose(state):
 
 
 class DQNAgent(luchador.util.StoreMixin, BaseAgent):
-    """Implement Vanilla DQNAgent from [1]_:
+    """Implement Agent part of DQN [1]_:
 
     Parameters
     ----------
@@ -147,12 +140,11 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
 
     def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
-        self._ql = DeepQLearning(
-            q_learning_config=cfg['q_learning_config'],
-            cost_config=cfg['cost_config'],
-            optimizer_config=cfg['optimizer_config'],
-        )
-
+        if cfg['typename'] == 'DeepQLearning':
+            dqn = DeepQLearning
+        elif cfg['typename'] == 'DoubleDeepQLearning':
+            dqn = DoubleDeepQLearning
+        self._ql = dqn(**cfg['args'])
         model_def = self._gen_model_def(n_actions)
         initial_parameter = self.args['model_config']['initial_parameter']
         self._ql.build(model_def, initial_parameter)

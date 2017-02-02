@@ -35,23 +35,25 @@ args:
     input_width: *width
 
   q_network_config:
-    q_learning_config:
-      discount_rate: 0.99
-      # reward is clipped between the following min and max
-      min_reward: -1.0
-      max_reward: 1.0
-    cost_config:
-      typename: SSE2
-      args:
-        # error between predicted Q value and target Q value is clipped by the following min and max
-        min_delta: -1.0
-        max_delta: 1.0
-    optimizer_config:
-      typename: NeonRMSProp
-      args:
-        decay: 0.95
-        epsilon: 0.000001
-        learning_rate: 0.00025
+    typename: DeepQLearning
+    args:
+      q_learning_config:
+        discount_rate: 0.99
+        # reward is clipped between the following min and max
+        min_reward: -1.0
+        max_reward: 1.0
+      cost_config:
+        typename: SSE2
+        args:
+          # error between predicted Q value and target Q value is clipped by the following min and max
+          min_delta: -1.0
+          max_delta: 1.0
+      optimizer_config:
+        typename: NeonRMSProp
+        args:
+          decay: 0.95
+          epsilon: 0.000001
+          learning_rate: 0.00025
 
   saver_config:
     output_dir: *save_dir
