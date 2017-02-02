@@ -159,7 +159,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             names=['Training/Error', 'Training/Reward', 'Training/Steps']
         )
         self._summary_writer.register_stats(['Error', 'Reward', 'Steps'])
-        self._summary_writer.register('scalar', ['Episode'])
+        self._summary_writer.register('scalar', ['Trainings'])
 
     ###########################################################################
     # Methods for `reset`
@@ -260,7 +260,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             dataset=[errors, rewards, steps],
         )
         self._summary_writer.summarize(
-            global_step=self._n_train, dataset={'Episode': episode}
+            global_step=episode, dataset={'Trainings': self._n_train}
         )
         if rewards:
             self._summary_writer.summarize_stats(
