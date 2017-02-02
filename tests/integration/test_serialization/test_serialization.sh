@@ -58,8 +58,8 @@ do
     LUCHADOR_NN_BACKEND=${BACKEND} LUCHADOR_NN_CONV_FORMAT=${CONV_FORMAT} ${TEST_COMMAND} --output ${OUTPUT_DIR}
 done
 
-THEANO_PARAM="${BASE_OUTPUT_DIR}/theano/save_0.h5"
-TENSORFLOW_PARAM="${BASE_OUTPUT_DIR}/tensorflow/save_0.h5"
+THEANO_PARAM="${BASE_OUTPUT_DIR}/theano/save_1.h5"
+TENSORFLOW_PARAM="${BASE_OUTPUT_DIR}/tensorflow/save_1.h5"
 
 echo "* Deserializing Theano param on Theano backend"
 LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW ${TEST_COMMAND} --input ${THEANO_PARAM}

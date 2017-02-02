@@ -58,8 +58,6 @@ args:
       prefix: *save_prefix
     summary_writer_config:
       output_dir: *save_dir
-    session_config:
-      parameter_file: *initial_parameter
 
   save_config:
     # Save network parameter every once after this #trainings

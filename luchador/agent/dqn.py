@@ -89,7 +89,6 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             optimizer_config=cfg['optimizer_config'],
             summary_writer_config=cfg['summary_writer_config'],
             saver_config=cfg['saver_config'],
-            session_config=cfg['session_config']
         )
         self._ql.build(n_actions=n_actions)
         self._ql.sync_network()

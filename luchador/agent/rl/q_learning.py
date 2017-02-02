@@ -52,7 +52,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         name : str
             The name of network model or path to model definition file.
         initial_parameter : str
-            Path to the file contain the initial parameter
+            Path to HDF5 file which contain the initial parameter values.
         input_channel, input_height, input_width : int
             The shape of input to the network
 
@@ -93,16 +93,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     summary_writer_config : dict
         Constructor arguments for :class:`luchador.nn.saver.Saver`
-
-    session_config: dict
-        parameter_file : str or None
-            HDF5 file which contain the initial parameter values.
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(
             self, model_config, q_learning_config, cost_config,
-            optimizer_config, saver_config, summary_writer_config,
-            session_config):
+            optimizer_config, saver_config, summary_writer_config):
         self._store_args(
             model_config=model_config,
             q_learning_config=q_learning_config,
@@ -110,16 +105,14 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             optimizer_config=optimizer_config,
             summary_writer_config=summary_writer_config,
             saver_config=saver_config,
-            session_config=session_config
         )
         self.vars = None
         self.models = None
         self.ops = None
         self.optimizer = None
         self.session = None
-        self.saver = nn.Saver(**saver_config)
-        self.summary_writer = nn.SummaryWriter(**summary_writer_config)
-
+        self.saver = None
+        self.summary_writer = None
         self.n_trainings = 0
 
     def _validate_args(self, q_learning_config=None, **_):
@@ -164,6 +157,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             error, wrt=model_0.get_parameter_variables())
         self._init_session()
         self._init_summary_writer(model_0)
+        self._init_saver()
 
         self.models = {
             'model_0': model_0,
@@ -222,18 +216,49 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         return (mask * error).mean()
 
     ###########################################################################
+    def _init_saver(self):
+        config = self.args['saver_config']
+        if config.get('output_dir'):
+            self.saver = nn.Saver(**config)
+
     def _init_optimizer(self):
         cfg = self.args['optimizer_config']
         self.optimizer = nn.get_optimizer(cfg['name'])(**cfg['args'])
 
     def _init_session(self):
-        cfg = self.args['session_config']
+        cfg = self.args['model_config']
         self.session = nn.Session()
-        if cfg.get('parameter_file'):
-            _LG.info('Loading paramter from %s', cfg['parameter_file'])
-            self.session.load_from_file(cfg['parameter_file'])
+        if cfg.get('initial_parameter'):
+            _LG.info('Loading parameters from %s', cfg['initial_parameter'])
+            self.session.load_from_file(cfg['initial_parameter'])
         else:
             self.session.initialize()
+
+    def _init_summary_writer(self, model_0):
+        """Initialize SummaryWriter and create set of summary operations"""
+        config = self.args['summary_writer_config']
+        if config.get('output_dir'):
+            self.summary_writer = nn.SummaryWriter(**config)
+        else:
+            return
+
+        if self.session.graph:
+            self.summary_writer.add_graph(self.session.graph)
+
+        params = model_0.get_parameter_variables()
+        outputs = model_0.get_output_tensors()
+        self.summary_writer.register(
+            'histogram', tag='params',
+            names=['/'.join(v.name.split('/')[1:]) for v in params])
+        self.summary_writer.register(
+            'histogram', tag='outputs',
+            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
+        self.summary_writer.register(
+            'histogram', tag='training',
+            names=['Training/Error', 'Training/Reward', 'Training/Steps']
+        )
+        self.summary_writer.register_stats(['Error', 'Reward', 'Steps'])
+        self.summary_writer.register('scalar', ['Episode'])
 
     ###########################################################################
     def predict_action_value(self, state):
@@ -314,26 +339,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         ]), global_step=self.n_trainings)
 
     ###########################################################################
-    def _init_summary_writer(self, model_0):
-        """Initialize SummaryWriter and create set of summary operations"""
-        if self.session.graph:
-            self.summary_writer.add_graph(self.session.graph)
-
-        params = model_0.get_parameter_variables()
-        outputs = model_0.get_output_tensors()
-        self.summary_writer.register(
-            'histogram', tag='params',
-            names=['/'.join(v.name.split('/')[1:]) for v in params])
-        self.summary_writer.register(
-            'histogram', tag='outputs',
-            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
-        self.summary_writer.register(
-            'histogram', tag='training',
-            names=['Training/Error', 'Training/Reward', 'Training/Steps']
-        )
-        self.summary_writer.register_stats(['Error', 'Reward', 'Steps'])
-        self.summary_writer.register('scalar', ['Episode'])
-
     def summarize_layer_params(self):
         """Summarize paramters of each layer"""
         params = self.models['model_0'].get_parameter_variables()
