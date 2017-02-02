@@ -31,9 +31,9 @@ args:
     model_config:
       name: example/vanilla_dqn.yml
       initial_parameter: *initial_parameter
+      input_channel: *stack
       input_height: *height
       input_width: *width
-      input_channel: *stack
     q_learning_config:
       discount_rate: 0.99
       # reward is clipped between the following min and max
@@ -58,14 +58,16 @@ args:
       prefix: *save_prefix
     summary_writer_config:
       output_dir: *save_dir
-
-  summary_config:
-    # Summarize network every once after this #trainings
-    # Giving non-positive value effectively disable save functionality
-    interval: -1
+    session_config:
+      parameter_file: *initial_parameter
 
   save_config:
     # Save network parameter every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: -1
+
+  summary_config:
+    # Summarize network every once after this #trainings
     # Giving non-positive value effectively disable save functionality
     interval: -1
 
