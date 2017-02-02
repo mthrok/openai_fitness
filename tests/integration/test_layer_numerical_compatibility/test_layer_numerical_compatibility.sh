@@ -31,6 +31,6 @@ LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX
 echo "* Running ${LAYER_NAME} with Tensorflow backend"
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32     ${TEST_COMMAND} --output ${FILE2}
 echo "* Comparing results"
-python "${BASE_DIR}/compare_result.py" ${FILE1} ${FILE2} --threshold 1.5e-2
+python "${BASE_DIR}/compare_result.py" ${FILE1} ${FILE2} --threshold 3e-2
 echo "********************************************************************************"
 echo ""
