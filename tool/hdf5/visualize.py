@@ -1,5 +1,4 @@
 """Visualize dataset in HDF5 file"""
-
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -35,7 +34,7 @@ def visualize_dataset(args):
     for index, filter_ in enumerate(data[batch], start=1):
         axis = fig.add_subplot(n_rows, n_cols, index)
         img = axis.imshow(filter_, vmin=vmin, vmax=vmax,
-                          cmap='Greys', interpolation='nearest')
+                          cmap='jet', interpolation='nearest')
         axis.set_title('Filter: {}'.format(index))
         if index == 1:
             fig.colorbar(img, ax=axis)

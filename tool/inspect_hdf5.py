@@ -1,47 +1,41 @@
 #!/usr/bin/env python
-
 """Command line tool to edit HDF5 file"""
-
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
-from argparse import ArgumentParser as AP
+import argparse
 
-from hdf5.modify import inspect, rename, delete
-from hdf5.visualize import visualize_dataset
+from hdf5 import modify, visualize
 
 
-def _inspect():
-    parser = AP(
+def _add_inspect_command(subparsers):
+    parser = subparsers.add_parser(
+        'inspect',
         description='List up datasets in the given file.',
     )
-    parser.add_argument('inspect')
     parser.add_argument('input_file', help='Input HDF5 file')
-    args = parser.parse_args()
-    inspect(args)
+    parser.set_defaults(func=modify.inspect)
 
 
-def _delete():
-    parser = AP(
+def _add_delete_command(subparsers):
+    parser = subparsers.add_parser(
+        'delete',
         description='Delete a dataset from H5 file',
     )
-    parser.add_argument('delete')
     parser.add_argument('input_file', help='Input HDF5 file.')
     parser.add_argument('keys', nargs='+', help='Names of dataset to delete')
     parser.add_argument(
         '--dry-run', '--dryrun', action='store_true',
         help='Do not apply change to the file.'
     )
-    args = parser.parse_args()
-    delete(args)
+    parser.set_defaults(func=modify.delete)
 
 
-def _rename():
-    parser = AP(
+def _add_rename_command(subparsers):
+    parser = subparsers.add_parser(
+        'rename',
         description='Rename a dataset in H5 file',
     )
-    parser.add_argument('rename')
     parser.add_argument('input_file', help='Input H5 file.')
     parser.add_argument('old_key', help='Dataset to rename')
     parser.add_argument('new_key', help='New Dataset name')
@@ -53,15 +47,14 @@ def _rename():
         '--dry-run', '--dryrun', action='store_true',
         help='Do not apply change to the file.'
     )
-    args = parser.parse_args()
-    rename(args)
+    parser.set_defaults(func=modify.rename)
 
 
-def _visualize_dataset():
-    parser = AP(
+def _add_view_command(subparsers):
+    parser = subparsers.add_parser(
+        'view',
         description='Visualize tensors',
     )
-    parser.add_argument('view')
     parser.add_argument('input_file', help='Input H5 file.')
     parser.add_argument('key', help='Datasets to visualize')
     parser.add_argument(
@@ -80,29 +73,21 @@ def _visualize_dataset():
         '--vmin', type=float,
         help='Minimum luminance cut-off value'
     )
-    args = parser.parse_args()
-    visualize_dataset(args)
-
-
-SUBCOMMANDS = {
-    'inspect': _inspect,
-    'delete': _delete,
-    'rename': _rename,
-    'view': _visualize_dataset,
-}
+    parser.set_defaults(func=visualize.visualize_dataset)
 
 
 def _main():
-    parser = AP(
+    parser = argparse.ArgumentParser(
         description='Inspect HDF5 Data'
     )
-    parser.add_argument(
-        'command',
-        choices=['inspect', 'delete', 'rename', 'view']
-    )
+    subparsers = parser.add_subparsers()
+    _add_inspect_command(subparsers)
+    _add_delete_command(subparsers)
+    _add_rename_command(subparsers)
+    _add_view_command(subparsers)
+    args = parser.parse_args()
+    args.func(args)
 
-    args = parser.parse_args(sys.argv[1:2])
-    SUBCOMMANDS[args.command]()
 
 if __name__ == '__main__':
     _main()
