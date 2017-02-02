@@ -120,6 +120,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._eg = EGreedy(**self.args['action_config'])
         self._init_saver()
         self._init_summary_writer()
+        self._summarize_layer_params()
 
     def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
@@ -131,7 +132,6 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         )
         self._ql.build(n_actions=n_actions)
         self._ql.sync_network()
-        self._summarize_layer_params()
 
     def _init_saver(self):
         config = self.args['saver_config']
