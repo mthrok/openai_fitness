@@ -149,8 +149,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
                 action_value_1, reward, terminal)
 
         with nn.variable_scope('error'):
-            action = nn.Input(shape=(None,), dtype='uint8', name='action')
-            error = self._build_error(target_q, action_value_0, action)
+            action_0 = nn.Input(shape=(None,), dtype='uint8', name='action_0')
+            error = self._build_error(target_q, action_value_0, action_0)
 
         self._init_optimizer()
         optimize_op = self.optimizer.minimize(
@@ -168,7 +168,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             'state_1': state_1,
             'action_value_0': action_value_0,
             'action_value_1': action_value_1,
-            'action': action,
+            'action_0': action_0,
             'reward': reward,
             'terminal': terminal,
             'target_q': target_q,
@@ -284,7 +284,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """Synchronize parameters of model_1 with those of model_0"""
         self.session.run(updates=self.ops['sync'], name='sync')
 
-    def train(self, state_0, action, reward, state_1, terminal):
+    def train(self, state_0, action_0, reward, state_1, terminal):
         """Train model network
 
         Parameters
@@ -292,14 +292,14 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         state_0 : NumPy ND Array
             Environment states before taking actions
 
-        action : NumPy ND Array
-            Actions taken
+        action_0 : NumPy ND Array
+            Actions taken in state_0
 
         reward : NumPy ND Array
-            Rewards obtained by taking the actions.
+            Rewards obtained by taking the action_0.
 
         state_1 : NumPy ND Array
-            Environment states after actions are taken
+            Environment states after action_0 are taken
 
         terminal : NumPy ND Array
             Flags for marking corresponding states in state_1 are
@@ -317,7 +317,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             outputs=self.vars['error'],
             inputs={
                 self.vars['state_0']: state_0,
-                self.vars['action']: action,
+                self.vars['action_0']: action_0,
                 self.vars['reward']: reward,
                 self.vars['state_1']: state_1,
                 self.vars['terminal']: terminal,
