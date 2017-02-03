@@ -1,3 +1,4 @@
+"""Test theano get_scope mechanism"""
 from __future__ import absolute_import
 
 import unittest
@@ -384,9 +385,9 @@ class TestGetVariable(unittest.TestCase):
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
         name = 'test_var'
-        self.assertTrue(name not in nn.wrapper._VARIABLES)
+        self.assertTrue(name not in nn.base.wrapper._VARIABLES)
         nn.scope.get_variable('test_var', shape=[3, 1])
-        self.assertTrue(name in nn.wrapper._VARIABLES)
+        self.assertTrue(name in nn.base.wrapper._VARIABLES)
 
     def test_get_variable_reuse_variable(self):
         """get_variable create variable"""

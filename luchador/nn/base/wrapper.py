@@ -1,6 +1,47 @@
 """Module to define common interface for Tensor/Operation wrapping"""
 from __future__ import absolute_import
 
+import logging
+from collections import OrderedDict
+
+
+###############################################################################
+# Mechanism for enabling reusing variable without explicitly giving dtype or
+# shape. When creating Variable with get_variable and reuse=False, we store
+# mapping from name to the resulting Variable wrapper.
+# When retrieving a Variable under reuse=True, we return the stored variable.
+# This mechanism is copy of Tensorflow, but Tensorflow's get_variable require
+# dtype and shape for retrieving exisiting varaible and is inconvenient.
+_VARIABLES = OrderedDict()
+_TENSORS = OrderedDict()
+
+
+def register_variable(name, var):
+    """Register variable to global list of variables for later resuse"""
+    if name in _VARIABLES:
+        raise ValueError('Variable `{}` already exists.'.format(name))
+    _VARIABLES[name] = var
+
+
+def register_tensor(name, tensor):
+    """Register tensor to global list of tensors for later resuse"""
+    if name in _TENSORS:
+        logging.warn('Tensor `%s` already exists.', name)
+    _TENSORS[name] = tensor
+
+
+def retrieve_variable(name):
+    """Get variable from global list of variables"""
+    return _VARIABLES.get(name)
+
+
+def retrieve_tensor(name):
+    """Get tensor from global list of tensors"""
+    if name not in _TENSORS:
+        raise ValueError('Tensor `{}` does not exist.'.format(name))
+    return _TENSORS.get(name)
+###############################################################################
+
 
 class BaseTensor(object):
     """Wraps Tensor or Variable object in Theano/Tensorflow

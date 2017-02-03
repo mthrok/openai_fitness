@@ -4,8 +4,10 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 import luchador
-from luchador.nn.base import initializer as base_initializer
-
+from luchador.nn.base import (
+    wrapper as base_wrapper,
+    initializer as base_initializer,
+)
 from . import wrapper
 
 __all__ = [
@@ -46,8 +48,14 @@ class VariableScope(tf.VariableScope):  # pylint: disable=R0903
 
 
 ###############################################################################
-def get_variable(name, shape=None, dtype=None,
-                 initializer=None, regularizer=None, trainable=True, **kwargs):
+def get_tensor(name):
+    """Fetch Tensor with the given name"""
+    return base_wrapper.retrieve_variable(name)
+
+
+def get_variable(
+        name, shape=None, dtype=None,
+        initializer=None, regularizer=None, trainable=True, **kwargs):
     """Create Variable with the given configuration or retrieve existing one
 
     This function works mostly same as tf.get_variable, except when retrieving
@@ -81,7 +89,7 @@ def get_variable(name, shape=None, dtype=None,
     scope = tf.get_variable_scope()
     if scope.reuse:
         name = '{}/{}'.format(scope.name, name) if scope.name else name
-        var = wrapper.retrieve_variable(name)
+        var = base_wrapper.retrieve_variable(name)
         if var is None:
             raise ValueError(
                 'Variable {} does not exist, disallowed. '

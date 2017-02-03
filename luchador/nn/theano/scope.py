@@ -6,14 +6,15 @@ import warnings
 
 import numpy as np
 import theano
-from theano import config as theano_config
 
+from luchador.nn.base import wrapper as base_wrapper
 from . import wrapper
 from .initializer import Normal
 
+
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope',
-    'name_scope', 'get_variable',
+    'name_scope', 'get_variable', 'get_tensor',
 ]
 
 _LG = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ def _reset():
     # pylint: disable=protected-access
     _set_flag(False)
     _set_scope('')
-    wrapper._VARIABLES = {}
+    base_wrapper._VARIABLES = {}
 
 
 class _NameScope(object):  # pylint: disable=too-few-public-methods
@@ -117,6 +118,11 @@ def get_variable_scope():
     return VariableScope(_get_flag(), _get_scope())
 
 
+def get_tensor(name):
+    """Fetch Tensor with the given name"""
+    return base_wrapper.retrieve_variable(name)
+
+
 def get_variable(
         name, shape=None, dtype=None, initializer=None,
         regularizer=None, trainable=True, **kwargs):
@@ -131,7 +137,7 @@ def get_variable(
     scope = _get_scope()
     name = '{}/{}'.format(scope, name) if scope else name
 
-    var = wrapper.retrieve_variable(name)
+    var = base_wrapper.retrieve_variable(name)
     if _get_flag():  # Search for an existing variable
         if var is None:
             raise ValueError(
@@ -151,8 +157,6 @@ def get_variable(
             raise ValueError(
                 'Shape of a new variable ({}) must be fully defined, '
                 'but instead was {}.'.format(name, shape))
-
-        dtype = dtype or theano_config.floatX
 
         if not initializer:
             initializer = Normal(dtype=dtype)

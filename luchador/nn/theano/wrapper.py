@@ -12,19 +12,6 @@ from luchador.nn.base.wrapper import Operation
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
-_VARIABLES = {}
-
-
-def _register_variable(name, var):
-    if name in _VARIABLES:
-        raise ValueError('Variable with name `{}` already exists.')
-    _VARIABLES[name] = var
-
-
-def retrieve_variable(name):
-    """Get variable from global list of variables"""
-    return _VARIABLES.get(name)
-
 
 def _is_same_shape(shape1, shape2):
     if not len(shape1) == len(shape2):
@@ -294,7 +281,7 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
         val = variable.get_value()
         super(Variable, self).__init__(
             tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
-        _register_variable(name, self)
+        base_wrapper.register_variable(name, self)
         self.trainable = trainable
 
 
@@ -312,6 +299,8 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             shape = [None if val < 0 else val for val in shape]
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
+        if name:
+            base_wrapper.register_tensor(name, self)
 
 
 def _get_tensor(dtype, n_dim, name):

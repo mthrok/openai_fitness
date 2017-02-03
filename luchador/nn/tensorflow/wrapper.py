@@ -13,26 +13,6 @@ from luchador.nn.base import wrapper as base_wrapper
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
 
-###############################################################################
-# Mechanism for enabling reusing variable without explicitly giving dtype or
-# shape. When creating Variable with get_variable and reuse=False, we store
-# mapping from name to the resulting Variable wrapper.
-# When retrieving a Variable under reuse=True, we return the stored variable.
-_VARIABLES = {}
-
-
-def _register_variable(name, var):
-    if name in _VARIABLES:
-        raise ValueError('Variable `{}` already exists.'.format(name))
-    _VARIABLES[name] = var
-
-
-def retrieve_variable(name):
-    """Get variable from global list of variables"""
-    return _VARIABLES.get(name)
-###############################################################################
-
-
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
     """Add elementwise operations to Tensor class"""
     def _extract_operand(self, other):
@@ -264,7 +244,7 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
         dtype = _get_dtype_str(variable)
         super(Variable, self).__init__(
             tensor=variable, shape=shape, name=name, dtype=dtype)
-        _register_variable(name, self)
+        base_wrapper.register_variable(name, self)
         self.trainable = trainable
 
 
@@ -290,6 +270,8 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
         dtype = _get_dtype_str(tensor)
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
+        if name:
+            base_wrapper.register_tensor(name, self)
 
 
 class Input(TensorMixin, base_wrapper.BaseTensor):
