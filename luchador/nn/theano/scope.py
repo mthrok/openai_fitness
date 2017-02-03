@@ -48,7 +48,6 @@ def _reset():
     # pylint: disable=protected-access
     _set_flag(False)
     _set_scope('')
-    base_wrapper._VARIABLES = {}
 
 
 class _NameScope(object):  # pylint: disable=too-few-public-methods

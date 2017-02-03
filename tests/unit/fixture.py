@@ -1,6 +1,8 @@
 """Module for creating test fixture"""
 from __future__ import absolute_import
 
+import unittest
+
 import inspect
 import numpy as np
 
@@ -83,3 +85,19 @@ def create_ones_tensor(shape, dtype, name='ones_tensor'):
         import tensorflow as be
     tensor = be.ones(shape, dtype=dtype)
     return nn.Tensor(tensor, shape=shape, name=name)
+
+
+###############################################################################
+def gen_scope(test_id, suffix=None):
+    """Generate TestCase-specific scope name"""
+    scope = test_id.replace('.', '/')
+    if suffix:
+        scope = '{}/{}'.format(scope, suffix)
+    return scope
+
+
+class TestCase(unittest.TestCase):
+    """TestCase with unique scope generation"""
+    def get_scope(self, suffix=None):
+        """Generate test-case-specific scope name"""
+        return gen_scope(self.id().replace('.', '/'), suffix)

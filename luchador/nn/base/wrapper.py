@@ -4,6 +4,8 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
+_LG = logging.getLogger(__name__)
+
 
 ###############################################################################
 # Mechanism for enabling reusing variable without explicitly giving dtype or
@@ -26,7 +28,7 @@ def register_variable(name, var):
 def register_tensor(name, tensor):
     """Register tensor to global list of tensors for later resuse"""
     if name in _TENSORS:
-        logging.warn('Tensor `%s` already exists.', name)
+        _LG.warn('Tensor `%s` already exists.', name)
     _TENSORS[name] = tensor
 
 

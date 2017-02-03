@@ -1,21 +1,41 @@
 """Test Wapper methods"""
 from __future__ import absolute_import
 
-import unittest
-
 import numpy as np
 
 from luchador import nn
 
 from tests.unit import fixture
 
+# pylint: disable=invalid-name
 
-class TestTensorOps(unittest.TestCase):
+
+class TestVariableStore(fixture.TestCase):
+    # pylint: disable=protected-access
+    """Test Variable/Tensor store mechanism"""
+    def test_get_variable_creates_variable(self):
+        """get_variable create variable"""
+        name = self.id().replace('/', '.')
+        self.assertTrue(name not in nn.base.wrapper._VARIABLES)
+        variable = nn.get_variable(name, shape=[3, 1])
+        self.assertTrue(name in nn.base.wrapper._VARIABLES)
+        self.assertIs(variable, nn.base.wrapper._VARIABLES[name])
+
+    def test_get_tensor_retrieves_existing_tensor(self):
+        """get_variable retrieve existing variable"""
+        name = self.id().replace('/', '.')
+        self.assertTrue(name not in nn.base.wrapper._TENSORS)
+        tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
+        self.assertTrue(name in nn.base.wrapper._TENSORS)
+        self.assertIs(tensor, nn.base.wrapper._TENSORS[name])
+
+
+class TestTensorOpsMult(fixture.TestCase):
     """Test wrapper operations"""
     def test_mul_numbers(self):
         """Tensor * number is correct elementwise"""
         constant, shape = 10, (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 * constant
             tensor3 = constant * tensor1
@@ -31,7 +51,7 @@ class TestTensorOps(unittest.TestCase):
     def test_mul_tensor(self):
         """Tensor * Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 * tensor1
 
@@ -45,7 +65,7 @@ class TestTensorOps(unittest.TestCase):
     def test_mul_variable(self):
         """Tensor * Variable is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             variable = fixture.create_constant_variable(shape, dtype='int32')
             tensor2 = tensor1 * variable
@@ -63,7 +83,7 @@ class TestTensorOps(unittest.TestCase):
     def test_mul_input(self):
         """Tensor * Input is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             input_ = nn.Input(name='input', shape=[], dtype='int32')
             tensor2 = tensor1 * input_
@@ -80,10 +100,13 @@ class TestTensorOps(unittest.TestCase):
         np.testing.assert_equal(val1 * input_val, val2)
         np.testing.assert_equal(input_val * val1, val3)
 
+
+class TestTensorOpsDiv(fixture.TestCase):
+    """Test wrapper division"""
     def test_truediv_numbers(self):
         """Tensor / number is correct elementwise"""
         constant, shape = 10., (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor2 = tensor1 / constant
             tensor3 = constant / tensor1
@@ -99,7 +122,7 @@ class TestTensorOps(unittest.TestCase):
     def test_floordiv_numbers(self):
         """Tensor // number is correct elementwise"""
         constant, shape = 10., (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor2 = tensor1 // constant
             tensor3 = constant // tensor1
@@ -115,7 +138,7 @@ class TestTensorOps(unittest.TestCase):
     def test_truediv_tensor(self):
         """Tensor / Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor2 = tensor1 / tensor1
 
@@ -129,7 +152,7 @@ class TestTensorOps(unittest.TestCase):
     def test_floordiv_tensor(self):
         """Tensor // Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor2 = tensor1 // tensor1
 
@@ -143,7 +166,7 @@ class TestTensorOps(unittest.TestCase):
     def test_truediv_input(self):
         """Tensor / Input is correct elementwise"""
         constant, shape = 10., (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             input1 = nn.Input(shape=[], dtype='float32')
             tensor2 = tensor1 / input1
@@ -162,7 +185,7 @@ class TestTensorOps(unittest.TestCase):
     def test_floordiv_input(self):
         """Tensor // Input is correct elementwise"""
         constant, shape = 10., (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='float32')
             input1 = nn.Input(shape=[], dtype='float32')
             tensor2 = tensor1 // input1
@@ -178,10 +201,13 @@ class TestTensorOps(unittest.TestCase):
         np.testing.assert_equal(np.floor_divide(val1, constant), val2)
         np.testing.assert_equal(np.floor_divide(constant, val1), val3)
 
+
+class TestTensorOpsAdd(fixture.TestCase):
+    """Test wrapper addition"""
     def test_add_numbers(self):
         """Tensor + number is correct elementwise"""
         constant, shape = 10, (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 + constant
             tensor3 = constant + tensor1
@@ -197,7 +223,7 @@ class TestTensorOps(unittest.TestCase):
     def test_add_tensor(self):
         """Tensor + Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 + tensor1
 
@@ -210,7 +236,7 @@ class TestTensorOps(unittest.TestCase):
     def test_add_input(self):
         """Tensor + Input is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=[], dtype='int32')
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 + input_
@@ -228,7 +254,7 @@ class TestTensorOps(unittest.TestCase):
     def test_add_variable(self):
         """Tensor + Variable is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             variable = fixture.create_constant_variable(shape, dtype='int32')
             tensor2 = tensor1 + variable
@@ -243,10 +269,13 @@ class TestTensorOps(unittest.TestCase):
         np.testing.assert_equal(val1 + val0, val2)
         np.testing.assert_equal(val0 + val1, val3)
 
+
+class TestTensorOpsNeg(fixture.TestCase):
+    """Test wrapper negation"""
     def test_neg(self):
         """-Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = -tensor1
 
@@ -259,7 +288,7 @@ class TestTensorOps(unittest.TestCase):
     def test_sub_numbers(self):
         """Tensor - number is correct elementwise"""
         constant, shape = 10, (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 - constant
             tensor3 = constant - tensor1
@@ -275,7 +304,7 @@ class TestTensorOps(unittest.TestCase):
     def test_sub_tensor(self):
         """Tensor - Tensor is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 - tensor1
 
@@ -289,7 +318,7 @@ class TestTensorOps(unittest.TestCase):
     def test_sub_input(self):
         """Tensor - Input is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=[], dtype='int32')
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             tensor2 = tensor1 - input_
@@ -307,7 +336,7 @@ class TestTensorOps(unittest.TestCase):
     def test_sub_variable(self):
         """Tensor - Variable is correct elementwise"""
         shape = (3, 5)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor1 = fixture.create_ones_tensor(shape, dtype='int32')
             variable = fixture.create_constant_variable(shape, dtype='int32')
             tensor2 = tensor1 - variable
@@ -322,8 +351,11 @@ class TestTensorOps(unittest.TestCase):
         np.testing.assert_equal(val1 - val0, val2)
         np.testing.assert_equal(val0 - val1, val3)
 
+
+class TestTensorOpsMean(fixture.TestCase):
+    """Test wrapper mean method"""
     def _test_mean(self, axis, shape, keep_dims):
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor1 = tensor0.mean(axis=axis, keep_dims=keep_dims)
 
@@ -351,8 +383,11 @@ class TestTensorOps(unittest.TestCase):
         """Test mean with multiple axes, dropping axis"""
         self._test_mean((1, 2), (3, 4, 5, 6), True)
 
+
+class TestTensorOpsSum(fixture.TestCase):
+    """Test wrapper sum method"""
     def _test_sum(self, axis, shape, keep_dims):
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor1 = tensor0.sum(axis=axis, keep_dims=keep_dims)
 
@@ -380,8 +415,11 @@ class TestTensorOps(unittest.TestCase):
         """Test sum with multiple axes, dropping axis"""
         self._test_sum((1, 2), (3, 4, 5, 6), True)
 
+
+class TestTensorOpsMax(fixture.TestCase):
+    """Test wrapper max method"""
     def _test_max(self, axis, shape, keep_dims):
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
             tensor1 = tensor0.max(axis=axis, keep_dims=keep_dims)
 
@@ -409,10 +447,13 @@ class TestTensorOps(unittest.TestCase):
         """Test max with multiple axes, dropping axis"""
         self._test_max((1, 2), (3, 4, 5, 6), True)
 
+
+class TestTensorOpsClip(fixture.TestCase):
+    """Test wrapper clip method"""
     def test_clip_number(self):
         """Test clip with float"""
         shape, min_value, max_value = (10, 10), 0.4, 0.6
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             tensor1 = variable0.clip(max_value=max_value, min_value=min_value)
 
@@ -428,7 +469,7 @@ class TestTensorOps(unittest.TestCase):
     def test_clip_variable(self):
         """Test clip with Variable"""
         shape, min_value, max_value = (10, 10), 0.4, 0.6
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             min_variable = fixture.create_constant_variable(
                 shape=[], dtype='float32', value=min_value, name='min_var')
@@ -449,7 +490,7 @@ class TestTensorOps(unittest.TestCase):
     def test_clip_tensor(self):
         """Test clip with Tensor"""
         shape, min_value, max_value = (10, 10), 0.4, 0.6
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             min_tensor = min_value * fixture.create_ones_tensor(
                 shape=[], dtype='float32', name='min_tensor')
@@ -470,7 +511,7 @@ class TestTensorOps(unittest.TestCase):
     def test_clip_input(self):
         """Test clip with Input"""
         shape, min_value, max_value = (10, 10), 0.4, 0.6
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             min_input = nn.Input(shape=[], dtype='float32')
             max_input = nn.Input(shape=[], dtype='float32')
@@ -490,8 +531,11 @@ class TestTensorOps(unittest.TestCase):
         expected = np.clip(val0, a_max=max_value, a_min=min_value)
         np.testing.assert_almost_equal(val1, expected)
 
+
+class TestTensorOpsOneHot(fixture.TestCase):
+    """Test wrapper one_hot"""
     def _test_one_hot(self, shape, n_classes, out_dtype):
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=shape, dtype='int64')
             tensor = input_.one_hot(n_classes=n_classes, dtype=out_dtype)
 
@@ -525,10 +569,13 @@ class TestTensorOps(unittest.TestCase):
         """Test one hot conversion"""
         self._test_one_hot(shape=[10], n_classes=4, out_dtype='float64')
 
+
+class TestTensorOpsReshape(fixture.TestCase):
+    """Test wrapper reshape method"""
     def _test_reshape(
             self, in_shape, out_shape, dtype='float32', in_val=None):
         """Test rehsape"""
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=in_shape, dtype=dtype)
             tensor = input_.reshape(out_shape)
 
@@ -565,9 +612,12 @@ class TestTensorOps(unittest.TestCase):
         in_val = np.random.random((5, 8)).astype(dtype)
         self._test_reshape(in_shape, out_shape, in_val=in_val, dtype=dtype)
 
+
+class TestTensorOpsTile(fixture.TestCase):
+    """Test wrapper tile method"""
     def _test_tile(self, in_shape, pattern, dtype='float32', in_val=None):
         """Test tile"""
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=in_shape, dtype=dtype)
             tensor = input_.tile(pattern=pattern)
 

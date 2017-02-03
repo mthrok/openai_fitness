@@ -12,8 +12,8 @@ import StringIO
 import yaml
 
 from luchador.util import get_subclasses
-from luchador.nn import get_layer
-from luchador.nn.base.wrapper import BaseTensor
+from luchador.nn.base import BaseTensor, get_layer
+
 from .model import get_model
 
 _DATA_DIR = os.path.join(
@@ -25,7 +25,7 @@ def _get_input():
     for class_ in get_subclasses(BaseTensor):
         if class_.__name__ == 'Input':
             return class_
-    raise ValueError('`Input` class is not defined in cullent backend.')
+    raise ValueError('`Input` class is not defined in current backend.')
 
 
 def make_model(model_config):
@@ -50,6 +50,7 @@ def make_model(model_config):
         _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
         layer = get_layer(layer_cfg['name'])(**args)
         model.add_layer(layer=layer, scope=cfg.get('scope', ''))
+
     if 'input' in model_config:
         input_ = _get_input()(**model_config['input'])
         model(input_)

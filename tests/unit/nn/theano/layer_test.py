@@ -1,3 +1,4 @@
+"""Test Theano Layers"""
 from __future__ import absolute_import
 
 import uuid
@@ -7,19 +8,25 @@ import numpy as np
 
 import luchador
 from luchador import nn
+from tests.unit.fixture import TestCase
+
 # pylint: disable=invalid-name, protected-access
 
 # import theano
 # theano.config.optimizer = 'None'
 # theano.config.exception_verbosity = 'high'
 
+be = nn.backend
 
-@unittest.skipUnless(luchador.get_nn_backend() == 'theano', 'Theano backend')
-class TestConv2D(unittest.TestCase):
+
+@unittest.skipUnless(
+    luchador.get_nn_backend() == 'theano', 'Theano backend')
+class TestConv2D(TestCase):
+    """Test Conv2D format and shape inference"""
     longMessage = True
 
     def setUp(self):
-        nn.scope._reset()
+        be.scope._reset()
 
     def test_map_border_mode(self):
         """padding string is correctly mapped to border_mode"""
@@ -30,17 +37,18 @@ class TestConv2D(unittest.TestCase):
             self.assertEqual(expected, found)
 
     def _test_shape_inference(
-            self, input_shape, filter_shape, n_filters, strides, padding):
+            self, input_shape, filter_shape,
+            n_filters, strides, padding):
         conv2d = nn.layer.Conv2D(
             filter_height=filter_shape['height'],
             filter_width=filter_shape['width'],
             n_filters=n_filters, strides=strides, padding=padding)
 
-        with nn.scope.variable_scope(uuid.uuid4()):
-            input_variable = nn.wrapper.Input(shape=input_shape)
+        with nn.variable_scope(self.get_scope(uuid.uuid4())):
+            input_variable = nn.Input(shape=input_shape)
             output_variable = conv2d(input_variable)
 
-        session = nn.session.Session()
+        session = nn.Session()
         input_value = np.zeros(input_shape)
         output_value = session.run(
             outputs=output_variable, givens={input_variable: input_value})
