@@ -27,6 +27,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
         )
 
+    def __neg__(self):
+        return type(self)(tensor=-self._tensor, shape=self.shape)
+
     def __add__(self, other):
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor + _other)
@@ -140,9 +143,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Tensor
             The resulting Tensor
         """
-        if isinstance(max_value, base_wrapper.BaseTensor):
+        if isinstance(max_value, base_wrapper.BaseWrapper):
             max_value = max_value.unwrap()
-        if isinstance(min_value, base_wrapper.BaseTensor):
+        if isinstance(min_value, base_wrapper.BaseWrapper):
             min_value = min_value.unwrap()
         _tensor = tf.clip_by_value(
             self._tensor, clip_value_min=min_value, clip_value_max=max_value,
@@ -229,7 +232,7 @@ def _get_dtype_str(tensor):
     return tensor.dtype.as_numpy_dtype().dtype.name
 
 
-class Variable(TensorMixin, base_wrapper.BaseTensor):
+class Variable(TensorMixin, base_wrapper.BaseVariable):
     """Wrap tf.Variable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap Tensorflow Variable object.
@@ -243,9 +246,8 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
         shape = tuple(variable.get_shape().as_list())
         dtype = _get_dtype_str(variable)
         super(Variable, self).__init__(
-            tensor=variable, shape=shape, name=name, dtype=dtype)
-        base_wrapper.register_variable(name, self)
-        self.trainable = trainable
+            tensor=variable, shape=shape, name=name,
+            dtype=dtype, trainable=trainable)
 
 
 class Tensor(TensorMixin, base_wrapper.BaseTensor):
@@ -270,11 +272,9 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
         dtype = _get_dtype_str(tensor)
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
-        if name:
-            base_wrapper.register_tensor(name, self)
 
 
-class Input(TensorMixin, base_wrapper.BaseTensor):
+class Input(TensorMixin, base_wrapper.BaseWrapper):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which wraps placeholder

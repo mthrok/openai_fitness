@@ -4,6 +4,8 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
+__all__ = ['BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation']
+
 _LG = logging.getLogger(__name__)
 
 
@@ -28,7 +30,7 @@ def register_variable(name, var):
 def register_tensor(name, tensor):
     """Register tensor to global list of tensors for later resuse"""
     if name in _TENSORS:
-        _LG.warn('Tensor `%s` already exists.', name)
+        _LG.warning('Tensor `%s` already exists.', name)
     _TENSORS[name] = tensor
 
 
@@ -45,7 +47,7 @@ def retrieve_tensor(name):
 ###############################################################################
 
 
-class BaseTensor(object):
+class BaseWrapper(object):
     """Wraps Tensor or Variable object in Theano/Tensorflow
 
     This class was introduced to provide easy shape inference to Theano Tensors
@@ -82,23 +84,8 @@ class BaseTensor(object):
         """Return the number of array dimension in tensor"""
         return len(self.shape)
 
-    def __neg__(self):
-        return type(self)(tensor=-self._tensor, shape=self.shape)
-
-    def __add__(self, other):
-        return NotImplemented
-
     def __radd__(self, other):
         return self + other
-
-    def __sub__(self, other):
-        return NotImplemented
-
-    def __rsub__(self, other):
-        return NotImplemented
-
-    def __mul__(self, other):
-        return NotImplemented
 
     def __rmul__(self, other):
         return self * other
@@ -106,14 +93,56 @@ class BaseTensor(object):
     def __div__(self, other):
         return self.__truediv__(other)
 
-    def __rdiv__(self, other):
-        return self.__rtruediv__(other)
-
     def __truediv__(self, other):
         return NotImplemented
 
+    def __rdiv__(self, other):
+        return self.__rtruediv__(other)
+
     def __rtruediv__(self, other):
         return NotImplemented
+
+
+class BaseVariable(BaseWrapper):
+    """Base wrapper class for Variable"""
+    def __init__(self, tensor, shape, name, dtype, trainable):
+        super(BaseVariable, self).__init__(
+            tensor=tensor, shape=shape, name=name, dtype=dtype)
+        register_variable(name, self)
+        self.trainable = trainable
+
+
+class BaseTensor(BaseWrapper):
+    """Base wrapper class for Tensor"""
+    def __init__(self, tensor, shape, name, dtype):
+        super(BaseTensor, self).__init__(
+            tensor=tensor, shape=shape, name=name, dtype=dtype)
+        if name:
+            self.register(name)
+
+    def register(self, name):
+        """Register this Tensor to global list of Tensors for later re-use
+
+        Parameters
+        ----------
+        name : str
+            Name to store this Tensor object.
+
+        Note
+        ----
+        This method is provided for reusing Tensor which was created without
+        a given name. Tensors created with proper name is automatically
+        registered, thus there is no need to register.
+
+        An exmaple of Tensor without name is those created with overloaded
+        operator, such as __add__.
+
+        >>> tensor2 = tensor1 + 0.1
+
+        To retrieve `tensor2` with `get_tensor` method, you need to call
+        tensor2.register().
+        """
+        register_tensor(name, self)
 
 
 class Operation(object):

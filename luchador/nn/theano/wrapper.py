@@ -64,6 +64,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
         )
 
+    def __neg__(self):
+        return Tensor(tensor=-self._tensor, shape=self.shape)
+
     def __add__(self, other):
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor + _other, shape=self.shape)
@@ -177,9 +180,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Tensor
             The resulting Tensor
         """
-        if isinstance(max_value, base_wrapper.BaseTensor):
+        if isinstance(max_value, base_wrapper.BaseWrapper):
             max_value = max_value.unwrap()
-        if isinstance(min_value, base_wrapper.BaseTensor):
+        if isinstance(min_value, base_wrapper.BaseWrapper):
             min_value = min_value.unwrap()
         _tensor = self._tensor.clip(a_max=max_value, a_min=min_value)
         return Tensor(tensor=_tensor, shape=self.shape, name=name)
@@ -266,7 +269,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
-class Variable(TensorMixin, base_wrapper.BaseTensor):
+class Variable(TensorMixin, base_wrapper.BaseVariable):
     """Wrap SharedVariable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap SharedVariable object.
@@ -280,9 +283,8 @@ class Variable(TensorMixin, base_wrapper.BaseTensor):
         name = name or variable.name
         val = variable.get_value()
         super(Variable, self).__init__(
-            tensor=variable, shape=val.shape, name=name, dtype=val.dtype)
-        base_wrapper.register_variable(name, self)
-        self.trainable = trainable
+            tensor=variable, shape=val.shape, name=name,
+            dtype=val.dtype, trainable=trainable)
 
 
 class Tensor(TensorMixin, base_wrapper.BaseTensor):
@@ -299,12 +301,9 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             shape = [None if val < 0 else val for val in shape]
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
-        if name:
-            base_wrapper.register_tensor(name, self)
 
 
-def _get_tensor(dtype, n_dim, name):
-    """Instantiate underlying Variable"""
+def _create_placeholder(dtype, n_dim, name):
     if n_dim == 0:
         tensor = T.scalar(name=name, dtype=dtype)
     elif n_dim == 1:
@@ -320,7 +319,7 @@ def _get_tensor(dtype, n_dim, name):
     return tensor
 
 
-class Input(TensorMixin, base_wrapper.BaseTensor):
+class Input(TensorMixin, base_wrapper.BaseWrapper):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which wraps TensorVariable
@@ -330,6 +329,6 @@ class Input(TensorMixin, base_wrapper.BaseTensor):
           name (str): The name of the resulting object.
           dtype (NumPy dtype or None): If None, default dtype(floatX) is used
         """
-        tensor = _get_tensor(dtype, len(shape), name)
+        tensor = _create_placeholder(dtype, len(shape), name)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)

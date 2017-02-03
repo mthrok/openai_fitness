@@ -12,7 +12,7 @@ import StringIO
 import yaml
 
 from luchador.util import get_subclasses
-from luchador.nn.base import BaseTensor, get_layer
+from luchador.nn.base import BaseWrapper, get_layer
 
 from .model import get_model
 
@@ -22,7 +22,7 @@ _LG = logging.getLogger(__name__)
 
 
 def _get_input():
-    for class_ in get_subclasses(BaseTensor):
+    for class_ in get_subclasses(BaseWrapper):
         if class_.__name__ == 'Input':
             return class_
     raise ValueError('`Input` class is not defined in current backend.')

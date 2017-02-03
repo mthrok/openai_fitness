@@ -15,7 +15,7 @@ class TestVariableStore(fixture.TestCase):
     """Test Variable/Tensor store mechanism"""
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
-        name = self.id().replace('/', '.')
+        name = self.get_scope()
         self.assertTrue(name not in nn.base.wrapper._VARIABLES)
         variable = nn.get_variable(name, shape=[3, 1])
         self.assertTrue(name in nn.base.wrapper._VARIABLES)
@@ -23,7 +23,7 @@ class TestVariableStore(fixture.TestCase):
 
     def test_get_tensor_retrieves_existing_tensor(self):
         """get_variable retrieve existing variable"""
-        name = self.id().replace('/', '.')
+        name = self.get_scope()
         self.assertTrue(name not in nn.base.wrapper._TENSORS)
         tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
         self.assertTrue(name in nn.base.wrapper._TENSORS)
