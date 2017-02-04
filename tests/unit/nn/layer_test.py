@@ -11,6 +11,7 @@ import numpy as np
 
 import luchador
 from luchador import nn
+from tests.unit.fixture import TestCase
 
 BE = luchador.get_nn_backend()
 
@@ -41,7 +42,7 @@ def _normalize_batch(shape, offset, scale):
         inputs={input_tensor: input_value}, updates=updates)
 
 
-class BatchNormalizationTest(unittest.TestCase):
+class BatchNormalizationTest(TestCase):
     """Test for BatchNormalization class"""
     def setUp(self):
         self.conv_format = luchador.get_nn_conv_format()
@@ -89,7 +90,7 @@ class BatchNormalizationTest(unittest.TestCase):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NCHW')
         offset, scale, shape = 3.0, 7.0, (32, 16, 8, 7)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
@@ -124,7 +125,7 @@ class BatchNormalizationTest(unittest.TestCase):
         """Output of normalization layer is normalized on 4D array"""
         luchador.set_nn_conv_format('NHWC')
         offset, scale, shape = 3.0, 7.0, (32, 8, 7, 16)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             output_value = _normalize_batch(shape, offset, scale)
 
         self.assertEqual(output_value.shape, shape)
@@ -159,7 +160,7 @@ class BatchNormalizationTest(unittest.TestCase):
         shape = (32, 5)
         input_tensor = nn.Input(shape=[None, shape[1]])
 
-        scope = self.id().replace('.', '/')
+        scope = self.get_scope()
         with luchador.nn.variable_scope(scope, reuse=False):
             bn = nn.layer.BatchNormalization(learn=True, decay=0.999)
             normalized = bn(input_tensor)
@@ -212,10 +213,10 @@ def _convert(layer, shape):
     return output_value, output_tensor
 
 
-class FormatConversionTest(unittest.TestCase):
+class FormatConversionTest(TestCase):
     def test_NCHW2NHWC(self):
         shape = (32, 4, 7, 8)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             output_value, output_tensor = _convert(
                 nn.layer.NCHW2NHWC(), shape)
 
@@ -225,7 +226,7 @@ class FormatConversionTest(unittest.TestCase):
 
     def test_NHWC2NCHW(self):
         shape = (32, 8, 7, 4)
-        with nn.variable_scope(self.id().replace('.', '/')):
+        with nn.variable_scope(self.get_scope()):
             output_value, output_tensor = _convert(
                 nn.layer.NHWC2NCHW(), shape)
 
@@ -234,12 +235,12 @@ class FormatConversionTest(unittest.TestCase):
         self.assertEqual(expected, output_tensor.shape)
 
 
-class TestFlatten(unittest.TestCase):
+class TestFlatten(TestCase):
     def test_flatten(self):
         """4D input tensor is flattened to 2D tensor"""
         input_shape = (32, 4, 77, 84)
         input_value = np.zeros(input_shape)
-        scope = self.id().replace('.', '/')
+        scope = self.get_scope()
         with luchador.nn.variable_scope(scope, reuse=False):
             input_tensor = nn.Input(shape=input_shape)
             flatten = nn.layer.Flatten()
@@ -254,12 +255,12 @@ class TestFlatten(unittest.TestCase):
         self.assertEqual(expected, found)
 
 
-class TestDense(unittest.TestCase):
+class TestDense(TestCase):
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
         input_ = nn.Input(shape=(None, n_nodes), name='foo')
-        base_scope = self.id().replace('.', '/')
+        base_scope = self.get_scope()
         with nn.variable_scope(base_scope, reuse=False):
             dense1 = nn.layer.Dense(n_nodes)
             dense1(input_)
@@ -292,7 +293,7 @@ class TestDense(unittest.TestCase):
         fmt = luchador.get_nn_conv_format()
         shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
         input_ = nn.Input(shape=shape, name='foo')
-        base_scope = self.id().replace('.', '/')
+        base_scope = self.get_scope()
         with nn.variable_scope(base_scope, reuse=False):
             conv = nn.layer.Conv2D(84, 84, 4, 4)
             conv(input_)
@@ -311,11 +312,12 @@ class TestDense(unittest.TestCase):
                 )
 
 
-class TestConcat(unittest.TestCase):
+class TestConcat(TestCase):
+    """Test Concat Layer behavior"""
     def test_concate_2d_axis_1(self):
-        """Concatenate 2D tensors"""
+        """Concatenate 2 2D tensors"""
         axis, shape1, shape2 = 1, (2, 5), (2, 3)
-        with nn.variable_scope(self.id().replace('.', '/'), reuse=False):
+        with nn.variable_scope(self.get_scope(), reuse=False):
             var1 = nn.get_variable(name='name1', shape=shape1)
             var2 = nn.get_variable(name='name2', shape=shape2)
             conc_var = nn.layer.Concat(axis=axis).build([var1, var2])
@@ -332,4 +334,28 @@ class TestConcat(unittest.TestCase):
 
         expected = np.concatenate((val1, val2), axis=axis)
         found = conc_val
-        self.assertTrue(np.sum(np.square(found - expected)) < 1e-10)
+        np.testing.assert_almost_equal(found, expected)
+
+    def test_concate_2d_axis_1_3(self):
+        """Concatenate 3 2D tensors"""
+        axis, shape1, shape2, shape3 = 1, (2, 5), (2, 3), (2, 4)
+        with nn.variable_scope(self.get_scope(), reuse=False):
+            var1 = nn.get_variable(name='var1', shape=shape1)
+            var2 = nn.get_variable(name='var2', shape=shape2)
+            var3 = nn.get_variable(name='var3', shape=shape3)
+            conc_var = nn.layer.Concat(axis=axis).build([var1, var2, var3])
+
+        session = nn.Session()
+        val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)
+        val3 = np.random.rand(*shape2)
+        conc_val = session.run(outputs=conc_var, givens={
+            var1: val1, var2: val2, var3: val3
+        })
+
+        expected = conc_val.shape
+        found = conc_var.shape
+        self.assertEqual(found, expected)
+
+        expected = np.concatenate((val1, val2, val3), axis=axis)
+        found = conc_val
+        np.testing.assert_almost_equal(found, expected)
