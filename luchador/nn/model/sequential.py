@@ -1,41 +1,15 @@
 """Define base network model structure and fetch method"""
 from __future__ import absolute_import
 
-import abc
+import logging
 
-import luchador.util
 import luchador.nn
+from luchador.nn.base import get_layer
+from .base_model import BaseModel
 
-__all__ = ['BaseModel', 'get_model', 'Sequential']
+__all__ = ['Sequential']
 
-
-class BaseModel(object):  # pylint: disable=too-few-public-methods
-    """Base Model class"""
-    __metaclass__ = abc.ABCMeta
-
-
-def get_model(name):
-    """Get Model class by name
-
-    Parameters
-    ----------
-    name : str
-        Name of Model to get
-
-    Returns
-    -------
-    type
-        Class found with the given name
-
-    Raises
-    ------
-    ValueError
-        When Model class with the given name is not found
-    """
-    for class_ in luchador.util.get_subclasses(BaseModel):
-        if class_.__name__ == name:
-            return class_
-    raise ValueError('Unknown model: {}'.format(name))
+_LG = logging.getLogger(__name__)
 
 
 class LayerConfig(object):  # pylint: disable=too-few-public-methods
@@ -281,3 +255,28 @@ class Sequential(BaseModel):
             'model_type': self.__class__.__name__,
             'layer_configs': self.layer_configs,
         })
+
+
+def make_sequential_model(layer_configs):
+    """Make model from model configuration
+
+    Parameters
+    ----------
+    layer_config : list
+        Layer configuration.
+
+    Returns
+    -------
+    Model
+        Resulting model
+    """
+    model = Sequential()
+    for layer_config in layer_configs:
+        layer_cfg = layer_config['layer']
+        if 'name' not in layer_cfg:
+            raise RuntimeError('Layer name is not given')
+        args = layer_cfg.get('args', {})
+        _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
+        layer = get_layer(layer_cfg['name'])(**args)
+        model.add_layer(layer=layer, scope=layer_config.get('scope', ''))
+    return model

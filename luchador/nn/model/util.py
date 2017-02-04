@@ -1,6 +1,6 @@
 """Module to define utility functions used in luchador.nn module
 
-This module is expected to be loaded before other modules are loaded,
+This module is expected to be loaded before backend is loaded,
 thus should not cause cyclic import.
 """
 from __future__ import absolute_import
@@ -12,9 +12,10 @@ import StringIO
 import yaml
 
 from luchador.util import get_subclasses
-from luchador.nn.base import BaseWrapper, get_layer
+from luchador.nn.base import BaseWrapper
 
-from .model import get_model
+from .sequential import make_sequential_model
+
 
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -33,7 +34,7 @@ def make_model(model_config):
 
     Parameters
     ----------
-    model_condig : dict
+    model_config : dict
         model configuration.
 
     Returns
@@ -41,17 +42,13 @@ def make_model(model_config):
     Model
         Resulting model
     """
-    model = get_model(model_config['model_type'])()
-    for cfg in model_config['layer_configs']:
-        layer_cfg = cfg['layer']
-        if 'name' not in layer_cfg:
-            raise RuntimeError('Layer name is not given')
-        args = layer_cfg.get('args', {})
-        _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
-        layer = get_layer(layer_cfg['name'])(**args)
-        model.add_layer(layer=layer, scope=cfg.get('scope', ''))
+    _type = model_config['model_type']
+    if _type == 'Sequential':
+        model = make_sequential_model(model_config['layer_configs'])
+    else:
+        raise ValueError('Unexpected model type: {}'.format(_type))
 
-    if 'input' in model_config:
+    if model_config.get('input'):
         input_ = _get_input()(**model_config['input'])
         model(input_)
     return model
