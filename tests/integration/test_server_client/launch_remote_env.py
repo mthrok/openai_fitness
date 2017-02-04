@@ -22,7 +22,7 @@ def _main():
         'http://localhost:{}/create'.format(args.man_port),
         json={
             'environment': {
-                'name': 'ALEEnvironment',
+                'typename': 'ALEEnvironment',
                 'args': {
                     'rom': 'breakout.bin',
                     'display_screen': True,

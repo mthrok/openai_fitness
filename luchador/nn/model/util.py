@@ -30,7 +30,7 @@ def _get_input():
 
 
 def _make_input(input_config):
-    if input_config['name'] == 'Input':
+    if input_config['typename'] == 'Input':
         return _get_input()(**input_config['args'])
 
 

@@ -29,7 +29,7 @@ args:
 
   q_network_config:
     model_config:
-      name: vanilla_dqn
+      model_file: vanilla_dqn
       initial_parameter: *initial_parameter
       input_channel: *stack
       input_height: *height

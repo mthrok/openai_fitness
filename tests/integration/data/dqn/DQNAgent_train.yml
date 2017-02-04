@@ -7,7 +7,7 @@ alias:
   save_prefix: &save_prefix DQN_integration_test
   initial_parameter: &initial_parameter tests/integration/data/dqn/dqn_integration_test_initial.h5
 
-name: DQNAgent
+typename: DQNAgent
 args:
   recorder_config:
     memory_size: 100
@@ -29,7 +29,7 @@ args:
 
   q_network_config:
     model_config:
-      name: vanilla_dqn
+      model_name: vanilla_dqn
       initial_parameter: *initial_parameter
       input_channel: *stack
       input_height: *height

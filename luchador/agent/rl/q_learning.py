@@ -175,7 +175,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             '[null, {}, {}, {}]'.format(c, h, w)
         )
         return nn.get_model_config(
-            cfg['typename'], n_actions=n_actions, input_shape=shape)
+            cfg['model_name'], n_actions=n_actions, input_shape=shape)
 
     def _build_target_q_value(self, action_value_1, reward, terminal):
         config = self.args['q_learning_config']
