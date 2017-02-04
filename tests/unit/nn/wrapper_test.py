@@ -15,11 +15,18 @@ class TestVariableStore(fixture.TestCase):
     """Test Variable/Tensor store mechanism"""
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
-        name = self.get_scope()
-        self.assertTrue(name not in nn.base.wrapper._VARIABLES)
-        variable = nn.get_variable(name, shape=[3, 1])
-        self.assertTrue(name in nn.base.wrapper._VARIABLES)
-        self.assertIs(variable, nn.base.wrapper._VARIABLES[name])
+        scope, var_name = self.get_scope(), 'aaa'
+        full_name = '/'.join([scope, var_name])
+        self.assertTrue(full_name not in nn.base.wrapper._VARIABLES)
+
+        with nn.variable_scope(scope, reuse=False):
+            variable = nn.get_variable(var_name, shape=[3, 1])
+
+        self.assertTrue(full_name in nn.base.wrapper._VARIABLES)
+        self.assertIs(variable, nn.base.wrapper._VARIABLES[full_name])
+
+        with nn.variable_scope(scope, reuse=True):
+            self.assertIs(variable, nn.get_variable(var_name))
 
     def test_get_tensor_retrieves_existing_tensor(self):
         """get_variable retrieve existing variable"""
@@ -28,6 +35,7 @@ class TestVariableStore(fixture.TestCase):
         tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
         self.assertTrue(name in nn.base.wrapper._TENSORS)
         self.assertIs(tensor, nn.base.wrapper._TENSORS[name])
+        self.assertIs(tensor, nn.get_tensor(name))
 
 
 class TestTensorOpsMult(fixture.TestCase):

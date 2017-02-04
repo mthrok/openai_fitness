@@ -119,7 +119,7 @@ def get_variable_scope():
 
 def get_tensor(name):
     """Fetch Tensor with the given name"""
-    return base_wrapper.retrieve_variable(name)
+    return base_wrapper.retrieve_tensor(name)
 
 
 def get_variable(

@@ -33,7 +33,7 @@ def make_model(model_config):
 
     Parameters
     ----------
-    model_condig : JSON-compatible object
+    model_condig : dict
         model configuration.
 
     Returns
