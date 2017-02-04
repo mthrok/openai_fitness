@@ -58,16 +58,20 @@ def _make_optimizer(filepath):
     return nn.get_optimizer(cfg['typename'])(**cfg['args'])
 
 
+def _gen_model_def(model_file):
+    fmt = luchador.get_nn_conv_format()
+    w, h, c = WIDTH, HEIGHT, CHANNEL
+    shape = (
+        '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
+        '[null, {}, {}, {}]'.format(c, h, w)
+    )
+    return nn.get_model_config(
+        model_file, n_actions=N_ACTIONS, input_shape=shape)
+
+
 def _build_network(model_filepath, optimizer_filepath, initial_parameter):
     _LG.info('Building Q networks')
     dql = DeepQLearning(
-        model_config={
-            'name': model_filepath,
-            'initial_parameter': initial_parameter,
-            'input_channel': CHANNEL,
-            'input_height': HEIGHT,
-            'input_width': WIDTH,
-        },
         q_learning_config={
             'discount_rate': 0.99,
             'min_reward': -1.0,
@@ -82,7 +86,8 @@ def _build_network(model_filepath, optimizer_filepath, initial_parameter):
         },
         optimizer_config=load_config(optimizer_filepath),
     )
-    dql.build(n_actions=N_ACTIONS)
+    model_def = _gen_model_def(model_filepath)
+    dql.build(model_def, initial_parameter)
     _LG.info('Syncing models')
     dql.sync_network()
     return dql

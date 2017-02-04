@@ -154,7 +154,8 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         )
 
         model_def = self._gen_model_def(n_actions)
-        self._ql.build(model_def, self.args['model_config']['initial_parameter'])
+        initial_parameter = self.args['model_config']['initial_parameter']
+        self._ql.build(model_def, initial_parameter)
         self._ql.sync_network()
 
     def _init_saver(self):
