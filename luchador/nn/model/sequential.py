@@ -36,6 +36,11 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
             'output': self.output,
         })
 
+    def serialize(self):
+        ret = self.layer.serialize()
+        ret['scope'] = self.scope
+        return ret
+
 
 class Sequential(BaseModel):
     """Network architecture which produces single output from single input
@@ -243,10 +248,7 @@ class Sequential(BaseModel):
         """
         return {
             'model_type': self.__class__.__name__,
-            'layer_configs': [{
-                'scope': cfg.scope,
-                'layer': cfg.layer.serialize(),
-            } for cfg in self.layer_configs]
+            'layer_configs': [cfg.serialize() for cfg in self.layer_configs]
         }
 
     ###########################################################################

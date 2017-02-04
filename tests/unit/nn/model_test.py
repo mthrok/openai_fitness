@@ -1,3 +1,4 @@
+"""Test nn.model.util module"""
 from __future__ import absolute_import
 
 import unittest
@@ -7,6 +8,7 @@ from luchador import nn
 
 
 class UtilTest(unittest.TestCase):
+    """Test model [de]serialization"""
     longMessage = True
     maxDiff = None
 
