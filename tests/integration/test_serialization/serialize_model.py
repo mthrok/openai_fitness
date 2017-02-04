@@ -55,7 +55,7 @@ def _parse_command_line_args():
 
 def _make_optimizer(filepath):
     cfg = load_config(filepath)
-    return nn.get_optimizer(cfg['name'])(**cfg['args'])
+    return nn.get_optimizer(cfg['typename'])(**cfg['args'])
 
 
 def _build_network(model_filepath, optimizer_filepath, initial_parameter):
@@ -74,7 +74,7 @@ def _build_network(model_filepath, optimizer_filepath, initial_parameter):
             'max_reward': 1.0,
         },
         cost_config={
-            'name': 'SSE2',
+            'typename': 'SSE2',
             'args': {
                 'min_delta': -1.0,
                 'max_delta': 1.0

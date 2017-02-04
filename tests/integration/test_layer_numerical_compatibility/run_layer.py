@@ -94,7 +94,7 @@ def _run_forward_prop(layer, input_value, parameter_file, iteration=1):
 
 
 def _load_layer(cfg):
-    return nn.get_layer(cfg['name'])(**cfg.get('args', {}))
+    return nn.get_layer(cfg['typename'])(**cfg.get('args', {}))
 
 
 def _load_input_value(filepath):

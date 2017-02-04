@@ -30,8 +30,8 @@ def _parse_command_line_args():
     return ap.parse_args()
 
 
-def _create_initializer(name, args):
-    return nn.get_initializer(name)(**args)
+def _create_initializer(typename, args):
+    return nn.get_initializer(typename)(**args)
 
 
 def _transpose_needed(initializer, shape):

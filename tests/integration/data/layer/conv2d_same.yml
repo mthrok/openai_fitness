@@ -1,5 +1,5 @@
 layer:
-  name: Conv2D
+  typename: Conv2D
   args:
     filter_height: 7
     filter_width: 5

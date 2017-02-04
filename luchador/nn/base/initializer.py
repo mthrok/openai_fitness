@@ -48,13 +48,13 @@ class BaseInitializer(luchador.util.SerializeMixin, object):
         pass
 
 
-def get_initializer(name):
-    """Retrieve Initializer class by name
+def get_initializer(typename):
+    """Retrieve Initializer class by type
 
     Parameters
     ----------
-    name : str
-        Name of Initializer to retrieve
+    typename : str
+        Type of Initializer to retrieve
 
     Returns
     -------
@@ -64,12 +64,12 @@ def get_initializer(name):
     Raises
     ------
     ValueError
-        When Initializer with the given name is not found
+        When Initializer with the given type is not found
     """
     for class_ in luchador.util.get_subclasses(BaseInitializer):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
-    raise ValueError('Unknown Initializer: {}'.format(name))
+    raise ValueError('Unknown Initializer: {}'.format(typename))
 
 
 ###############################################################################

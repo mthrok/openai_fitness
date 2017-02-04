@@ -133,6 +133,6 @@ class SerializeMixin(CompareMixin):
         for key, val in self.args.items():
             args[key] = val.serialize() if hasattr(val, 'serialize') else val
         return {
-            'name': self.__class__.__name__,
+            'typename': self.__class__.__name__,
             'args': args
         }

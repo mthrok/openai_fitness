@@ -175,7 +175,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             '[null, {}, {}, {}]'.format(c, h, w)
         )
         return nn.get_model_config(
-            cfg['name'], n_actions=n_actions, input_shape=shape)
+            cfg['typename'], n_actions=n_actions, input_shape=shape)
 
     def _build_target_q_value(self, action_value_1, reward, terminal):
         config = self.args['q_learning_config']
@@ -197,15 +197,16 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     def _build_error(self, target_q, action_value_0, action):
         config = self.args['cost_config']
-        sse2 = nn.get_cost(config['name'])(elementwise=True, **config['args'])
-        error = sse2(target_q, action_value_0)
+        args = config['args']
+        cost = nn.get_cost(config['typename'])(elementwise=True, **args)
+        error = cost(target_q, action_value_0)
         mask = action.one_hot(n_classes=action_value_0.shape[1])
         return (mask * error).mean()
 
     ###########################################################################
     def _init_optimizer(self):
         cfg = self.args['optimizer_config']
-        self.optimizer = nn.get_optimizer(cfg['name'])(**cfg['args'])
+        self.optimizer = nn.get_optimizer(cfg['typename'])(**cfg['args'])
 
     def _init_session(self):
         cfg = self.args['model_config']

@@ -1,4 +1,4 @@
-name: FlappyBird
+typename: FlappyBird
 args:
   random_seed: null
 

@@ -65,7 +65,7 @@ def _optimize(optimizer, loss, wrt, n_ite):
 
 def _load_optimizer(filepath):
     cfg = load_config(filepath)
-    return get_optimizer(cfg['name'])(**cfg.get('args', {}))
+    return get_optimizer(cfg['typename'])(**cfg.get('args', {}))
 
 
 def _save_result(filepath, result):

@@ -6,12 +6,12 @@ input:
 layer_configs:
   - scope: layer0/preprocessing
     layer:
-      name: TrueDiv
+      typename: TrueDiv
       args:
         denom: 255
   - scope: layer1/conv2D
     layer:
-      name: Conv2D
+      typename: Conv2D
       args:
         n_filters: 32
         filter_width: 8
@@ -20,7 +20,7 @@ layer_configs:
         padding: valid
         initializers:
           bias: &initializer1
-            name: Uniform
+            typename: Uniform
             args:
               # 1 / sqrt(8 * 8 * 32) = 0.022097
               maxval: 0.022
@@ -28,10 +28,10 @@ layer_configs:
           weight: *initializer1
   - scope: layer1/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer2/conv2D
     layer:
-      name: Conv2D
+      typename: Conv2D
       args:
         n_filters: 64
         filter_width: 4
@@ -40,7 +40,7 @@ layer_configs:
         padding: valid
         initializers:
           bias: &initializer2
-            name: Uniform
+            typename: Uniform
             args:
               # 1 / sqrt(4 * 4 * 64) = 0.03125
               maxval: 0.031
@@ -48,10 +48,10 @@ layer_configs:
           weight: *initializer2
   - scope: layer2/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer3/conv2D
     layer:
-      name: Conv2D
+      typename: Conv2D
       args:
         filter_width: 3
         filter_height: 3
@@ -60,7 +60,7 @@ layer_configs:
         padding: valid
         initializers:
           bias: &initializer3
-            name: Uniform
+            typename: Uniform
             args:
               # 1 / sqrt(3 * 3 * 64) = 0.04166
               maxval: 0.042
@@ -68,18 +68,18 @@ layer_configs:
           weight: *initializer3
   - scope: layer3/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer4/flatten
     layer:
-      name: Flatten
+      typename: Flatten
   - scope: layer5/dense
     layer:
-      name: Dense
+      typename: Dense
       args:
         n_nodes: 512
         initializers:
           bias: &initializer5
-            name: Uniform
+            typename: Uniform
             args:
               # 1 / sqrt(3136) = 0.01785
               # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
@@ -88,15 +88,15 @@ layer_configs:
           weight: *initializer5
   - scope: layer5/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer6/dense
     layer:
-      name: Dense
+      typename: Dense
       args:
         n_nodes: {n_actions}
         initializers:
           bias: &initializer6
-            name: Uniform
+            typename: Uniform
             args:
               # 1 / sqrt(512) = 0.04419
               maxval: 0.044

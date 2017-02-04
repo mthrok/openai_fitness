@@ -74,12 +74,12 @@ _ENVIRONMENT_MODULE_MAPPING = {
 }
 
 
-def get_env(name):
-    """Retrieve Environment class by name
+def get_env(typename):
+    """Retrieve Environment class by typename
 
     Parameters
     ----------
-    name : str
+    typename : str
         Name of Environment to retrieve
 
     Returns
@@ -97,12 +97,13 @@ def get_env(name):
     # Ubuntu 14.04.
     # TLS Error is avoidable only by upgrading underlying libc version, which
     # is not easy. So we import such environments on-demand.
-    if name in _ENVIRONMENT_MODULE_MAPPING:
-        module = 'luchador.env.{:s}'.format(_ENVIRONMENT_MODULE_MAPPING[name])
+    if typename in _ENVIRONMENT_MODULE_MAPPING:
+        module = 'luchador.env.{:s}'.format(
+            _ENVIRONMENT_MODULE_MAPPING[typename])
         importlib.import_module(module)
 
     for class_ in luchador.util.get_subclasses(BaseEnvironment):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
 
-    raise ValueError('Unknown Environment: {}'.format(name))
+    raise ValueError('Unknown Environment: {}'.format(typename))

@@ -1,4 +1,4 @@
-name: Adamax
+typename: Adamax
 args:
   learning_rate: 0.001
   beta1: 0.9

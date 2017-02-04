@@ -1,5 +1,5 @@
 initializer:
-  name: Normal
+  typename: Normal
   args:
     mean: &mean 5.3
     stddev: &stddev 9.0

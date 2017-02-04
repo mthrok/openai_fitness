@@ -1,4 +1,4 @@
 layer:
-  name: Softplus
+  typename: Softplus
 
 input: input_randn_5x3.h5

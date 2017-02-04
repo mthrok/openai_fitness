@@ -7,7 +7,7 @@ alias:
   save_prefix: &save_prefix DQN_integration_test
   initial_parameter: &initial_parameter example/space_invaders_vanilla_dqn_99000.h5
 
-name: DQNAgent
+typename: DQNAgent
 args:
   recorder_config:
     memory_size: 100
@@ -40,13 +40,13 @@ args:
       min_reward: -1.0
       max_reward: 1.0
     cost_config:
-      name: SSE2
+      typename: SSE2
       args:
         # error between predicted Q value and target Q value is clipped by the following min and max
         min_delta: -1.0
         max_delta: 1.0
     optimizer_config:
-      name: NeonRMSProp
+      typename: NeonRMSProp
       args:
         decay: 0.95
         epsilon: 0.000001

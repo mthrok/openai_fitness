@@ -1,4 +1,4 @@
-name: CartPole
+typename: CartPole
 args:
   angle_limit: 12  # Degree
   distance_limit: 2.4  # meter

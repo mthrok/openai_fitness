@@ -62,19 +62,19 @@ def _load_additional_sources(*files):
 def _make_agent(config_file):
     config = (
         load_config(config_file) if config_file else
-        {'name': 'NoOpAgent', 'args': {}}
+        {'typename': 'NoOpAgent', 'args': {}}
     )
-    return get_agent(config['name'])(**config.get('args', {}))
+    return get_agent(config['typename'])(**config.get('args', {}))
 
 
 def _make_env(config_file, host, port):
     config = load_config(config_file)
-    if config['name'] == 'RemoteEnv':
+    if config['typename'] == 'RemoteEnv':
         if port:
             config['args']['port'] = port
         if host:
             config['args']['host'] = host
-    return get_env(config['name'])(**config.get('args', {}))
+    return get_env(config['typename'])(**config.get('args', {}))
 
 
 def entry_point(args):

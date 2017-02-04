@@ -1,4 +1,4 @@
 layer:
-  name: Sigmoid
+  typename: Sigmoid
 
 input: input_randn_5x3.h5

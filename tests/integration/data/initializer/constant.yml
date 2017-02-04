@@ -1,5 +1,5 @@
 initializer:
-  name: Constant
+  typename: Constant
   args:
     value: 3.2
 

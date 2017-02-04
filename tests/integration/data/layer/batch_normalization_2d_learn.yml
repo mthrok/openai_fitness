@@ -2,7 +2,7 @@ run:
   iteration: 10
 
 layer:
-  name: BatchNormalization
+  typename: BatchNormalization
   args:
     scale: 2.0
     offset: 0.5

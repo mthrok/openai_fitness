@@ -273,10 +273,10 @@ def make_sequential_model(layer_configs):
     model = Sequential()
     for layer_config in layer_configs:
         layer_cfg = layer_config['layer']
-        if 'name' not in layer_cfg:
+        if 'typename' not in layer_cfg:
             raise RuntimeError('Layer name is not given')
         args = layer_cfg.get('args', {})
-        _LG.debug('    Constructing: %s: %s', layer_cfg['name'], args)
-        layer = get_layer(layer_cfg['name'])(**args)
+        _LG.debug('    Constructing: %s: %s', layer_cfg['typename'], args)
+        layer = get_layer(layer_cfg['typename'])(**args)
         model.add_layer(layer=layer, scope=layer_config.get('scope', ''))
     return model

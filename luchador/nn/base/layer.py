@@ -84,13 +84,13 @@ class BaseLayer(luchador.util.SerializeMixin, object):
         )
 
 
-def get_layer(name):
-    """Retrieve Layer class by name
+def get_layer(typename):
+    """Retrieve Layer class by type
 
     Parameters
     ----------
-    name : str
-        Name of Layer to retrieve
+    typename : str
+        Type of Layer to retrieve
 
     Returns
     -------
@@ -100,12 +100,12 @@ def get_layer(name):
     Raises
     ------
     ValueError
-        When Layer with the given name is not found
+        When Layer with the given type is not found
     """
     for class_ in luchador.util.get_subclasses(BaseLayer):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
-    raise ValueError('Unknown Layer: {}'.format(name))
+    raise ValueError('Unknown Layer: {}'.format(typename))
 
 
 ###############################################################################

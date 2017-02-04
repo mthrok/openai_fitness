@@ -1,5 +1,5 @@
 initializer:
-  name: Uniform
+  typename: Uniform
   args:
     minval: -2.0 
     maxval: 6.0

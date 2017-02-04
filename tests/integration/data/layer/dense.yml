@@ -1,5 +1,5 @@
 layer:
-  name: Dense
+  typename: Dense
   args:
     n_nodes: 7
     with_bias: True

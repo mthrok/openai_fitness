@@ -1,4 +1,4 @@
 layer:
-  name: Softmax
+  typename: Softmax
 
 input: input_randn_5x3.h5

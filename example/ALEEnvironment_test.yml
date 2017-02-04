@@ -1,4 +1,4 @@
-name: ALEEnvironment
+typename: ALEEnvironment
 args:
   rom: space_invaders
 

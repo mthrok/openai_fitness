@@ -1,5 +1,5 @@
 layer:
-  name: TrueDiv
+  typename: TrueDiv
   args:
     denom: 255
 

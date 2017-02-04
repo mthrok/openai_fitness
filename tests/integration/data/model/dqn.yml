@@ -8,12 +8,12 @@ input:
 layer_configs:
   - scope: layer0/preprocessing
     layer:
-      name: TrueDiv
+      typename: TrueDiv
       args:
         denom: 255
   - scope: layer1/conv2D
     layer:
-      name: Conv2D
+      typename: Conv2D
       args:
         n_filters: 32
         filter_width: 8
@@ -22,10 +22,10 @@ layer_configs:
         padding: valid
   - scope: layer1/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer2/conv2D
     layer:
-      name: Conv2D
+      typename: Conv2D
       args:
         n_filters: 64
         filter_width: 4
@@ -35,37 +35,37 @@ layer_configs:
         with_bias: False
   - scope: layer2/BatchNormalization
     layer:
-      name: BatchNormalization
+      typename: BatchNormalization
       args:
         learn: True
   - scope: layer2/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer3/flatten
     layer:
-      name: Flatten
+      typename: Flatten
   - scope: layer4/dense
     layer:
-      name: Dense
+      typename: Dense
       args:
         n_nodes: 512
         with_bias: False
   - scope: layer4/BatchNormalization
     layer:
-      name: BatchNormalization
+      typename: BatchNormalization
       args:
         learn: True
   - scope: layer4/ReLU
     layer:
-      name: ReLU
+      typename: ReLU
   - scope: layer5/dense
     layer:
-      name: Dense
+      typename: Dense
       args:
         n_nodes: {n_actions}
         with_bias: False
   - scope: layer5/BatchNormalization
     layer:
-      name: BatchNormalization
+      typename: BatchNormalization
       args:
         learn: True

@@ -52,13 +52,13 @@ class BaseCost(luchador.util.StoreMixin, object):
         pass
 
 
-def get_cost(name):
-    """Retrieve Cost class by name
+def get_cost(typename):
+    """Retrieve Cost class by type
 
     Parameters
     ----------
-    name : str
-        Name of Cost to retrieve
+    typename : str
+        Type of Cost to retrieve
 
     Returns
     -------
@@ -68,12 +68,12 @@ def get_cost(name):
     Raises
     ------
     ValueError
-        When Cost with the given name is not found
+        When Cost with the given type is not found
     """
     for class_ in luchador.util.get_subclasses(BaseCost):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
-    raise ValueError('Unknown Cost: {}'.format(name))
+    raise ValueError('Unknown Cost: {}'.format(typename))
 
 
 ###############################################################################

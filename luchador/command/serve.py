@@ -27,7 +27,7 @@ def entry_point_env(args):
     if args.environment is None:
         raise ValueError('Environment config is not given')
     env_config = luchador.util.load_config(args.environment)
-    env = luchador.env.get_env(env_config['name'])(**env_config['args'])
+    env = luchador.env.get_env(env_config['typename'])(**env_config['args'])
     app = luchador.env.remote.create_env_app(env)
     _run_server(app, args.port)
 

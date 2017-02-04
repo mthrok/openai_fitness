@@ -113,13 +113,13 @@ class BaseOptimizer(luchador.util.SerializeMixin):
         return self.slot
 
 
-def get_optimizer(name):
-    """Retrieve Optimizer class by name
+def get_optimizer(typename):
+    """Retrieve Optimizer class by type
 
     Parameters
     ----------
-    name : str
-        Name of Optimizer to retrieve
+    typename : str
+        Type of Optimizer to retrieve
 
     Returns
     -------
@@ -129,12 +129,12 @@ def get_optimizer(name):
     Raises
     ------
     ValueError
-        When Optimizer with the given name is not found
+        When Optimizer with the given type is not found
     """
     for class_ in luchador.util.get_subclasses(BaseOptimizer):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
-    raise ValueError('Unknown Optimizer: {}'.format(name))
+    raise ValueError('Unknown Optimizer: {}'.format(typename))
 
 
 ###############################################################################

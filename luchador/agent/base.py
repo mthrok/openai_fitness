@@ -96,12 +96,12 @@ _AGENT_MODULE_MAPPING = {
 }
 
 
-def get_agent(name):
+def get_agent(typename):
     """Retrieve Agent class by name
 
     Parameters
     ----------
-    name : str
+    typename : str
         Name of Agent to retrieve
 
     Returns
@@ -114,11 +114,11 @@ def get_agent(name):
     ValueError
         When Agent with the given name is not found
     """
-    if name in _AGENT_MODULE_MAPPING:
-        module = 'luchador.agent.{:s}'.format(_AGENT_MODULE_MAPPING[name])
+    if typename in _AGENT_MODULE_MAPPING:
+        module = 'luchador.agent.{:s}'.format(_AGENT_MODULE_MAPPING[typename])
         importlib.import_module(module)
 
     for class_ in luchador.util.get_subclasses(BaseAgent):
-        if class_.__name__ == name:
+        if class_.__name__ == typename:
             return class_
-    raise ValueError('Unknown Agent: {}'.format(name))
+    raise ValueError('Unknown Agent: {}'.format(typename))
