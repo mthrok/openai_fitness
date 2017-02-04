@@ -30,7 +30,7 @@ def _get_input():
 
 
 def _make_input(config):
-    type_ = config['type']
+    type_ = config['typename']
     if type_ == 'Input':
         input_ = _get_input()(**config['args'])
     elif type_ == 'Tensor':

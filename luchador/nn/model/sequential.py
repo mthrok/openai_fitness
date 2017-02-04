@@ -37,6 +37,15 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
         })
 
     def serialize(self):
+        """Serialize layer
+
+        Returns
+        -------
+        dict
+            typename : Name of Layer class
+            args : Layer constructor arguments
+            scope : Scope
+        """
         ret = self.layer.serialize()
         ret['scope'] = self.scope
         return ret
