@@ -264,6 +264,14 @@ class BaseGravesRMSProp(BaseOptimizer):
 
 
 class BaseAdam(BaseOptimizer):
+    """Adam optimizer [1]_
+
+    References
+    ----------
+    .. [1] Kingma, D. Ba, J 2014
+        Adam: A Method for Stochastic Optimization
+        https://arxiv.org/abs/1412.6980
+    """
     def __init__(self, learning_rate,
                  beta1=0.9, beta2=0.999,
                  epsilon=1e-08, name='Adam', **kwargs):
@@ -273,6 +281,14 @@ class BaseAdam(BaseOptimizer):
 
 
 class BaseAdamax(BaseOptimizer):
+    """Adam optimizer [1]_
+
+    References
+    ----------
+    .. [1] Kingma, D. Ba, J 2014
+        Adam: A Method for Stochastic Optimization
+        https://arxiv.org/abs/1412.6980
+    """
     def __init__(self, learning_rate,
                  beta1=0.9, beta2=0.999,
                  epsilon=1e-8, name='Adamax', **kwargs):
