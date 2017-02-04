@@ -83,7 +83,7 @@ class UtilTest(fixture.TestCase):
             self.assertIs(model1.layer_configs[1].output, model3.input)
 
     def test_multiple_inputs(self):
-        """make_model can create multiple Input"""
+        """make_model can handle multiple Input"""
         n_elem1, n_elem2 = 3, 4
         model_def = {
             'model_type': 'Sequential',
@@ -114,3 +114,56 @@ class UtilTest(fixture.TestCase):
         with nn.variable_scope(self.get_scope()):
             model = nn.make_model(model_def)
             self.assertEqual(model.output.shape, (None, n_elem1 + n_elem2))
+
+    def test_multiple_tensor_inputs(self):
+        """Tensor type input correctly build multiple input tensor"""
+        n_nodes1, n_nodes2 = 4, 5
+        base_scope = self.get_scope()
+        model_def1 = {
+            'model_type': 'Sequential',
+            'input': {
+                'typename': 'Input',
+                'args': {
+                    'shape': [None, 3]
+                },
+                'name': 'input'
+            },
+            'layer_configs': [{
+                'scope': 'layer1/dense',
+                'typename': 'Dense',
+                'args': {
+                    'n_nodes': n_nodes1,
+                }
+            }, {
+                'scope': 'layer2/dense',
+                'typename': 'Dense',
+                'args': {
+                    'n_nodes': n_nodes2,
+                }
+            }]
+        }
+
+        model_def2 = {
+            'model_type': 'Sequential',
+            'input': [{
+                'typename': 'Tensor',
+                'name': '{}/layer1/dense/output'.format(base_scope),
+            }, {
+                'typename': 'Tensor',
+                'name': '{}/layer2/dense/output'.format(base_scope),
+            }],
+            'layer_configs': [{
+                'scope': 'layer1/concat',
+                'typename': 'Concat',
+                'args': {
+                    'axis': 1,
+                }
+            }]
+        }
+
+        with nn.variable_scope(self.get_scope()):
+            model1 = nn.make_model(model_def1)
+            model2 = nn.make_model(model_def2)
+
+            self.assertIs(model1.layer_configs[0].output, model2.input[0])
+            self.assertIs(model1.layer_configs[1].output, model2.input[1])
