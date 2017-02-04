@@ -14,7 +14,7 @@ from .initializer import Normal
 
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope',
-    'name_scope', 'get_variable', 'get_tensor',
+    'name_scope', 'get_variable',
 ]
 
 _LG = logging.getLogger(__name__)
@@ -115,11 +115,6 @@ def variable_scope(name_or_scope, reuse=None):
 def get_variable_scope():
     """Return the current variable scope"""
     return VariableScope(_get_flag(), _get_scope())
-
-
-def get_tensor(name):
-    """Fetch Tensor with the given name"""
-    return base_wrapper.retrieve_tensor(name)
 
 
 def get_variable(

@@ -4,7 +4,8 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
-__all__ = ['BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation']
+__all__ = [
+    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation', 'get_tensor']
 
 _LG = logging.getLogger(__name__)
 
@@ -39,8 +40,14 @@ def retrieve_variable(name):
     return _VARIABLES.get(name)
 
 
-def retrieve_tensor(name):
-    """Get tensor from global list of tensors"""
+def get_tensor(name):
+    """Get tensor from global list of tensors
+
+    Parameters
+    ----------
+    name : str
+        Name of Tensor to fetch
+    """
     if name not in _TENSORS:
         raise ValueError('Tensor `{}` does not exist.'.format(name))
     return _TENSORS.get(name)

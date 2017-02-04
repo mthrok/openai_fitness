@@ -12,7 +12,7 @@ from . import wrapper
 
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope',
-    'name_scope', 'get_variable', 'get_tensor',
+    'name_scope', 'get_variable',
 ]
 
 
@@ -48,11 +48,6 @@ class VariableScope(tf.VariableScope):  # pylint: disable=R0903
 
 
 ###############################################################################
-def get_tensor(name):
-    """Fetch Tensor with the given name"""
-    return base_wrapper.retrieve_tensor(name)
-
-
 def get_variable(
         name, shape=None, dtype=None,
         initializer=None, regularizer=None, trainable=True, **kwargs):
