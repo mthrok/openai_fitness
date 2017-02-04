@@ -19,11 +19,11 @@ from luchador.episode_runner import EpisodeRunner
 
 def main(env, agent, episodes, steps):
     # Create environment
-	Environment = get_env(env['name'])
-	env = Environment(**env['args'])
+    Environment = get_env(env['typename'])
+    env = Environment(**env['args'])
 
     # Create agent
-    Agent = get_agent(agent['name'])
+    Agent = get_agent(agent['typename'])
     agent = Agent(**agent['args'])
     agent.init(env)
 
@@ -109,7 +109,7 @@ $ python
 To use this new agent, we need to create configuration file. As this agent does not take any constructor argument, configuration file is as simple as follow.
 
 ```yaml
-name: MyRandomAgent
+typename: MyRandomAgent
 args: {}
 ```
 
@@ -163,23 +163,20 @@ Network architecture can be described using a set of layer configurations, and w
 model_type: Sequential
 layer_configs:
   - scope: layer1
-    layer:
-      name: Conv2D
-      args:
-        n_filters: 32
-        filter_width: 8
-        filter_height: 8
-        strides: 4
-        padding: valid
+    typename: Conv2D
+    args:
+      n_filters: 32
+      filter_width: 8
+      filter_height: 8
+      strides: 4
+      padding: valid
   - scope: layer2
-    layer:
-      name: ReLU
-      args: {}
+    typename: ReLU
+    args: {}
   - scope: layer3
-    layer:
-      name: Dense
-      args:
-        n_nodes: 3
+    typename: Dense
+    args:
+      n_nodes: 3
 ```
 
 You can feed this configuration to `luchador.nn.util.make_model` then the function will return the coresponding network architecture.
@@ -190,23 +187,20 @@ But having static parameters is sometimes inconvenient. For example, although th
 model_type: Sequential
 layer_configs:
   - scope: layer1
-    layer:
-      name: Conv2D
-      args:
-        n_filters: 32
-        filter_width: 8
-        filter_height: 8
-        strides: 4
-        padding: valid
+    typename: Conv2D
+    args:
+      n_filters: 32
+      filter_width: 8
+      filter_height: 8
+      strides: 4
+      padding: valid
   - scope: layer2
-    layer:
-      name: ReLU
-      args: {{}}
+    typename: ReLU
+    args: {{}}
   - scope: layer3
-    layer:
-      name: Dense
-      args:
-        n_nodes: {n_actions}
+    typename: Dense
+    args:
+      n_nodes: {n_actions}
 ```
 
 When you load this file with `luchador.nn.util.make_model('model.yml', n_actions=5)`, 5 is substituted at `{n_actions}`. Notice that `ReLU`'s `args` parameter became `{{}}` from `{}` so that it Python's `format` function will replace it to `{}`.

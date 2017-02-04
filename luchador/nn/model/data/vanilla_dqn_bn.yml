@@ -25,8 +25,7 @@ layer_configs:
       learn: True
       decay: 0.999
   - scope: layer1/ReLU
-    layer:
-      typename: ReLU
+    typename: ReLU
   - scope: layer2/conv2D
     typename: Conv2D
     args:

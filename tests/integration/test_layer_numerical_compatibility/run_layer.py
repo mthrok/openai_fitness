@@ -93,7 +93,7 @@ def _run_forward_prop(layer, input_value, parameter_file, iteration=1):
     return output
 
 
-def _create_layer(typename, args):
+def _create_layer(typename, args=None):
     return nn.get_layer(typename)(**(args or {}))
 
 
