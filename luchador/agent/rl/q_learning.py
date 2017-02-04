@@ -46,16 +46,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
 
     Parameters
     ----------
-    model_config : dict
-        Configuration for model definition.
-
-        name : str
-            The name of network model or path to model definition file.
-        initial_parameter : str
-            Path to HDF5 file which contain the initial parameter values.
-        input_channel, input_height, input_width : int
-            The shape of input to the network
-
     q_learning_config : dict
         Configuration for building target Q value.
 
@@ -90,10 +80,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(
-            self, model_config, q_learning_config, cost_config,
-            optimizer_config):
+            self, q_learning_config, cost_config, optimizer_config):
         self._store_args(
-            model_config=model_config,
             q_learning_config=q_learning_config,
             cost_config=cost_config,
             optimizer_config=optimizer_config,
@@ -117,7 +105,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """
         self.build(q_network_maker)
 
-    def build(self, n_actions):
+    def build(self, model_def, initial_parameter):
         """Build computation graph (error and sync ops) for Q learning
 
         Parameters
@@ -126,7 +114,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             The number of available actions in the environment.
         """
         # pylint: disable=too-many-locals
-        model_def = self._gen_model_def(n_actions)
         model_0, state_0, action_value_0 = _make_model(model_def, 'pre_trans')
         model_1, state_1, action_value_1 = _make_model(model_def, 'post_trans')
         sync_op = _build_sync_op(model_0, model_1, 'sync')
@@ -144,7 +131,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self._init_optimizer()
         optimize_op = self.optimizer.minimize(
             error, wrt=model_0.get_parameter_variables())
-        self._init_session()
+        self._init_session(initial_parameter)
 
         self.models = {
             'model_0': model_0,
@@ -165,17 +152,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             'sync': sync_op,
             'optimize': optimize_op,
         }
-
-    def _gen_model_def(self, n_actions):
-        cfg = self.args['model_config']
-        fmt = luchador.get_nn_conv_format()
-        w, h, c = cfg['input_width'], cfg['input_height'], cfg['input_channel']
-        shape = (
-            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
-            '[null, {}, {}, {}]'.format(c, h, w)
-        )
-        return nn.get_model_config(
-            cfg['model_name'], n_actions=n_actions, input_shape=shape)
 
     def _build_target_q_value(self, action_value_1, reward, terminal):
         config = self.args['q_learning_config']
@@ -208,12 +184,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         cfg = self.args['optimizer_config']
         self.optimizer = nn.get_optimizer(cfg['typename'])(**cfg['args'])
 
-    def _init_session(self):
-        cfg = self.args['model_config']
+    def _init_session(self, initial_parameter=None):
         self.session = nn.Session()
-        if cfg.get('initial_parameter'):
-            _LG.info('Loading parameters from %s', cfg['initial_parameter'])
-            self.session.load_from_file(cfg['initial_parameter'])
+        if initial_parameter:
+            _LG.info('Loading parameters from %s', initial_parameter)
+            self.session.load_from_file(initial_parameter)
         else:
             self.session.initialize()
 

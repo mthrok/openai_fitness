@@ -40,6 +40,16 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         Constructor arguments for
         :class:`luchador.agent.recorder.TransitionRecorder`
 
+    model_config : dict
+        Configuration for model definition.
+
+        name : str
+            The name of network model or path to model definition file.
+        initial_parameter : str
+            Path to HDF5 file which contain the initial parameter values.
+        input_channel, input_height, input_width : int
+            The shape of input to the network
+
     q_network_config : dict
         Constructor arguments for
         :class:`luchador.agent.rl.q_learning.DeepQLearning`
@@ -75,6 +85,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     def __init__(
             self,
             recorder_config,
+            model_config,
             q_network_config,
             action_config,
             training_config,
@@ -86,6 +97,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         super(DQNAgent, self).__init__()
         self._store_args(
             recorder_config=recorder_config,
+            model_config=model_config,
             q_network_config=q_network_config,
             action_config=action_config,
             training_config=training_config,
@@ -122,15 +134,27 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._init_summary_writer()
         self._summarize_layer_params()
 
+    def _gen_model_def(self, n_actions):
+        cfg = self.args['model_config']
+        fmt = luchador.get_nn_conv_format()
+        w, h, c = cfg['input_width'], cfg['input_height'], cfg['input_channel']
+        shape = (
+            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
+            '[null, {}, {}, {}]'.format(c, h, w)
+        )
+        return nn.get_model_config(
+            cfg['model_file'], n_actions=n_actions, input_shape=shape)
+
     def _init_network(self, n_actions):
         cfg = self.args['q_network_config']
         self._ql = DeepQLearning(
-            model_config=cfg['model_config'],
             q_learning_config=cfg['q_learning_config'],
             cost_config=cfg['cost_config'],
             optimizer_config=cfg['optimizer_config'],
         )
-        self._ql.build(n_actions=n_actions)
+
+        model_def = self._gen_model_def(n_actions)
+        self._ql.build(model_def, self.args['model_config']['initial_parameter'])
         self._ql.sync_network()
 
     def _init_saver(self):

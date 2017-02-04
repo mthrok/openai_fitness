@@ -27,13 +27,14 @@ args:
       terminal:
         dtype: bool
 
+  model_config:
+    model_file: vanilla_dqn
+    initial_parameter: *initial_parameter
+    input_channel: *stack
+    input_height: *height
+    input_width: *width
+
   q_network_config:
-    model_config:
-      model_file: vanilla_dqn
-      initial_parameter: *initial_parameter
-      input_channel: *stack
-      input_height: *height
-      input_width: *width
     q_learning_config:
       discount_rate: 0.99
       # reward is clipped between the following min and max
