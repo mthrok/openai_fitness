@@ -30,6 +30,9 @@ def _get_input():
 
 
 def _make_input(config):
+    if isinstance(config, list):
+        return [_make_input(cfg) for cfg in config]
+
     type_ = config['typename']
     if type_ == 'Input':
         input_ = _get_input()(**config['args'])

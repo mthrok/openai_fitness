@@ -81,3 +81,36 @@ class UtilTest(fixture.TestCase):
 
             self.assertIs(model1.layer_configs[0].output, model2.input)
             self.assertIs(model1.layer_configs[1].output, model3.input)
+
+    def test_multiple_inputs(self):
+        """make_model can create multiple Input"""
+        n_elem1, n_elem2 = 3, 4
+        model_def = {
+            'model_type': 'Sequential',
+            'input': [
+                {
+                    'typename': 'Input',
+                    'args': {
+                        'shape': [None, n_elem1]
+                    },
+                    'name': 'input'
+                }, {
+                    'typename': 'Input',
+                    'args': {
+                        'shape': [None, n_elem2]
+                    },
+                    'name': 'input'
+                },
+            ],
+            'layer_configs': [{
+                'scope': 'layer1/concat',
+                'typename': 'Concat',
+                'args': {
+                    'axis': 1,
+                }
+            }]
+        }
+
+        with nn.variable_scope(self.get_scope()):
+            model = nn.make_model(model_def)
+            self.assertEqual(model.output.shape, (None, n_elem1 + n_elem2))
