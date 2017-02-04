@@ -29,6 +29,11 @@ def _get_input():
     raise ValueError('`Input` class is not defined in current backend.')
 
 
+def _make_input(input_config):
+    if input_config['name'] == 'Input':
+        return _get_input()(**input_config['args'])
+
+
 def make_model(model_config):
     """Make model from model configuration
 
@@ -49,7 +54,7 @@ def make_model(model_config):
         raise ValueError('Unexpected model type: {}'.format(_type))
 
     if model_config.get('input'):
-        input_ = _get_input()(**model_config['input'])
+        input_ = _make_input(model_config['input'])
         model(input_)
     return model
 

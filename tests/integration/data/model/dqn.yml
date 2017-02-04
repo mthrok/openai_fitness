@@ -1,8 +1,10 @@
 model_type: Sequential
 input:
-  dtype: uint8
-  shape: {input_shape}
-  name: state
+  name: Input
+  args:
+    dtype: uint8
+    shape: {input_shape}
+    name: state
 layer_configs:
   - scope: layer0/preprocessing
     layer:
