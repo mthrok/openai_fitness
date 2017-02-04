@@ -25,7 +25,7 @@ class UtilTest(fixture.TestCase):
             self.assertEqual(m1, m2)
 
     def test_input_tensor(self):
-        """Tensor type input correctly build model on existing TEnsor"""
+        """Tensor type input correctly build model on existing Tensor"""
         model_def1 = {
             'model_type': 'Sequential',
             'input': {
@@ -40,6 +40,12 @@ class UtilTest(fixture.TestCase):
                 'typename': 'Dense',
                 'args': {
                     'n_nodes': 4,
+                }
+            }, {
+                'scope': 'layer2/dense',
+                'typename': 'Dense',
+                'args': {
+                    'n_nodes': 5,
                 }
             }]
         }
@@ -56,9 +62,22 @@ class UtilTest(fixture.TestCase):
             }]
         }
 
+        model_def3 = {
+            'model_type': 'Sequential',
+            'input': {
+                'typename': 'Tensor',
+                'name': '{}/layer2/dense/output'.format(self.get_scope()),
+            },
+            'layer_configs': [{
+                'scope': 'layer1/ReLU',
+                'typename': 'ReLU',
+            }]
+        }
+
         with nn.variable_scope(self.get_scope()):
             model1 = nn.make_model(model_def1)
-
             model2 = nn.make_model(model_def2)
+            model3 = nn.make_model(model_def3)
 
-            self.assertIs(model1.output, model2.input)
+            self.assertIs(model1.layer_configs[0].output, model2.input)
+            self.assertIs(model1.layer_configs[1].output, model3.input)
