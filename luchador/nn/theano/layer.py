@@ -337,16 +337,23 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return _wrap_output(output_tensor, output_shape, 'output')
 
 
-def _concatenate_shapes(shape0, shape1, axis):
-    new_shape = []
-    for i, (dim1, dim2) in enumerate(zip(shape0, shape1)):
-        if i == axis:
-            new_shape.append(dim1 + dim2)
-        elif dim1 == dim2:
-            new_shape.append(dim1)
-        else:
-            raise ValueError('Inconsistent shape')
-    return new_shape
+def _compute_concat_shape(shapes, axis):
+    _shape = [None] * len(shapes[0])
+    _shape[axis] = 0
+    for shape in shapes:
+        for i, val in enumerate(shape):
+            if i == axis:
+                if _shape[i] is None or val is None:
+                    _shape[i] = None
+                else:
+                    _shape[i] += val
+            else:
+                if _shape[i] is None or val is None:
+                    _shape[i] = _shape[i] or val
+                else:
+                    if not _shape[i] == val:
+                        raise ValueError('Inconsistent shape')
+    return _shape
 
 
 class Concat(LayerMixin, base_layer.BaseConcat):
@@ -355,18 +362,13 @@ class Concat(LayerMixin, base_layer.BaseConcat):
     See :any: `BaseConcat` for detail.
     """
     def _build(self, var_list):
+        if len(var_list) < 2:
+            raise ValueError('var_list must contain more than 1 tensor')
         axis = self.args['axis']
 
-        tensor_list = []
-        shape, new_dim = None, 0
-        for var in var_list:
-            new_dim += var.shape[axis]
-            if shape is None:
-                shape = var.shape
-            else:
-                shape = _concatenate_shapes(shape, var.shape, axis)
-            tensor_list.append(var.unwrap())
-
+        tensor_list = [var.unwrap() for var in var_list]
+        shape_list = [var.shape for var in var_list]
+        shape = _compute_concat_shape(shape_list, axis)
         output = T.concatenate(tensor_list=tensor_list, axis=axis)
         return _wrap_output(output, shape, 'output')
 

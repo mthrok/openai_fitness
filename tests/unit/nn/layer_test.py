@@ -1,3 +1,4 @@
+"""Test Layer behaviors"""
 from __future__ import division
 from __future__ import absolute_import
 
@@ -336,6 +337,60 @@ class TestConcat(TestCase):
         found = conc_val
         np.testing.assert_almost_equal(found, expected)
 
+    def test_concate_2d_axis_1_none(self):
+        """Concatenate 2 2D tensors with None"""
+        axis, n_elems, shape1, shape2 = 1, 32, (None, 5), (None, 3)
+        with nn.variable_scope(self.get_scope(), reuse=False):
+            input1 = nn.Input(shape=shape1, dtype='float32', name='name1')
+            input2 = nn.Input(shape=shape2, dtype='float32', name='name2')
+            conc_var = nn.layer.Concat(axis=axis).build([input1, input2])
+
+        session = nn.Session()
+        val1 = np.random.rand(n_elems, shape1[1]).astype('float32')
+        val2 = np.random.rand(n_elems, shape2[1]).astype('float32')
+        conc_val = session.run(outputs=conc_var, givens={
+            input1: val1, input2: val2,
+        })
+
+        expected = (None, conc_val.shape[1])
+        found = conc_var.shape
+        self.assertEqual(found, expected)
+
+        expected = np.concatenate((val1, val2), axis=axis)
+        found = conc_val
+        np.testing.assert_almost_equal(found, expected)
+
+    def test_concate_2d_axis_1_multiple_none(self):
+        """Concatenate 2 2D tensors with None"""
+        axis, n_elems, shape1, shape2 = 1, 32, (None, None, 5), (None, 3, None)
+        with nn.variable_scope(self.get_scope(), reuse=False):
+            input1 = nn.Input(shape=shape1, dtype='float32', name='name1')
+            input2 = nn.Input(shape=shape2, dtype='float32', name='name2')
+            conc_var = nn.layer.Concat(axis=axis).build([input1, input2])
+
+        session = nn.Session()
+        val1 = np.random.rand(n_elems, 4, 5).astype('float32')
+        val2 = np.random.rand(n_elems, 3, 5).astype('float32')
+        conc_val = session.run(outputs=conc_var, givens={
+            input1: val1, input2: val2,
+        })
+        expected = (None, None, 5)
+        found = conc_var.shape
+        self.assertEqual(found, expected)
+
+        expected = np.concatenate((val1, val2), axis=axis)
+        found = conc_val
+        np.testing.assert_almost_equal(found, expected)
+
+    def test_concatenate_raise_when_incosistent_shape(self):
+        """Concatenate raise ValueError when inconsistent shapes"""
+        axis, shape1, shape2 = 1, (3, 5), (4, 6)
+        with nn.variable_scope(self.get_scope(), reuse=False):
+            input1 = nn.Input(shape=shape1, dtype='float32', name='name1')
+            input2 = nn.Input(shape=shape2, dtype='float32', name='name2')
+            with self.assertRaises(ValueError):
+                nn.layer.Concat(axis=axis).build([input1, input2])
+
     def test_concate_2d_axis_1_3(self):
         """Concatenate 3 2D tensors"""
         axis, shape1, shape2, shape3 = 1, (2, 5), (2, 3), (2, 4)
@@ -347,11 +402,10 @@ class TestConcat(TestCase):
 
         session = nn.Session()
         val1, val2 = np.random.rand(*shape1), np.random.rand(*shape2)
-        val3 = np.random.rand(*shape2)
+        val3 = np.random.rand(*shape3)
         conc_val = session.run(outputs=conc_var, givens={
             var1: val1, var2: val2, var3: val3
         })
-
         expected = conc_val.shape
         found = conc_var.shape
         self.assertEqual(found, expected)
