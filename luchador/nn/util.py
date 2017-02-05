@@ -14,8 +14,9 @@ import yaml
 from luchador.util import get_subclasses
 from luchador.nn.base import BaseWrapper, get_tensor
 
-from .sequential import make_sequential_model
+from .model.sequential import make_sequential_model
 
+__all__ = ['make_model', 'get_model_config']
 
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')

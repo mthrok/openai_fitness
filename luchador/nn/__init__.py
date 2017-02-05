@@ -5,10 +5,9 @@ import logging
 
 import luchador
 
-# pylint: disable=wildcard-import
+# pylint: disable=wildcard-import, wrong-import-position
 
 from .base import *  # noqa: F401, F403
-from .model import *  # noqa: F401, F403
 from .saver import *  # noqa: F401, F403
 from .summary import *  # noqa: F401, F403
 
@@ -22,3 +21,6 @@ if luchador.get_nn_backend() == 'tensorflow':
 else:
     from . import theano as backend  # noqa: F401
     from .theano import *  # noqa: F401, F403
+
+from .model import *  # noqa: F401, F403
+from .util import *  # noqa: F401, F403

@@ -106,7 +106,7 @@ def _setup():
         ],
         package_data={
             'luchador': [
-                'nn/model/data/*.yml',
+                'nn/data/*.yml',
                 '{}/*.bin'.format(ALE_ROM_DIR),
             ],
         },
