@@ -20,7 +20,8 @@ __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
-    'Flatten', 'Concat', 'TrueDiv',
+    'Flatten', 'TrueDiv', 'Mean',
+    'Concat', 'Add', 'Sub',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
@@ -289,6 +290,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
         return _wrap_output(output)
 
 
+###############################################################################
 class Flatten(LayerMixin, base_layer.BaseFlatten):
     """Implement Flatten in Tensorflow.
 
@@ -313,6 +315,34 @@ class Concat(LayerMixin, base_layer.BaseConcat):
         return _wrap_output(output)
 
 
+class Add(LayerMixin, base_layer.BaseAdd):
+    """Implement Add layer in Tensorflow
+
+    See :any: `BaseAdd` for detail.
+    """
+    def _build(self, var_list):
+        if len(var_list) < 2:
+            raise ValueError('var_list must contain more than 1 tensor')
+
+        ret = var_list[0]
+        for var in var_list[1:]:
+            ret = ret + var
+        return ret
+
+
+class Sub(LayerMixin, base_layer.BaseAdd):
+    """Implement Sub layer in Tensorflow
+
+    See :any: `BaseSub` for detail.
+    """
+    def _build(self, var_list):
+        if len(var_list) == 2:
+            raise ValueError('var_list must be 2 tensors')
+
+        return var_list[0] - var_list[1]
+
+
+###############################################################################
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
     """Implement TrueDiv in Tensorflow.
 
@@ -336,6 +366,16 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
         return _wrap_output(output)
 
 
+class Mean(LayerMixin, base_layer.BaseMean):
+    """Implement Mean layer in Tensorflow.
+
+    See :any:`BaseMean` for detail.
+    """
+    def _build(self, input_tensor):
+        return input_tensor.mean(**self.args)
+
+
+###############################################################################
 class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
     """Implement BatchNormalization in Tensorflow.
 

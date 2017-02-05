@@ -247,6 +247,23 @@ class BaseTrueDiv(BaseLayer):
         self.denom = None
 
 
+class BaseMean(BaseLayer):
+    """Apply mean to input tensor
+
+    Parameters
+    ----------
+    axis : int or list of int
+        Axis or axes along which to compute the mean
+    keep_dim : bool
+        If true, retains reduced dimensions with length 1.
+    dtype : str
+        Output dtype
+    """
+    def __init__(self, axis, keep_dim=False, dtype=None):
+        super(BaseMean, self).__init__(
+            axis=axis, keep_dim=keep_dim, dtype=dtype)
+
+
 ###############################################################################
 class BaseFlatten(BaseLayer):
     """Reshape 4D tensor into 2D tensor"""
@@ -254,10 +271,23 @@ class BaseFlatten(BaseLayer):
         super(BaseFlatten, self).__init__()
 
 
+###############################################################################
 class BaseConcat(BaseLayer):
     """Concatenate variables"""
     def __init__(self, axis=1):
         super(BaseConcat, self).__init__(axis=axis)
+
+
+class BaseAdd(BaseLayer):
+    """Add tensors"""
+    def __init__(self):
+        super(BaseAdd, self).__init__()
+
+
+class BaseSub(BaseLayer):
+    """Subtract tensors"""
+    def __init__(self):
+        super(BaseSub, self).__init__()
 
 
 ###############################################################################

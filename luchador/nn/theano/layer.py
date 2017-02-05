@@ -16,7 +16,8 @@ __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
-    'Flatten', 'Concat', 'TrueDiv',
+    'Flatten', 'TrueDiv', 'Mean',
+    'Concat', 'Add', 'Sub',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
 ]
@@ -373,6 +374,34 @@ class Concat(LayerMixin, base_layer.BaseConcat):
         return _wrap_output(output, shape, 'output')
 
 
+class Add(LayerMixin, base_layer.BaseAdd):
+    """Implement Add layer in Theano
+
+    See :any: `BaseAdd` for detail.
+    """
+    def _build(self, var_list):
+        if len(var_list) < 2:
+            raise ValueError('var_list must contain more than 1 tensor')
+
+        ret = var_list[0]
+        for var in var_list[1:]:
+            ret = ret + var
+        return ret
+
+
+class Sub(LayerMixin, base_layer.BaseAdd):
+    """Implement Sub layer in Theano
+
+    See :any: `BaseSub` for detail.
+    """
+    def _build(self, var_list):
+        if len(var_list) == 2:
+            raise ValueError('var_list must be 2 tensors')
+
+        return var_list[0] - var_list[1]
+
+
+###############################################################################
 class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
     """Implement TrueDiv layer in Theano.
 
@@ -387,6 +416,15 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
             self._instantiate_denominator(input_tensor.dtype)
         output_tensor = input_tensor.unwrap() / self.denom
         return _wrap_output(output_tensor, input_tensor.shape, 'output')
+
+
+class Mean(LayerMixin, base_layer.BaseMean):
+    """Implement Mean layer in Theano.
+
+    See :any:`BaseMean` for detail.
+    """
+    def _build(self, input_tensor):
+        return input_tensor.mean(**self.args)
 
 
 ###############################################################################
