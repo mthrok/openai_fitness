@@ -49,14 +49,17 @@ def make_model(model_config):
 
     Parameters
     ----------
-    model_config : dict
-        model configuration.
+    model_config : dict or list
+        model configuration in dict or list of configurations.
 
     Returns
     -------
-    Model
-        Resulting model
+    Model or list of Model
+        Resulting models
     """
+    if isinstance(model_config, list):
+        return [make_model(cfg) for cfg in model_config]
+
     _type = model_config['model_type']
     if _type == 'Sequential':
         model = make_sequential_model(model_config['layer_configs'])
