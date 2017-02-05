@@ -221,6 +221,18 @@ class BaseTanh(BaseLayer):
         super(BaseTanh, self).__init__()
 
 
+class BaseSin(BaseLayer):
+    """Apply sin activation elementwise"""
+    def __init__(self):
+        super(BaseSin, self).__init__()
+
+
+class BaseCos(BaseLayer):
+    """Apply cos activation elementwise"""
+    def __init__(self):
+        super(BaseCos, self).__init__()
+
+
 class BaseSoftmax(BaseLayer):
     """Apply softmax activation elementwise"""
     def __init__(self):

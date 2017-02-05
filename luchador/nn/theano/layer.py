@@ -15,7 +15,9 @@ from . import scope, wrapper, initializer
 __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
-    'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
+    'ReLU', 'Softplus',
+    'Sigmoid', 'Softmax',
+    'Tanh', 'Sin', 'Cos',
     'Flatten', 'TrueDiv', 'Mean',
     'Concat', 'Add', 'Sub',
     'BatchNormalization',
@@ -294,6 +296,28 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.tanh(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
+
+
+class Sin(LayerMixin, base_layer.BaseSin):
+    """Implement Sin layer in Theano
+
+    See :any:`BaseSin` for detail.
+    """
+    def _build(self, input_tensor):
+        input_shape = input_tensor.shape
+        output_tensor = T.sin(input_tensor.unwrap())
+        return _wrap_output(output_tensor, input_shape, name='output')
+
+
+class Cos(LayerMixin, base_layer.BaseCos):
+    """Implement Cos layer in Theano
+
+    See :any:`BaseSin` for detail.
+    """
+    def _build(self, input_tensor):
+        input_shape = input_tensor.shape
+        output_tensor = T.cos(input_tensor.unwrap())
         return _wrap_output(output_tensor, input_shape, name='output')
 
 

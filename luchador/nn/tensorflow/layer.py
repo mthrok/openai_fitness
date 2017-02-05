@@ -19,7 +19,9 @@ from . import scope, wrapper, initializer
 __all__ = [
     'LayerMixin',
     'Dense', 'Conv2D',
-    'ReLU', 'Sigmoid', 'Softmax', 'Softplus',
+    'ReLU', 'Softplus',
+    'Sigmoid', 'Softmax',
+    'Tanh', 'Sin', 'Cos',
     'Flatten', 'TrueDiv', 'Mean',
     'Concat', 'Add', 'Sub',
     'BatchNormalization',
@@ -267,6 +269,26 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
     """
     def _build(self, input_tensor):
         output = tf.tanh(input_tensor.unwrap(), 'output')
+        return _wrap_output(output)
+
+
+class Sin(LayerMixin, base_layer.BaseSin):
+    """Implement Sin in Tensorflow.
+
+    See :any:`BaseSin` for detail.
+    """
+    def _build(self, input_tensor):
+        output = tf.sin(input_tensor.unwrap(), 'output')
+        return _wrap_output(output)
+
+
+class Cos(LayerMixin, base_layer.BaseCos):
+    """Implement Cos in Tensorflow.
+
+    See :any:`BaseCos` for detail.
+    """
+    def _build(self, input_tensor):
+        output = tf.cos(input_tensor.unwrap(), 'output')
         return _wrap_output(output)
 
 
