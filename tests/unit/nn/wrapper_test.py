@@ -1,6 +1,7 @@
 """Test Wapper methods"""
 from __future__ import absolute_import
 
+import uuid
 import numpy as np
 
 from luchador import nn
@@ -28,14 +29,23 @@ class TestVariableStore(fixture.TestCase):
         with nn.variable_scope(scope, reuse=True):
             self.assertIs(variable, nn.get_variable(var_name))
 
-    def test_get_tensor_retrieves_existing_tensor(self):
-        """get_variable retrieve existing variable"""
-        name = self.get_scope()
+    def test_get_tensor_from_global_scope(self):
+        """get_variable retrieve existing variable from global scope"""
+        name = uuid.uuid4()
         self.assertTrue(name not in nn.base.wrapper._TENSORS)
         tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
         self.assertTrue(name in nn.base.wrapper._TENSORS)
         self.assertIs(tensor, nn.base.wrapper._TENSORS[name])
         self.assertIs(tensor, nn.get_tensor(name))
+
+    def test_get_tensor_from_current_scope(self):
+        """get_variable retrieve existing variable from current scope"""
+        scope, name = self.get_scope(), uuid.uuid4()
+        with nn.variable_scope(scope):
+            tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
+            self.assertIs(tensor, nn.get_tensor(name))
+        with self.assertRaises(ValueError):
+            nn.get_tensor(name)
 
 
 class TestTensorOpsMult(fixture.TestCase):

@@ -12,7 +12,7 @@ import StringIO
 import yaml
 
 from luchador.util import get_subclasses
-from luchador.nn.base import BaseWrapper, get_tensor
+import luchador.nn
 
 from .model.sequential import make_sequential_model
 
@@ -24,7 +24,7 @@ _LG = logging.getLogger(__name__)
 
 
 def _get_input():
-    for class_ in get_subclasses(BaseWrapper):
+    for class_ in get_subclasses(luchador.nn.base.wrapper.BaseWrapper):
         if class_.__name__ == 'Input':
             return class_
     raise ValueError('`Input` class is not defined in current backend.')
@@ -38,7 +38,7 @@ def _make_input(config):
     if type_ == 'Input':
         input_ = _get_input()(**config['args'])
     elif type_ == 'Tensor':
-        input_ = get_tensor(name=config['name'])
+        input_ = luchador.nn.get_tensor(name=config['name'])
     else:
         raise ValueError('Unexpected Input type: {}'.format(type_))
     return input_

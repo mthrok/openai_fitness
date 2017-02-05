@@ -5,7 +5,7 @@ import logging
 from collections import OrderedDict
 
 __all__ = [
-    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation', 'get_tensor']
+    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation']
 
 _LG = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def retrieve_variable(name):
     return _VARIABLES.get(name)
 
 
-def get_tensor(name):
+def retrieve_tensor(name):
     """Get tensor from global list of tensors
 
     Parameters
