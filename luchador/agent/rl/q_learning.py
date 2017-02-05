@@ -96,15 +96,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         if q_learning_config is not None:
             _validate_q_learning_config(**q_learning_config)
 
-    def __call__(self, q_network_maker):
-        """Build computation graph (error and sync ops) for Q learning
-
-        Args:
-          q_network_maker(function): Model factory function which are called
-            without any arguments and return Model object
-        """
-        self.build(q_network_maker)
-
     def build(self, model_def, initial_parameter):
         """Build computation graph (error and sync ops) for Q learning
 
