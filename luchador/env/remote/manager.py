@@ -44,7 +44,7 @@ _LG = logging.getLogger(__name__)
 def _create_temp_environment_file(config):
     _LG.info('Creating environment config file')
     file_ = tempfile.NamedTemporaryFile(delete=False)
-    yaml.dump(config, file_)
+    yaml.dump(config, file_, Dumper=yaml.RoundTripDumper)
     return file_
 
 
