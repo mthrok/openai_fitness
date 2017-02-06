@@ -10,7 +10,7 @@ __all__ = ['load_config', 'pprint_dict']
 def load_config(filepath):
     """Load yaml file"""
     with open(filepath) as file_:
-        return yaml.load(file_)
+        return yaml.safe_load(file_)
 
 
 def pprint_dict(dictionary):
