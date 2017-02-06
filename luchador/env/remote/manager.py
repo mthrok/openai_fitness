@@ -35,7 +35,7 @@ import logging
 import tempfile
 import subprocess
 
-import yaml
+import ruamel.yaml as yaml
 import flask
 
 _LG = logging.getLogger(__name__)

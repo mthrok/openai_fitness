@@ -97,7 +97,7 @@ def _setup():
         install_requires=[
             'Pillow',  # For scipy.misc.imresize
             'h5py',
-            'pyyaml',
+            'ruamel.yaml',
             'pygame',
             'pyglet',
             'flask',

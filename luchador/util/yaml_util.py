@@ -1,7 +1,7 @@
 """Utility functions related to YAML, used throughout luchador"""
 from __future__ import absolute_import
 
-import yaml
+import ruamel.yaml as yaml
 
 
 __all__ = ['load_config', 'pprint_dict']

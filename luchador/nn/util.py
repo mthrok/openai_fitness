@@ -9,7 +9,7 @@ import os
 import logging
 import StringIO
 
-import yaml
+import ruamel.yaml as yaml
 
 from luchador.util import get_subclasses
 import luchador.nn
