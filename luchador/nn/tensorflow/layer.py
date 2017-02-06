@@ -52,15 +52,15 @@ def _get_initializers(cfg, with_bias):
     w_cfg = cfg.get('weight')
     ret = {}
     ret['weight'] = (
-        base_initializer.get_initializer(w_cfg['name'])(**w_cfg['args'])
+        base_initializer.get_initializer(w_cfg['typename'])(**w_cfg['args'])
         if w_cfg else initializer.Xavier()
     )
 
     if with_bias:
-        b_cfg = cfg.get('bias')
+        _cfg = cfg.get('bias')
         ret['bias'] = (
-            base_initializer.get_initializer(b_cfg['name'])(**b_cfg['args'])
-            if b_cfg else initializer.Constant(0.1)
+            base_initializer.get_initializer(_cfg['typename'])(**_cfg['args'])
+            if _cfg else initializer.Constant(0.1)
         )
 
     return ret

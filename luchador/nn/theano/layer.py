@@ -53,10 +53,10 @@ def _get_initializers(cfg, with_bias):
     )
 
     if with_bias:
-        b_cfg = cfg.get('bias')
+        _cfg = cfg.get('bias')
         ret['bias'] = (
-            base_initializer.get_initializer(b_cfg['typename'])(**b_cfg['args'])
-            if b_cfg else initializer.Constant(0.1)
+            base_initializer.get_initializer(_cfg['typename'])(**_cfg['args'])
+            if _cfg else initializer.Constant(0.1)
         )
 
     return ret
