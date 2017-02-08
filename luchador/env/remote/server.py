@@ -103,7 +103,6 @@ import json
 import logging
 
 import flask
-import cheroot.wsgi
 
 from .util import serialize_outcome
 
@@ -177,22 +176,3 @@ def create_env_app(env):
     app.attr = attr
     _reset()
     return app
-
-
-###############################################################################
-def create_server(app, port=5000, host='0.0.0.0'):
-    """Mount application on cherrypy WSGI server
-
-    Parameters
-    ----------
-    app : a dict or list of (path_prefix, app) pairs
-        See :py:func:`create_app`
-
-    Returns
-    -------
-    WSGIServer object
-    """
-    dispatcher = cheroot.wsgi.WSGIPathInfoDispatcher({'/': app})
-    server = cheroot.wsgi.WSGIServer((host, port), dispatcher)
-    app.attr['server'] = server
-    return server

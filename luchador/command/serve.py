@@ -10,7 +10,7 @@ _LG = logging.getLogger(__name__)
 
 
 def _run_server(app, port):
-    server = luchador.env.remote.create_server(app, port=port)
+    server = luchador.util.create_server(app, port=port)
     _LG.info('Starting server on port %d', port)
     try:
         server.start()
