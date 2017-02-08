@@ -92,3 +92,29 @@ class SessionTest(fixture.TestCase):
             else:
                 np.testing.assert_almost_equal(val1, w_0)
                 np.testing.assert_almost_equal(val2, w_0 - val0)
+
+    def test_apply_gradient_directory(self):
+        """Variables can be updated by appyling gradient directly"""
+        w_0 = 6
+        with nn.variable_scope(self.get_scope()):
+            x = nn.Input(shape=(), name='x')
+            initializer = nn.initializer.Constant(w_0)
+            w = nn.get_variable(
+                name='w', shape=(),
+                initializer=initializer
+            )
+            y = w * x
+
+            sgd = nn.optimizer.SGD(learning_rate=1.0)
+            update_op = sgd.minimize(y, w)
+            dw = nn.get_tensor('{}_grad'.format(w.name))
+
+            session = nn.Session()
+            session.initialize()
+
+            val0 = 3.
+
+            session.run(updates=update_op, givens={dw: val0})
+            val_w = session.run(outputs=w)
+
+            np.testing.assert_almost_equal(val_w, w_0 - val0)
