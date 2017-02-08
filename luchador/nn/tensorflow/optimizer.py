@@ -102,15 +102,19 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         This also store slot variables of TF native Optimizers to luchador
         Optimizer.
 
-        Args:
-          grads_and_vars (list of Tensor pairs): Value returned by
-                                                 compute_gradient method.
+        Parameters
+        ----------
+        grads_and_vars : list of tensorflow Tensor pairs
+            Value returned by compute_gradient method.
 
-          **kwargs: Other arguments passed to apply_gradients of
-                    underlying Tenasorflow native Optimizer.
+        **kwargs :
+            Other arguments passed to apply_gradients of underlying
+            Tenasorflow native Optimizer.
 
-        Returns:
-          Operation: Operation which updates parmeter variables.
+        Returns
+        -------
+        Operation
+            Operation which updates parmeter variables.
         """
         minimize_op = self.optimizer.apply_gradients(grads_and_vars, **kwargs)
         self._register_slot(grads_and_vars)
