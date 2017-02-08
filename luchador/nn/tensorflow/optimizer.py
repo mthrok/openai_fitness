@@ -72,8 +72,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         list
             List of (gradient, variable) pairs
         """
-        wrt = [wrt] if wrt and not luchador.util.is_iteratable(wrt) else wrt
-        var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
+        wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
+        var_list = [v.unwrap() for v in wrt if v.trainable]
         return self.optimizer.compute_gradients(
             loss=loss.unwrap(), var_list=var_list, **kwargs)
 
