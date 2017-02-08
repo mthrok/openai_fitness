@@ -258,8 +258,9 @@ class Adam(OptimizerMixin, base_optimizer.BaseAdam):
     def _apply_gradients(self, grads_and_vars, **kwargs):
         # pylint: disable=protected-access
         ret = super(Adam, self)._apply_gradients(grads_and_vars, **kwargs)
-        name1 = '{}/{}'.format(self.args['name'], 'beta1_power')
-        name2 = '{}/{}'.format(self.args['name'], 'beta2_power')
+        scope_ = scope.get_variable_scope().name
+        name1 = '{}/{}/{}'.format(scope_, self.args['name'], 'beta1_power')
+        name2 = '{}/{}/{}'.format(scope_, self.args['name'], 'beta2_power')
         self.slot.extend([
             wrapper.Variable(self.optimizer._beta1_power, name=name1),
             wrapper.Variable(self.optimizer._beta2_power, name=name2),
