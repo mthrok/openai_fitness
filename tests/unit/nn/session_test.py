@@ -61,10 +61,9 @@ class SessionTest(fixture.TestCase):
         w_0 = 6
         with nn.variable_scope(self.get_scope()):
             x = nn.Input(shape=(), name='x')
-            initializer = nn.initializer.Constant(w_0)
             w = nn.get_variable(
                 name='w', shape=(),
-                initializer=initializer
+                initializer=nn.initializer.Constant(w_0),
             )
             y = w * x
 
@@ -79,29 +78,34 @@ class SessionTest(fixture.TestCase):
 
             val0 = 3.
 
-            val1 = session.run(name='test_cache', inputs={x: val0},
-                               outputs=w, updates=update_op)
-            val2 = session.run(name='test_cache', inputs={x: val0})
+            val1 = session.run(
+                outputs=w, updates=update_op,
+                name='test_cache', inputs={x: val0})
+            val2 = session.run(
+                name='test_cache', inputs={x: val0})
+            val3 = session.run(
+                name='test_cache', inputs={x: val0})
 
             # Theano updates variables after evaluating output variables
             # Tensorflow does not necessarily do the same, and we do not have
             # controll over it. So we see different value for `w`
             if luchador.get_nn_backend() == 'tensorflow':
-                np.testing.assert_almost_equal(val1, w_0 - val0)
-                np.testing.assert_almost_equal(val2, w_0 - val0 - val0)
+                np.testing.assert_almost_equal(val1, w_0 - 1 * val0)
+                np.testing.assert_almost_equal(val2, w_0 - 2 * val0)
+                np.testing.assert_almost_equal(val3, w_0 - 3 * val0)
             else:
-                np.testing.assert_almost_equal(val1, w_0)
-                np.testing.assert_almost_equal(val2, w_0 - val0)
+                np.testing.assert_almost_equal(val1, w_0 - 0 * val0)
+                np.testing.assert_almost_equal(val2, w_0 - 1 * val0)
+                np.testing.assert_almost_equal(val3, w_0 - 2 * val0)
 
     def test_apply_gradient_directory(self):
         """Variables can be updated by appyling gradient directly"""
         w_0 = 6
         with nn.variable_scope(self.get_scope()):
             x = nn.Input(shape=(), name='x')
-            initializer = nn.initializer.Constant(w_0)
             w = nn.get_variable(
                 name='w', shape=(),
-                initializer=initializer
+                initializer=nn.initializer.Constant(w_0),
             )
             y = w * x
 
@@ -113,7 +117,6 @@ class SessionTest(fixture.TestCase):
             session.initialize()
 
             val0 = 3.
-
             session.run(updates=update_op, givens={dw: val0})
             val_w = session.run(outputs=w)
 
