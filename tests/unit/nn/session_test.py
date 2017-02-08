@@ -83,9 +83,9 @@ class SessionTest(fixture.TestCase):
                                outputs=w, updates=update_op)
             val2 = session.run(name='test_cache', inputs={x: val0})
 
-            # Tensorflow updates variables after evaluating output variables
-            # Theano does not necessarily do the same, and we do not have controll
-            # over it.
+            # Theano updates variables after evaluating output variables
+            # Tensorflow does not necessarily do the same, and we do not have
+            # controll over it. So we see different value for `w`
             if luchador.get_nn_backend() == 'tensorflow':
                 np.testing.assert_almost_equal(val1, w_0 - val0)
                 np.testing.assert_almost_equal(val2, w_0 - val0 - val0)
