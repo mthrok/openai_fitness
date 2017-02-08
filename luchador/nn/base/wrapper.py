@@ -4,6 +4,8 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
+import numpy as np
+
 __all__ = [
     'BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation']
 
@@ -65,7 +67,7 @@ class BaseWrapper(object):
         self._tensor = tensor
         self.shape = tuple(shape)
         self.name = name
-        self.dtype = dtype
+        self.dtype = dtype.name if isinstance(dtype, np.dtype) else dtype
 
     def unwrap(self):
         """Get the underlying tensor object"""
