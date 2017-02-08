@@ -51,7 +51,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
     def _minimize(self, loss, wrt=None, **kwargs):
         kws1, kws2 = _parse_kwargs(kwargs)
         grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
-        return self._apply_gradients(grads_and_vars, **kws2)
+        grads_and_vars_ = [g_v for g_v in grads_and_vars if g_v[0]]
+        return self._apply_gradients(grads_and_vars_, **kws2)
 
     def _compute_gradients(self, loss, wrt, **kwargs):
         """Compute gradient
@@ -74,8 +75,16 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         """
         wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
         var_list = [v.unwrap() for v in wrt if v.trainable]
-        return self.optimizer.compute_gradients(
+        grads_and_vars = self.optimizer.compute_gradients(
             loss=loss.unwrap(), var_list=var_list, **kwargs)
+        ret, i = [], 0
+        for var in wrt:
+            if var.trainable:
+                ret.append(grads_and_vars[i])
+                i += 1
+            else:
+                ret.append((None, var.unwrap()))
+        return ret
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
         """Apply grads_and_vars to optimizer to create minimization Operation

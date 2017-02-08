@@ -26,7 +26,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
 
     def _minimize(self, loss, wrt, **kwargs):
         grads_and_vars = self.compute_gradients(loss, wrt, **kwargs)
-        return self._apply_gradients(grads_and_vars)
+        grads_and_vars_ = [g_v for g_v in grads_and_vars if g_v[0]]
+        return self._apply_gradients(grads_and_vars_)
 
     @staticmethod
     def _compute_gradients(loss, wrt, **kwargs):
@@ -49,9 +50,16 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
             List of (gradient, variable) pairs
         """
         wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
-        loss, wrt = loss.unwrap(), [v.unwrap() for v in wrt if v.trainable]
-        grads = theano.grad(loss, wrt, **kwargs)
-        return [(grad, var) for grad, var in zip(grads, wrt)]
+        wrt_ = [v.unwrap() for v in wrt if v.trainable]
+        grads = theano.grad(loss.unwrap(), wrt_, **kwargs)
+        ret, i = [], 0
+        for var in wrt:
+            if var.trainable:
+                ret.append((grads[i], wrt_[i]))
+                i += 1
+            else:
+                ret.append((None, var.unwrap()))
+        return ret
 
     def _create_slot_var(self, var, slot_name):
         """Create slot variable for the given Variable
