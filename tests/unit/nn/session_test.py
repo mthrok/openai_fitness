@@ -121,3 +121,27 @@ class SessionTest(fixture.TestCase):
             val_w = session.run(outputs=w)
 
             np.testing.assert_almost_equal(val_w, w_0 - val0)
+
+    def test_check_optimizer_slot(self):
+        """Slot variables are updated when applying gradient directly"""
+        name, b1_0, b2_0 = 'Adam', 0.5, 0.4
+        opt = nn.optimizer.Adam(
+            learning_rate=1.0, name=name, beta1=b1_0, beta2=b2_0)
+        with nn.variable_scope(self.get_scope()) as vs:
+            x = nn.Input(shape=(), name='x')
+            w = nn.get_variable(shape=(), name='w')
+            update_op = opt.minimize(w * x, w)
+
+            vs.reuse_variables()
+            dw = nn.get_tensor('{}_grad'.format(w.name))
+            b1 = nn.get_variable('{}/beta1_power'.format(name))
+            b2 = nn.get_variable('{}/beta2_power'.format(name))
+
+        session = nn.Session()
+        session.initialize()
+
+        for i in range(10):
+            b1_val, b2_val = session.run(outputs=[b1, b2])
+            np.testing.assert_almost_equal(b1_val, b1_0 ** (i + 1))
+            np.testing.assert_almost_equal(b2_val, b2_0 ** (i + 1))
+            session.run(updates=update_op, givens={dw: 1.0})
