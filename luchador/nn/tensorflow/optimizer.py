@@ -54,6 +54,24 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         return self._apply_gradients(grads_and_vars, **kws2)
 
     def _compute_gradients(self, loss, wrt, **kwargs):
+        """Compute gradient
+
+        Parameters
+        ----------
+        loss : Tensor
+            loss to be minimized
+
+        wrt : Variable or list of Variables
+            Term for which loss Tensor is differentiated
+
+        kwargs
+            Other arguments passed to ``tf.gradients``
+
+        Returns
+        -------
+        list
+            List of (gradient, variable) pairs
+        """
         wrt = [wrt] if wrt and not luchador.util.is_iteratable(wrt) else wrt
         var_list = [v.unwrap() for v in wrt if v.trainable] if wrt else None
         return self.optimizer.compute_gradients(
