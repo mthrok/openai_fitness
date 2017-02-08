@@ -22,9 +22,6 @@ def serialize_numpy_array(array, compress=True):
     dict
         Serialized array
 
-        type : type identifier. 'np.ndarray'
-        obj : object data, in dictionary as follow
-
         shape : list
             array shape
         dtype : str
@@ -38,13 +35,10 @@ def serialize_numpy_array(array, compress=True):
     if compress:
         str_ = zlib.compress(str_)
     return {
-        'type': 'np.ndarray',
-        'obj': {
-            'shape': array.shape,
-            'dtype': array.dtype.name,
-            'data': str_.encode('base64'),
-            'compressed': compress,
-        }
+        'shape': array.shape,
+        'dtype': array.dtype.name,
+        'data': str_.encode('base64'),
+        'compressed': compress,
     }
 
 
@@ -61,8 +55,8 @@ def deserialize_numpy_array(obj):
     NumPy ND Array
         Resulting array
     """
-    data = obj['obj']['data'].decode('base64')
-    if obj['obj']['compressed']:
+    data = obj['data'].decode('base64')
+    if obj['compressed']:
         data = zlib.decompress(data)
-    array = np.fromstring(data, dtype=obj['obj']['dtype'])
-    return array.reshape(obj['obj']['shape'])
+    array = np.fromstring(data, dtype=obj['dtype'])
+    return array.reshape(obj['shape'])

@@ -9,14 +9,17 @@ from ..base import Outcome
 
 def _serialize_state(state, compress):
     if isinstance(state, np.ndarray):
-        return serialize_numpy_array(state, compress)
-    return {'type': 'other', 'obj': state}
+        return {
+            'type': 'np.ndarray',
+            'content': serialize_numpy_array(state, compress)
+        }
+    return {'type': 'other', 'content': state}
 
 
 def _deserialize_state(obs):
     if obs['type'] == 'np.ndarray':
-        return deserialize_numpy_array(obs)
-    return obs['obj']
+        return deserialize_numpy_array(obs['content'])
+    return obs['content']
 
 
 def serialize_outcome(outcome, compress=True):
