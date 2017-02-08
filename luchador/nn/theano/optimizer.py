@@ -27,7 +27,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
     def _minimize(self, loss, wrt, **kwargs):
         grads_and_vars = self.compute_gradients(loss, wrt, **kwargs)
         grads_and_vars_ = [g_v for g_v in grads_and_vars if g_v[0] is not None]
-        return self._apply_gradients(grads_and_vars_)
+        return self.apply_gradients(grads_and_vars_)
 
     @staticmethod
     def _compute_gradients(loss, wrt, **kwargs):
@@ -59,10 +59,20 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         ret, i = [], 0
         for var in wrt:
             if var.trainable:
-                ret.append((grads[i], wrt_[i]))
+                # Gradient Tensor is registered using
+                # `<scope>/<variable_name>_grad` name pattern,
+                # so that when same variable is used to compute gradient for
+                # different loss. This way, the resulting gradients are
+                # retrievable, given that gradients were computed in
+                # different scope.
+                scope_ = scope.get_variable_scope().name
+                name = '{}/{}_grad'.format(scope_, var.name)
+                tensor = wrapper.Tensor(
+                    grads[i], shape=var.shape, name=name)
                 i += 1
             else:
-                ret.append((None, var.unwrap()))
+                tensor = None
+            ret.append((tensor, var))
         return ret
 
     def _create_slot_var(self, var, slot_name):

@@ -96,6 +96,8 @@ class BaseOptimizer(luchador.util.SerializeMixin):
         Operation
             Operation which updates parameter variables
         """
+        grads_and_vars = [
+            (grad.unwrap(), var.unwrap()) for grad, var in grads_and_vars]
         return self._apply_gradients(grads_and_vars, **kwargs)
 
     @abc.abstractmethod
