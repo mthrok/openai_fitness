@@ -1,8 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import unittest
-
 # import theano
 # theano.config.optimizer = 'None'
 # theano.config.exception_verbosity = 'high'
@@ -10,21 +8,23 @@ import unittest
 import luchador
 from luchador import nn
 
+from tests.unit import fixture
+
 BE = luchador.get_nn_backend()
 
 # pylint: disable=too-many-locals, invalid-name
 
 
-def get_y_equals_x_squared(scope, x_init):
+def _get_y_equals_x_squared(scope, x_init):
     with nn.variable_scope(scope):
         x = nn.get_variable(
             name='x', shape=(), trainable=True,
             initializer=nn.initializer.Constant(x_init))
-        y = nn.Tensor(x.unwrap() * x.unwrap(), shape=())
+        y = x * x
     return x, y
 
 
-def get_slot_var(optimizer, slot_name, var_name=None):
+def _get_slot_var(optimizer, slot_name, var_name=None):
     opt_name = optimizer.args['name']
     names = ['{}/{}'.format(opt_name, slot_name)]
     if var_name:
@@ -36,7 +36,43 @@ def get_slot_var(optimizer, slot_name, var_name=None):
     raise ValueError('No slot was found')
 
 
-class AdamTest(unittest.TestCase):
+class OptimizerGradientTest(fixture.TestCase):
+    """Test gradient computation interface IO"""
+    def test_compute_gradients_with_trainables(self):
+        """compute_gradients computes gradients for trainable wrt"""
+        with nn.variable_scope(self.get_scope()):
+            xs = [nn.get_variable(
+                name='x_{}'.format(i), shape=(), trainable=True,
+            ) for i in range(3)]
+            y = xs[0] + xs[1] + xs[2]
+
+        sgd = nn.optimizer.SGD(learning_rate=0.01)
+        grads_and_vars = sgd.compute_gradients(y, wrt=xs)
+        self.assertEqual(len(xs), len(grads_and_vars))
+        for i, (grad, var) in enumerate(grads_and_vars):
+            self.assertIs(xs[i].unwrap(), var)
+            self.assertIsNotNone(grad)
+
+    def test_compute_gradients(self):
+        """compute_gradients returns None for non-trainable wrt"""
+        with nn.variable_scope(self.get_scope()):
+            xs = [nn.get_variable(
+                name='x_{}'.format(i), shape=(), trainable=bool(i % 2),
+            ) for i in range(5)]
+            y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
+
+        sgd = nn.optimizer.SGD(learning_rate=0.01)
+        grads_and_vars = sgd.compute_gradients(y, wrt=xs)
+        self.assertEqual(len(xs), len(grads_and_vars))
+        for i, (grad, var) in enumerate(grads_and_vars):
+            self.assertIs(xs[i].unwrap(), var)
+            if i % 2:
+                self.assertIsNotNone(grad)
+            else:
+                self.assertIsNone(grad)
+
+
+class AdamTest(fixture.TestCase):
     """Test Adam Optimizer"""
     def test_beta_power_update(self):
         """Beta paramete is updated every time update is evaluated"""
@@ -45,14 +81,14 @@ class AdamTest(unittest.TestCase):
         adam = nn.optimizer.Adam(
             learning_rate=0.01, beta1=beta1, beta2=beta2, name=name)
 
-        x_tensor, y_tensor = get_y_equals_x_squared(
-            scope=self.id().replace('.', '/'), x_init=x_init_val)
+        x_tensor, y_tensor = _get_y_equals_x_squared(
+            scope=self.get_scope(), x_init=x_init_val)
 
         minimize_op = adam.minimize(loss=y_tensor, wrt=x_tensor)
-        beta1_pow_tensor = get_slot_var(adam, 'beta1_power')
-        beta2_pow_tensor = get_slot_var(adam, 'beta2_power')
-        m_tensor = get_slot_var(adam, 'm', var_name=x_tensor.name)
-        v_tensor = get_slot_var(adam, 'v', var_name=x_tensor.name)
+        beta1_pow_tensor = _get_slot_var(adam, 'beta1_power')
+        beta2_pow_tensor = _get_slot_var(adam, 'beta2_power')
+        m_tensor = _get_slot_var(adam, 'm', var_name=x_tensor.name)
+        v_tensor = _get_slot_var(adam, 'v', var_name=x_tensor.name)
 
         session = nn.Session()
         session.initialize()
@@ -115,19 +151,19 @@ class AdamTest(unittest.TestCase):
             v_val_prev = v_val
 
 
-class AdamaxTest(unittest.TestCase):
+class AdamaxTest(fixture.TestCase):
     def test_beta_power_update(self):
         """Beta parameter is updated every time update is evaluated"""
         beta1, beta2, x_init_val = 0.9, 0.999, 3.0
         adamax = nn.optimizer.Adamax(learning_rate=0.01, beta1=beta1)
 
-        x_tensor, y_tensor = get_y_equals_x_squared(
-            scope=self.id().replace('.', '/'), x_init=x_init_val)
+        x_tensor, y_tensor = _get_y_equals_x_squared(
+            scope=self.get_scope(), x_init=x_init_val)
 
         minimize_op = adamax.minimize(loss=y_tensor, wrt=x_tensor)
-        beta1_pow_tensor = get_slot_var(adamax, 'beta1_power')
-        m_tensor = get_slot_var(adamax, 'm', var_name=x_tensor.name)
-        u_tensor = get_slot_var(adamax, 'u', var_name=x_tensor.name)
+        beta1_pow_tensor = _get_slot_var(adamax, 'beta1_power')
+        m_tensor = _get_slot_var(adamax, 'm', var_name=x_tensor.name)
+        u_tensor = _get_slot_var(adamax, 'u', var_name=x_tensor.name)
 
         session = nn.Session()
         session.initialize()

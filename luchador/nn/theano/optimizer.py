@@ -51,6 +51,10 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         """
         wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
         wrt_ = [v.unwrap() for v in wrt if v.trainable]
+
+        if not wrt_:
+            raise ValueError('No variables to optimize.')
+
         grads = theano.grad(loss.unwrap(), wrt_, **kwargs)
         ret, i = [], 0
         for var in wrt:
