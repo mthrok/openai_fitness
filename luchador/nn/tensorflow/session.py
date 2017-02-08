@@ -96,6 +96,7 @@ class Session(BaseSession):
     def __init__(self, graph=None, config=None):
         super(Session, self).__init__()
         self.session = tf.Session('', graph, config)
+        self._cached_functions = {}
 
     @property
     def graph(self):
@@ -103,24 +104,42 @@ class Session(BaseSession):
 
     def run(self, outputs=None, inputs=None,
             updates=None, givens=None, name=None):
-        """
+        """Run computation and update values
 
-        Args:
-          outputs (list of Tensors): Tensors of which values are fetched
+        Parameters
+        ----------
+        outputs : list of Tensors
+            Tensors of which values are fetched
 
-          inputs (dict): Keys are the input Tensors required to compute values
-                         of output Tensors. Values are actual values to feed
-                         to Tensors.
+        inputs : dict
+            Keys are the input Tensors required to compute values of output
+            Tensors. Values are actual values to feed to Tensors.
 
-          updates (Operation or list of Operations):
+        updates : Operation or list of Operations
+            Updates variables
 
-          givens (dict):
+        givens : dict
+            Same as inputs
 
-          name (str): Not used. Compatibility for theano backend
+        name : str
+            When given, outputs and updates are cached so that the next time
+            calling the same operation, only inputs and givens are required.
+
+        Returns
+        -------
+        [list of] NumPy ND Arrays
+            The resulting values corresponding the given `outputs` values
         """
         outputs = outputs if outputs else []
         inputs = inputs if inputs else {}
-        fetches = _construct_fetches(outputs, updates)
+        if name in self._cached_functions:
+            fetches = self._cached_functions[name]
+        else:
+            fetches = _construct_fetches(outputs, updates)
+
+        if name and name not in self._cached_functions:
+            self._cached_functions[name] = fetches
+
         feed_dict = _construct_feed_dict(inputs, givens)
         values = self.session.run(fetches, feed_dict=feed_dict)
         if luchador.util.is_iteratable(outputs):
