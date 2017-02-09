@@ -18,22 +18,22 @@ class _ScopeTestCase(TestCase):
 
     def tearDown(self):
         # After each test, scope should be reset to root
-        expected, found = '', be.scope._get_scope()
+        expected, found = '', be.wrapper._get_scope()
         # Sanitize global scope for the next test in case something went wrong
-        be.scope._reset()
+        be.wrapper._reset()
         self.assertEqual(
             expected, found,
             'Variable scope was not properly closed in the last test. ')
 
     def _check_scope(self, expected, found=None):
-        found = found or be.scope._get_scope()
+        found = found or be.wrapper._get_scope()
         self.assertEqual(
             expected, found,
             'Failed to update current variable scope. '
         )
 
     def _check_reuse(self, expected, found=None):
-        found = found or be.scope._get_flag()
+        found = found or be.wrapper._get_flag()
         self.assertEqual(
             expected, found,
             'Failed to update current reuse flag. '
@@ -90,8 +90,8 @@ class TestVariableScopeClass(_ScopeTestCase):
         """VariableScope revert current variable scope after close"""
         scopes = [self.get_scope(scope) for scope in ['aaa', 'bbb', 'ccc']]
         for scope in scopes:
-            expected_scope = be.scope._get_scope()
-            expected_reuse = be.scope._get_flag()
+            expected_scope = be.wrapper._get_scope()
+            expected_reuse = be.wrapper._get_flag()
             with be.scope.VariableScope(False, scope):
                 pass
             self._check_scope(expected_scope)
@@ -188,7 +188,7 @@ class TestGetVariable(_ScopeTestCase):
         """get_variable create variable"""
         scope = self.get_scope()
         var1 = be.scope.get_variable(scope, shape=[3, 1])
-        be.scope._set_flag(True)
+        be.wrapper._set_flag(True)
         var2 = be.scope.get_variable(scope)
         self.assertIs(
             var1.unwrap(), var2.unwrap(),
@@ -197,7 +197,7 @@ class TestGetVariable(_ScopeTestCase):
 
     def test_get_variable_raises_when_reuseing_non_existent_variable(self):
         """get_variable raise when trying to reuse non existent variable"""
-        be.scope._set_flag(True)
+        be.wrapper._set_flag(True)
         try:
             be.scope.get_variable('non_existing_variable_name')
         except ValueError:

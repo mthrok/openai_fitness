@@ -13,6 +13,38 @@ from luchador.nn.base.wrapper import Operation
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
 
+###############################################################################
+_CURRENT_REUSE_FLAG = False
+_CURRENT_VARIABLE_SCOPE = ''
+
+
+def _set_flag(flag):
+    # pylint: disable=global-statement
+    global _CURRENT_REUSE_FLAG
+    _CURRENT_REUSE_FLAG = flag
+
+
+def _set_scope(scope):
+    # pylint: disable=global-statement
+    global _CURRENT_VARIABLE_SCOPE
+    _CURRENT_VARIABLE_SCOPE = scope
+
+
+def _get_flag():
+    return _CURRENT_REUSE_FLAG
+
+
+def _get_scope():
+    return _CURRENT_VARIABLE_SCOPE
+
+
+def _reset():
+    """Reset variable scope and remove cached variables. For Testing"""
+    _set_flag(False)
+    _set_scope('')
+
+
+###############################################################################
 def _is_same_shape(shape1, shape2):
     if not len(shape1) == len(shape2):
         return False

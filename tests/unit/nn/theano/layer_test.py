@@ -26,7 +26,7 @@ class TestConv2D(TestCase):
     longMessage = True
 
     def setUp(self):
-        be.scope._reset()
+        be.wrapper._reset()
 
     def test_map_border_mode(self):
         """padding string is correctly mapped to border_mode"""
