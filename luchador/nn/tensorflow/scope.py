@@ -12,7 +12,7 @@ from . import wrapper
 
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope',
-    'name_scope', 'get_variable', 'get_tensor',
+    'name_scope', 'get_variable', 'get_tensor', 'get_input',
 ]
 
 
@@ -65,6 +65,25 @@ def get_tensor(name):
     except ValueError:
         pass
     return base_wrapper.retrieve_tensor(name)
+
+
+def get_input(name):
+    """Fetch Input with name in global scope or the current scope
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    Input
+    """
+    try:
+        scope = tf.get_variable_scope().name
+        return base_wrapper.retrieve_input('{}/{}'.format(scope, name))
+    except ValueError:
+        pass
+    return base_wrapper.retrieve_input(name)
 
 
 def get_variable(

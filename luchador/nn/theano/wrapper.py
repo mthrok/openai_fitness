@@ -361,7 +361,7 @@ def _create_placeholder(dtype, n_dim, name):
     return tensor
 
 
-class Input(TensorMixin, base_wrapper.BaseWrapper):
+class Input(TensorMixin, base_wrapper.BaseInput):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which wraps TensorVariable

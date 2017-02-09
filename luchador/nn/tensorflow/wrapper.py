@@ -296,7 +296,7 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
 
-class Input(TensorMixin, base_wrapper.BaseWrapper):
+class Input(TensorMixin, base_wrapper.BaseInput):
     """Represents network input."""
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which wraps placeholder

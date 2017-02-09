@@ -15,6 +15,7 @@ from .scope import (  # noqa: F401
     get_variable_scope,
     get_variable,
     get_tensor,
+    get_input,
 )
 from .wrapper import (  # noqa: F401
     Input,

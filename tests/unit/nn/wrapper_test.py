@@ -663,3 +663,24 @@ class TestTensorOpsTile(fixture.TestCase):
         dtype, in_shape, pattern = 'float32', (None, 8), (3, 4)
         in_val = np.random.random((3, 8)).astype(dtype)
         self._test_tile(in_shape, pattern, in_val=in_val, dtype=dtype)
+
+
+class TestGetInput(fixture.TestCase):
+    """Test Input fetch"""
+    def test_get_input(self):
+        """Test if get_input correctly fetch Input object"""
+        scope = self.get_scope()
+        with nn.variable_scope(scope):
+            input_0 = nn.Input(shape=[], name='input_a')
+            input_1 = nn.get_input('input_a')
+
+            self.assertIs(input_0, input_1)
+
+            with self.assertRaises(ValueError):
+                nn.get_input('input_b')
+
+        input_2 = nn.get_input('{}/input_a'.format(scope))
+        self.assertIs(input_0, input_2)
+
+        with self.assertRaises(ValueError):
+            nn.get_input('{}/input_b'.format(scope))
