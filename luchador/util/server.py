@@ -5,12 +5,13 @@ __all__ = ['create_server']
 
 
 def create_server(app, port=5000, host='0.0.0.0'):
-    """Mount application on cherrypy WSGI server
+    """Mount application on cheroot WSGI server
 
     Parameters
     ----------
-    app : a dict or list of (path_prefix, app) pairs
-        See :py:func:`create_app`
+    app
+        WSGI compilant application object.
+        See :py:func:`create_env_app` for example.
 
     Returns
     -------
