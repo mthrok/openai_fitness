@@ -41,12 +41,6 @@ class LayerMixin(object):
         return wrapper.Operation(tf.group(*self.update_operations.values()))
 
 
-def _wrap_output(tensor, name='output'):
-    """Prefix the name of output tensor with current scope"""
-    name = '{}/{}'.format(tf.get_variable_scope().name, name)
-    return wrapper.Tensor(tensor, name=name)
-
-
 def _get_initializers(cfg, with_bias):
     """Initializer for Dense and Conv2D"""
     w_cfg = cfg.get('weight')
@@ -99,7 +93,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
         if self.args['with_bias']:
             bias = self._get_parameter('bias').unwrap()
             output = tf.add(output, bias, name='output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 def _map_padding(padding):
@@ -230,16 +224,16 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         cudnn = self.args.get('use_cudnn_on_gpu', True)
         fmt = self._get_format()
         padding = self._get_padding()
-        output_tensor = tf.nn.conv2d(
+        output = tf.nn.conv2d(
             input_tensor.unwrap(), weight, strides=strides,
             padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=fmt, name=name)
 
         if self.args['with_bias']:
             bias = self._get_parameter('bias').unwrap()
-            output_tensor = tf.nn.bias_add(
-                output_tensor, bias, data_format=fmt, name='output')
-        return _wrap_output(output_tensor)
+            output = tf.nn.bias_add(
+                output, bias, data_format=fmt, name='output')
+        return wrapper.Tensor(output, name='output')
 
 
 class ReLU(LayerMixin, base_layer.BaseReLU):
@@ -249,7 +243,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
     """
     def _build(self, input_tensor):
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
@@ -259,7 +253,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
     """
     def _build(self, input_tensor):
         output = tf.sigmoid(input_tensor.unwrap(), 'output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Tanh(LayerMixin, base_layer.BaseTanh):
@@ -269,7 +263,7 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
     """
     def _build(self, input_tensor):
         output = tf.tanh(input_tensor.unwrap(), 'output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Sin(LayerMixin, base_layer.BaseSin):
@@ -279,7 +273,7 @@ class Sin(LayerMixin, base_layer.BaseSin):
     """
     def _build(self, input_tensor):
         output = tf.sin(input_tensor.unwrap(), 'output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Cos(LayerMixin, base_layer.BaseCos):
@@ -289,7 +283,7 @@ class Cos(LayerMixin, base_layer.BaseCos):
     """
     def _build(self, input_tensor):
         output = tf.cos(input_tensor.unwrap(), 'output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
@@ -299,7 +293,7 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
     """
     def _build(self, input_tensor):
         output = tf.nn.softmax(input_tensor.unwrap())
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Softplus(LayerMixin, base_layer.BaseSoftplus):
@@ -309,7 +303,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
     """
     def _build(self, input_tensor):
         output = tf.nn.softplus(input_tensor.unwrap())
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 ###############################################################################
@@ -323,7 +317,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
         out_shape = (-1, n_nodes)
         output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Concat(LayerMixin, base_layer.BaseConcat):
@@ -334,7 +328,7 @@ class Concat(LayerMixin, base_layer.BaseConcat):
     def _build(self, var_list):
         values = [var.unwrap() for var in var_list]
         output = tf.concat_v2(values, axis=self.args['axis'])
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Add(LayerMixin, base_layer.BaseAdd):
@@ -385,7 +379,7 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
             self._instantiate_denominator(dtype)
 
         output = tf.truediv(tensor, self.denom, 'ouptut')
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 class Mean(LayerMixin, base_layer.BaseMean):
@@ -457,21 +451,19 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         output = tf.nn.batch_normalization(
             x=input_, mean=mean_acc, variance=var_acc, offset=offset,
             scale=scale, variance_epsilon=epsilon)
-        return _wrap_output(output)
+        return wrapper.Tensor(output, name='output')
 
 
 ###############################################################################
 class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
     """See :any:`BaseNHWC2NCHW` for detail."""
     def _build(self, input_tensor):
-        input_tensor_ = input_tensor.unwrap()
-        output_tensor_ = tf.transpose(input_tensor_, perm=(0, 3, 1, 2))
-        return _wrap_output(output_tensor_)
+        output = tf.transpose(input_tensor.unwrap(), perm=(0, 3, 1, 2))
+        return wrapper.Tensor(output, name='output')
 
 
 class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
     """See :any:`BaseNCHW2NHWC` for detail."""
     def _build(self, input_tensor):
-        input_tensor_ = input_tensor.unwrap()
-        output_tensor_ = tf.transpose(input_tensor_, perm=(0, 2, 3, 1))
-        return _wrap_output(output_tensor_)
+        output = tf.transpose(input_tensor.unwrap(), perm=(0, 2, 3, 1))
+        return wrapper.Tensor(output, name='output')

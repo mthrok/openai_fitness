@@ -83,9 +83,6 @@ def create_ones_tensor(shape, dtype, name='ones_tensor'):
         import theano.tensor as be
     else:
         import tensorflow as be
-    scope = nn.get_variable_scope().name
-    if scope:
-        name = '{}/{}'.format(scope, name)
     tensor = be.ones(shape, dtype=dtype)
     return nn.Tensor(tensor, shape=shape, name=name)
 
