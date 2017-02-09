@@ -120,15 +120,15 @@ def get_variable(
 
     # 1. Check the current variable scope
     scope = wrapper.get_scope_()
-    name = '{}/{}'.format(scope, name) if scope else name
+    name_ = '{}/{}'.format(scope, name) if scope else name
 
-    var = base_wrapper.retrieve_variable(name)
+    var = base_wrapper.retrieve_variable(name_)
     if wrapper.get_flag_():  # Search for an existing variable
         if var is None:
             raise ValueError(
                 'Variable {} does not exist, disallowed. '
                 'Did you mean to set reuse=None in VarScope?'
-                .format(name)
+                .format(name_)
             )
         return var
     else:  # Create new variable
@@ -136,12 +136,12 @@ def get_variable(
             raise ValueError(
                 'Variable {} already exists, disallowed. '
                 'Did you mean to set reuse=True in VarScope?'
-                .format(name)
+                .format(name_)
             )
         if shape is None:
             raise ValueError(
                 'Shape of a new variable ({}) must be fully defined, '
-                'but instead was {}.'.format(name, shape))
+                'but instead was {}.'.format(name_, shape))
 
         if not initializer:
             initializer = Normal(dtype=dtype)
@@ -153,6 +153,6 @@ def get_variable(
         return wrapper.Variable(
             theano.shared(
                 value=np.array(initializer.sample(shape), dtype=dtype),
-                name=name, allow_downcast=True, **kwargs
-            ), trainable=trainable,
+                name=name_, allow_downcast=True, **kwargs
+            ), trainable=trainable, name=name,
         )

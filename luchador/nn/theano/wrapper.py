@@ -305,6 +305,11 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
+def _prefix_with_scope(name):
+    scope_ = get_scope_()
+    return '{}/{}'.format(scope_, name) if scope_ else name
+
+
 class Variable(TensorMixin, base_wrapper.BaseVariable):
     """Wrap SharedVariable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
@@ -316,7 +321,7 @@ class Variable(TensorMixin, base_wrapper.BaseVariable):
             overwritten with this name, otherwise, name is constructed in the
             manner as Tensorflow.
         """
-        name = name or variable.name
+        name = _prefix_with_scope(name or variable.name)
         val = variable.get_value()
         super(Variable, self).__init__(
             tensor=variable, shape=val.shape, name=name,
@@ -335,6 +340,7 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
         """
         if -1 in shape:
             shape = [None if val < 0 else val for val in shape]
+        name = _prefix_with_scope(name) if name else None
         super(Tensor, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
 
@@ -365,6 +371,7 @@ class Input(TensorMixin, base_wrapper.BaseWrapper):
           name (str): The name of the resulting object.
           dtype (NumPy dtype or None): If None, default dtype(floatX) is used
         """
+        name = _prefix_with_scope(name) if name else None
         tensor = _create_placeholder(dtype, len(shape), name)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)

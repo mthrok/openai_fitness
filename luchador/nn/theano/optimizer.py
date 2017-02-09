@@ -59,16 +59,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         ret, i = [], 0
         for var in wrt:
             if var.trainable:
-                # Gradient Tensor is registered using
-                # `<scope>/<variable_name>_grad` name pattern,
-                # so that when same variable is used to compute gradient for
-                # different loss. This way, the resulting gradients are
-                # retrievable, given that gradients were computed in
-                # different scope.
-                scope_ = scope.get_variable_scope().name
-                name = '{}/{}_grad'.format(scope_, var.name)
-                tensor = wrapper.Tensor(
-                    grads[i], shape=var.shape, name=name)
+                name_ = '{}_grad'.format(var.name)
+                tensor = wrapper.Tensor(grads[i], shape=var.shape, name=name_)
                 i += 1
             else:
                 tensor = None

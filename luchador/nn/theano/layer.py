@@ -37,12 +37,6 @@ class LayerMixin(object):  # pylint: disable=too-few-public-methods
         return wrapper.Operation(self.update_operations)
 
 
-def _wrap_output(tensor, shape, name='output'):
-    """Prefix the name of output tensor with current scope"""
-    name = '{}/{}'.format(scope.get_variable_scope().name, name)
-    return wrapper.Tensor(tensor, shape=shape, name=name)
-
-
 def _get_initializers(cfg, with_bias):
     """Initializer for Dense and Conv2D"""
     w_cfg = cfg.get('weight')
@@ -58,7 +52,6 @@ def _get_initializers(cfg, with_bias):
             base_initializer.get_initializer(_cfg['typename'])(**_cfg['args'])
             if _cfg else initializer.Constant(0.1)
         )
-
     return ret
 
 
@@ -93,13 +86,13 @@ class Dense(LayerMixin, base_layer.BaseDense):
             self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         weight = self._get_parameter('weight').unwrap()
-        output_tensor = T.dot(input_tensor.unwrap(), weight)
+        output = T.dot(input_tensor.unwrap(), weight)
 
         if self.args['with_bias']:
             bias = self._get_parameter('bias').unwrap()
-            output_tensor = output_tensor + bias
+            output = output + bias
         output_shape = (input_shape[0], self.args['n_nodes'])
-        return _wrap_output(output_tensor, output_shape, 'output')
+        return wrapper.Tensor(output, shape=output_shape, name='output')
 
 
 def _map_border_mode(padding):
@@ -262,7 +255,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
 
         output_shape = self._get_output_shape(input_shape, filter_shape)
         _LG.debug('    output_shape: %s', output_shape)
-        return _wrap_output(output_tensor, output_shape, 'output')
+        return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
 class ReLU(LayerMixin, base_layer.BaseReLU):
@@ -274,7 +267,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
         """Build rectified linear activation operation on input tensor"""
         input_shape = input_tensor.shape
         output_tensor = T.nnet.relu(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
@@ -285,7 +278,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.sigmoid(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Tanh(LayerMixin, base_layer.BaseTanh):
@@ -296,7 +289,7 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.tanh(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Sin(LayerMixin, base_layer.BaseSin):
@@ -307,7 +300,7 @@ class Sin(LayerMixin, base_layer.BaseSin):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.sin(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Cos(LayerMixin, base_layer.BaseCos):
@@ -318,7 +311,7 @@ class Cos(LayerMixin, base_layer.BaseCos):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.cos(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Softmax(LayerMixin, base_layer.BaseSoftmax):
@@ -329,7 +322,7 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.softmax(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 class Softplus(LayerMixin, base_layer.BaseSoftplus):
@@ -340,7 +333,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         output_tensor = T.nnet.softplus(input_tensor.unwrap())
-        return _wrap_output(output_tensor, input_shape, name='output')
+        return wrapper.Tensor(output_tensor, shape=input_shape, name='output')
 
 
 ###############################################################################
@@ -359,7 +352,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         output_shape = (input_shape[0] or -1, n_nodes)
         output_tensor = T.reshape(input_tensor.unwrap(), output_shape)
         _LG.debug('    output_shape: %s', output_shape)
-        return _wrap_output(output_tensor, output_shape, 'output')
+        return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
 def _compute_concat_shape(shapes, axis):
@@ -395,7 +388,7 @@ class Concat(LayerMixin, base_layer.BaseConcat):
         shape_list = [var.shape for var in var_list]
         shape = _compute_concat_shape(shape_list, axis)
         output = T.concatenate(tensor_list=tensor_list, axis=axis)
-        return _wrap_output(output, shape, 'output')
+        return wrapper.Tensor(output, shape=shape, name='output')
 
 
 class Add(LayerMixin, base_layer.BaseAdd):
@@ -438,8 +431,8 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
     def _build(self, input_tensor):
         if self.denom is None:
             self._instantiate_denominator(input_tensor.dtype)
-        output_tensor = input_tensor.unwrap() / self.denom
-        return _wrap_output(output_tensor, input_tensor.shape, 'output')
+        output = input_tensor.unwrap() / self.denom
+        return wrapper.Tensor(output, shape=input_tensor.shape, name='output')
 
 
 class Mean(LayerMixin, base_layer.BaseMean):
@@ -519,27 +512,25 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
         stdi = T.inv(T.sqrt(var_acc + self.args['epsilon']))
         output = scale * (input_tensor_ - mean_acc) * stdi + offset
-        return _wrap_output(output, input_tensor.shape, 'output')
+        return wrapper.Tensor(output, shape=input_tensor.shape, name='output')
 
 
 ###############################################################################
 class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
     """See :any:`BaseNHWC2NCHW` for detail."""
     def _build(self, input_tensor):
-        input_tensor_ = input_tensor.unwrap()
-        output_tensor_ = input_tensor_.dimshuffle(0, 3, 1, 2)
+        output_tensor = input_tensor.unwrap().dimshuffle(0, 3, 1, 2)
 
         shape = input_tensor.shape
         output_shape = (shape[0], shape[3], shape[1], shape[2])
-        return _wrap_output(output_tensor_, output_shape, 'output')
+        return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
 class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
     """See :any:`BaseNCHW2NHWC` for detail."""
     def _build(self, input_tensor):
-        input_tensor_ = input_tensor.unwrap()
-        output_tensor_ = input_tensor_.dimshuffle(0, 2, 3, 1)
+        output_tensor = input_tensor.unwrap().dimshuffle(0, 2, 3, 1)
 
         shape = input_tensor.shape
         output_shape = (shape[0], shape[2], shape[3], shape[1])
-        return _wrap_output(output_tensor_, output_shape, 'output')
+        return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
