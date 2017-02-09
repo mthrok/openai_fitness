@@ -283,6 +283,12 @@ class BaseFlatten(BaseLayer):
         super(BaseFlatten, self).__init__()
 
 
+class BaseTile(BaseLayer):
+    """Tile tensor"""
+    def __init__(self, pattern):
+        super(BaseTile, self).__init__(pattern=pattern)
+
+
 ###############################################################################
 class BaseConcat(BaseLayer):
     """Concatenate variables"""

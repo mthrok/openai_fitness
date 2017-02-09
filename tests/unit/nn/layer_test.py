@@ -215,6 +215,7 @@ def _convert(layer, shape):
 
 
 class FormatConversionTest(TestCase):
+    """Test conversion layer"""
     def test_NCHW2NHWC(self):
         shape = (32, 4, 7, 8)
         with nn.variable_scope(self.get_scope()):
@@ -237,6 +238,7 @@ class FormatConversionTest(TestCase):
 
 
 class TestFlatten(TestCase):
+    """Test Flatten layer"""
     def test_flatten(self):
         """4D input tensor is flattened to 2D tensor"""
         input_shape = (32, 4, 77, 84)
@@ -256,7 +258,43 @@ class TestFlatten(TestCase):
         self.assertEqual(expected, found)
 
 
+class TestTile(TestCase):
+    """Test Tile layer"""
+    def _test_tile(self, pattern, input_shape, input_value):
+        scope = self.get_scope()
+        with luchador.nn.variable_scope(scope, reuse=False):
+            input_tensor = nn.Input(shape=input_shape)
+            tile = nn.layer.Tile(pattern=pattern)
+            output_tensor = tile(input_tensor)
+
+        session = nn.Session()
+        output_value = session.run(
+            outputs=output_tensor, inputs={input_tensor: input_value})
+
+        expected = np.tile(input_value, pattern)
+        np.testing.assert_almost_equal(expected, output_value)
+
+    def test_tile_shaped(self):
+        """N x 1 is tiled to N x M"""
+        value = np.array([i for i in range(32)]).reshape((-1, 1))
+        shape, pattern = (32, 1), (1, 5)
+        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
+
+    def test_tile_None(self):
+        """None x 1 is tiled to None x M"""
+        value = np.array([i for i in range(64)]).reshape((-1, 1))
+        shape, pattern = (None, 1), (1, 5)
+        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
+
+    def test_tile(self):
+        """[N,] is tiled to N x 1 x M"""
+        value = np.array([i for i in range(32)])
+        shape, pattern = (32,), (1, 1, 5)
+        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
+
+
 class TestDense(TestCase):
+    """Test Dense layer"""
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256

@@ -320,6 +320,16 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return wrapper.Tensor(output, name='output')
 
 
+class Tile(LayerMixin, base_layer.BaseTile):
+    """Implement Tile layer in Tensorflow
+
+    See :any:`BaseFlatten` for detail.
+    """
+    def _build(self, input_tensor):
+        return input_tensor.tile(self.args['pattern'], name='output')
+
+
+###############################################################################
 class Concat(LayerMixin, base_layer.BaseConcat):
     """Implement Concat in Tensorflow.
 

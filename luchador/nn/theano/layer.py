@@ -18,7 +18,8 @@ __all__ = [
     'ReLU', 'Softplus',
     'Sigmoid', 'Softmax',
     'Tanh', 'Sin', 'Cos',
-    'Flatten', 'TrueDiv', 'Mean',
+    'Flatten', 'Tile',
+    'TrueDiv', 'Mean',
     'Concat', 'Add', 'Sub',
     'BatchNormalization',
     'NHWC2NCHW', 'NCHW2NHWC',
@@ -355,6 +356,16 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
+class Tile(LayerMixin, base_layer.BaseTile):
+    """Implement Tile layer in Theano
+
+    See :any:`BaseFlatten` for detail.
+    """
+    def _build(self, input_tensor):
+        return input_tensor.tile(self.args['pattern'], name='output')
+
+
+###############################################################################
 def _compute_concat_shape(shapes, axis):
     _shape = [None] * len(shapes[0])
     _shape[axis] = 0
