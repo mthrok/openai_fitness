@@ -232,17 +232,30 @@ def _get_dtype_str(tensor):
     return tensor.dtype.as_numpy_dtype().dtype.name
 
 
+def _prefix_with_scope(name):
+    scope = tf.get_variable_scope().name
+    return '{}/{}'.format(scope, name) if scope else name
+
+
 class Variable(TensorMixin, base_wrapper.BaseVariable):
     """Wrap tf.Variable object for storing network parameters"""
     def __init__(self, variable, name=None, trainable=True):
         """Wrap Tensorflow Variable object.
 
-        Args:
-          variable (tf.Variable): Tensorflow Variable object
-          name (str or None): When given, the name of the resulting wrapper is
-            overwritten with this name.
+        Parameters
+        ----------
+        variable : tf.Variable
+            Tensorflow Variable object
+
+        name : str or None
+            If None, the name is retrieved from variable. Otherwise,
+            the given name is prefixed with current scope and used to
+            register variable.
+
+        trainable : bool
+            Trainable attribute.
         """
-        name = name or variable.op.name
+        name = _prefix_with_scope(name) if name else variable.op.name
         shape = tuple(variable.get_shape().as_list())
         dtype = _get_dtype_str(variable)
         super(Variable, self).__init__(
@@ -257,17 +270,26 @@ class Tensor(TensorMixin, base_wrapper.BaseTensor):
 
         When wrapping Tensor object, as shape and name can be retrieved from
         the object being wrapped, you need not to give them explicitly. You can
-        overwrite name attribute for some reasons by giving one.
+        overwrite name attribute for some reasons by giving one. If given, the
+        is prefixed with current scope.
+
         The shape argument is here for compatibility with Theano backend and
         not used in tensorflow backend.
 
-        Args:
-          tensor (tf.Tensor): Tensorflow Tensor object.
-          shape : Not used.
-          name (str or None): When given, the name of the resulting wrapper is
-            overwritten with this name.
+        Parameters
+        ----------
+        tensor : tf.Tensor
+            Tensorflow Tensor object.
+
+        shape
+            Not used.
+
+        name : str or None
+            If None, the name is retrieved from variable. Otherwise,
+            the given name is prefixed with current scope and used to
+            register variable.
         """
-        name = name or tensor.name
+        name = _prefix_with_scope(name) if name else tensor.name
         shape = tuple(tensor.get_shape().as_list())
         dtype = _get_dtype_str(tensor)
         super(Tensor, self).__init__(
@@ -279,12 +301,17 @@ class Input(TensorMixin, base_wrapper.BaseWrapper):
     def __init__(self, shape, name=None, dtype=None):
         """Creates Input object which wraps placeholder
 
-        Args:
-          shape (list): The shape of the resulting object.
-          name (str): The name of the resulting object.
-          dtype (NumPy dtype or None): If None, default dtype is used
+        Parameters
+        ----------
+        shape : list
+            The shape of the resulting object.
+        name : str
+            The name of the resulting object.
+        dtype : NumPy dtype or None
+            If None, default dtype is used
         """
         _dtype = dtype or luchador.get_nn_dtype()
+        name = _prefix_with_scope(name)
         tensor = tf.placeholder(dtype=_dtype, shape=shape, name=name)
         dtype = _get_dtype_str(tensor)
         super(Input, self).__init__(

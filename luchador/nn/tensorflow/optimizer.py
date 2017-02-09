@@ -80,16 +80,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         ret, i = [], 0
         for var in wrt:
             if var.trainable:
-                # Gradient Tensor is registered using
-                # `<scope>/<variable_name>_grad` name pattern,
-                # so that when same variable is used to compute gradient for
-                # different loss. This way, the resulting gradients are
-                # retrievable, given that gradients were computed in
-                # different scope.
-                scope_ = scope.get_variable_scope().name
-                name = '{}/{}_grad'.format(scope_, var.name)
                 tensor = wrapper.Tensor(
-                    grads_and_vars[i][0], name=name)
+                    grads_and_vars[i][0], name='{}_grad'.format(var.name))
                 i += 1
             else:
                 tensor = None
@@ -260,9 +252,6 @@ class Adam(OptimizerMixin, base_optimizer.BaseAdam):
         ret = super(Adam, self)._apply_gradients(grads_and_vars, **kwargs)
         name1 = '{}/{}'.format(self.args['name'], 'beta1_power')
         name2 = '{}/{}'.format(self.args['name'], 'beta2_power')
-        scope_ = scope.get_variable_scope().name
-        name1 = '{}/{}'.format(scope_, name1) if scope_ else name1
-        name2 = '{}/{}'.format(scope_, name2) if scope_ else name2
         self.slot.extend([
             wrapper.Variable(self.optimizer._beta1_power, name=name1),
             wrapper.Variable(self.optimizer._beta2_power, name=name2),
