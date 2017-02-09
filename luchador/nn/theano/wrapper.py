@@ -18,30 +18,34 @@ _CURRENT_REUSE_FLAG = False
 _CURRENT_VARIABLE_SCOPE = ''
 
 
-def _set_flag(flag):
+def set_flag_(flag):
+    """Set reuse flag. Internal user only"""
     # pylint: disable=global-statement
     global _CURRENT_REUSE_FLAG
     _CURRENT_REUSE_FLAG = flag
 
 
-def _set_scope(scope):
+def set_scope_(scope):
+    """Set scope value. Internal user only"""
     # pylint: disable=global-statement
     global _CURRENT_VARIABLE_SCOPE
     _CURRENT_VARIABLE_SCOPE = scope
 
 
-def _get_flag():
+def get_flag_():
+    """Get reuse flag. Internal user only"""
     return _CURRENT_REUSE_FLAG
 
 
-def _get_scope():
+def get_scope_():
+    """Get scope value. Internal user only"""
     return _CURRENT_VARIABLE_SCOPE
 
 
 def _reset():
     """Reset variable scope and remove cached variables. For Testing"""
-    _set_flag(False)
-    _set_scope('')
+    set_flag_(False)
+    set_scope_('')
 
 
 ###############################################################################

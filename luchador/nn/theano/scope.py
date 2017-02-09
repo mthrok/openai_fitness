@@ -46,24 +46,26 @@ class VariableScope(object):
     @staticmethod
     def reuse_variables():
         """Set reuse flag to True"""
-        wrapper._set_flag(True)
+        wrapper.set_flag_(True)
 
     def _open(self):
-        self.previous_scopes.append(wrapper._get_scope())
-        self.previous_reuse_flags.append(wrapper._get_flag())
-        wrapper._set_scope(self.name)
-        wrapper._set_flag(self.reuse)
+        self.previous_scopes.append(wrapper.get_scope_())
+        self.previous_reuse_flags.append(wrapper.get_flag_())
+        wrapper.set_scope_(self.name)
+        wrapper.set_flag_(self.reuse)
 
     def _close(self):
-        wrapper._set_scope(self.previous_scopes.pop())
-        wrapper._set_flag(self.previous_reuse_flags.pop())
+        wrapper.set_scope_(self.previous_scopes.pop())
+        wrapper.set_flag_(self.previous_reuse_flags.pop())
 
     def __enter__(self):
+        # pylint: disable=protected-access
         self._open()
         _LG.debug('Current Scope: %s', wrapper._CURRENT_VARIABLE_SCOPE)
         return self
 
     def __exit__(self, type_, value, traceback):
+        # pylint: disable=protected-access
         self._close()
         _LG.debug('Current Scope: %s', wrapper._CURRENT_VARIABLE_SCOPE)
 
@@ -76,15 +78,15 @@ def variable_scope(name_or_scope, reuse=None):
         return name_or_scope
 
     scope = (
-        '{}/{}'.format(wrapper._get_scope(), name_or_scope)
-        if wrapper._get_scope() else name_or_scope
+        '{}/{}'.format(wrapper.get_scope_(), name_or_scope)
+        if wrapper.get_scope_() else name_or_scope
     )
     return VariableScope(reuse, scope)
 
 
 def get_variable_scope():
     """Return the current variable scope"""
-    return VariableScope(wrapper._get_flag(), wrapper._get_scope())
+    return VariableScope(wrapper.get_flag_(), wrapper.get_scope_())
 
 
 def get_tensor(name):
@@ -99,7 +101,7 @@ def get_tensor(name):
     Tensor
     """
     try:
-        scope = wrapper._get_scope()
+        scope = wrapper.get_scope_()
         return base_wrapper.retrieve_tensor('{}/{}'.format(scope, name))
     except ValueError:
         pass
@@ -117,11 +119,11 @@ def get_variable(
         warnings.warn('`regularizer` is not implemented in Theano backend.')
 
     # 1. Check the current variable scope
-    scope = wrapper._get_scope()
+    scope = wrapper.get_scope_()
     name = '{}/{}'.format(scope, name) if scope else name
 
     var = base_wrapper.retrieve_variable(name)
-    if wrapper._get_flag():  # Search for an existing variable
+    if wrapper.get_flag_():  # Search for an existing variable
         if var is None:
             raise ValueError(
                 'Variable {} does not exist, disallowed. '
