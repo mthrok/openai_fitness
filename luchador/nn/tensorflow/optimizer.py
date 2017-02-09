@@ -80,8 +80,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         ret, i = [], 0
         for var in wrt:
             if var.trainable:
-                tensor = wrapper.Tensor(
-                    grads_and_vars[i][0], name='{}_grad'.format(var.name))
+                name_ = '{}_grad'.format(var.name)
+                tensor = wrapper.Tensor(grads_and_vars[i][0], name=name_)
                 i += 1
             else:
                 tensor = None
