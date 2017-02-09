@@ -409,12 +409,12 @@ class Add(LayerMixin, base_layer.BaseAdd):
     """
     def _build(self, var_list):
         if len(var_list) < 2:
-            raise ValueError('var_list must contain more than 1 tensor')
+            raise ValueError('var_list must contain at least 2 tensors')
 
         ret = var_list[0]
-        for var in var_list[1:]:
+        for var in var_list[1:-1]:
             ret = ret + var
-        return ret
+        return ret.__add__(var_list[-1], name='output')
 
 
 class Sub(LayerMixin, base_layer.BaseAdd):
@@ -423,10 +423,10 @@ class Sub(LayerMixin, base_layer.BaseAdd):
     See :any: `BaseSub` for detail.
     """
     def _build(self, var_list):
-        if len(var_list) == 2:
+        if len(var_list) != 2:
             raise ValueError('var_list must be 2 tensors')
 
-        return var_list[0] - var_list[1]
+        return var_list[0].__sub__(var_list[1], name='output')
 
 
 ###############################################################################

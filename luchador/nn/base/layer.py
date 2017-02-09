@@ -271,9 +271,9 @@ class BaseMean(BaseLayer):
     dtype : str
         Output dtype
     """
-    def __init__(self, axis, keep_dim=False, dtype=None):
+    def __init__(self, axis, keep_dims=False, dtype=None):
         super(BaseMean, self).__init__(
-            axis=axis, keep_dim=keep_dim, dtype=dtype)
+            axis=axis, keep_dims=keep_dims, dtype=dtype)
 
 
 ###############################################################################

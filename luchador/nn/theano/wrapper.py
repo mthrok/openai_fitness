@@ -100,42 +100,42 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
         )
 
-    def __neg__(self):
-        return Tensor(tensor=-self._tensor, shape=self.shape)
+    def __neg__(self, name=None):
+        return Tensor(tensor=-self._tensor, shape=self.shape, name=name)
 
-    def __add__(self, other):
+    def __add__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=self._tensor + _other, shape=self.shape)
+        return Tensor(tensor=self._tensor+_other, shape=self.shape, name=name)
 
-    def __sub__(self, other):
+    def __sub__(self, other, name=None):
         """Scalar subtraction or elementwise subtraction"""
         _other = self._extract_operand(other)
-        return Tensor(tensor=self._tensor-_other, shape=self.shape)
+        return Tensor(tensor=self._tensor-_other, shape=self.shape, name=name)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=_other-self._tensor, shape=self.shape)
+        return Tensor(tensor=_other-self._tensor, shape=self.shape, name=name)
 
-    def __mul__(self, other):
+    def __mul__(self, other, name=None):
         """Scalar multiplication or elementwise multiplication"""
         _other = self._extract_operand(other)
-        return Tensor(tensor=self._tensor * _other, shape=self.shape)
+        return Tensor(tensor=self._tensor*_other, shape=self.shape, name=name)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=self._tensor/_other, shape=self.shape)
+        return Tensor(tensor=self._tensor/_other, shape=self.shape, name=name)
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=_other/self._tensor, shape=self.shape)
+        return Tensor(tensor=_other/self._tensor, shape=self.shape, name=name)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=self._tensor//_other, shape=self.shape)
+        return Tensor(tensor=self._tensor//_other, shape=self.shape, name=name)
 
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other, name=None):
         _other = self._extract_operand(other)
-        return Tensor(tensor=_other//self._tensor, shape=self.shape)
+        return Tensor(tensor=_other//self._tensor, shape=self.shape, name=name)
 
     def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
         """Compute mean across the given axis
