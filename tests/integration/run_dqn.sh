@@ -11,3 +11,4 @@ else
 fi
 
 ${TEST_COMMAND} exercise "${DATA_DIR}/ALEEnvironment_train.yml" --agent "${DATA_DIR}/DQNAgent_train.yml" --episodes 10 --steps 500
+${TEST_COMMAND} exercise "${DATA_DIR}/ALEEnvironment_train.yml" --agent "${DATA_DIR}/DoubleDQNAgent_train.yml" --episodes 10 --steps 500

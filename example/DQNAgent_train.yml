@@ -21,7 +21,7 @@ args:
     importance: 0.5
 
   model_config:
-    model_file: vanilla_dqn
+    model_file: duel_dqn
     initial_parameter: *initial_parameter
     input_channel: *stack
     input_height: *height

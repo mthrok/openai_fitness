@@ -1,0 +1,78 @@
+alias:
+  memory_size: &memory_size 1000
+  width: &width 84
+  height: &height 84
+  stack: &stack 4
+  batch: &batch 32
+  save_dir: &save_dir tmp/test_dqn
+  save_prefix: &save_prefix DoubleDQN_integration_test
+  initial_parameter: &initial_parameter tests/integration/data/dqn/double_dqn_integration_test_initial.h5
+
+typename: DQNAgent
+args:
+  record_config:
+    sort_frequency: *memory_size
+    stack: *stack
+
+  recorder_config:
+    buffer_size: *memory_size
+    sample_size: *batch
+    priority: 0.7
+    importance: 0.5
+
+  model_config:
+    model_file: duel_dqn
+    initial_parameter: *initial_parameter
+    input_channel: *stack
+    input_height: *height
+    input_width: *width
+
+  q_network_config:
+    typename: DoubleDeepQLearning
+    args:
+      q_learning_config:
+        discount_rate: 0.99
+        # reward is clipped between the following min and max
+        min_reward: -1.0
+        max_reward: 1.0
+      optimizer_config:
+        typename: RMSProp
+        args:
+          decay: 0.95
+          epsilon: 0.000001
+          learning_rate: 0.00025
+
+  saver_config:
+    output_dir: *save_dir
+    max_to_keep: 10
+    keep_every_n_hours: 1.0
+    prefix: *save_prefix
+
+  save_config:
+    # Save network parameter every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: 100
+
+  summary_writer_config:
+    output_dir: *save_dir
+
+  summary_config:
+    # Summarize network every once after this #trainings
+    # Giving non-positive value effectively disable save functionality
+    interval: 100
+
+  action_config:
+    method: linear
+    duration: 1000
+    epsilon_init: 0.5
+    epsilon_term: 0.5
+
+  training_config:
+    # Training starts after this number of transitions are recorded
+    # Giving negative value effectively disable training and network sync
+    train_start: 1000
+    # Train network every this number of observations are made
+    train_frequency: 4
+    # Sync networks every this number of observations are made
+    sync_frequency: 4
+    n_samples: *batch
