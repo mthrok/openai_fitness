@@ -26,7 +26,7 @@ _LG = logging.getLogger(__name__)
 
 
 def _get_input():
-    for class_ in get_subclasses(luchador.nn.base.wrapper.BaseWrapper):
+    for class_ in get_subclasses(luchador.nn.base.wrapper.BaseInput):
         if class_.__name__ == 'Input':
             return class_
     raise ValueError('`Input` class is not defined in current backend.')
@@ -38,7 +38,10 @@ def _make_input(config):
 
     type_ = config['typename']
     if type_ == 'Input':
-        input_ = _get_input()(**config['args'])
+        if config.get('reuse'):
+            input_ = luchador.nn.get_input(config['name'])
+        else:
+            input_ = _get_input()(**config['args'])
     elif type_ == 'Tensor':
         input_ = luchador.nn.get_tensor(name=config['name'])
     else:
