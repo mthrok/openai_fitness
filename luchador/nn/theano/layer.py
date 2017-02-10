@@ -452,7 +452,7 @@ class Mean(LayerMixin, base_layer.BaseMean):
     See :any:`BaseMean` for detail.
     """
     def _build(self, input_tensor):
-        return input_tensor.mean(**self.args)
+        return input_tensor.mean(name='output', **self.args)
 
 
 ###############################################################################
