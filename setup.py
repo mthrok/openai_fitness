@@ -33,8 +33,8 @@ def extract(content, output_dir):
         output_path = os.path.join(output_dir, name_)
         print('Extracting:', output_path)
 
-        with open(output_path, 'w') as f:
-            f.write(zf.open(name).read())
+        with open(output_path, 'w') as file_:
+            file_.write(zf.open(name).read())
 
 
 class DownloadALECommand(setuptools.Command):
@@ -74,9 +74,9 @@ def _get_git_revision(no_commit=False):
 def _get_version():
     try:
         return _get_git_revision(no_commit=True)
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         print(error)
-        return 'v0.4.0'
+        return 'v0.8.0'
 
 
 def _setup():
