@@ -1,300 +1,376 @@
-"""Module for implelemting customizable ReplayMemory mechanism"""
+"""Implements prioritized replay memory [ARXIV05952]_
+
+References
+----------
+.. [ARXIV05952] Tom Schaul, John Quan, Ioannis Antonoglou, David Silver (2015):
+       Prioritized Experience Replay
+       https://arxiv.org/abs/1511.05952
+"""
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
-from collections import deque
-
 import numpy as np
 
-_LG = logging.getLogger(__name__)
 
+def _compute_partition_index(buffer_size, sample_size, priority):
+    """Compute partition indices for rank-based prioritization
 
-class Buffer(object):
-    """Handles recording and sampling of data
+    Given N memory slots in array format, rank :math:`r(i)` and priority
+    :math:`p(i)`of the element at index i (0-based index) is
+
+    .. math::
+        r(i) &= i + 1
+        p(i) &= r(i)^{-\\alpha} = (i + 1) ^ {-\\alpha}
+
+    where :math:`\\alpha` is prioritization weight.
+
+    This function returns the indices which partitions cumulative priorities
+    into equal value bins
 
     Parameters
     ----------
-    stack : int
-        The number of datum included in one stack
+    buffer_size : int
+        The size of memory slots
 
-    stansition : int
-        The number of stacked data to fetch
+    sample_size : int
+        #partitions to separate priorities
+
+    priority : float
+        Priority weight parameter, :math:`\\alpha`. Must be between [0, 1.0]
+        1 is full prioritized, 0 is no prioritization is effective, sampling is
+        uniformly random.
+
+    Returns
+    -------
+    list of tuple of two ints
+        Each tuple is starting index and ending index of partition
+
+    NumPy ND Array
+        N-length array contains sapmling probability.
     """
-    def __init__(self, stack, transition):
-        self.data = []
-        self.stack = stack
-        self.transition = transition
+    rank = np.arange(1, buffer_size+1)
+    priority = np.power(rank, -priority)
+    p_cumsum = np.cumsum(priority)
+    probabilities = priority / p_cumsum[-1]
+    p_cumsum -= p_cumsum[0]
+    p_unit = p_cumsum[-1] / (sample_size + 1)
 
-    def put(self, datum):
-        """Append data to the end"""
-        self.data.append(datum)
+    indices, i_start = [], 0
+    for _ in range(sample_size):
+        p_cumsum -= p_unit
+        i_end = max(i_start + 1, np.where(np.diff(np.sign(p_cumsum)))[0][0])
+        indices.append((i_start, i_end))
+        i_start = i_end
+    return indices, probabilities.astype('float32')
 
-    def _get(self, index):
-        """Fetch data from buffer and stack
+
+def _get_child_index(index, buffer_):
+    i1, i2 = [2 * index + i + 1 for i in range(2)]
+    length = len(buffer_)
+    if i2 >= length:
+        if i1 >= length:
+            return None
+        return i1
+    return i1 if buffer_[i1] > buffer_[i2] else i2
+
+
+def _get_parent_index(index):
+    return (index - 1) // 2
+
+
+class _PriorityRecord(object):  # pylint: disable=too-few-public-methods
+    """Record with priority comparison"""
+    def __init__(self, priority, record_id):
+        self.priority = priority
+        self.record_id = record_id
+
+    def __repr__(self):
+        return '(Priority: {}, Record: {})'.format(
+            self.priority, self.record_id)
+
+    def __lt__(self, other):
+        return self.priority < other.priority
+
+    def __gt__(self, other):
+        return self.priority > other.priority
+
+    def __le__(self, other):
+        return self.priority <= other.priority
+
+    def __ge__(self, other):
+        return self.priority >= other.priority
+
+
+class PrioritizedQueue(object):
+    # pylint: disable=line-too-long, too-many-instance-attributes
+    """Fixed-size max priority queue
+
+    Parameters
+    ----------
+    buffer_size : int
+        The size of maximum records
+
+    sample_size : int
+        Size of sample mini-batch
+
+    priority : float
+        Priority parameter, :math:`\\alpha` in [ARXIV05952]_. Must be in the
+        range of [0.0, 1.0]. When 1, sampling is fully weighted by priorities.
+        When 0, priority is notin effect thus sampling is just uniformly
+        random.
+
+    importance : float
+        Importance sampling weight. :math:`\\beta` in [ARXIV05952]_
+
+    random_seed
+        Random seed value for sampling records
+    """
+    def __init__(
+            self, buffer_size, sample_size, priority,
+            importance, random_seed=None):
+        self.buffer_size = buffer_size
+        self.sample_size = sample_size
+        self.importance = importance
+        self.priority = priority
+        self._rng = np.random.RandomState(seed=random_seed)
+
+        # The actual heap buffer
+        self.buffer = []
+        indices, probabilities = _compute_partition_index(
+            self.buffer_size, self.sample_size, self.priority)
+        self.partition_indices = indices
+        self.probabilities = probabilities
+
+        # Record IDs are used for tracking the oldest records and locate them
+        # in heap buffer.
+        self.new_record_id = 0
+        self.update_record_id = 0
+
+        self.id2record = {}  # record ID -> actual record
+        self.id2index = {}  # record ID -> index in array
+
+    ###########################################################################
+    # Hepler methods for balancing/sorting heap
+    def _swap(self, i_1, i_2):
+        """Swap records and update index mapping"""
+        self.buffer[i_1], self.buffer[i_2] = self.buffer[i_2], self.buffer[i_1]
+        self.id2index[self.buffer[i_2].record_id] = i_2
+        self.id2index[self.buffer[i_1].record_id] = i_1
+
+    def _balance_up(self, index):
+        """Recursively move up a record if its priority is higher
 
         Parameters
         ----------
         index : int
-            Index for the last datum to include in the resulting data.
-
-            For performance reason, argument validity check is omitted, but
-            arguments must satisfy the following condition:
-
-                0 <= stack - 1 <= index < len(self.data)
+            Index of record to move up
 
         Returns
         -------
-        list
-            data stored in the corresponding index
+        bool
+            True if swap is performed.
         """
-        if self.stack:
-            i_start, i_end = index - self.stack + 1, index + 1
-            return self.data[i_start:i_end]
-        else:
-            return self.data[index]
+        if index == 0:
+            return False
 
-    def get(self, index):
-        """Fetch multiple stacked data from buffer
+        i_parent = _get_parent_index(index)
+        if self.buffer[i_parent] >= self.buffer[index]:
+            return False
+
+        self._swap(i_parent, index)
+        self._balance_up(i_parent)
+        return True
+
+    def _balance_down(self, index):
+        """Recursively move down a record if its priority is lower
 
         Parameters
         ----------
         index : int
-            Index for the last datum to include in the first data to be
-            fetched.
+            Index of record to move up
 
-            This index has stronger restriction than ``_get`` method,
-            as this method fetches multiple stacked data.
-
-                0 <= stack - 1 <= index < len(self.data) - self.transition
-
+        Returns
+        -------
+        bool
+            True if swap is performed.
         """
-        if self.transition:
-            return [self._get(index+i) for i in range(self.transition)]
+        i_child = _get_child_index(index, self.buffer)
+        if i_child is None:
+            return False
+
+        if self.buffer[index] >= self.buffer[i_child]:
+            return False
+
+        self._swap(index, i_child)
+        self._balance_down(i_child)
+        return True
+
+    ###########################################################################
+    # Method for pushing new record
+    def push(self, priority, record):
+        """Push new record to heap.
+
+        Parameters
+        ----------
+        priority : float
+            Priority of new record. Must be positive.
+
+        record
+            Record to push
+
+        Returns
+        -------
+        int
+            Index of the resulting record location
+
+        Examples
+        --------
+        >>> buffer_size = 3
+        >>> queue = PrioritizedQueue(buffer_size=buffer_size, ...)
+        >>> for i in range(buffer_size):
+        >>>     queue.push(priority=i, record=None)
+        >>>     print(queue.buffer)
+        [(Priority: 0, ...)]
+        [(Priority: 1, ...), (Priority: 0, ...)]
+        [(Priority: 2, ...), (Priority: 0, ...), (Priority: 1, ...)]
+        # Now the #stored records reached its limit, old records are removed
+        # automatically in the following `push`
+        >>> for i in range(buffer_size, 2 * buffer_size):
+        >>>     queue.push(priority=i, record=None)
+        >>>     print(queue.buffer)
+        [(Priority: 3, ...), (Priority: 2, ...), (Priority: 1, ...)]
+        [(Priority: 4, ...), (Priority: 2, ...), (Priority: 3, ...)]
+        [(Priority: 5, ...), (Priority: 4, ...), (Priority: 3, ...)]
+        """
+        index = len(self.buffer)
+        if index >= self.buffer_size:
+            self._update_push(priority, record)
         else:
-            return self._get(index)
+            self._append_push(priority, record)
 
-    def get_last_stack(self):
-        """Fetch the latest data and stack if necessary"""
-        if self.stack:
-            return self.data[-self.stack:]
-        else:
-            return self.data[-1]
+    def _append_push(self, priority, record):
+        """Push a record by appending it at the end of buffer"""
+        new_id = self.new_record_id
+        self.new_record_id += 1
 
-    def __str__(self):
-        return 'Buffer: <stack: {}, transition: {} > (#Records: {})'.format(
-            self.stack, self.transition, len(self.data))
+        # Add new <ID -> record> mapping
+        self.id2record[new_id] = record
 
+        # Add new priority record to heap buffer
+        self.buffer.append(_PriorityRecord(priority, new_id))
 
-class EpisodeRecorder(object):
-    """Record/Sample multiple data stream for an episode
+        # Add new <ID -> index> mapping
+        index = len(self.buffer) - 1
+        self.id2index[new_id] = index
 
-    Parameters
-    ----------
-    buffer_configs : dict
-        key is the name of data to record, value is dict containing
-        'stack' and 'transition', which are passed to Buffer constructor
+        # Move up if necessary
+        self._balance_up(index)
 
-    initial_data : dict
-        Initial data to stored in recorders. key is the name of recorder
-    """
-    def __init__(self, buffer_configs, initial_data):
-        self.buffers = {
-            name: Buffer(
-                stack=cfg.get('stack'), transition=cfg.get('transition'))
-            for name, cfg in buffer_configs.items()
-        }
-        self.n_data = 0
+    def _update_push(self, priority, record):
+        """Push a record by overwriting the oldest record"""
+        old_id, new_id = self.update_record_id, self.new_record_id
+        self.update_record_id += 1
+        self.new_record_id += 1
 
-        for name, data in initial_data.items():
-            self.buffers[name].put(data)
+        # Add new <ID -> record> mapping and remove old one
+        self.id2record[new_id] = record
+        del self.id2record[old_id]
 
-        # Max stack size and transition size of underlying buffer.
-        # These are used to compute valid sampling index
-        self.max_stack = max([
-            buf.stack for buf in self.buffers.values()])
-        self.max_transition = max([
-            buf.transition for buf in self.buffers.values()])
+        # Update the content of old record in heap buffer with new one
+        index = self.id2index[old_id]
+        self.buffer[index] = _PriorityRecord(priority, new_id)
 
-    def put(self, data):
-        """Put data to underlying buffers"""
-        for name, buffer_ in self.buffers.items():
-            buffer_.put(data[name])
-        self.n_data += 1
+        # Add new <ID -> index> mapping and remove old one
+        self.id2index[new_id] = index
+        del self.id2index[old_id]
 
-    def get(self, index):
-        """Get data from underlying buffers"""
-        return {
-            name: buffer_.get(index)
-            for name, buffer_ in self.buffers.items()
-        }
+        # Move up or down if necessary
+        if self._balance_up(index):
+            return
+        self._balance_down(index)
 
-    def enough_data(self):
-        """Check if there is enough data to create transition"""
-        return self.n_data > self.max_stack + self.max_transition
-
+    ###########################################################################
+    # Record retrievals
     def sample(self):
-        """Sample transition randomly"""
-        index = np.random.randint(
-            self.max_stack - 1, self.n_data - self.max_transition + 1)
-        return self.get(index)
-
-    def get_last_stack(self):
-        """Get the latest record stack"""
-        return {
-            name: buffer_.get_last_stack()
-            for name, buffer_ in self.buffers.items()
-        }
-
-    def __str__(self):
-        return 'EpisodeRecorder:\n' + '\n'.join([
-            '  {}: {}'.format(name, buffer_)
-            for name, buffer_ in self.buffers.items()
-        ])
-
-
-class TransitionRecorder(object):
-    """Record/Sample records across episodes
-
-    Parameters
-    ----------
-    memory_size : int
-        The number of records to retain.
-
-    buffer_config : dict
-        See :class:`EpisodeRecorder`
-
-    batch_size : int
-        Buffer size for sampling
-    """
-    def __init__(self, memory_size, buffer_config, batch_size=32):
-        self.memory_size = memory_size
-        self.buffer_config = buffer_config
-        self.batch_size = batch_size
-
-        self._recorder = None
-        self._recorders = deque()
-
-        self._batch = {}
-        self._init_batch()
-
-    def _init_batch(self):
-        for name, cfg in self.buffer_config.items():
-            shape = list(cfg.get('shape', []))
-            stack = cfg.get('stack')
-            transition = cfg.get('transition')
-            if stack:
-                shape = [stack] + shape
-            shape = [self.batch_size] + shape
-            if transition:
-                self._batch[name] = [
-                    np.empty(shape=shape, dtype=cfg['dtype'])
-                    for _ in range(cfg['transition'])
-                ]
-            else:
-                self._batch[name] = np.empty(
-                    shape=shape, dtype=cfg['dtype'])
-
-    def reset(self, initial_data):
-        """Renew recorder for the current episode"""
-        self._recorder = EpisodeRecorder(self.buffer_config, initial_data)
-
-    def record(self, data):
-        """Record data
-
-        Parameters
-        ----------
-        data : dict
-            keys are the name of buffers and
-            values are the actual data to put in buffer
-        """
-        self._recorder.put(data)
-
-    @property
-    def n_records(self):
-        """Get the number of records in archive. Not include current episode"""
-        return sum([recorder.n_data for recorder in self._recorders])
-
-    def truncate(self):
-        """Put current recorder in archive and discard old recordes
-        which surpasses the defined memory size"""
-        self._recorders.append(self._recorder)
-        self._recorder = None
-
-        n_records = self.n_records
-        n_recorders = len(self._recorders)
-
-        _LG.debug('  Before truncate:')
-        _LG.debug('  # records  : %s', n_records)
-        _LG.debug('  # recorders: %s', n_recorders)
-
-        while n_recorders > 1 and n_records > self.memory_size:
-            poped = self._recorders.popleft()
-            n_records -= poped.n_data
-            n_recorders -= 1
-
-        _LG.debug('  After truncate:')
-        _LG.debug('  # records  : %s', n_records)
-        _LG.debug('  # recorders: %s', n_recorders)
-
-    def _set_batch(self, data, i_batch):
-        for name in self._batch:
-            transition = self.buffer_config[name].get('transition')
-            if transition:
-                for j in range(transition):
-                    self._batch[name][j][i_batch] = data[name][j]
-            else:
-                self._batch[name][i_batch] = data[name]
-
-    def sample(self, n_samples):
-        """Sample transitions from the past episodes
-
-        Parameters
-        ----------
-        n_samples : int
-            Must be smaller than or equal to batch size
+        """Sample records from buffer
 
         Returns
         -------
         dict
-            Contains sampled data
+            records : list
+                Records
+            weights : list
+                Sampling weights of each records
+            indices : list
+                Indices where records were stored in buffer. To be used to
+                update priorities later.
         """
-        n_recorders = len(self._recorders)
-        i_batch = 0
-        while i_batch < n_samples:
-            recorder = self._recorders[np.random.randint(n_recorders)]
-            if recorder.enough_data():
-                data = recorder.sample()
-                self._set_batch(data, i_batch)
-                i_batch += 1
-        return self._batch
+        buffer_size = len(self.buffer)
+        if buffer_size < self.buffer_size:
+            partitions, probabilities = _compute_partition_index(
+                buffer_size, self.sample_size, self.priority)
+        else:
+            partitions = self.partition_indices
+            probabilities = self.probabilities
 
-    def get_last_stack(self):
-        """Get the latest state"""
-        data = self._recorder.get_last_stack()
-        ret = {}
-        for name in self._batch:
-            transition = self.buffer_config[name].get('transition')
-            if transition:
-                bucket = self._batch[name][0]
-            else:
-                bucket = self._batch[name]
-            bucket[0] = data[name]
-            ret[name] = bucket[0]
-        return ret
+        indices = [self._rng.randint(i0, i1) for i0, i1 in partitions]
+        record_ids = [self.buffer[i].record_id for i in indices]
+        records = [self.id2record[id_] for id_ in record_ids]
+        probs = probabilities[indices]
+        weights = np.power(1 / probs / buffer_size, self.importance)
+        weights /= np.max(weights)
+        return {'indices': indices, 'records': records, 'weights': weights}
 
-    def is_ready(self):
-        """True if the current episode recorder has sufficient records"""
-        return self._recorder.enough_data()
+    def get_last_record(self):
+        """Get the record inserted previously
 
-    def __str__(self):
-        return (
-            'TransitionRecorder:\n'
-            'Archived recorders:\n'
-            '  #recorders: {}\n'
-            '  #records: {})\n'
-            'Current recorder:\n'
-            '{}'
-        ).format(
-            len(self._recorders), self.n_records, self._recorder
-        )
+        Returns
+        -------
+        record
+            Record added with previous push
+        """
+        return self.id2record[self.new_record_id - 1]
+
+    ###########################################################################
+    def update(self, indices, priorities):
+        """Update priority of records and balance tree
+
+        Parameters
+        ----------
+        indices : list
+            List of indices to update priority
+
+        priorities : list
+            New priority values
+        """
+        for index, priority in zip(indices, priorities):
+            self.buffer[index].priority = priority
+            if not self._balance_up(index):
+                self._balance_down(index)
+
+    ###########################################################################
+    # Quick sort
+    def sort(self):
+        """Sort internal buffer"""
+        self._quick_sort(0, len(self.buffer) - 1)
+
+    def _partition(self, i_start, i_end):
+        pivot = (
+            self.buffer[i_start].priority + self.buffer[i_end].priority
+        ) / 2
+
+        i_left, i_right = i_start, i_end
+        while i_left < i_right:
+            while self.buffer[i_left].priority > pivot:
+                i_left += 1
+            while self.buffer[i_right].priority < pivot:
+                i_right -= 1
+            if i_left < i_right:
+                self._swap(i_left, i_right)
+        return i_right, i_left
+
+    def _quick_sort(self, i_start, i_end):
+        if i_start < i_end:
+            i_end_, i_start_ = self._partition(i_start, i_end)
+            self._quick_sort(i_start, i_end_)
+            self._quick_sort(i_start_, i_end)

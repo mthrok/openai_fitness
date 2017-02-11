@@ -12,7 +12,7 @@ from luchador.nn.saver import Saver
 from luchador.nn.summary import SummaryWriter
 
 from .base import BaseAgent
-from .prioritized_recorder import PrioritizedQueue
+from .recorder import PrioritizedQueue
 from .misc import EGreedy
 from .rl import DeepQLearning, DoubleDeepQLearning
 
@@ -26,15 +26,14 @@ def _transpose(state):
     return state.transpose((0, 2, 3, 1))
 
 
-class DQNAgent(luchador.util.StoreMixin, BaseAgent):
+class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     """Implement Agent part of DQN [1]_:
 
     Parameters
     ----------
-    # TODO: Update
     recorder_config : dict
         Constructor arguments for
-        :class:`luchador.agent.recorder.TransitionRecorder`
+        :class:`luchador.agent.recorder.PrioritizedQueue`
 
     model_config : dict
         Configuration for model definition.
