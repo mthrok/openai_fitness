@@ -1,7 +1,6 @@
-"""Test Wapper methods"""
+"""Test wapper module"""
 from __future__ import absolute_import
 
-import uuid
 import numpy as np
 
 from luchador import nn
@@ -9,43 +8,6 @@ from luchador import nn
 from tests.unit import fixture
 
 # pylint: disable=invalid-name
-
-
-class TestVariableStore(fixture.TestCase):
-    # pylint: disable=protected-access
-    """Test Variable/Tensor store mechanism"""
-    def test_get_variable_creates_variable(self):
-        """get_variable create variable"""
-        scope, var_name = self.get_scope(), 'aaa'
-        full_name = '/'.join([scope, var_name])
-        self.assertTrue(full_name not in nn.base.wrapper._VARIABLES)
-
-        with nn.variable_scope(scope, reuse=False):
-            variable = nn.get_variable(var_name, shape=[3, 1])
-
-        self.assertTrue(full_name in nn.base.wrapper._VARIABLES)
-        self.assertIs(variable, nn.base.wrapper._VARIABLES[full_name])
-
-        with nn.variable_scope(scope, reuse=True):
-            self.assertIs(variable, nn.get_variable(var_name))
-
-    def test_get_tensor_from_global_scope(self):
-        """get_variable retrieve existing variable from global scope"""
-        name = uuid.uuid4()
-        self.assertTrue(name not in nn.base.wrapper._TENSORS)
-        tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
-        self.assertTrue(name in nn.base.wrapper._TENSORS)
-        self.assertIs(tensor, nn.base.wrapper._TENSORS[name])
-        self.assertIs(tensor, nn.get_tensor(name))
-
-    def test_get_tensor_from_current_scope(self):
-        """get_variable retrieve existing variable from current scope"""
-        scope, name = self.get_scope(), uuid.uuid4()
-        with nn.variable_scope(scope):
-            tensor = fixture.create_ones_tensor([3, 1], 'float32', name=name)
-            self.assertIs(tensor, nn.get_tensor(name))
-        with self.assertRaises(ValueError):
-            nn.get_tensor(name)
 
 
 class TestTensorOpsMult(fixture.TestCase):

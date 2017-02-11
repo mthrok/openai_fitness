@@ -7,22 +7,22 @@ from collections import OrderedDict
 import numpy as np
 
 __all__ = [
-    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'Operation',
+    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseOperation',
 ]
 
 _LG = logging.getLogger(__name__)
 
 
 ###############################################################################
-# Mechanism for enabling reusing variable without explicitly giving dtype or
-# shape. When creating Variable with get_variable and reuse=False, we store
-# mapping from name to the resulting Variable wrapper.
-# When retrieving a Variable under reuse=True, we return the stored variable.
-# This mechanism is copy of Tensorflow, but Tensorflow's get_variable require
-# dtype and shape for retrieving exisiting varaible and is inconvenient.
+# Mechanism for fetching Variable, Tensor, Input and Operation only by name
+# This is similar to Tensorflow's get_variable function with reuse=Trie, but
+# 1. Tensorflow's get_variable require dtype and shape for retrieving
+# exisiting varaible, which is inconvenient.
+# 2. It is extendef to Input, Tensor and Operation objects
 _VARIABLES = OrderedDict()
 _TENSORS = OrderedDict()
 _INPUTS = OrderedDict()
+_OPERATIONS = OrderedDict()
 
 
 def register_variable(name, var):
@@ -44,6 +44,13 @@ def register_input(name, input_):
     if name in _INPUTS:
         _LG.warning('Input `%s` already exists.', name)
     _INPUTS[name] = input_
+
+
+def register_operation(name, operation):
+    """Register Operation to global list of operations for later resuse"""
+    if name in _OPERATIONS:
+        _LG.warning('Operation `%s` already exists.', name)
+    _OPERATIONS[name] = operation
 
 
 def retrieve_variable(name):
@@ -75,6 +82,19 @@ def retrieve_input(name):
     if name not in _INPUTS:
         raise ValueError('Input `{}` does not exist.'.format(name))
     return _INPUTS[name]
+
+
+def retrieve_operation(name):
+    """Get Operation from global list of tensors
+
+    Parameters
+    ----------
+    name : str
+        Name of Operation to fetch
+    """
+    if name not in _OPERATIONS:
+        raise ValueError('Operation `{}` does not exist.'.format(name))
+    return _OPERATIONS[name]
 ###############################################################################
 
 
@@ -184,11 +204,14 @@ class BaseInput(BaseWrapper):
         register_input(name, self)
 
 
-class Operation(object):
+class BaseOperation(object):
     """Wrapps theano updates or tensorflow operation"""
     def __init__(self, op, name=None):
         self.op = op
         self.name = name
+
+        if name:
+            register_operation(name, self)
 
     def unwrap(self):
         """Returns the underlying backend-specific operation object"""

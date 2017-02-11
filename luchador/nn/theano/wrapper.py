@@ -8,7 +8,6 @@ import theano.tensor as T
 
 import luchador.util
 from luchador.nn.base import wrapper as base_wrapper
-from luchador.nn.base.wrapper import Operation
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -375,3 +374,10 @@ class Input(TensorMixin, base_wrapper.BaseInput):
         tensor = _create_placeholder(dtype, len(shape), name)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=tensor.dtype)
+
+
+class Operation(base_wrapper.BaseOperation):
+    """Represents operation"""
+    def __init__(self, op, name=None):
+        name = _prefix_with_scope(name) if name else None
+        super(Operation, self).__init__(op=op, name=name)

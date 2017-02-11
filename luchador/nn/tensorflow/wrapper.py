@@ -318,10 +318,11 @@ class Input(TensorMixin, base_wrapper.BaseInput):
             tensor=tensor, shape=shape, name=name, dtype=dtype)
 
 
-class Operation(base_wrapper.Operation):
+class Operation(base_wrapper.BaseOperation):
     """Wrap tensorflow operations"""
     def __init__(self, op, name=None):
         if luchador.util.is_iteratable(op):
             op = tf.group(*op, name=name)
 
+        name = _prefix_with_scope(name) if name else None
         super(Operation, self).__init__(op=op, name=name)
