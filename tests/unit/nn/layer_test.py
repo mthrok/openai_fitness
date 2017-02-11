@@ -298,9 +298,9 @@ class TestDense(TestCase):
     def test_recreate_success_with_reuse(self):
         """Copied layer can create node when reuse=True in variable scope"""
         n_nodes = 256
-        input_ = nn.Input(shape=(None, n_nodes), name='foo')
         base_scope = self.get_scope()
         with nn.variable_scope(base_scope, reuse=False):
+            input_ = nn.Input(shape=(None, n_nodes), name='foo')
             dense1 = nn.layer.Dense(n_nodes)
             dense1(input_)
 
@@ -331,9 +331,9 @@ class TestDense(TestCase):
         """Copied layer fails to create node when reuse is not True"""
         fmt = luchador.get_nn_conv_format()
         shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
-        input_ = nn.Input(shape=shape, name='foo')
         base_scope = self.get_scope()
         with nn.variable_scope(base_scope, reuse=False):
+            input_ = nn.Input(shape=shape, name='foo')
             conv = nn.layer.Conv2D(84, 84, 4, 4)
             conv(input_)
             try:
