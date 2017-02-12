@@ -20,14 +20,6 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
         self.input = input_
         self.output = output
 
-    def __eq__(self, other):
-        if isinstance(other, LayerConfig):
-            return self.layer == other.layer and self.scope == other.scope
-        return NotImplemented
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __repr__(self):
         return repr({
             'scope': self.scope,
@@ -35,20 +27,6 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
             'input': self.input,
             'output': self.output,
         })
-
-    def serialize(self):
-        """Serialize layer
-
-        Returns
-        -------
-        dict
-            typename : Name of Layer class
-            args : Layer constructor arguments
-            scope : Scope
-        """
-        ret = self.layer.serialize()
-        ret['scope'] = self.scope
-        return ret
 
 
 class Sequential(BaseModel):
@@ -136,53 +114,6 @@ class Sequential(BaseModel):
         return self
 
     ###########################################################################
-    # Functions for model-wise copy and concatenation
-    def __iadd__(self, other):
-        """Append layers from another model after this model
-
-        Parameters
-        ----------
-        other : Sequential
-            Sequential to be concatenated
-
-        Returns
-        -------
-        Sequential
-            Updated model
-        """
-        for cfg in other.layer_configs:
-            self.add_layer(layer=cfg.layer, scope=cfg.scope)
-        return self
-
-    def __add__(self, other):
-        """Create new model which contains layers from other after this model
-
-        Parameters
-        ----------
-        other : Sequential
-            Sequential to be concatenated
-
-        Returns
-        -------
-        Sequential
-            Resulting new model
-        """
-        new_model = type(self)()
-        new_model += self
-        new_model += other
-        return new_model
-
-    ###########################################################################
-    # Model equality
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.layer_configs == other.layer_configs
-        return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    ###########################################################################
     # Functions for building actual computation graphs
     def __call__(self, input_tensor):
         """Convenience function to call ``build``"""
@@ -245,20 +176,6 @@ class Sequential(BaseModel):
             List of update operations from each layer
         """
         return [cfg.layer.get_update_operation() for cfg in self.layer_configs]
-
-    ###########################################################################
-    def serialize(self):
-        """Serialize model configuration
-
-        Returns
-        -------
-        dict
-            Seiralized model data
-        """
-        return {
-            'model_type': self.__class__.__name__,
-            'layer_configs': [cfg.serialize() for cfg in self.layer_configs]
-        }
 
     ###########################################################################
     def __repr__(self):
