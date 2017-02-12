@@ -77,6 +77,25 @@ def make_model(model_config):
     return model
 
 
+def _convert_to_str(value):
+    """Convert object into one-line YAML string"""
+    if value is None:
+        ret = 'null'
+    elif luchador.util.is_iteratable(value):
+        ret = '[{}]'.format(
+            ', '.join([_convert_to_str(val) for val in value]))
+    elif isinstance(value, dict):
+        ret = '{{ {} }}'.format(
+            ', '.join(
+                '{}: {}'.format(key, _convert_to_str(val))
+                for key, val in value.items()
+            )
+        )
+    else:
+        ret = str(value)
+    return ret
+
+
 def get_model_config(model_name, **parameters):
     """Load pre-defined model configurations
 
@@ -109,7 +128,9 @@ def get_model_config(model_name, **parameters):
         model_text = file_.read()
 
     if parameters:
-        model_text = model_text.format(**parameters)
+        _params = {
+            key: _convert_to_str(val) for key, val in parameters.items()}
+        model_text = model_text.format(**_params)
 
     model_text = StringIO.StringIO(model_text)
     return yaml.safe_load(model_text)

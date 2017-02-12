@@ -131,10 +131,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         cfg = self.args['model_config']
         fmt = luchador.get_nn_conv_format()
         w, h, c = cfg['input_width'], cfg['input_height'], cfg['input_channel']
-        shape = (
-            '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
-            '[null, {}, {}, {}]'.format(c, h, w)
-        )
+        shape = [None, h, w, c] if fmt == 'NHWC' else [None, c, h, w]
         return nn.get_model_config(
             cfg['model_file'], n_actions=n_actions, input_shape=shape)
 
@@ -147,6 +144,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._ql = dqn(**cfg['args'])
         model_def = self._gen_model_def(n_actions)
         initial_parameter = self.args['model_config']['initial_parameter']
+        _LG.info('\n%s', luchador.util.pprint_dict(model_def))
         self._ql.build(model_def, initial_parameter)
         self._ql.sync_network()
 
