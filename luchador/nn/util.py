@@ -79,21 +79,23 @@ def make_model(model_config):
 
 def _convert_to_str(value):
     """Convert object into one-line YAML string"""
+    if isinstance(value, str):
+        return value
     if value is None:
-        ret = 'null'
-    elif luchador.util.is_iteratable(value):
-        ret = '[{}]'.format(
-            ', '.join([_convert_to_str(val) for val in value]))
-    elif isinstance(value, dict):
-        ret = '{{ {} }}'.format(
+        return 'null'
+
+    if isinstance(value, dict):
+        return '{{{}}}'.format(
             ', '.join(
                 '{}: {}'.format(key, _convert_to_str(val))
                 for key, val in value.items()
             )
         )
-    else:
-        ret = str(value)
-    return ret
+
+    if luchador.util.is_iteratable(value):
+        return '[{}]'.format(
+            ', '.join([_convert_to_str(val) for val in value]))
+    return str(value)
 
 
 def get_model_config(model_name, **parameters):
