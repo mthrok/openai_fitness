@@ -61,7 +61,7 @@ def _compute_partition_index(buffer_size, sample_size, priority):
         i_end = max(i_start + 1, np.where(np.diff(np.sign(p_cumsum)))[0][0])
         indices.append((i_start, i_end))
         i_start = i_end
-    return indices, probabilities.astype('float32')
+    return indices, probabilities
 
 
 def _get_child_index(index, buffer_):
@@ -319,6 +319,7 @@ class PrioritizedQueue(object):
         probs = probabilities[indices]
         weights = np.power(1 / probs / buffer_size, self.importance)
         weights /= np.max(weights)
+        weights = weights.astype('float32')
         return {'indices': indices, 'records': records, 'weights': weights}
 
     def get_last_record(self):
@@ -367,6 +368,9 @@ class PrioritizedQueue(object):
                 i_right -= 1
             if i_left < i_right:
                 self._swap(i_left, i_right)
+            if i_left <= i_right:
+                i_left += 1
+                i_right -= 1
         return i_right, i_left
 
     def _quick_sort(self, i_start, i_end):

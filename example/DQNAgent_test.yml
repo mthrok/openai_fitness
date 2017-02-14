@@ -1,4 +1,5 @@
 alias:
+  memory_size: &memory_size 25000
   width: &width 84
   height: &height 84
   stack: &stack 4
@@ -9,8 +10,12 @@ alias:
 
 typename: DQNAgent
 args:
+  record_config:
+    sort_frequency: -1
+    stack: *stack
+
   recorder_config:
-    buffer_size: 250000
+    buffer_size: 10
     sample_size: *batch
     priority: 0.0
     importance: 0.0

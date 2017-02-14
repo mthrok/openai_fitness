@@ -31,6 +31,14 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
     Parameters
     ----------
+    record_config : dict
+        Configuration for recording
+
+        sort_frequency : int
+            Sort heap buffer every this number of records are put
+        stack : int
+            Stack state
+
     recorder_config : dict
         Constructor arguments for
         :class:`luchador.agent.recorder.PrioritizedQueue`
@@ -79,6 +87,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     """
     def __init__(
             self,
+            record_config,
             recorder_config,
             model_config,
             q_network_config,
@@ -91,6 +100,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     ):
         super(DQNAgent, self).__init__()
         self._store_args(
+            record_config=record_config,
             recorder_config=recorder_config,
             model_config=model_config,
             q_network_config=q_network_config,
@@ -207,10 +217,16 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     ###########################################################################
     # Methods for `learn`
     def learn(self, state0, action, reward, state1, terminal, info=None):
+        self._n_obs += 1
+        self._record(action, reward, state1, terminal)
+        self._train()
+
+    def _record(self, action, reward, state1, terminal):
+        """Stack states and push them to recorder, occasionally sort"""
         self._stack_buffer.append(state1)
 
-        n_stack = len(self._stack_buffer)
-        if n_stack == self.args['model_config']['input_channel'] + 1:
+        cfg = self.args['record_config']
+        if len(self._stack_buffer) == cfg['stack'] + 1:
             if self._previous_stack is None:
                 self._previous_stack = np.array(self._stack_buffer[:-1])
             state0_ = self._previous_stack
@@ -221,20 +237,25 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             self._stack_buffer = self._stack_buffer[1:]
             self._previous_stack = state1_
             self._ready = True
-        self._n_obs += 1
 
-        cfg, n_obs = self.args['training_config'], self._n_obs
-        if cfg['train_start'] < 0 or n_obs < cfg['train_start']:
+        if self._n_obs % cfg['sort_frequency'] == 0:
+            _LG.info('Sorting Memory')
+            self._recorder.sort()
+            _LG.debug('Sorting Complete')
+
+    def _train(self):
+        cfg = self.args['training_config']
+        if cfg['train_start'] < 0 or self._n_obs < cfg['train_start']:
             return
 
-        if n_obs == cfg['train_start']:
+        if self._n_obs == cfg['train_start']:
             _LG.info('Starting DQN training')
 
-        if n_obs % cfg['sync_frequency'] == 0:
+        if self._n_obs % cfg['sync_frequency'] == 0:
             self._ql.sync_network()
 
-        if n_obs % cfg['train_frequency'] == 0:
-            error = self._train()
+        if self._n_obs % cfg['train_frequency'] == 0:
+            error = self._train_network()
             self._n_train += 1
             self._summary_values['errors'].append(error)
 
@@ -251,6 +272,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
                 self._summarize_history()
 
     def _sample(self):
+        """Sample transition from recorder and build training batch"""
         data = self._recorder.sample()
         records = data['records']
         state0 = np.asarray([r['state0'] for r in records])
@@ -265,7 +287,8 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         }
         return samples, indices
 
-    def _train(self):
+    def _train_network(self):
+        """Train network"""
         samples, indices = self._sample()
         if luchador.get_nn_conv_format() == 'NHWC':
             samples['state0'] = _transpose(samples['state0'])
@@ -275,15 +298,18 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         return errors
 
     def _save(self):
+        """Save trained parameters to file"""
         data = self._ql.fetch_all_parameters()
         self._saver.save(data, global_step=self._n_train)
 
     def _summarize_layer_params(self):
+        """Summarize layer parameter statistic"""
         dataset = self._ql.fetch_layer_params()
         self._summary_writer.summarize(
             global_step=self._n_train, dataset=dataset)
 
     def _summarize_layer_outputs(self):
+        """Summarize layer output"""
         samples, _ = self._sample()
         if luchador.get_nn_conv_format() == 'NHWC':
             samples['state0'] = _transpose(samples['state0'])
@@ -292,6 +318,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             global_step=self._n_train, dataset=dataset)
 
     def _summarize_history(self):
+        """Summarize training history"""
         steps = self._summary_values['steps']
         errors = self._summary_values['errors']
         rewards = self._summary_values['rewards']

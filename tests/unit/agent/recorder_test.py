@@ -100,6 +100,24 @@ class TestMaxHeap(unittest.TestCase):
             for i in range(len(heap.buffer) - 1):
                 self.assertGreater(heap.buffer[i], heap.buffer[i+1])
 
+    def test_sort_sorted(self):
+        """Sort does not hang when sorted"""
+        buffer_size = 1000
+
+        heap = PrioritizedQueue(
+            buffer_size=buffer_size, sample_size=32,
+            priority=0.7, importance=0.5)
+
+        record = 0
+        for _ in range(10):
+            for _ in range(buffer_size):
+                heap.push(priority=1, record=record)
+                record += 1
+            heap.sort()
+            self._verify_heap(heap)
+            for i in range(len(heap.buffer) - 1):
+                self.assertGreaterEqual(heap.buffer[i], heap.buffer[i+1])
+
     def test_update(self):
         """Update record priority keeps the heap balance"""
         buffer_size = 30
