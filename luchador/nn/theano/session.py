@@ -88,7 +88,7 @@ class Session(BaseSession):
     """
     def __init__(self, **_):
         super(Session, self).__init__()
-        self.functions = {}
+        self._cached_functions = {}
 
     @property
     def graph(self):
@@ -96,15 +96,42 @@ class Session(BaseSession):
 
     def run(self, outputs=None, inputs=None,
             updates=None, givens=None, name=None):
+        """Run computation and update values
+
+        Parameters
+        ----------
+        outputs : list of Tensors
+            Tensors of which values are fetched
+
+        inputs : dict
+            Keys are the input Tensors required to compute values of output
+            Tensors. Values are actual values to feed to Tensors.
+
+        updates : Operation or list of Operations
+            Updates variables
+
+        givens : dict
+            Same as inputs
+
+        name : str
+            When given, the resulting Theano function is internally cached so
+            that next time calling the same operation, only inputs and
+            givens are required.
+
+        Returns
+        -------
+        [list of] NumPy ND Arrays
+            The resulting values corresponding the given `outputs` values
+        """
         outputs = outputs if outputs else []
         inputs = inputs if inputs else {}
-        if name in self.functions:
-            function = self.functions[name]
+        if name in self._cached_functions:
+            function = self._cached_functions[name]
         else:
             function = _construct_function(inputs, outputs, updates, givens)
 
-        if name and name not in self.functions:
-            self.functions[name] = function
+        if name and name not in self._cached_functions:
+            self._cached_functions[name] = function
 
         values = function(*inputs.values())
         if luchador.util.is_iteratable(outputs):

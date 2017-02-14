@@ -103,20 +103,30 @@ class Session(BaseSession):
 
     def run(self, outputs=None, inputs=None,
             updates=None, givens=None, name=None):
-        """
+        """Run computation and update values
 
-        Args:
-          outputs (list of Tensors): Tensors of which values are fetched
+        Parameters
+        ----------
+        outputs : list of Tensors
+            Tensors of which values are fetched
 
-          inputs (dict): Keys are the input Tensors required to compute values
-                         of output Tensors. Values are actual values to feed
-                         to Tensors.
+        inputs : dict
+            Keys are the input Tensors required to compute values of output
+            Tensors. Values are actual values to feed to Tensors.
 
-          updates (Operation or list of Operations):
+        updates : Operation or list of Operations
+            Updates variables
 
-          givens (dict):
+        givens : dict
+            Same as inputs
 
-          name (str): Not used. Compatibility for theano backend
+        name : str
+            Not used. Compatibility for theano backend
+
+        Returns
+        -------
+        [list of] NumPy ND Arrays
+            The resulting values corresponding the given `outputs` values
         """
         outputs = outputs if outputs else []
         inputs = inputs if inputs else {}
