@@ -1,3 +1,4 @@
+"""Define tf.Session wrapper class"""
 from __future__ import absolute_import
 
 import logging

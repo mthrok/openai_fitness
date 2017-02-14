@@ -1,4 +1,4 @@
-"""Implement tensorflow.Session like interface"""
+"""Implement tensorflow.Session-like interface"""
 from __future__ import absolute_import
 
 import logging
