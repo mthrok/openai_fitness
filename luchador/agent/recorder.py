@@ -65,6 +65,15 @@ def _compute_partition_index(buffer_size, sample_size, priority):
 
 
 def _get_child_index(index, buffer_):
+    """Get a valid child index of the given index in binary tree.
+
+    Returns
+    -------
+    int or None
+        If the range of child indices are out of buffer length, None is
+        returned, else the index of the child with larger priority is
+        returned.
+    """
     i1, i2 = [2 * index + i + 1 for i in range(2)]
     length = len(buffer_)
     if i2 >= length:
@@ -143,6 +152,8 @@ class PrioritizedQueue(object):
 
         # Record IDs are used for tracking the oldest records and locate them
         # in heap buffer.
+        # Since the incoming record is not guaranteed to be hashable, we use
+        # record ID and store the actual record separately.
         self.new_record_id = 0
         self.update_record_id = 0
 

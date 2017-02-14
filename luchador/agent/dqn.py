@@ -222,7 +222,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         self._train()
 
     def _record(self, action, reward, state1, terminal):
-        """Stack states and push them to recorder, occasionally sort"""
+        """Stack states and push them to recorder, then sort memory"""
         self._stack_buffer.append(state1)
 
         cfg = self.args['record_config']
@@ -238,12 +238,16 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             self._previous_stack = state1_
             self._ready = True
 
-        if self._n_obs % cfg['sort_frequency'] == 0:
+        sort_freq = cfg['sort_frequency']
+        if sort_freq > 0 and self._n_obs % sort_freq == 0:
             _LG.info('Sorting Memory')
             self._recorder.sort()
             _LG.debug('Sorting Complete')
 
+    # -------------------------------------------------------------------------
+    # Training
     def _train(self):
+        """Schedule training"""
         cfg = self.args['training_config']
         if cfg['train_start'] < 0 or self._n_obs < cfg['train_start']:
             return
@@ -252,24 +256,14 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             _LG.info('Starting DQN training')
 
         if self._n_obs % cfg['sync_frequency'] == 0:
+            _LG.debug('Syncing networks')
             self._ql.sync_network()
 
         if self._n_obs % cfg['train_frequency'] == 0:
             error = self._train_network()
             self._n_train += 1
             self._summary_values['errors'].append(error)
-
-            interval = self.args['save_config']['interval']
-            if interval > 0 and self._n_train % interval == 0:
-                _LG.info('Saving parameters')
-                self._save()
-
-            interval = self.args['summary_config']['interval']
-            if interval > 0 and self._n_train % interval == 0:
-                _LG.info('Summarizing Network')
-                self._summarize_layer_params()
-                self._summarize_layer_outputs()
-                self._summarize_history()
+            self._save_and_summarize()
 
     def _sample(self):
         """Sample transition from recorder and build training batch"""
@@ -297,7 +291,23 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         self._recorder.update(indices, np.abs(errors))
         return errors
 
-    def _save(self):
+    # -------------------------------------------------------------------------
+    # Save and summarize
+    def _save_and_summarize(self):
+        """Save model parameter and summarize occasionally"""
+        interval = self.args['save_config']['interval']
+        if interval > 0 and self._n_train % interval == 0:
+            _LG.info('Saving parameters')
+            self._save_parameters()
+
+        interval = self.args['summary_config']['interval']
+        if interval > 0 and self._n_train % interval == 0:
+            _LG.info('Summarizing Network')
+            self._summarize_layer_params()
+            self._summarize_layer_outputs()
+            self._summarize_history()
+
+    def _save_parameters(self):
         """Save trained parameters to file"""
         data = self._ql.fetch_all_parameters()
         self._saver.save(data, global_step=self._n_train)
