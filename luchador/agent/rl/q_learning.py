@@ -111,9 +111,13 @@ class DeepQLearning(luchador.util.StoreMixin, object):
                 shape=(None,), dtype='int32', name='action_0')
             error = self._build_error(target_q, action_value_0, action_0)
 
+        weight = nn.Input(
+            shape=(None,), name='sample_weight')
         self._init_optimizer()
         optimize_op = self.optimizer.minimize(
-            loss=error, wrt=model_0.get_parameter_variables())
+            loss=(error*weight).mean(),
+            params=model_0.get_parameter_variables())
+
         self._init_session(initial_parameter)
 
         self.models = {
@@ -131,6 +135,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             'post_q': post_q,
             'target_q': target_q,
             'error': error,
+            'weight': weight,
         }
         self.ops = {
             'sync': sync_op,
@@ -160,7 +165,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         delta = (target_q - action_value_0)
         error = nn.minimum(nn.abs(delta), (delta * delta))
         mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
-        return (mask * error).mean()
+        return (mask * error).mean(axis=1)
 
     ###########################################################################
     def _init_optimizer(self):
@@ -199,32 +204,41 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """Synchronize parameters of model_1 with those of model_0"""
         self.session.run(updates=self.ops['sync'], name='sync')
 
-    def train(self, state_0, action_0, reward, state_1, terminal):
+    def train(self, state0, action, reward, state1, terminal, weight=None):
         """Train model network
 
         Parameters
         ----------
-        state_0 : NumPy ND Array
+        state0 : NumPy ND Array
             Environment states before taking actions
 
-        action_0 : NumPy ND Array
-            Actions taken in state_0
+        action : NumPy ND Array
+            Actions taken in state0
 
         reward : NumPy ND Array
             Rewards obtained by taking the action_0.
 
-        state_1 : NumPy ND Array
+        state1 : NumPy ND Array
             Environment states after action_0 are taken
 
         terminal : NumPy ND Array
-            Flags for marking corresponding states in state_1 are
+            Flags for marking corresponding states in state1 are
             terminal states.
+
+        weight : NumPy ND Array
+            Weight of each data points. Scale parameter update.
 
         Returns
         -------
         NumPy ND Array
             Mean error between Q prediction and target Q
         """
+        if weight is None:
+            weight = np.ones((action.size, ), dtype=self.vars['weight'].dtype)
+
+        return self._train(state0, action, reward, state1, terminal, weight)
+
+    def _train(self, state_0, action_0, reward, state_1, terminal, weight):
         updates = self.models['model_0'].get_update_operations()
         updates += [self.ops['optimize']]
         return self.session.run(
@@ -235,6 +249,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
                 self.vars['reward']: reward,
                 self.vars['state_1']: state_1,
                 self.vars['terminal']: terminal,
+                self.vars['weight']: weight,
             },
             updates=updates,
             name='minibatch_training',
@@ -291,32 +306,7 @@ class DoubleDeepQLearning(DeepQLearning):
         Deep Reinforcement Learning with Double Q-learning
         https://arxiv.org/abs/1509.06461
     """
-    def train(self, state_0, action_0, reward, state_1, terminal):
-        """Train model network
-
-        Parameters
-        ----------
-        state_0 : NumPy ND Array
-            Environment states before taking actions
-
-        action_0 : NumPy ND Array
-            Actions taken in state_0
-
-        reward : NumPy ND Array
-            Rewards obtained by taking the action_0.
-
-        state_1 : NumPy ND Array
-            Environment states after action_0 are taken
-
-        terminal : NumPy ND Array
-            Flags for marking corresponding states in state_1 are
-            terminal states.
-
-        Returns
-        -------
-        NumPy ND Array
-            Mean error between Q prediction and target Q
-        """
+    def _train(self, state_0, action_0, reward, state_1, terminal, weight):
         # Find the best action after state_1 by feeding state_1 to model_0
         action_value_1_0, action_value_1 = self.session.run(
             outputs=[
@@ -343,6 +333,7 @@ class DoubleDeepQLearning(DeepQLearning):
                 self.vars['post_q']: post_q,
                 self.vars['reward']: reward,
                 self.vars['terminal']: terminal,
+                self.vars['weight']: weight,
             },
             updates=updates,
             name='minibatch_training',

@@ -61,7 +61,7 @@ def _compute_partition_index(buffer_size, sample_size, priority):
         i_end = max(i_start + 1, np.where(np.diff(np.sign(p_cumsum)))[0][0])
         indices.append((i_start, i_end))
         i_start = i_end
-    return indices, probabilities
+    return indices, probabilities.astype('float32')
 
 
 def _get_child_index(index, buffer_):
@@ -290,13 +290,20 @@ class PrioritizedQueue(object):
         self._balance_down(index)
 
     ###########################################################################
-    # Sample records
+    # Record retrievals
     def sample(self):
         """Sample records from buffer
 
         Returns
         -------
-        # TODO: Finish this once return value is finalized
+        dict
+            records : list
+                Records
+            weights : list
+                Sampling weights of each records
+            indices : list
+                Indices where records were stored in buffer. To be used to
+                update priorities later.
         """
         buffer_size = len(self.buffer)
         if buffer_size < self.buffer_size:
@@ -312,7 +319,17 @@ class PrioritizedQueue(object):
         probs = probabilities[indices]
         weights = np.power(1 / probs / buffer_size, self.importance)
         weights /= np.max(weights)
-        return indices, records, weights
+        return {'indices': indices, 'records': records, 'weights': weights}
+
+    def get_last_record(self):
+        """Get the record inserted previously
+
+        Returns
+        -------
+        record
+            Record added with previous push
+        """
+        return self.id2record[self.new_record_id - 1]
 
     ###########################################################################
     def update(self, indices, priorities):

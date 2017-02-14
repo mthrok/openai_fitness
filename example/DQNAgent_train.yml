@@ -10,22 +10,10 @@ alias:
 typename: DQNAgent
 args:
   recorder_config:
-    memory_size: 1000000
-    batch_size: *batch
-    buffer_config:
-      state:
-        shape:
-          - *height
-          - *width
-        dtype: uint8
-        stack: *stack
-        transition: 2
-      action:
-        dtype: uint8
-      reward:
-        dtype: float32
-      terminal:
-        dtype: bool
+    buffer_size: 250000
+    sample_size: *batch
+    priority: 0.7
+    importance: 0.5
 
   model_config:
     model_file: vanilla_dqn
@@ -82,4 +70,3 @@ args:
     train_frequency: 4
     # Sync networks every this number of observations are made
     sync_frequency: 10000
-    n_samples: *batch

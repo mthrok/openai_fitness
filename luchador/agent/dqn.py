@@ -12,7 +12,7 @@ from luchador.nn.saver import Saver
 from luchador.nn.summary import SummaryWriter
 
 from .base import BaseAgent
-from .recorder import TransitionRecorder
+from .prioritized_recorder import PrioritizedQueue
 from .misc import EGreedy
 from .rl import DeepQLearning, DoubleDeepQLearning
 
@@ -31,6 +31,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
 
     Parameters
     ----------
+    # TODO: Update
     recorder_config : dict
         Constructor arguments for
         :class:`luchador.agent.recorder.TransitionRecorder`
@@ -104,11 +105,14 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
         self._n_obs = 0
         self._n_train = 0
         self._n_actions = None
+        self._ready = False
 
         self._recorder = None
         self._saver = None
         self._ql = None
         self._eg = None
+        self._stack_buffer = None
+        self._previous_stack = None
         self._summary_writer = None
         self._summary_values = {
             'errors': [],
@@ -121,7 +125,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     # Methods for initialization
     def init(self, env):
         self._n_actions = env.n_actions
-        self._recorder = TransitionRecorder(**self.args['recorder_config'])
+        self._recorder = PrioritizedQueue(**self.args['recorder_config'])
 
         self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
@@ -181,16 +185,14 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
-        self._recorder.reset(
-            initial_data={'state': initial_observation})
+        self._stack_buffer = [initial_observation]
+        self._previous_stack = None
+        self._ready = False
 
     ###########################################################################
     # Methods for `act`
     def act(self):
-        if (
-                not self._recorder.is_ready() or
-                self._eg.act_random()
-        ):
+        if not self._ready or self._eg.act_random():
             return np.random.randint(self._n_actions)
 
         q_val = self._predict_q()
@@ -198,7 +200,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
 
     def _predict_q(self):
         # _LG.debug('Predicting Q value from NN')
-        state = self._recorder.get_last_stack()['state'][None, ...]
+        state = self._recorder.get_last_record()['state1'][None, ...]
         if luchador.get_nn_conv_format() == 'NHWC':
             state = _transpose(state)
         return self._ql.predict_action_value(state)[0]
@@ -206,9 +208,20 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     ###########################################################################
     # Methods for `learn`
     def learn(self, state0, action, reward, state1, terminal, info=None):
-        self._recorder.record({
-            'action': action, 'reward': reward,
-            'state': state1, 'terminal': terminal})
+        self._stack_buffer.append(state1)
+
+        n_stack = len(self._stack_buffer)
+        if n_stack == self.args['model_config']['input_channel'] + 1:
+            if self._previous_stack is None:
+                self._previous_stack = np.array(self._stack_buffer[:-1])
+            state0_ = self._previous_stack
+            state1_ = np.array(self._stack_buffer[1:])
+            self._recorder.push(1, {
+                'state0': state0_, 'action': action, 'reward': reward,
+                'state1': state1_, 'terminal': terminal})
+            self._stack_buffer = self._stack_buffer[1:]
+            self._previous_stack = state1_
+            self._ready = True
         self._n_obs += 1
 
         cfg, n_obs = self.args['training_config'], self._n_obs
@@ -222,7 +235,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             self._ql.sync_network()
 
         if n_obs % cfg['train_frequency'] == 0:
-            error = self._train(cfg['n_samples'])
+            error = self._train()
             self._n_train += 1
             self._summary_values['errors'].append(error)
 
@@ -238,16 +251,29 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
                 self._summarize_layer_outputs()
                 self._summarize_history()
 
-    def _train(self, n_samples):
-        samples = self._recorder.sample(n_samples)
-        state0 = samples['state'][0]
-        state1 = samples['state'][1]
+    def _sample(self):
+        data = self._recorder.sample()
+        records = data['records']
+        state0 = np.asarray([r['state0'] for r in records])
+        state1 = np.asarray([r['state1'] for r in records])
+        reward = [r['reward'] for r in records]
+        action = [r['action'] for r in records]
+        terminal = [r['terminal'] for r in records]
+        weights, indices = data['weights'], data['indices']
+        samples = {
+            'state0': state0, 'state1': state1, 'reward': reward,
+            'action': action, 'terminal': terminal, 'weight': weights,
+        }
+        return samples, indices
+
+    def _train(self):
+        samples, indices = self._sample()
         if luchador.get_nn_conv_format() == 'NHWC':
-            state0 = _transpose(state0)
-            state1 = _transpose(state1)
-        return self._ql.train(
-            state0, samples['action'], samples['reward'],
-            state1, samples['terminal'])
+            samples['state0'] = _transpose(samples['state0'])
+            samples['state1'] = _transpose(samples['state1'])
+        errors = self._ql.train(**samples)
+        self._recorder.update(indices, np.abs(errors))
+        return errors
 
     def _save(self):
         data = self._ql.fetch_all_parameters()
@@ -259,11 +285,10 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
             global_step=self._n_train, dataset=dataset)
 
     def _summarize_layer_outputs(self):
-        sample = self._recorder.sample(32)
-        state = sample['state'][0]
+        samples, _ = self._sample()
         if luchador.get_nn_conv_format() == 'NHWC':
-            state = _transpose(state)
-        dataset = self._ql.fetch_layer_outputs(state)
+            samples['state0'] = _transpose(samples['state0'])
+        dataset = self._ql.fetch_layer_outputs(samples['state0'])
         self._summary_writer.summarize(
             global_step=self._n_train, dataset=dataset)
 
@@ -298,7 +323,6 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):
     ###########################################################################
     # Methods for post_episode_action
     def perform_post_episode_task(self, stats):
-        self._recorder.truncate()
         self._summary_values['rewards'].append(stats['rewards'])
         self._summary_values['steps'].append(stats['steps'])
         self._summary_values['episode'] = stats['episode']
