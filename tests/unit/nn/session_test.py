@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 
-import unittest
-
 import numpy as np
 
 from luchador import nn
+from tests.unit import fixture
 
 
-class SessionTest(unittest.TestCase):
+class SessionTest(fixture.TestCase):
     def _test_load_dataset(self, dtype1, dtype2):
         name = 'test_load_dataset_{}_{}'.format(dtype1, dtype2)
         shape = (3, 3)
