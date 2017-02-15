@@ -5,6 +5,8 @@ from __future__ import absolute_import
 # theano.config.optimizer = 'None'
 # theano.config.exception_verbosity = 'high'
 
+import numpy as np
+
 import luchador
 from luchador import nn
 
@@ -87,6 +89,32 @@ class OptimizerGradientTest(fixture.TestCase):
         for i in range(5):
             grad = nn.get_tensor('{}/{}_grad'.format(scope, xs[i].name))
             self.assertIs(grads_and_vars[i][0], grad)
+
+    def test_clip_gradients(self):
+        """Gradients are clipped"""
+        sgd = nn.optimizer.SGD(learning_rate=1.0)
+        shape = (32, 1)
+        with nn.variable_scope(self.get_scope()):
+            initializer = nn.get_initializer('Uniform')(minval=-3, maxval=3)
+            x = nn.get_variable(name='x', shape=shape, initializer=initializer)
+            y = x * x / 2
+            grads_and_vars = [
+                (grad.clip(max_value=1.0, min_value=-1.0), var)
+                for grad, var in sgd.compute_gradients(y.sum(), wrt=x)
+            ]
+            op = sgd.apply_gradients(grads_and_vars)
+
+        session = nn.Session()
+        session.initialize()
+
+        val_0 = session.run(outputs=x)
+        session.run(updates=op)
+        val_1_be = session.run(outputs=x)
+
+        val_1_np = np.zeros(shape)
+        val_1_np[val_0 > 1] = val_0[val_0 > 1] - 1
+        val_1_np[val_0 < -1] = val_0[val_0 < -1] + 1
+        np.testing.assert_almost_equal(val_1_be, val_1_np)
 
 
 class AdamTest(fixture.TestCase):
