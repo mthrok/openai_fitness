@@ -14,7 +14,7 @@ RETURN=0
 for dir in ${DATA_DIR}/*/
 do
     echo "${dir}agent.yml"
-    ${TEST_COMMAND} exercise "${dir}env.yml" --agent "${dir}agent.yml" --episodes 10 --steps 500
+    xvfb-run -s "-screen 0 1400x900x24" ${TEST_COMMAND} exercise "${dir}env.yml" --agent "${dir}agent.yml" --episodes 10 --steps 500
     if [[ ! $? = 0 ]]; then
 	RETURN=1
     fi

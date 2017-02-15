@@ -60,7 +60,9 @@ def _parse_params(params):
     except ValueError:
         raise ValueError('"port" must be string type')
 
-    return params['environment'], port
+    xvfb = params.get('xvfb')
+
+    return params['environment'], port, xvfb
 
 
 def create_manager_app():
@@ -73,12 +75,14 @@ def create_manager_app():
         params = flask.request.get_json()
 
         try:
-            env, port = _parse_params(params)
+            env_cfg, port, xvfb = _parse_params(params)
         except ValueError as error:
             return error.args[0], 400
 
-        file_ = _create_temp_environment_file(env)
+        file_ = _create_temp_environment_file(env_cfg)
         cmd = ['luchador', 'serve', 'env', file_.name, '--port', port]
+        if xvfb:
+            cmd = ['xvfb-run'] + cmd
         _LG.info('Starting environment server: %s', cmd)
         # For portable way to start independent process
         # see http://stackoverflow.com/a/13256908
