@@ -428,6 +428,33 @@ class TestTensorOpsMax(fixture.TestCase):
         self._test_max((1, 2), (3, 4, 5, 6), True)
 
 
+class TestTensorOpsMaximum(fixture.TestCase):
+    """Test wrapper maximum method"""
+    def _test_maximum(self, value0, value1):
+        with nn.variable_scope(self.get_scope()):
+            input0 = nn.Input(
+                shape=value0.shape, dtype=value0.dtype, name='0')
+            input1 = nn.Input(
+                shape=value1.shape, dtype=value1.dtype, name='1')
+            output0 = input0.maximum(input1)
+            output1 = input1.maximum(input0)
+        session = nn.Session()
+
+        val0, val1 = session.run(
+            outputs=[output0, output1],
+            inputs={input0: value0, input1: value1},
+        )
+
+        np.testing.assert_equal(val0, np.maximum(value0, value1))
+        np.testing.assert_equal(val1, np.maximum(value1, value0))
+
+    def test_max(self):
+        """Test maximum with same shape and dtype"""
+        shape = (3, 4)
+        value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
+        self._test_maximum(value0, value1)
+
+
 class TestTensorOpsClip(fixture.TestCase):
     """Test wrapper clip method"""
     def test_clip_number(self):

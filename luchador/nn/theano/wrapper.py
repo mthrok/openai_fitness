@@ -202,6 +202,26 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
         return Tensor(tensor=_tensor, shape=_shape, name=name)
 
+    def maximum(self, other, name=None):
+        """Compute elementwise max against other tensor
+
+        Parameters
+        ----------
+        other : Tensor
+            Tensor to compare
+
+        name : str
+            Name of new Tensor
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        # TODO: Add Broadcasting
+        _tensor = T.maximum(self._tensor, other.unwrap())
+        return Tensor(tensor=_tensor, shape=self.shape, name=name)
+
     def clip(self, max_value, min_value, name=None):
         """Clip value elementwise
 

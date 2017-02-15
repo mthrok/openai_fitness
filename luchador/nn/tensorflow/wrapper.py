@@ -130,6 +130,25 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
             self._tensor, axis=axis, keep_dims=keep_dims, name=name)
         return Tensor(tensor=_tensor, name=name)
 
+    def maximum(self, other, name=None):
+        """Compute elementwise max against other tensor
+
+        Parameters
+        ----------
+        other : Tensor
+            Tensor to compare
+
+        name : str
+            Name of new Tensor
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.maximum(self._tensor, other.unwrap, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
     def clip(self, max_value, min_value, name=None):
         """Clip value elementwise
 
