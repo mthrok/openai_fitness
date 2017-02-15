@@ -51,8 +51,8 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
     def _minimize(self, loss, wrt=None, **kwargs):
         kws1, kws2 = _parse_kwargs(kwargs)
         grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
-        grads_and_vars_ = [g_v for g_v in grads_and_vars if g_v[0] is not None]
-        return self.apply_gradients(grads_and_vars_, **kws2)
+        grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
+        return self.apply_gradients(grads_and_vars, **kws2)
 
     def _compute_gradients(self, loss, wrt, **kwargs):
         """Compute gradient

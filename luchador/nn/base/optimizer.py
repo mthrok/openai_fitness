@@ -62,7 +62,7 @@ class BaseOptimizer(luchador.util.SerializeMixin):
         loss : Tensor
             Tensor holding loss value to be minimized
 
-        wrt : [list of] Tensors:
+        wrt : [list of] Tensors
             Variables with which gradients of loss are computed. Variables
             marked as not trainable are ignored.
 
@@ -152,9 +152,12 @@ class BaseSGD(BaseOptimizer):
         Used to create scope which contains parameter variables.
         Virtually has no effect in SGD
     kwargs
-        - use_lock : [TF only] passed to underlying TF native optimizer
+        Other accepted keyword arguments
+        use_lock
+            [Tensorflow nly] passed to underlying TF native optimizer
     """
-    def __init__(self, learning_rate, name='SGD', **kwargs):
+    def __init__(
+            self, learning_rate, name='SGD', **kwargs):
         super(BaseSGD, self).__init__(
             learning_rate=learning_rate, name=name, **kwargs)
 
@@ -189,7 +192,9 @@ class BaseRMSProp(BaseOptimizer):
     name : str
         Used to create scope which contains parameter variables
     kwargs
-        use_lock : [Tensorflow only] passed to underlying TF native optimizer
+        Other accepted keyword arguments
+        use_lock
+            [Tensorflow nly] passed to underlying TF native optimizer
 
     References
     ----------
@@ -197,12 +202,12 @@ class BaseRMSProp(BaseOptimizer):
            Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
            Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
     """
-    def __init__(self, learning_rate,
-                 decay=0.95, momentum=0.0,
-                 epsilon=1e-2, name='RMSProp', **kwargs):
+    def __init__(
+            self, learning_rate, decay=0.95, momentum=0.0,
+            epsilon=1e-2, name='RMSProp', **kwargs):
         super(BaseRMSProp, self).__init__(
-            learning_rate=learning_rate, decay=decay, momentum=momentum,
-            epsilon=epsilon, name=name, **kwargs)
+            learning_rate=learning_rate, decay=decay,
+            momentum=momentum, epsilon=epsilon, name=name, **kwargs)
 
 
 class BaseNeonRMSProp(BaseOptimizer):
@@ -229,7 +234,9 @@ class BaseNeonRMSProp(BaseOptimizer):
     name : str
         Used to create scope which contains parameter variables
     kwargs
-        use_lock : [Tensorflow only] passed to underlying TF native optimizer
+        Other accepted keyword arguments
+        use_lock
+            [Tensorflow nly] passed to underlying TF native optimizer
 
     References
     ----------
@@ -237,15 +244,19 @@ class BaseNeonRMSProp(BaseOptimizer):
            Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
            Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
     """
-    def __init__(self, learning_rate, decay=0.95, epsilon=1e-6,
-                 name='NeonRMSProp', **kwargs):
+    def __init__(
+            self, learning_rate, decay=0.95, epsilon=1e-6,
+            name='NeonRMSProp', **kwargs):
         super(BaseNeonRMSProp, self).__init__(
-            learning_rate=learning_rate, decay=decay,
-            epsilon=epsilon, name=name, **kwargs)
+            learning_rate=learning_rate,
+            decay=decay, epsilon=epsilon, name=name, **kwargs)
 
 
 class BaseGravesRMSProp(BaseOptimizer):
     """RMSProp used in DQN paper [1]_ and described in A.Graves paper [2]_
+
+    # TODO: Add docstring
+    # TODO: Fix citatoin ref
 
     References
     ----------
@@ -257,9 +268,9 @@ class BaseGravesRMSProp(BaseOptimizer):
            Generating Sequences With Recurrent Neural Networks
            http://arxiv.org/pdf/1308.0850v5.pdf
     """
-    def __init__(self, learning_rate,
-                 decay1=0.95, decay2=0.95,
-                 epsilon=1e-2, name='GravesRMSProp', **kwargs):
+    def __init__(
+            self, learning_rate, decay1=0.95, decay2=0.95, epsilon=1e-2,
+            name='GravesRMSProp', **kwargs):
         super(BaseGravesRMSProp, self).__init__(
             learning_rate=learning_rate, decay1=decay1, decay2=decay2,
             epsilon=epsilon, name=name, **kwargs)
@@ -268,15 +279,18 @@ class BaseGravesRMSProp(BaseOptimizer):
 class BaseAdam(BaseOptimizer):
     """Adam optimizer [1]_
 
+    # TODO: Add docstring
+    # TODO: Fix citatoin ref
+
     References
     ----------
     .. [1] Kingma, D. Ba, J 2014
         Adam: A Method for Stochastic Optimization
         https://arxiv.org/abs/1412.6980
     """
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-08, name='Adam', **kwargs):
+    def __init__(
+            self, learning_rate, beta1=0.9, beta2=0.999,
+            epsilon=1e-08, name='Adam', **kwargs):
         super(BaseAdam, self).__init__(
             learning_rate=learning_rate, beta1=beta1, beta2=beta2,
             epsilon=epsilon, name=name, **kwargs)
@@ -285,15 +299,18 @@ class BaseAdam(BaseOptimizer):
 class BaseAdamax(BaseOptimizer):
     """Adam optimizer [1]_
 
+    # TODO: Add docstring
+    # TODO: Fix citatoin ref
+
     References
     ----------
     .. [1] Kingma, D. Ba, J 2014
         Adam: A Method for Stochastic Optimization
         https://arxiv.org/abs/1412.6980
     """
-    def __init__(self, learning_rate,
-                 beta1=0.9, beta2=0.999,
-                 epsilon=1e-8, name='Adamax', **kwargs):
+    def __init__(
+            self, learning_rate, beta1=0.9, beta2=0.999,
+            epsilon=1e-8, name='Adamax', **kwargs):
         super(BaseAdamax, self).__init__(
             learning_rate=learning_rate, beta1=beta1, beta2=beta2,
             epsilon=epsilon, name=name, **kwargs)
