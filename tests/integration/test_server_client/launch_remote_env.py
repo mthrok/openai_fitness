@@ -29,6 +29,7 @@ def _main():
                 }
             },
             'port': args.env_port,
+            'xvfb': True,
         }
     )
     if res.status_code == 200:
