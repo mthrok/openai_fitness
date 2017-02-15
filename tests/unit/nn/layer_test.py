@@ -242,7 +242,7 @@ class TestFlatten(TestCase):
     def test_flatten(self):
         """4D input tensor is flattened to 2D tensor"""
         input_shape = (32, 4, 77, 84)
-        input_value = np.zeros(input_shape)
+        input_value = np.random.rand(*input_shape)
         scope = self.get_scope()
         with luchador.nn.variable_scope(scope, reuse=False):
             input_tensor = nn.Input(shape=input_shape)
@@ -253,9 +253,9 @@ class TestFlatten(TestCase):
         output_value = session.run(
             outputs=output_tensor, inputs={input_tensor: input_value})
 
-        expected = output_value.shape
-        found = output_tensor.shape
-        self.assertEqual(expected, found)
+        self.assertEqual(output_value.shape, output_tensor.shape)
+        expected = input_value.reshape(input_value.shape[0], -1)
+        np.testing.assert_almost_equal(expected, output_value)
 
 
 class TestTile(TestCase):
