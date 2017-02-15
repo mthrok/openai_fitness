@@ -32,7 +32,7 @@ stages:
         name: Install Luchador
         command: |
           python setup.py download_ale --output-dir=luchador/env/ale/rom
-          pip install .
+          pip install -e .
       - type: shell
         name: Print Version
         command: |
