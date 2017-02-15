@@ -67,7 +67,7 @@ class CostSCETest(unittest.TestCase):
         x, z = logit, target
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
 
-        np.testing.assert_almost_equal(sce_be, sce_np)
+        np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
 
     def test_sce_scalar(self):
         """SigmoidCrossEntropy output value is correct"""
@@ -87,7 +87,7 @@ class CostSCETest(unittest.TestCase):
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
         sce_np = np.mean(np.sum(sce_np, axis=1), axis=0)
 
-        np.testing.assert_almost_equal(sce_be, sce_np)
+        np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
 
 
 class CostSSETest(unittest.TestCase):
@@ -107,7 +107,7 @@ class CostSSETest(unittest.TestCase):
             sse_be = _compute_cost(sse, target, prediction)
 
         sse_np = np.square(target - prediction)
-        np.testing.assert_almost_equal(sse_be, sse_np)
+        np.testing.assert_almost_equal(sse_be, sse_np, decimal=5)
 
     def test_sse_scalar(self):
         """SSE output value is correct"""
@@ -123,4 +123,4 @@ class CostSSETest(unittest.TestCase):
 
         sse_np = np.square(target - prediction)
         sse_np = np.mean(np.sum(sse_np, axis=1))
-        np.testing.assert_almost_equal(sse_be, sse_np)
+        np.testing.assert_almost_equal(sse_be, sse_np, decimal=5)
