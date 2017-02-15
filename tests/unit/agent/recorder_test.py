@@ -435,7 +435,6 @@ class TestTransitionRecorder(unittest.TestCase):
                 'Value expected: {}, Found: {}.'.format(expected, found)
             )
 
-    @unittest.expectedFailure
     def test_sampling_time(self):
         """Sampling should finish in reasonable time."""
         n_samples, stack = 32, 4
