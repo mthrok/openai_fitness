@@ -10,13 +10,14 @@ RUN apt-get update && \
     libsdl-image1.2-dev \
     libhdf5-serial-dev \
     xvfb
-
-WORKDIR /src
-ADD ./ ./
-RUN ./cci_script/install_ale.sh && \
-    ./cci_script/download_atari_roms.sh luchador/env/ale/rom && \
-    conda install libgcc numpy scipy mkl coverage && \
+WORKDIR /src_
+RUN git clone https://github.com/mgbellemare/Arcade-Learning-Environment && \
+    cd Arcade-Learning-Environment && \
+    cmake -DUSE_SDL=ON -DUSE_RLGLUE=OFF . && \
+    make && \
+    pip install --upgrade .
+RUN conda install libgcc numpy scipy mkl coverage flake8 && \
+    pip install codacy-coverage Sphinx sphinx_rtd_theme && \
     pip install git+git://github.com/Theano/Theano.git && \
-    pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl && \
-    pip install .
-CMD ["luchador"]
+    pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl
+CMD ["bash"]

@@ -1,7 +1,7 @@
 version: 2
 executorType: docker
 containerInfo:
-  - image: continuumio/anaconda
+  - image: mthrok/luchador-base:test
     env:
       - COUNT_INTEGRATION_COVERAGE=true
 stages:
@@ -9,25 +9,6 @@ stages:
     workDir: /src
     steps:
       - type: checkout
-      - type: shell
-        name: Install Dependancies
-        command: |
-          apt-get update
-          apt-get -y install g++ git cmake libsdl1.2-dev libsdl-gfx1.2-dev libsdl-image1.2-dev libhdf5-serial-dev xvfb
-      - type: shell
-        name: Install ALE
-        command: ./cci_script/install_ale.sh
-      - type: shell
-        name: Install Python Dependencies
-        command: |
-          conda install libgcc numpy scipy mkl coverage flake8
-          pip install codacy-coverage Sphinx sphinx_rtd_theme
-      - type: shell
-        name: Install Theano
-        command: pip install git+git://github.com/Theano/Theano.git
-      - type: shell
-        name: Install Tensorflow
-        command: pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.12.1-cp27-none-linux_x86_64.whl
       - type: shell
         name: Install Luchador
         command: |
