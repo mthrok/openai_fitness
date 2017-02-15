@@ -95,4 +95,4 @@ stages:
         name: Build Doc
         command: |
           xvfb-run -s "-screen 0 1400x900x24" ./cci_script/build_docs.sh
-          ./cci_script/push_docs.sh
+          # ./cci_script/push_docs.sh
