@@ -1,13 +1,17 @@
 """Test wapper module"""
 from __future__ import absolute_import
 
+import unittest
 import numpy as np
 
+import luchador
 from luchador import nn
 
 from tests.unit import fixture
 
 # pylint: disable=invalid-name
+
+_BACKEND = luchador.get_nn_backend()
 
 
 class TestTensorOpsMult(fixture.TestCase):
@@ -445,13 +449,20 @@ class TestTensorOpsMaximum(fixture.TestCase):
             inputs={input0: value0, input1: value1},
         )
 
-        np.testing.assert_equal(val0, np.maximum(value0, value1))
-        np.testing.assert_equal(val1, np.maximum(value1, value0))
+        np.testing.assert_almost_equal(val0, np.maximum(value0, value1))
+        np.testing.assert_almost_equal(val1, np.maximum(value1, value0))
 
-    def test_max(self):
+    def test_max_same_shape_same_dtype(self):
         """Test maximum with same shape and dtype"""
         shape = (3, 4)
         value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
+        self._test_maximum(value0, value1)
+
+    @unittest.skipUnless(
+        _BACKEND == 'tensorflow', 'Only supported in Tensorflow')
+    def test_max_different_shape(self):
+        """Test maximum with same dtype"""
+        value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
         self._test_maximum(value0, value1)
 
 

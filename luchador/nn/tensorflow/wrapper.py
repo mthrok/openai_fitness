@@ -136,7 +136,8 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Parameters
         ----------
         other : Tensor
-            Tensor to compare
+            Tensor to compare. In Tensorflow backend, the shape of other
+            Tensor can be different as long as it is broadcastable.
 
         name : str
             Name of new Tensor
@@ -146,7 +147,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         Tensor
             The resulting Tensor
         """
-        _tensor = tf.maximum(self._tensor, other.unwrap, name=name)
+        _tensor = tf.maximum(self._tensor, other.unwrap(), name=name)
         return Tensor(tensor=_tensor, name=name)
 
     def clip(self, max_value, min_value, name=None):
