@@ -43,17 +43,16 @@ args:
         min_reward: -1.0
         max_reward: 1.0
       cost_config:
-        typename: SSE2
-        args:
-          # error between predicted Q value and target Q value is clipped by the following min and max
-          min_delta: -1.0
-          max_delta: 1.0
+        typename: SSE
       optimizer_config:
         typename: NeonRMSProp
         args:
           decay: 0.95
           epsilon: 0.000001
           learning_rate: 0.00025
+      clip_grad:
+        max_value: 1.0
+        min_value: -1.0
 
   saver_config:
     output_dir: *save_dir

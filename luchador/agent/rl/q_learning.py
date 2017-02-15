@@ -80,6 +80,14 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         args : dict
             Configuration for the optimizer class
 
+    clip_grad: dict
+        If given, gradient is clipped.
+
+        min_val
+            Minimum value
+        max_val
+            Maximum value
+
     References
     ----------
     .. [1] Mnih, V et. al (2015)
@@ -88,11 +96,12 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(
-            self, q_learning_config, cost_config, optimizer_config):
+            self, q_learning_config, cost_config, optimizer_config, clip_grad):
         self._store_args(
             q_learning_config=q_learning_config,
             cost_config=cost_config,
             optimizer_config=optimizer_config,
+            clip_grad=clip_grad,
         )
         self.vars = None
         self.models = None
@@ -100,9 +109,14 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.optimizer = None
         self.session = None
 
-    def _validate_args(self, q_learning_config=None, **_):
+    def _validate_args(self, q_learning_config=None, clip_grad=None, **_):
         if q_learning_config is not None:
             _validate_q_learning_config(**q_learning_config)
+
+        if clip_grad:
+            if not ('min_value' in clip_grad and 'max_value' in clip_grad):
+                raise ValueError(
+                    '`min_value` and `max_value` must be given in `clip_grad`')
 
     def build(self, model_def, initial_parameter):
         """Build computation graph (error and sync ops) for Q learning
@@ -129,8 +143,9 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             error = self._build_error(target_q, action_value_0, action_0)
 
         self._init_optimizer()
-        optimize_op = self.optimizer.minimize(
-            error, wrt=model_0.get_parameter_variables())
+        optimize_op = self._build_optimize_op(
+            loss=error,
+            params=model_0.get_parameter_variables())
         self._init_session(initial_parameter)
 
         self.models = {
@@ -175,11 +190,26 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     def _build_error(self, target_q, action_value_0, action):
         n_actions = action_value_0.shape[1]
         config = self.args['cost_config']
-        args = config['args']
-        cost = nn.get_cost(config['typename'])(elementwise=True, **args)
+        cost = nn.get_cost(config['typename'])(
+            elementwise=True, **config.get('args', {}))
         error = cost(target_q, action_value_0)
         mask = action.one_hot(n_classes=n_actions, dtype=error.dtype)
         return (mask * error).mean()
+
+    def _build_optimize_op(self, loss, params):
+        grads_and_vars = self.optimizer.compute_gradients(
+            loss=loss, wrt=params)
+        # Remove untrainables
+        grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
+        # Clip gradients
+        if self.args.get('clip_grad'):
+            max_ = self.args['clip_grad']['max_value']
+            min_ = self.args['clip_grad']['min_value']
+            grads_and_vars = [
+                (g_v.clip(max_value=max_, min_value=min_), var)
+                for g_v, var in grads_and_vars
+            ]
+        return self.optimizer.apply_gradients(grads_and_vars)
 
     ###########################################################################
     def _init_optimizer(self):

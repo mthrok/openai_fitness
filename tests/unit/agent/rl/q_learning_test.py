@@ -29,11 +29,7 @@ def _make_dqn(
             'scale_reward': scale_reward,
         },
         cost_config={
-            'typename': 'SSE2',
-            'args': {
-                'min_delta': -1,
-                'max_delta': +1,
-            }
+            'typename': 'SSE',
         },
         optimizer_config={
             'typename': 'RMSProp',
@@ -42,7 +38,12 @@ def _make_dqn(
                 'epsilon': 1e-6,
                 'learning_rate': 2.5e-4,
             }
+        },
+        clip_grad={
+            'min_value': -1,
+            'max_value': +1,
         }
+
     )
     if model_def is None:
         if input_shape is None:

@@ -9,7 +9,7 @@ import theano.tensor as T
 from luchador.nn.base import cost as base_cost
 from . import wrapper
 
-__all__ = ['SSE2', 'SigmoidCrossEntropy']
+__all__ = ['SSE', 'SigmoidCrossEntropy']
 
 _LG = logging.getLogger(__name__)
 
@@ -18,19 +18,16 @@ def _mean_sum(x):
     return x.mean(axis=0).sum()
 
 
-class SSE2(base_cost.BaseSSE2):
-    """Implement SSE2 in Theano.
+class SSE(base_cost.BaseSSE):
+    """Implement SSE in Theano.
 
-    See :any:`BaseSSE2` for detail.
+    See :any:`BaseSSE` for detail.
     """
     def _build(self, target, prediction):
-        target_, pred_ = target.unwrap(), prediction.unwrap()
-        delta = theano.gradient.disconnected_grad(target_) - pred_
-        if self.args['min_delta']:
-            delta = delta.clip(self.args['min_delta'], self.args['max_delta'])
-        delta = T.square(delta) / 2
-
-        output = delta if self.args['elementwise'] else _mean_sum(delta)
+        pred_ = prediction.unwrap()
+        target_ = theano.gradient.disconnected_grad(target.unwrap())
+        error = T.square(target_ - pred_)
+        output = error if self.args['elementwise'] else _mean_sum(error)
         shape = target.shape if self.args['elementwise'] else (1,)
         return wrapper.Tensor(output, shape=shape)
 

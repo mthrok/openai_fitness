@@ -78,51 +78,37 @@ def get_cost(typename):
 
 ###############################################################################
 # pylint: disable=abstract-method
-class BaseSSE2(BaseCost):
-    """Compute Sum-Squared-Error / 2.0 for the given target and prediction
+class BaseSSE(BaseCost):
+    """Compute Sum-Squared-Error for the given target and prediction
 
-    TODO: Add math expression
-
-    Parameters
-    ----------
-    max_delta, min_delta : float
-        Clip the difference between target value and prediction values
-
-    elementwise : Bool
-        When true, the cost tesnor returned by this method has the same shape
-        as its input Tensors. When False, the cost tensor is flattened
-        to scalar shape by taking average over batch and sum over feature.
-        Default: False.
-
-    Notes
-    -----
-    In case ``elementwise=True``, this cost is reduced to squared difference
-    between target and prediction.
-    """
-    def __init__(self, max_delta=None, min_delta=None, elementwise=False):
-        super(BaseSSE2, self).__init__(
-            max_delta=max_delta, min_delta=min_delta, elementwise=elementwise)
-
-    def _validate_args(self, min_delta, max_delta, **_):
-        """Check if constructor arguments are valid. Raise error if invalid.
-
-        Called automatically by constructor. Not to be called by user.
-        """
-        if (min_delta and max_delta) or (not max_delta and not min_delta):
-            return
-        raise ValueError('When clipping delta, both '
-                         '`min_delta` and `max_delta` must be provided')
-
-
-class BaseSigmoidCrossEntropy(BaseCost):
-    """Directory computes classification entropy from logit
+    .. math::
+        loss = (target - prediction) ^ {2}
 
     Parameters
     ----------
     elementwise : Bool
         When True, the cost tesnor returned by `build` method has the same
-        shape as its input Tensors. When False, the cost tensor is flattened
-        to scalar shape by taking average over batch and sum over feature.
+        shape as its input Tensors. When False, the cost tensor is reduced to
+        scalar shape by taking average over batch and sum over feature.
+        Defalut: False.
+    """
+    def __init__(self, elementwise=False):
+        super(BaseSSE, self).__init__(elementwise=elementwise)
+
+
+class BaseSigmoidCrossEntropy(BaseCost):
+    """Directory computes classification entropy from logit
+
+    .. math::
+        loss = \\frac{-1}{n} \\sum\\limits_{n=1}^N \\left[ p_n \\log
+                \\hat{p}_n + (1 - p_n) \\log(1 - \\hat{p}_n) \\right]
+
+    Parameters
+    ----------
+    elementwise : Bool
+        When True, the cost tesnor returned by `build` method has the same
+        shape as its input Tensors. When False, the cost tensor is reduced to
+        scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
     def __init__(self, elementwise=False):
