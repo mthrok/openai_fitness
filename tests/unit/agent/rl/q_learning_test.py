@@ -116,4 +116,4 @@ class DQNTest(fixture.TestCase):
         target_q_ = rewards + (1.0 - terminal) * discount * max_action
         target_q_ = np.tile(target_q_.reshape(-1, 1), (1, n_actions))
 
-        np.testing.assert_almost_equal(target_q, target_q_)
+        np.testing.assert_almost_equal(target_q, target_q_, decimal=4)
