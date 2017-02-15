@@ -35,16 +35,19 @@ import logging
 import tempfile
 import subprocess
 
-import ruamel.yaml as yaml
 import flask
+
+import luchador.util
 
 _LG = logging.getLogger(__name__)
 
 
 def _create_temp_environment_file(config):
     _LG.info('Creating environment config file')
-    file_ = tempfile.NamedTemporaryFile(delete=False)
-    yaml.dump(config, file_, Dumper=yaml.RoundTripDumper)
+    dumped = luchador.util.pprint_dict(config)
+    _LG.info('\n%s', dumped)
+    with tempfile.NamedTemporaryFile(delete=False) as file_:
+        file_.write(dumped)
     return file_
 
 

@@ -15,4 +15,5 @@ def load_config(filepath):
 
 def pprint_dict(dictionary):
     """Pretty-print dictionary in YAML style"""
-    return yaml.dump(dictionary, default_flow_style=False)
+    return yaml.dump(
+        dictionary, default_flow_style=False, Dumper=yaml.RoundTripDumper)
