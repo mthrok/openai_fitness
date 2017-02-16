@@ -73,7 +73,8 @@ class BaseLayer(luchador.util.SerializeMixin, object):
         Tensor
             Tensor which holds the output of built computation
         """
-        _LG.debug('    Building %s: %s', type(self).__name__, self.args)
+        _LG.info(
+            '  Building layer %s on %s', type(self).__name__, input_tensor)
         return self._build(input_tensor)
 
     @abc.abstractmethod
