@@ -35,8 +35,10 @@ class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
     """
     def _build(self, target, logit):
         with tf.name_scope(self.__class__.__name__):
+            logits = logit.unwrap()
+            labels = tf.stop_gradient(target.unwrap())
             sce = tf.nn.sigmoid_cross_entropy_with_logits(
-                logit.unwrap(), tf.stop_gradient(target.unwrap()))
+                labels=labels, logits=logits)
 
             output = sce if self.args['elementwise'] else _mean_sum(sce)
             return wrapper.Tensor(output)
