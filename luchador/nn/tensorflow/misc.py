@@ -1,9 +1,15 @@
 """Module for providing backend-common interface for misc task"""
 from __future__ import absolute_import
 
-from .wrapper import Operation
+import tensorflow as tf
+
+import luchador
+from ..base.wrapper import BaseWrapper
+from .wrapper import Operation, Tensor
 
 __all__ = ['build_sync_op']
+
+# pylint: disable=redefined-builtin
 
 
 def build_sync_op(source_vars, target_vars, tau=None, name='sync'):
@@ -39,3 +45,219 @@ def build_sync_op(source_vars, target_vars, tau=None, name='sync'):
             src = (1 - tau) * tgt + tau * src
         _operations.append(tgt.assign(src))
     return Operation(op=_operations, name=name)
+
+
+###############################################################################
+def mean(var, axis=None, keep_dims=False, name=None):
+    """Compute mean across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute mean. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_mean(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def sum(var, axis=None, keep_dims=False, name=None):
+    """Compute sum across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute sum. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_sum(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def max(var, axis=None, keep_dims=False, name=None):
+    """Compute max across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute max. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_max(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def clip(var, max_value, min_value, name=None):
+    """Clip value elementwise
+
+    Parameters
+    ----------
+    max_value, min_value : number or Wrapper
+        Clip values
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    if isinstance(max_value, BaseWrapper):
+        max_value = max_value.unwrap()
+    if isinstance(min_value, BaseWrapper):
+        min_value = min_value.unwrap()
+    _tensor = tf.clip_by_value(
+        var.unwrap(), clip_value_min=min_value, clip_value_max=max_value,
+        name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+###############################################################################
+def reshape(var, new_shape, name=None):
+    """Reshape tensor.
+
+    Parameters
+    ----------
+    new_shape : tuple
+        new shape
+
+    name : str
+        Name of operation
+
+    Returns
+    -------
+    Tensor
+        Tensor with new shape
+    """
+    _tensor = tf.reshape(var.unwrap(), shape=new_shape)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def tile(var, pattern, name=None):
+    """Tile tensor.
+
+    Parameters
+    ----------
+    pattern : tuple
+        tile pattern
+
+    Notes
+    -----
+    Currently only constant pattern is allowed.
+    """
+    if not luchador.util.is_iteratable(pattern):
+        raise ValueError('`pattern` must be iteratable')
+    pattern = tuple(pattern)
+
+    if len(pattern) > var.n_dim:
+        prepend = (1, ) * (len(pattern) - var.n_dim)
+        tensor = var.reshape(prepend + var.shape).unwrap()
+    else:
+        prepend = (1, ) * (var.n_dim - len(pattern))
+        pattern = prepend + pattern
+        tensor = var.unwrap()
+    return Tensor(tf.tile(tensor, pattern, name), name=name)
+
+
+###############################################################################
+def one_hot(var, n_classes, dtype=None, name=None):
+    """Convert to one-hot encoding.
+
+    Parameters
+    ----------
+    n_classes : int
+        Number of label to encode
+
+    dtype : str
+        The dtype of the resulting Tensor. Default to floatX
+
+    name : str
+        Name of operation
+
+    Returns
+    -------
+    Tensor
+        Tensor with shape ``(var.shape[0], n_classes)``
+
+    Notes
+    -----
+    The Tensor must be either vector or 2D matrix
+    """
+    if not var.n_dim == 1:
+        raise ValueError('Tensor must be 1D.')
+
+    _dtype = dtype or luchador.get_nn_dtype()
+    _tensor = tf.one_hot(
+        var.unwrap(), depth=n_classes, dtype=_dtype, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+###############################################################################
+def maximum(var1, var2, name=None):
+    """Compute elementwise max against other tensor
+
+    Parameters
+    ----------
+    other : Tensor
+        Tensor to compare. In Tensorflow backend, the shape of other
+        Tensor can be different as long as it is broadcastable.
+
+    name : str
+        Name of new Tensor
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.maximum(var1.unwrap(), var2.unwrap(), name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def minimum(var1, var2, name=None):
+    """Compute elementwise min against other tensor
+
+    Parameters
+    ----------
+    other : Tensor
+        Tensor to compare. In Tensorflow backend, the shape of other
+        Tensor can be different as long as it is broadcastable.
+
+    name : str
+        Name of new Tensor
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.minimum(var1.unwrap(), var2.unwrap(), name=name)
+    return Tensor(tensor=_tensor, name=name)
