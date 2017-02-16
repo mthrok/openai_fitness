@@ -102,6 +102,9 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
     def __neg__(self, name=None):
         return Tensor(tensor=-self._tensor, shape=self.shape, name=name)
 
+    def __abs__(self, name=None):
+        return Tensor(tensor=abs(self.unwrap()), shape=self.shape, name=name)
+
     def __add__(self, other, name=None):
         _other = self._extract_operand(other)
         return Tensor(tensor=self._tensor+_other, shape=self.shape, name=name)

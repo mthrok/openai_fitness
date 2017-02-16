@@ -28,7 +28,10 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         )
 
     def __neg__(self, name=None):
-        return type(self)(tensor=-self._tensor, shape=self.shape, name=name)
+        return Tensor(tensor=-self._tensor, name=name)
+
+    def __abs__(self, name=None):
+        return Tensor(tensor=tf.abs(self._tensor), name=name)
 
     def __add__(self, other, name=None):
         _other = self._extract_operand(other)

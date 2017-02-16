@@ -254,6 +254,25 @@ class TestTensorOpsAdd(fixture.TestCase):
         np.testing.assert_equal(val0 + val1, val3)
 
 
+class TestTensorOpsAbs(fixture.TestCase):
+    """Test wrapper absolute op"""
+    def test_abs(self):
+        """abs(Tensor) is correct elementwise"""
+        shape = (3, 5)
+        with nn.variable_scope(self.get_scope()):
+            input_ = nn.Input(shape, dtype='float64')
+            output = abs(input_)
+
+        input_val = np.random.randn(*shape)
+
+        session = nn.Session()
+        out_val = session.run(
+            outputs=output,
+            inputs={input_: input_val},
+        )
+        np.testing.assert_almost_equal(out_val, abs(input_val))
+
+
 class TestTensorOpsNeg(fixture.TestCase):
     """Test wrapper negation"""
     def test_neg(self):

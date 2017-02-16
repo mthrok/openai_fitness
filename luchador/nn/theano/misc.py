@@ -9,6 +9,8 @@ from .wrapper import Operation, Tensor
 
 __all__ = ['build_sync_op', 'one_hot', 'maximum', 'minimum']
 
+# pylint: disable=redefined-builtin
+
 
 def build_sync_op(source_vars, target_vars, tau=None, name='sync'):
     """Build operation to copy values from source variables to target variables
@@ -78,6 +80,11 @@ def one_hot(var, n_classes, dtype=None, name=None):
 
 
 ###############################################################################
+def abs(var, name):
+    """Element-wise absolute value"""
+    return var.__abs__(name=name)
+
+
 def maximum(var1, var2, name=None):
     """Compute elementwise max among tensors
 
