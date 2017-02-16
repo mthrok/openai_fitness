@@ -28,9 +28,6 @@ def _make_dqn(
             'max_reward': max_reward,
             'scale_reward': scale_reward,
         },
-        cost_config={
-            'typename': 'SSE',
-        },
         optimizer_config={
             'typename': 'RMSProp',
             'args': {
@@ -39,11 +36,6 @@ def _make_dqn(
                 'learning_rate': 2.5e-4,
             }
         },
-        clip_grad={
-            'min_value': -1,
-            'max_value': +1,
-        }
-
     )
     if model_def is None:
         if input_shape is None:

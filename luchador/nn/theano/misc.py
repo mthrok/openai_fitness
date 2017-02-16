@@ -7,7 +7,7 @@ import theano.tensor as T
 
 from .wrapper import Operation, Tensor
 
-__all__ = ['build_sync_op', 'one_hot', 'maximum', 'minimum']
+__all__ = ['build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs']
 
 # pylint: disable=redefined-builtin
 
@@ -80,7 +80,7 @@ def one_hot(var, n_classes, dtype=None, name=None):
 
 
 ###############################################################################
-def abs(var, name):
+def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
 

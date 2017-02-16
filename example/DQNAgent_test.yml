@@ -42,8 +42,6 @@ args:
         # reward is clipped between the following min and max
         min_reward: -1.0
         max_reward: 1.0
-      cost_config:
-        typename: SSE
       optimizer_config:
         typename: NeonRMSProp
         args:
