@@ -56,7 +56,7 @@ class DQNTest(fixture.TestCase):
         model_def = util.get_model_config(
             'vanilla_dqn', input_shape=shape, n_actions=5)
         # Skip biases as they are deterministically initialized
-        for cfg in model_def['layer_configs']:
+        for cfg in model_def['args']['layer_configs']:
             if cfg['typename'] in ['Conv2D', 'Dense']:
                 cfg['args']['with_bias'] = False
 
