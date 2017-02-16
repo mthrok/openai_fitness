@@ -116,7 +116,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self._init_optimizer()
         optimize_op = self.optimizer.minimize(
             loss=(error*weight).mean(),
-            params=model_0.get_parameter_variables())
+            wrt=model_0.get_parameter_variables())
 
         self._init_session(initial_parameter)
 
