@@ -222,6 +222,26 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _tensor = T.maximum(self._tensor, other.unwrap())
         return Tensor(tensor=_tensor, shape=self.shape, name=name)
 
+    def minimum(self, other, name=None):
+        """Compute elementwise min against other tensor
+
+        Parameters
+        ----------
+        other : Tensor
+            Tensor to compare
+
+        name : str
+            Name of new Tensor
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        # TODO: Add Broadcasting
+        _tensor = T.minimum(self._tensor, other.unwrap())
+        return Tensor(tensor=_tensor, shape=self.shape, name=name)
+
     def clip(self, max_value, min_value, name=None):
         """Clip value elementwise
 

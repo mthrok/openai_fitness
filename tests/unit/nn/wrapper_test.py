@@ -466,6 +466,40 @@ class TestTensorOpsMaximum(fixture.TestCase):
         self._test_maximum(value0, value1)
 
 
+class TestTensorOpsMinimum(fixture.TestCase):
+    """Test wrapper minimum method"""
+    def _test_minimum(self, value0, value1):
+        with nn.variable_scope(self.get_scope()):
+            input0 = nn.Input(
+                shape=value0.shape, dtype=value0.dtype, name='0')
+            input1 = nn.Input(
+                shape=value1.shape, dtype=value1.dtype, name='1')
+            output0 = input0.minimum(input1)
+            output1 = input1.minimum(input0)
+        session = nn.Session()
+
+        val0, val1 = session.run(
+            outputs=[output0, output1],
+            inputs={input0: value0, input1: value1},
+        )
+
+        np.testing.assert_almost_equal(val0, np.minimum(value0, value1))
+        np.testing.assert_almost_equal(val1, np.minimum(value1, value0))
+
+    def test_max_same_shape_same_dtype(self):
+        """Test minimum with same shape and dtype"""
+        shape = (3, 4)
+        value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
+        self._test_minimum(value0, value1)
+
+    @unittest.skipUnless(
+        _BACKEND == 'tensorflow', 'Only supported in Tensorflow')
+    def test_max_different_shape(self):
+        """Test minimum with same dtype"""
+        value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
+        self._test_minimum(value0, value1)
+
+
 class TestTensorOpsClip(fixture.TestCase):
     """Test wrapper clip method"""
     def test_clip_number(self):
