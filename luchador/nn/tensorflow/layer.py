@@ -337,7 +337,7 @@ class Concat(LayerMixin, base_layer.BaseConcat):
     """
     def _build(self, var_list):
         values = [var.unwrap() for var in var_list]
-        output = tf.concat_v2(values, axis=self.args['axis'])
+        output = tf.concat(values, axis=self.args['axis'])
         return wrapper.Tensor(output, name='output')
 
 
