@@ -6,8 +6,6 @@ import logging
 import luchador.nn
 from .base_model import BaseModel
 
-__all__ = ['Sequential']
-
 _LG = logging.getLogger(__name__)
 
 

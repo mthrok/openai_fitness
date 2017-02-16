@@ -4,14 +4,16 @@ from __future__ import absolute_import
 import logging
 
 import luchador.nn
-from ..model import Sequential
+from ..model import Sequential, Container
 from .getter import get_input, get_layer, get_tensor
 
 _LG = logging.getLogger(__name__)
 
 
-def make_input(config):
-    """Make input instance from configuration.
+def make_io_node(config):
+    """Make/fetch ``Input``/``Tensor`` instances from configuration.
+
+    This function was itroduced to facilitate model construction from YAML.
 
     Parameters
     ----------
@@ -46,7 +48,7 @@ def make_input(config):
     >>>         'name': 'input_state',
     >>>     },
     >>> }
-    >>> input1 = make_input(input_config1)
+    >>> input1 = make_io_node(input_config1)
 
     then, to reuse the input,
 
@@ -55,7 +57,7 @@ def make_input(config):
     >>>     'reuse': True,
     >>>     'name': 'input_state',
     >>> }
-    >>> input2 = make_input(input_config2)
+    >>> input2 = make_io_node(input_config2)
     >>> assert input1 is inpput2
 
     To reuse a Tensor from some output
@@ -64,11 +66,11 @@ def make_input(config):
     >>>     'typename': 'Tensor',
     >>>     'name': 'output_state',
     >>> }
-    >>> input3 = make_input(input_config3)
+    >>> input3 = make_io_node(input_config3)
 
     You can also create multiple Input instances
 
-    >>> inputs = make_input([input_config2, input_config3])
+    >>> inputs = make_io_node([input_config2, input_config3])
     >>> assert input2 is inputs[0]
     >>> assert input3 is inputs[1]
 
@@ -77,18 +79,19 @@ def make_input(config):
     [list of] ``Tensor`` or ``Input``
     """
     if isinstance(config, list):
-        return [make_input(cfg) for cfg in config]
+        return [make_io_node(cfg) for cfg in config]
 
     type_ = config.get('typename', 'No `typename` is found.')
     if type_ not in ['Input', 'Tensor']:
         raise ValueError('Unexpected Input type: {}'.format(type_))
 
     if type_ == 'Tensor':
-        return get_tensor(name=config['name'])
-    # `Input` class
-    if config.get('reuse'):
-        return get_input(config['name'])
-    return luchador.nn.backend.Input(**config['args'])
+        ret = get_tensor(name=config['name'])
+    elif config.get('reuse'):
+        ret = get_input(config['name'])
+    else:
+        ret = luchador.nn.backend.Input(**config['args'])
+    return ret
 
 
 def make_sequential_model(layer_configs, input_config=None):
@@ -120,7 +123,36 @@ def make_sequential_model(layer_configs, input_config=None):
         model.add_layer(layer=layer, scope=config.get('scope', ''))
 
     if input_config:
-        model(make_input(input_config))
+        model(make_io_node(input_config))
+    return model
+
+
+def make_container_model(input_config, model_configs, output_config):
+    """Make ``Container`` model from model configuration
+
+    Parameters
+    ----------
+    input_config : [list of] dict
+        See :any::make_io_node
+
+    model_config : list
+        Model configuration.
+
+    output_config : [list of] dict
+        See :any::make_io_node
+
+    Returns
+    -------
+    Model
+        Resulting model
+    """
+    model = Container()
+    model.input = make_io_node(input_config)
+    for conf in model_configs:
+        name = conf['name']
+        model_ = make_model(conf)
+        model.add_model(name, model_)
+    model.output = make_io_node(output_config)
     return model
 
 
@@ -143,5 +175,7 @@ def make_model(model_config):
     _type = model_config.get('typename', 'No model type found')
     if _type == 'Sequential':
         return make_sequential_model(**model_config.get('args', {}))
+    if _type == 'Container':
+        return make_container_model(**model_config.get('args', {}))
 
     raise ValueError('Unexpected model type: {}'.format(_type))
