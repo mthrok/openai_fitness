@@ -11,22 +11,22 @@ from ..model import BaseModel
 ###############################################################################
 # Functions for fetching class
 def get_cost(name):
-    """Get Cost class by name
+    """Get ``Cost`` class by name
 
     Parameters
     ----------
     name : str
-        Type of Cost to get
+        Type of ``Cost`` to get.
 
     Returns
     -------
     type
-        Cost type found
+        ``Cost`` type found
 
     Raises
     ------
     ValueError
-        When Cost with the given type is not found
+        When ``Cost`` class with the given type is not found
     """
     for class_ in get_subclasses(BaseCost):
         if class_.__name__ == name:
@@ -35,22 +35,22 @@ def get_cost(name):
 
 
 def get_layer(name):
-    """Get Layer class by name
+    """Get ``Layer`` class by name
 
     Parameters
     ----------
     name : str
-        Type of Layer to get
+        Type of ``Layer`` to get
 
     Returns
     -------
     type
-        Layer type found
+        ``Layer`` type found
 
     Raises
     ------
     ValueError
-        When Layer with the given type is not found
+        When ``Layer`` class with the given type is not found
     """
     for class_ in get_subclasses(BaseLayer):
         if class_.__name__ == name:
@@ -59,22 +59,22 @@ def get_layer(name):
 
 
 def get_optimizer(name):
-    """Get Optimizer class by name
+    """Get ``Optimizer`` class by name
 
     Parameters
     ----------
     name : str
-        Type of Optimizer to get
+        Type of ``Optimizer`` to get
 
     Returns
     -------
     type
-        Optimizer type found
+        ``Optimizer`` type found
 
     Raises
     ------
     ValueError
-        When Optimizer with the given type is not found
+        When ``Optimizer`` class with the given type is not found
     """
     for class_ in get_subclasses(BaseOptimizer):
         if class_.__name__ == name:
@@ -83,22 +83,22 @@ def get_optimizer(name):
 
 
 def get_initializer(name):
-    """Get Initializer class by name
+    """Get ``Initializer`` class by name
 
     Parameters
     ----------
     name : str
-        Type of Initializer to get
+        Type of ``Initializer`` to get
 
     Returns
     -------
     type
-        Initializer type found
+        ``Initializer`` type found
 
     Raises
     ------
     ValueError
-        When Initializer with the given type is not found
+        When ``Initializer`` class with the given type is not found
     """
     for class_ in get_subclasses(BaseInitializer):
         if class_.__name__ == name:
@@ -108,22 +108,22 @@ def get_initializer(name):
 
 # -----------------------------------------------------------------------------
 def get_model(name):
-    """Get Model class by name
+    """Get ``Model`` class by name
 
     Parameters
     ----------
     name : str
-        Name of Model to get
+        Name of ``Model`` to get
 
     Returns
     -------
     type
-        Class found with the given name
+        ``Model`` type found
 
     Raises
     ------
     ValueError
-        When Model class with the given name is not found
+        When ``Model`` class with the given name is not found
     """
     for class_ in luchador.util.get_subclasses(BaseModel):
         if class_.__name__ == name:
@@ -134,11 +134,12 @@ def get_model(name):
 ###############################################################################
 # Functions for fetching instance
 def get_input(name):
-    """Fetch Input with name in global scope or the current scope
+    """Get ``Input`` instance from the current scope or the global scope
 
     Parameters
     ----------
     name : str
+        name of ``Input`` instance to get
 
     Returns
     -------
@@ -153,11 +154,12 @@ def get_input(name):
 
 
 def get_tensor(name):
-    """Fetch tensor with name in global scope or the current scope
+    """Get ``Tensor`` instance from the current scope or the global scope
 
     Parameters
     ----------
     name : str
+        name of ``Tensor`` instance to get
 
     Returns
     -------
@@ -172,16 +174,16 @@ def get_tensor(name):
 
 
 def get_grad(var):
-    """Fetch gradient tensor corresponding to the given Variable
+    """Get gradient ``Tensor`` corresponding to the given ``Variable``
 
-    In optimizers, gradient tensors are registered in global list of tensors,
-    following the naming pattern `<scope>/<variable_name>_grad`.
+    In optimizers, gradient tensors are registered in global scope,
+    following the naming pattern ``<scope>/<variable_name>_grad``.
 
-    This function automatically build such name from the given Variable and
-    the current scope.
+    This function automatically build such name from the given ``Variable``
+    and the current scope name.
 
-    To properly fetch the corresponding gradient Tensor, this function
-    must be called in the scope where gradient Tensor was defined.
+    To properly fetch the corresponding gradient ``Tensor``, this function
+    must be called in the scope where gradient ``Tensor`` was defined.
 
     Examples
     --------
@@ -199,22 +201,23 @@ def get_grad(var):
     Parameters
     ----------
     var : Variable
-        Variable object of which grad is retrieved.
+        ``Variable`` object of which grad is retrieved.
 
     Returns
     -------
     Tensor
-        Tensor object which is a gradient of given Variable
+        ``Tensor`` object which is a gradient of given ``Variable``
     """
     return get_tensor('{}_grad'.format(var.name))
 
 
 def get_operation(name):
-    """Fetch Operation with name in global scope or the current scope
+    """Get ``Operation`` instance from the current scope or the global scope
 
     Parameters
     ----------
     name : str
+        name of ``Operation`` instance to get
 
     Returns
     -------

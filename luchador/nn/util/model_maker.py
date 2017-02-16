@@ -17,23 +17,27 @@ def make_input(config):
     ----------
     config : [list of] dict
         typename : str
-            Either `Input` or `Tensor`.
+            Either ``Input`` or ``Tensor``.
         reuse : bool
-            When typename is `Input`, this value determines either the to reuse
-            an existing instance of Input class or, to create new instance.
+            When typename is ``Input``, this value determines either the to
+            reuse an existing instance of Input class or, to create new
+            instance.
         args : dict
             Constructor agruments for creating new Input instance.
-            See :any:`Input` for detail.
+            See :any:`BaseInput` for detail.
         name : str
-            When reusing `Input` or `Tensor`, existing instance is retrieved
-            using this name.
+            When reusing ``Input`` or ``Tensor``, existing instance is
+            retrieved using this name.
 
-        When fetching `Tensor` or an existing `Input` isntance with reuse, they
-        must be instantiated before this function is called.
+    Notes
+    -----
+    When fetching ``Tensor`` or an existing ``Input`` isntance with reuse, they
+    must be instantiated before this function is called.
 
     Examples
     --------
     To create new Input
+
     >>> input_config1 = {
     >>>     'typename': 'Input',
     >>>     'args': {
@@ -45,6 +49,7 @@ def make_input(config):
     >>> input1 = make_input(input_config1)
 
     then, to reuse the input,
+
     >>> input_config2 = {
     >>>     'typename': 'Input',
     >>>     'reuse': True,
@@ -54,6 +59,7 @@ def make_input(config):
     >>> assert input1 is inpput2
 
     To reuse a Tensor from some output
+
     >>> input_config3 = {
     >>>     'typename': 'Tensor',
     >>>     'name': 'output_state',
@@ -61,13 +67,14 @@ def make_input(config):
     >>> input3 = make_input(input_config3)
 
     You can also create multiple Input instances
+
     >>> inputs = make_input([input_config2, input_config3])
     >>> assert input2 is inputs[0]
     >>> assert input3 is inputs[1]
 
     Returns
     -------
-    [list of] Tensor or Input
+    [list of] ``Tensor`` or ``Input``
     """
     if isinstance(config, list):
         return [make_input(cfg) for cfg in config]
@@ -90,12 +97,12 @@ def make_sequential_model(layer_configs, input_config=None):
     Parameters
     ----------
     layer_configs : list
-        Layer configuration.
+        ``Layer`` configuration.
 
     input_config : dict or None
-        Input configuraiton to the model. If give, layers are built on the
+        ``Input`` configuraiton to the model. If give, layers are built on the
         input spcified by this configuration, otherwise, model is returned
-        unbuilt. (Layer parameter Variables and output Tensors are None.).
+        unbuilt.
 
     Returns
     -------
@@ -123,12 +130,12 @@ def make_model(model_config):
     Parameters
     ----------
     model_config : [list of] dict
-        model configuration in dict or list of configurations.
+        Model configuration in dict or list of configurations.
 
     Returns
     -------
-    Model or list of Model
-        Resulting models
+    [list of] Model
+        Resulting model[s]
     """
     if isinstance(model_config, list):
         return [make_model(cfg) for cfg in model_config]
