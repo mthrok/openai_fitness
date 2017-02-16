@@ -9,7 +9,6 @@ import tensorflow as tf
 import luchador
 import luchador.util
 from luchador.nn.base import wrapper as base_wrapper
-from . import misc
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -66,29 +65,136 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=_other//self._tensor, name=name)
 
     def mean(self, axis=None, keep_dims=False, name=None):
-        """:any:`luchador.nn.tesorflow.misc.mean`"""
-        return misc.mean(self, axis=axis, keep_dims=keep_dims, name=name)
+        """Compute mean across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute mean. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.reduce_mean(
+            self.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
 
     def sum(self, axis=None, keep_dims=False, name=None):
-        """:any:`luchador.nn.tesorflow.misc.sum`"""
-        return misc.sum(self, axis=axis, keep_dims=keep_dims, name=name)
+        """Compute sum across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute sum. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.reduce_sum(
+            self.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
 
     def max(self, axis=None, keep_dims=False, name=None):
-        """:any:`luchador.nn.tesorflow.misc.max`"""
-        return misc.max(self, axis=axis, keep_dims=keep_dims, name=name)
+        """Compute max across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute max. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.reduce_max(
+            self.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+        return Tensor(tensor=_tensor, name=name)
 
     def clip(self, max_value, min_value, name=None):
-        """:any:`luchador.nn.tesorflow.misc.clip`"""
-        return misc.clip(
-            self, max_value=max_value, min_value=min_value, name=name)
+        """Clip value elementwise
+
+        Parameters
+        ----------
+        max_value, min_value : number or Wrapper
+            Clip values
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        if isinstance(max_value, base_wrapper.BaseWrapper):
+            max_value = max_value.unwrap()
+        if isinstance(min_value, base_wrapper.BaseWrapper):
+            min_value = min_value.unwrap()
+        _tensor = tf.clip_by_value(
+            self.unwrap(), clip_value_min=min_value, clip_value_max=max_value,
+            name=name)
+        return Tensor(tensor=_tensor, name=name)
 
     def reshape(self, new_shape, name=None):
-        """:any:`luchador.nn.tesorflow.misc.clip`"""
-        return misc.reshape(self, new_shape=new_shape, name=name)
+        """Reshape tensor.
+
+        Parameters
+        ----------
+        new_shape : tuple
+            new shape
+
+        name : str
+            Name of operation
+
+        Returns
+        -------
+        Tensor
+            Tensor with new shape
+        """
+        _tensor = tf.reshape(self.unwrap(), shape=new_shape)
+        return Tensor(tensor=_tensor, name=name)
 
     def tile(self, pattern, name=None):
-        """:any:`luchador.nn.tesorflow.misc.clip`"""
-        return misc.reshape(self, pattern=pattern, name=name)
+        """Tile tensor.
+
+        Parameters
+        ----------
+        pattern : tuple
+            tile pattern
+
+        Notes
+        -----
+        Currently only constant pattern is allowed.
+        """
+        if not luchador.util.is_iteratable(pattern):
+            raise ValueError('`pattern` must be iteratable')
+        pattern = tuple(pattern)
+
+        if len(pattern) > self.n_dim:
+            prepend = (1, ) * (len(pattern) - self.n_dim)
+            tensor = self.reshape(prepend + self.shape).unwrap()
+        else:
+            prepend = (1, ) * (self.n_dim - len(pattern))
+            pattern = prepend + pattern
+            tensor = self.unwrap()
+        return Tensor(tf.tile(tensor, pattern, name), name=name)
 
 
 def _get_dtype_str(tensor):

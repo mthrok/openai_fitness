@@ -8,7 +8,6 @@ import theano.tensor as T
 
 import luchador.util
 from luchador.nn.base import wrapper as base_wrapper
-from . import misc
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -59,6 +58,32 @@ def _is_same_shape(shape1, shape2):
         if not dim1 == dim2:
             return False
     return True
+
+
+def _compute_reduced_shape(axis, shape, keep_dims):
+    if not luchador.util.is_iteratable(axis):
+        axis = [axis]
+    if keep_dims:
+        return [
+            (1 if i in axis else dim)
+            for i, dim in enumerate(shape)]
+    return [
+        dim for i, dim in enumerate(shape)
+        if i not in axis]
+
+
+def _compute_tile_shape(shape, pattern):
+    if len(shape) > len(pattern):
+        return _compute_tile_shape(pattern, shape)
+
+    _shape = list(pattern)
+    offset = len(pattern) - len(shape)
+    for i, val in enumerate(shape):
+        if _shape[offset + i] is None:
+            continue
+        if val is not None:
+            _shape[offset + i] *= val
+    return _shape
 
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
@@ -112,32 +137,142 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=_other//self._tensor, shape=self.shape, name=name)
 
     def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
-        """:any:`luchador.nn.theano.misc.mean`"""
-        return misc.mean(
-            self, axis=axis, keep_dims=keep_dims, dtype=dtype, name=name)
+        """Compute mean across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute mean. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = self.unwrap().mean(
+            axis=axis, keepdims=keep_dims, dtype=dtype)
+        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
     def sum(self, axis=None, keep_dims=False, dtype=None, name=None):
-        """:any:`luchador.nn.theano.misc.sum`"""
-        return misc.sum(
-            self, axis=axis, keep_dims=keep_dims, dtype=dtype, name=name)
+        """Compute sum across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute mean. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = self.unwrap().sum(axis=axis, keepdims=keep_dims, dtype=dtype)
+        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
     def max(self, axis=None, keep_dims=False, name=None):
-        """:any:`luchador.nn.theano.misc.max`"""
-        return misc.max(
-            self, axis=axis, keep_dims=keep_dims, name=name)
+        """Compute max across the given axis
+
+        Parameters
+        ----------
+        axis : int, list or None
+            The dimensions to compute max. If None (the default),
+            reduces all dimensions.
+        keep_dims: bool
+            If true, retains reduced dimensions with length 1.
+        name: str
+            A name for the operation.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = self.unwrap().max(axis=axis, keepdims=keep_dims)
+        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
     def clip(self, max_value, min_value, name=None):
-        """:any:`luchador.nn.theano.misc.clip`"""
-        return misc.clip(
-            self, max_value=max_value, min_value=min_value, name=name)
+        """Clip value elementwise
+
+        Parameters
+        ----------
+        max_value, min_value : number or Wrapper
+            Clip values
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        if isinstance(max_value, base_wrapper.BaseWrapper):
+            max_value = max_value.unwrap()
+        if isinstance(min_value, base_wrapper.BaseWrapper):
+            min_value = min_value.unwrap()
+        _tensor = self.unwrap().clip(a_max=max_value, a_min=min_value)
+        return Tensor(tensor=_tensor, shape=self.shape, name=name)
 
     def reshape(self, new_shape, name=None):
-        """:any:`luchador.nn.theano.misc.reshape`"""
-        return misc.reshape(self, new_shape=new_shape, name=name)
+        """Reshape tensor.
+
+        Parameters
+        ----------
+        new_shape : tuple
+            new shape
+
+        name : str
+            Name of operation
+
+        Returns
+        -------
+        Tensor
+            Tensor with new shape
+
+        Notes
+        -----
+        This function is for conveniently invoke underlying reshap function.
+        Shape-checking and inference is not carried out.
+        """
+        _tensor = T.reshape(self.unwrap(), newshape=new_shape)
+        return Tensor(tensor=_tensor, shape=new_shape, name=name)
 
     def tile(self, pattern, name=None):
-        """:any:`luchador.nn.theano.misc.tile`"""
-        return misc.tile(self, pattern=pattern, name=name)
+        """Tile tensor.
+
+        Parameters
+        ----------
+        pattern : tuple
+            tile pattern
+
+        name : str
+            Name of operation
+
+        Returns
+        -------
+        Tensor
+            Resulting tensor.
+
+        Notes
+        -----
+        Currently only constant pattern is allowed.
+        """
+        if not luchador.util.is_iteratable(pattern):
+            raise ValueError('`pattern` must be iteratable')
+
+        _shape = _compute_tile_shape(pattern, self.shape)
+        _tensor = T.tile(self.unwrap(), pattern)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
 def _prefix_with_scope(name):

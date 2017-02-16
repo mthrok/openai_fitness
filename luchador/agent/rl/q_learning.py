@@ -193,7 +193,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         cost = nn.get_cost(config['typename'])(
             elementwise=True, **config.get('args', {}))
         error = cost(target_q, action_value_0)
-        mask = action.one_hot(n_classes=n_actions, dtype=error.dtype)
+        mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
         return (mask * error).mean()
 
     def _build_optimize_op(self, loss, params):

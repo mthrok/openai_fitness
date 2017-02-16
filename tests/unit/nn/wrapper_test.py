@@ -440,8 +440,8 @@ class TestTensorOpsMaximum(fixture.TestCase):
                 shape=value0.shape, dtype=value0.dtype, name='0')
             input1 = nn.Input(
                 shape=value1.shape, dtype=value1.dtype, name='1')
-            output0 = input0.maximum(input1)
-            output1 = input1.maximum(input0)
+            output0 = nn.maximum(input0, input1)
+            output1 = nn.maximum(input1, input0)
         session = nn.Session()
 
         val0, val1 = session.run(
@@ -474,8 +474,8 @@ class TestTensorOpsMinimum(fixture.TestCase):
                 shape=value0.shape, dtype=value0.dtype, name='0')
             input1 = nn.Input(
                 shape=value1.shape, dtype=value1.dtype, name='1')
-            output0 = input0.minimum(input1)
-            output1 = input1.minimum(input0)
+            output0 = nn.minimum(input0, input1)
+            output1 = nn.minimum(input1, input0)
         session = nn.Session()
 
         val0, val1 = session.run(
@@ -589,7 +589,7 @@ class TestTensorOpsOneHot(fixture.TestCase):
     def _test_one_hot(self, shape, n_classes, out_dtype):
         with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=shape, dtype='int64')
-            tensor = input_.one_hot(n_classes=n_classes, dtype=out_dtype)
+            tensor = nn.one_hot(input_, n_classes=n_classes, dtype=out_dtype)
 
         session = nn.Session()
 
