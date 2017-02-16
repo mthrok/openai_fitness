@@ -37,6 +37,14 @@ def _build_sync_op(src_model, tgt_model, scope):
         return nn.build_sync_op(src_vars, tgt_vars, name='sync')
 
 
+def _build_error(target_q, action_value_0, action):
+    n_actions = action_value_0.shape[1]
+    delta = (target_q - action_value_0)
+    error = nn.minimum(nn.abs(delta), (delta * delta))
+    mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
+    return (mask * error).sum(axis=1)
+
+
 class DeepQLearning(luchador.util.StoreMixin, object):
     """Implement Neural Network part of DQN [1]_:
 
@@ -109,7 +117,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         with nn.variable_scope('error'):
             action_0 = nn.Input(
                 shape=(None,), dtype='int32', name='action_0')
-            error = self._build_error(target_q, action_value_0, action_0)
+            error = _build_error(target_q, action_value_0, action_0)
 
         weight = nn.Input(
             shape=(None,), name='sample_weight')
@@ -159,13 +167,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         n_actions = action_value_1.shape[1]
         target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
         return target_q, post_q
-
-    def _build_error(self, target_q, action_value_0, action):
-        n_actions = action_value_0.shape[1]
-        delta = (target_q - action_value_0)
-        error = nn.minimum(nn.abs(delta), (delta * delta))
-        mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
-        return (mask * error).mean(axis=1)
 
     ###########################################################################
     def _init_optimizer(self):
