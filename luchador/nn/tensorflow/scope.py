@@ -12,7 +12,7 @@ from . import wrapper
 
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope',
-    'name_scope', 'get_variable', 'get_tensor', 'get_input', 'get_operation',
+    'name_scope', 'get_variable'
 ]
 
 
@@ -46,63 +46,6 @@ class VariableScope(tf.VariableScope):  # pylint: disable=R0903
     """Wrap Tensorflow VariableScope class."""
     pass
 ###############################################################################
-
-
-def get_tensor(name):
-    """Fetch tensor with name in global scope or the current scope
-
-    Parameters
-    ----------
-    name : str
-
-    Returns
-    -------
-    Tensor
-    """
-    try:
-        scope = tf.get_variable_scope().name
-        return base_wrapper.retrieve_tensor('{}/{}'.format(scope, name))
-    except ValueError:
-        pass
-    return base_wrapper.retrieve_tensor(name)
-
-
-def get_input(name):
-    """Fetch Input with name in global scope or the current scope
-
-    Parameters
-    ----------
-    name : str
-
-    Returns
-    -------
-    Input
-    """
-    try:
-        scope = tf.get_variable_scope().name
-        return base_wrapper.retrieve_input('{}/{}'.format(scope, name))
-    except ValueError:
-        pass
-    return base_wrapper.retrieve_input(name)
-
-
-def get_operation(name):
-    """Fetch Operation with name in global scope or the current scope
-
-    Parameters
-    ----------
-    name : str
-
-    Returns
-    -------
-    Operation
-    """
-    try:
-        scope = tf.get_variable_scope().name
-        return base_wrapper.retrieve_operation('{}/{}'.format(scope, name))
-    except ValueError:
-        pass
-    return base_wrapper.retrieve_operation(name)
 
 
 def get_variable(

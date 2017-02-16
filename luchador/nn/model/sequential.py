@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import logging
 
 import luchador.nn
-from luchador.nn.base import get_layer
 from .base_model import BaseModel
 
 __all__ = ['Sequential']
@@ -183,28 +182,3 @@ class Sequential(BaseModel):
             'model_type': self.__class__.__name__,
             'layer_configs': self.layer_configs,
         })
-
-
-def make_sequential_model(layer_configs):
-    """Make model from model configuration
-
-    Parameters
-    ----------
-    layer_config : list
-        Layer configuration.
-
-    Returns
-    -------
-    Model
-        Resulting model
-    """
-    model = Sequential()
-    for config in layer_configs:
-        if 'typename' not in config:
-            raise RuntimeError('Layer name is not given')
-        args = config.get('args', {})
-
-        _LG.debug('    Constructing: %s: %s', config['typename'], args)
-        layer = get_layer(config['typename'])(**args)
-        model.add_layer(layer=layer, scope=config.get('scope', ''))
-    return model

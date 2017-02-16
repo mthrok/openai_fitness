@@ -10,6 +10,7 @@ import numpy as np
 import luchador
 from luchador.util import load_config, initialize_logger
 from luchador import nn
+from luchador.nn.saver import Saver
 from luchador.agent.rl.q_learning import DeepQLearning
 
 _LG = logging.getLogger('luchador')
@@ -122,7 +123,7 @@ def _main():
     _run(dql)
 
     if args.output:
-        saver = nn.Saver(output_dir=args.output)
+        saver = Saver(output_dir=args.output)
         saver.save(dql.fetch_all_parameters(), global_step=1)
 
 

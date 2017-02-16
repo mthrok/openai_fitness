@@ -7,7 +7,7 @@ from collections import OrderedDict
 import numpy as np
 
 __all__ = [
-    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseOperation',
+    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseInput', 'BaseOperation',
 ]
 
 _LG = logging.getLogger(__name__)

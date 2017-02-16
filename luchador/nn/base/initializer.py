@@ -48,30 +48,6 @@ class BaseInitializer(luchador.util.SerializeMixin, object):
         pass
 
 
-def get_initializer(typename):
-    """Retrieve Initializer class by type
-
-    Parameters
-    ----------
-    typename : str
-        Type of Initializer to retrieve
-
-    Returns
-    -------
-    type
-        Initializer type found
-
-    Raises
-    ------
-    ValueError
-        When Initializer with the given type is not found
-    """
-    for class_ in luchador.util.get_subclasses(BaseInitializer):
-        if class_.__name__ == typename:
-            return class_
-    raise ValueError('Unknown Initializer: {}'.format(typename))
-
-
 ###############################################################################
 # pylint: disable=abstract-method
 class BaseConstant(BaseInitializer):

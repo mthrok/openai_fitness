@@ -1,5 +1,4 @@
 """Define common interface for Layer classes"""
-
 from __future__ import division
 from __future__ import absolute_import
 
@@ -82,30 +81,6 @@ class BaseLayer(luchador.util.SerializeMixin, object):
         raise NotImplementedError(
             '`_build` method is not implemented for {}'.format(self.__class__)
         )
-
-
-def get_layer(typename):
-    """Retrieve Layer class by type
-
-    Parameters
-    ----------
-    typename : str
-        Type of Layer to retrieve
-
-    Returns
-    -------
-    type
-        Layer type found
-
-    Raises
-    ------
-    ValueError
-        When Layer with the given type is not found
-    """
-    for class_ in luchador.util.get_subclasses(BaseLayer):
-        if class_.__name__ == typename:
-            return class_
-    raise ValueError('Unknown Layer: {}'.format(typename))
 
 
 ###############################################################################

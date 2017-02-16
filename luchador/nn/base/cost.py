@@ -6,7 +6,6 @@ import logging
 
 import luchador.util
 
-
 _LG = logging.getLogger(__name__)
 
 
@@ -50,30 +49,6 @@ class BaseCost(luchador.util.StoreMixin, object):
     @abc.abstractmethod
     def _build(self, target, prediction):
         pass
-
-
-def get_cost(typename):
-    """Retrieve Cost class by type
-
-    Parameters
-    ----------
-    typename : str
-        Type of Cost to retrieve
-
-    Returns
-    -------
-    type
-        Cost type found
-
-    Raises
-    ------
-    ValueError
-        When Cost with the given type is not found
-    """
-    for class_ in luchador.util.get_subclasses(BaseCost):
-        if class_.__name__ == typename:
-            return class_
-    raise ValueError('Unknown Cost: {}'.format(typename))
 
 
 ###############################################################################

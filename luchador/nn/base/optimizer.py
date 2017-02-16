@@ -115,30 +115,6 @@ class BaseOptimizer(luchador.util.SerializeMixin):
         return self.slot
 
 
-def get_optimizer(typename):
-    """Retrieve Optimizer class by type
-
-    Parameters
-    ----------
-    typename : str
-        Type of Optimizer to retrieve
-
-    Returns
-    -------
-    type
-        Optimizer type found
-
-    Raises
-    ------
-    ValueError
-        When Optimizer with the given type is not found
-    """
-    for class_ in luchador.util.get_subclasses(BaseOptimizer):
-        if class_.__name__ == typename:
-            return class_
-    raise ValueError('Unknown Optimizer: {}'.format(typename))
-
-
 ###############################################################################
 # pylint: disable=abstract-method
 class BaseSGD(BaseOptimizer):
