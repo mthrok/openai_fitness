@@ -65,14 +65,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         args : dict
             Configuration for the optimizer class
 
-    clip_grad: dict
-        If given, gradient is clipped.
-
-        min_val
-            Minimum value
-        max_val
-            Maximum value
-
     References
     ----------
     .. [1] Mnih, V et. al (2015)
@@ -91,7 +83,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.optimizer = None
         self.session = None
 
-    def _validate_args(self, q_learning_config=None, clip_grad=None, **_):
+    def _validate_args(self, q_learning_config=None, **_):
         if q_learning_config is not None:
             _validate_q_learning_config(**q_learning_config)
 

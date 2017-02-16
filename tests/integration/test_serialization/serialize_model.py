@@ -77,14 +77,7 @@ def _build_network(model_filepath, optimizer_filepath, initial_parameter):
             'min_reward': -1.0,
             'max_reward': 1.0,
         },
-        cost_config={
-            'typename': 'SSE',
-        },
         optimizer_config=load_config(optimizer_filepath),
-        clip_grad={
-            'min_value': -1.0,
-            'max_value': 1.0,
-        },
     )
     model_def = _gen_model_def(model_filepath)
     dql.build(model_def, initial_parameter)
