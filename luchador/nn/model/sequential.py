@@ -174,7 +174,12 @@ class Sequential(BaseModel):
         list
             List of update operations from each layer
         """
-        return [cfg.layer.get_update_operation() for cfg in self.layer_configs]
+        ret = []
+        for cfg in self.layer_configs:
+            update = cfg.layer.get_update_operation()
+            if update:
+                ret.append(update)
+        return ret
 
     ###########################################################################
     def __repr__(self):
