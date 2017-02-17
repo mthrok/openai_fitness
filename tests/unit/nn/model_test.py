@@ -3,11 +3,8 @@ from __future__ import absolute_import
 
 import ruamel.yaml as yaml
 
-import luchador.util
 import luchador.nn as nn
-
-from luchador.nn.model import Sequential, Container
-
+from luchador.nn.model import Container
 from tests.unit import fixture
 
 
@@ -64,13 +61,16 @@ con_1:
     input_config:
       typename: Input
       args:
-        name: input_seq_3,
+        name: input_seq_3
         shape:
           - null
           - 8
     model_configs:
-      <<: *seq_1
-      name: seq_1
+      - <<: *seq_1
+        name: seq_1
+    output_config:
+      typename: Tensor
+      name: seq1/layer1/dense/output
 """
 
 _MODELS = yaml.round_trip_load(_MODEL_DEFS)
@@ -79,7 +79,7 @@ _MODELS = yaml.round_trip_load(_MODEL_DEFS)
 class TestContainer(fixture.TestCase):
     """Test Container class"""
     def test_fetch_sequences(self):
-        """Fetch parameters from all the models."""
+        """Container can fetch variables correctly"""
         models, container = _get_models(
             self.get_scope(),
             [_MODELS['seq_1'], _MODELS['seq_2']],
@@ -99,8 +99,6 @@ class TestContainer(fixture.TestCase):
                 models[1].get_output_tensors()
             )
         )
-        # TODO: Revise
-        '''
         self.assertEqual(
             container.get_update_operations(),
             (
@@ -108,5 +106,23 @@ class TestContainer(fixture.TestCase):
                 models[1].get_update_operations()
             )
         )
-        '''
-        # def test_nested_
+
+    def test_nested_container(self):
+        """Nested Container can fetch variables correctly"""
+        models, container = _get_models(
+            self.get_scope(),
+            [_MODELS['con_1']],
+        )
+        model = models[0].models['seq_1']
+        self.assertEqual(
+            container.get_parameter_variables(),
+            model.get_parameter_variables(),
+        )
+        self.assertEqual(
+            container.get_output_tensors(),
+            model.get_output_tensors(),
+        )
+        self.assertEqual(
+            container.get_update_operations(),
+            model.get_update_operations(),
+        )
