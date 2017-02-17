@@ -3,7 +3,7 @@
 
 ## Overview
 
-Luchador is a library for Reinforcement Learning with forcus on Deep Reinforcement Learning. It contains environment, agent and runner implementation.
+Luchador is a library for Reinforcement Learning with forcus on Deep Reinforcement Learning. It contains environment, agent and runner implementation. It also contains the basic implementation of DQN, DoubleDQN, Prioritized Replay and DuelDQN.
 
 In Reinforcement Learning, we need to set a lot of parameters for environment behavior, agent behavior, learning behavior, experiment setting and so on. In case of Deep Reinforcement Learning, we also need to define network architecture and hyper parameters for optimization. When conducting research on RL, it is helpful to be able to run experiments with just simple modifications in configuration file so that not only a new experiment can be started quickly but also keeping the results organized with configuration file.
 
@@ -222,7 +222,7 @@ Luchador has `luchador.nn.summary.SummaryWriter` class which wraps Tensorflow's 
 The following dependencies are automatically installed during the installation.
 
 - `h5py` for saving neural network parameters
-- `pyyaml` for parsing YAML files.
+- `ruamel.yaml` for parsing YAML files.
 - `pygame` for FlappyBird environment.
 
 ### Installation
