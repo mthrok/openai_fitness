@@ -83,7 +83,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
             self._add_parameter('bias', bias)
 
     def _build(self, input_tensor):
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(
                 input_tensor.shape[1], input_tensor.dtype)
 
@@ -214,7 +214,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
             self._add_parameter('bias', bias)
 
     def _build(self, input_tensor):
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(
                 input_tensor.shape, input_tensor.dtype)
 
@@ -435,7 +435,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(input_shape)
 
         input_ = input_tensor.unwrap()

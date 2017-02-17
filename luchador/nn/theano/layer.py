@@ -83,7 +83,7 @@ class Dense(LayerMixin, base_layer.BaseDense):
             raise ValueError('Input tensor must be 2D. '
                              'Insted of {}'.format(len(input_shape)))
 
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         weight = self._get_parameter('weight').unwrap()
@@ -236,7 +236,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
             raise ValueError('Input tensor must be 4D. '
                              'Insted of {}'.format(len(input_shape)))
 
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         filters = self._get_parameter('weight').unwrap()
@@ -491,7 +491,7 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         self._add_parameter('offset', offset)
 
     def _build(self, input_tensor):
-        if not self.parameter_variables:
+        if not self._parameter_variables:
             self._instantiate_parameters(
                 input_tensor.shape, input_tensor.dtype)
 

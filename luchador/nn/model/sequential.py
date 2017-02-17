@@ -153,7 +153,7 @@ class Sequential(BaseModel):
         """
         ret = []
         for cfg in self.layer_configs:
-            ret.extend(cfg.layer.parameter_variables.values())
+            ret.extend(cfg.layer.get_parameter_variables())
         return ret
 
     def get_output_tensors(self):

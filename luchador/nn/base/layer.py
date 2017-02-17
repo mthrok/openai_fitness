@@ -20,12 +20,28 @@ class BaseLayer(luchador.util.SerializeMixin, object):
         self._store_args(**kwargs)
 
         self.update_operations = OrderedDict()
-        self.parameter_variables = OrderedDict()
+        self._parameter_variables = OrderedDict()
 
     ###########################################################################
     # Setter for learnable parameters
     def _add_update(self, name, operation):
         self.update_operations[name] = operation
+
+    def get_parameter_variables(self, name=None):
+        """Get parameter variables
+
+        Parameters
+        ----------
+        name : str or None
+            The name of parameter such as `weight` or `var` to retrieve.
+            If not given, all parameter Variable objects are returned.
+
+        Returns
+        -------
+        list
+            List of Variable instances consisting this layer
+        """
+        return self._parameter_variables.values()
 
     def get_update_operation(self):
         """Get operation which updates Layer parameter
@@ -48,10 +64,10 @@ class BaseLayer(luchador.util.SerializeMixin, object):
     ###########################################################################
     # Setter/Getter for learnable parameters
     def _add_parameter(self, name, variable):
-        self.parameter_variables[name] = variable
+        self._parameter_variables[name] = variable
 
     def _get_parameter(self, name):
-        return self.parameter_variables[name]
+        return self._parameter_variables[name]
 
     ###########################################################################
     # Functions for building computation graph
