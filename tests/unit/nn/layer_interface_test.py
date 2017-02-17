@@ -145,6 +145,7 @@ class LayerInterfaceTest(fixture.TestCase):
             var = layer.get_parameter_variables('var')
             scale = layer.get_parameter_variables('scale')
             offset = layer.get_parameter_variables('offset')
+            update = layer.get_update_operation()
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(mean, nn.get_variable('mean'))
@@ -152,3 +153,4 @@ class LayerInterfaceTest(fixture.TestCase):
             self.assertIs(scale, nn.get_variable('scale'))
             self.assertIs(offset, nn.get_variable('offset'))
             self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(update, nn.get_operation('bn_update'))

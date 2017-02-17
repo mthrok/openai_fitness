@@ -19,14 +19,11 @@ class BaseLayer(luchador.util.StoreMixin, object):
         super(BaseLayer, self).__init__()
         self._store_args(**kwargs)
 
-        self.update_operations = OrderedDict()
+        self._update_operation = None
         self._parameter_variables = OrderedDict()
 
     ###########################################################################
-    # Setter for learnable parameters
-    def _add_update(self, name, operation):
-        self.update_operations[name] = operation
-
+    # Getter for learnable parameters
     def get_parameter_variables(self, name=None):
         """Get parameter variables
 
@@ -54,17 +51,10 @@ class BaseLayer(luchador.util.StoreMixin, object):
 
         Currently only BatchNormalization requires such operation.
         """
-        return self._get_update_operation()
-
-    @abc.abstractmethod
-    def _get_update_operation(self):
-        raise NotImplementedError(
-            '`get_update_operation` method is not implemented for {}'
-            .format(self.__class__)
-        )
+        return self._update_operation
 
     ###########################################################################
-    # Setter/Getter for learnable parameters
+    # Setter for learnable parameters
     def _add_parameter(self, name, variable):
         self._parameter_variables[name] = variable
 

@@ -17,7 +17,6 @@ from . import scope, wrapper, initializer
 # pylint: disable=too-few-public-methods, invalid-name
 
 __all__ = [
-    'LayerMixin',
     'Dense', 'Conv2D',
     'ReLU', 'Softplus',
     'Sigmoid', 'Softmax',
@@ -29,16 +28,6 @@ __all__ = [
 ]
 
 _LG = logging.getLogger(__name__)
-
-
-class LayerMixin(object):
-    """Implement the following common Layer methods in Tensorflow
-
-    - ``_get_update_operation``
-
-    """
-    def _get_update_operation(self):
-        return wrapper.Operation(tf.group(*self.update_operations.values()))
 
 
 def _get_initializers(cfg, with_bias):
@@ -60,7 +49,7 @@ def _get_initializers(cfg, with_bias):
     return ret
 
 
-class Dense(LayerMixin, base_layer.BaseDense):
+class Dense(base_layer.BaseDense):
     """Implement Dense layer in Tensorflow.
 
     See :any:`BaseDense` for detail.
@@ -135,7 +124,7 @@ def _validate_strides(strides):
     )
 
 
-class Conv2D(LayerMixin, base_layer.BaseConv2D):
+class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
     See :any:`BaseConv2D` for detail.
@@ -236,7 +225,7 @@ class Conv2D(LayerMixin, base_layer.BaseConv2D):
         return wrapper.Tensor(output, name='output')
 
 
-class ReLU(LayerMixin, base_layer.BaseReLU):
+class ReLU(base_layer.BaseReLU):
     """Implement ReLU in Tensorflow.
 
     See :any:`BaseReLU` for detail.
@@ -246,7 +235,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
         return wrapper.Tensor(output, name='output')
 
 
-class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
+class Sigmoid(base_layer.BaseSigmoid):
     """Implement Sigmoid in Tensorflow.
 
     See :any:`BaseSigmoid` for detail.
@@ -256,7 +245,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
         return wrapper.Tensor(output, name='output')
 
 
-class Tanh(LayerMixin, base_layer.BaseTanh):
+class Tanh(base_layer.BaseTanh):
     """Implement Tanh in Tensorflow.
 
     See :any:`BaseTanh` for detail.
@@ -266,7 +255,7 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
         return wrapper.Tensor(output, name='output')
 
 
-class Sin(LayerMixin, base_layer.BaseSin):
+class Sin(base_layer.BaseSin):
     """Implement Sin in Tensorflow.
 
     See :any:`BaseSin` for detail.
@@ -276,7 +265,7 @@ class Sin(LayerMixin, base_layer.BaseSin):
         return wrapper.Tensor(output, name='output')
 
 
-class Cos(LayerMixin, base_layer.BaseCos):
+class Cos(base_layer.BaseCos):
     """Implement Cos in Tensorflow.
 
     See :any:`BaseCos` for detail.
@@ -286,7 +275,7 @@ class Cos(LayerMixin, base_layer.BaseCos):
         return wrapper.Tensor(output, name='output')
 
 
-class Softmax(LayerMixin, base_layer.BaseSoftmax):
+class Softmax(base_layer.BaseSoftmax):
     """Implement Softmax in Tensorflow.
 
     See :any:`BaseSoftmax` for detail.
@@ -296,7 +285,7 @@ class Softmax(LayerMixin, base_layer.BaseSoftmax):
         return wrapper.Tensor(output, name='output')
 
 
-class Softplus(LayerMixin, base_layer.BaseSoftplus):
+class Softplus(base_layer.BaseSoftplus):
     """Implement Softplus in Tensorflow.
 
     See :any:`BaseSoftplus` for detail.
@@ -307,7 +296,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
 
 
 ###############################################################################
-class Flatten(LayerMixin, base_layer.BaseFlatten):
+class Flatten(base_layer.BaseFlatten):
     """Implement Flatten in Tensorflow.
 
     See :any:`BaseFlatten` for detail.
@@ -320,7 +309,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return wrapper.Tensor(output, name='output')
 
 
-class Tile(LayerMixin, base_layer.BaseTile):
+class Tile(base_layer.BaseTile):
     """Implement Tile layer in Tensorflow
 
     See :any:`BaseFlatten` for detail.
@@ -330,7 +319,7 @@ class Tile(LayerMixin, base_layer.BaseTile):
 
 
 ###############################################################################
-class Concat(LayerMixin, base_layer.BaseConcat):
+class Concat(base_layer.BaseConcat):
     """Implement Concat in Tensorflow.
 
     See :any:`BaseConcat` for detail.
@@ -341,7 +330,7 @@ class Concat(LayerMixin, base_layer.BaseConcat):
         return wrapper.Tensor(output, name='output')
 
 
-class Add(LayerMixin, base_layer.BaseAdd):
+class Add(base_layer.BaseAdd):
     """Implement Add layer in Tensorflow
 
     See :any: `BaseAdd` for detail.
@@ -356,7 +345,7 @@ class Add(LayerMixin, base_layer.BaseAdd):
         return ret.__add__(var_list[-1], name='output')
 
 
-class Sub(LayerMixin, base_layer.BaseAdd):
+class Sub(base_layer.BaseAdd):
     """Implement Sub layer in Tensorflow
 
     See :any: `BaseSub` for detail.
@@ -369,7 +358,7 @@ class Sub(LayerMixin, base_layer.BaseAdd):
 
 
 ###############################################################################
-class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
+class TrueDiv(base_layer.BaseTrueDiv):
     """Implement TrueDiv in Tensorflow.
 
     See :any:`BaseTrueDiv` for detail.
@@ -392,7 +381,7 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
         return wrapper.Tensor(output, name='output')
 
 
-class Mean(LayerMixin, base_layer.BaseMean):
+class Mean(base_layer.BaseMean):
     """Implement Mean layer in Tensorflow.
 
     See :any:`BaseMean` for detail.
@@ -402,7 +391,7 @@ class Mean(LayerMixin, base_layer.BaseMean):
 
 
 ###############################################################################
-class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
+class BatchNormalization(base_layer.BaseBatchNormalization):
     """Implement BatchNormalization in Tensorflow.
 
     See :any:`BaseBatchNormalization` for detail.
@@ -452,8 +441,13 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
             new_var_acc = decay * var_acc + (1 - decay) * var_in
 
-            self._add_update('mean', tf.assign(mean_acc, new_mean_acc))
-            self._add_update('var', tf.assign(var_acc, new_var_acc))
+            self._update_operation = wrapper.Operation(
+                op=[
+                    tf.assign(mean_acc, new_mean_acc),
+                    tf.assign(var_acc, new_var_acc)
+                ],
+                name='bn_update',
+            )
 
             mean_acc = new_mean_acc
             var_acc = new_var_acc
@@ -465,14 +459,14 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
 
 
 ###############################################################################
-class NHWC2NCHW(LayerMixin, base_layer.BaseNHWC2NCHW):
+class NHWC2NCHW(base_layer.BaseNHWC2NCHW):
     """See :any:`BaseNHWC2NCHW` for detail."""
     def _build(self, input_tensor):
         output = tf.transpose(input_tensor.unwrap(), perm=(0, 3, 1, 2))
         return wrapper.Tensor(output, name='output')
 
 
-class NCHW2NHWC(LayerMixin, base_layer.BaseNCHW2NHWC):
+class NCHW2NHWC(base_layer.BaseNCHW2NHWC):
     """See :any:`BaseNCHW2NHWC` for detail."""
     def _build(self, input_tensor):
         output = tf.transpose(input_tensor.unwrap(), perm=(0, 2, 3, 1))
