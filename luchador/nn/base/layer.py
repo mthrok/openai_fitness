@@ -45,13 +45,19 @@ class BaseLayer(luchador.util.StoreMixin, object):
         return self._parameter_variables.values()
 
     def get_update_operation(self):
-        """Get operation which updates Layer parameter
+        """Get Operation which updates Layer parameter
 
         For layers which require updates other than back propagate
         optimization, Operation returned by this function must be
         fed to Session.run function.
 
         Currently only BatchNormalization requires such operation.
+
+        Returns
+        -------
+        Operation or None
+            If update Operation is defined (BatchNormalization), Operation is
+            returned, else None
         """
         return self._update_operation
 
