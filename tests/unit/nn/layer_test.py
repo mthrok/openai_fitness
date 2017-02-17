@@ -166,8 +166,8 @@ class BatchNormalizationTest(TestCase):
             bn = nn.layer.BatchNormalization(learn=True, decay=0.999)
             normalized = bn(input_tensor)
 
-        mean_tensor = bn.parameter_variables['mean']
-        var_tensor = bn.parameter_variables['var']
+        mean_tensor = bn.get_parameter_variables('mean')
+        var_tensor = bn.get_parameter_variables('var')
         updates = bn.get_update_operation()
 
         input_value = np.random.randn(*shape) - 100
@@ -295,38 +295,6 @@ class TestTile(TestCase):
 
 class TestDense(TestCase):
     """Test Dense layer"""
-    def test_recreate_success_with_reuse(self):
-        """Copied layer can create node when reuse=True in variable scope"""
-        n_nodes = 256
-        base_scope = self.get_scope()
-        with nn.variable_scope(base_scope, reuse=False):
-            input_ = nn.Input(shape=(None, n_nodes), name='foo')
-            dense1 = nn.layer.Dense(n_nodes)
-            dense1(input_)
-
-            _scope = nn.get_variable_scope()
-            with nn.variable_scope(_scope, reuse=True):
-                dense2 = nn.layer.Dense(**dense1.serialize()['args'])
-                dense2(input_)
-
-        vars1 = dense1.parameter_variables
-        vars2 = dense2.parameter_variables
-        expected = vars1.keys()
-        found = vars2.keys()
-        self.assertEqual(
-            expected, found,
-            'Copied layer should have the same parameter variables '
-            'as the original layer. Expected: {}, Found: {}'
-            .format(expected, found))
-        for key in vars1.keys():
-            expected, found = vars1[key], vars2[key]
-            self.assertTrue(
-                vars1[key].unwrap() is vars2[key].unwrap(),
-                'Variable objects in copied layer should be identical '
-                'to those in the original layer. Variable {} is not identical.'
-                .format(key)
-            )
-
     def test_dynamic_initializer(self):
         """Initializers are correctly selected"""
         n_in, n_nodes, weight_val, bias_val = 4, 5, 13, 7
@@ -354,36 +322,13 @@ class TestDense(TestCase):
         session.initialize()
 
         weight, bias = session.run(
-            outputs=dense.parameter_variables.values()
+            outputs=dense.get_parameter_variables()
         )
 
         np.testing.assert_almost_equal(
             weight, weight_val * np.ones((n_in, n_nodes)))
         np.testing.assert_almost_equal(
             bias, bias_val * np.ones((n_nodes,)))
-
-    def test_copy_fail_without_reuse(self):
-        """Copied layer fails to create node when reuse is not True"""
-        fmt = luchador.get_nn_conv_format()
-        shape = (None, 4, 84, 84) if fmt == 'NCHW' else (None, 84, 84, 4)
-        base_scope = self.get_scope()
-        with nn.variable_scope(base_scope, reuse=False):
-            input_ = nn.Input(shape=shape, name='foo')
-            conv = nn.layer.Conv2D(84, 84, 4, 4)
-            conv(input_)
-            try:
-                conv2 = nn.layer.Conv2D(**conv.serialize()['args'])
-                conv2(input_)
-                self.fail('Copied layer should raise ValueError when '
-                          'reuse is not enabled in variable scope.')
-            except ValueError:
-                pass
-            except Exception as error:  # pylint: disable=broad-except
-                self.fail(
-                    'Expected ValueError when copied layer tries to '
-                    'create node without reuse enabled in variable scope. '
-                    'Found "{}"'.format(error)
-                )
 
 
 class TestConcat(TestCase):
