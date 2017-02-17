@@ -9,7 +9,7 @@ import luchador.util
 _LG = logging.getLogger(__name__)
 
 
-class BaseInitializer(luchador.util.SerializeMixin, object):
+class BaseInitializer(luchador.util.StoreMixin, object):
     """Define Common interface for Initializer classes"""
     __metaclass__ = abc.ABCMeta
 

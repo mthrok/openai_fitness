@@ -6,7 +6,7 @@ import abc
 import luchador.util
 
 
-class BaseOptimizer(luchador.util.SerializeMixin):
+class BaseOptimizer(luchador.util.StoreMixin):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
 

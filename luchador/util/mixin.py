@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from .yaml_util import pprint_dict
 
-__all__ = ['StoreMixin', 'CompareMixin', 'SerializeMixin']
+__all__ = ['StoreMixin']
 
 # pylint: disable=too-few-public-methods
 
@@ -60,79 +60,3 @@ class StoreMixin(object):
 
     def __str__(self):
         return pprint_dict({self.__class__.__name__: self.args})
-
-
-class CompareMixin(StoreMixin):
-    """Extend StoreMixin by providing method to compare ``args``
-
-    .. automethod:: __eq__
-
-    .. automethod:: __ne__
-
-    Examples
-    --------
-    >>> class Foo(CompareMixin):
-    >>>     def __init__(self, arg):
-    >>>         self._store_args(arg=arg)
-    >>>
-    >>> foo1 = Foo('bar')
-    >>> foo2 = Foo('bar')
-    >>> foo3 = Foo('foo')
-    >>> foo1 == foo2
-    True
-    >>> foo1 == foo3
-    False
-
-    See Also
-    --------
-    StoreMixin : Base mixin which stores costructor arguments
-    SerializeMixin : Subclass mixin which serialize object with arguments
-    """
-    def __eq__(self, other):
-        """Checks if the other object has `same configuration` with this object
-
-        `Same configuration` here means objects are of the same (or subclassed)
-        type and have the same ``args`` attribute value.
-        """
-        if isinstance(other, self.__class__):
-            return self.args == other.args
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Checks if the other object is not equal to this object"""
-        return not self.__eq__(other)
-
-
-class SerializeMixin(CompareMixin):
-    """Extend StoreMixin to be serializable in JSON format
-
-    Examples
-    --------
-    >>> class Foo(SerializeMixin):
-    >>>     def __init__(self, number, string):
-    >>>         self._store_args(numer=number, string=string)
-    >>>
-    >>> foo = Foo(0.5, 'bar')
-    >>> print(foo.serialize())
-    {'number': 0.5, 'string': 'bar'}
-
-    See Also
-    --------
-    StoreMixin : Base mixin which stores costructor arguments
-    CompareMixin : Base mixin which adds equality comparison to StoreMixin
-    """
-    def serialize(self):
-        """Serialize object configuration (constructor arguments)
-
-        Returns
-        -------
-        dict
-           Arguments stored via ::func:`_store_args` method.
-        """
-        args = {}
-        for key, val in self.args.items():
-            args[key] = val.serialize() if hasattr(val, 'serialize') else val
-        return {
-            'typename': self.__class__.__name__,
-            'args': args
-        }
