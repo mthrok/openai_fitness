@@ -1,8 +1,11 @@
+"""Install Luchador"""
 from __future__ import print_function
 
 import os
 import subprocess
 import setuptools
+import setuptools.command.install
+import setuptools.command.develop
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ALE_ROM_DIR = os.path.join('env', 'ale', 'rom')
@@ -60,8 +63,25 @@ class DownloadALECommand(setuptools.Command):
             os.makedirs(self.output_dir)
 
     def run(self):
+        """Execute command"""
         content = download(self.url)
         extract(content, self.output_dir)
+
+
+class InstallCommand(setuptools.command.install.install):
+    """Download ALE before build"""
+    def run(self):
+        """Execute command"""
+        self.run_command('download_ale')
+        setuptools.command.install.install.run(self)
+
+
+class DevelopCommand(setuptools.command.develop.develop):
+    """Download ALE before build"""
+    def run(self):
+        """Execute command"""
+        self.run_command('download_ale')
+        setuptools.command.develop.develop.run(self)
 
 
 def _get_git_revision(no_commit=False):
@@ -76,7 +96,7 @@ def _get_version():
         return _get_git_revision(no_commit=True)
     except Exception as error:  # pylint: disable=broad-except
         print(error)
-        return 'v0.8.0'
+        return 'v0.10.1'
 
 
 def _setup():
@@ -84,8 +104,9 @@ def _setup():
         name='luchador',
         version=_get_version(),
         cmdclass={
-            # TODO: Add custom install/build command which run `download_ale`
             'download_ale': DownloadALECommand,
+            'install': InstallCommand,
+            'develop': DevelopCommand,
         },
         packages=setuptools.find_packages(),
         entry_points={
