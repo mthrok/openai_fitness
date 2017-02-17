@@ -30,13 +30,15 @@ class BaseLayer(luchador.util.StoreMixin, object):
         Parameters
         ----------
         name : str or None
-            The name of parameter such as `weight` or `var` to retrieve.
-            If not given, all parameter Variable objects are returned.
+            The name of the parameter (such as ``weight``) to retrieve.
+            If not given, all parameter Variables consisting this layer are
+            returned.
 
         Returns
         -------
-        list
-            List of Variable instances consisting this layer
+        [list of] Variable
+            When name is given, a single Variable is returned, otherwise
+            list of Variables are returned.
         """
         if name:
             return self._parameter_variables[name]
@@ -113,6 +115,11 @@ class BaseDense(BaseLayer):
 
     with_bias : bool
         When True, bias term is added after multiplication.
+
+    Notes
+    -----
+    To fetch paramter variables with :any:`get_variable`, use keys
+    ``weight`` and ``bias`` in the same scope as layer build.
     """
     def __init__(self, n_nodes, initializers=None, with_bias=True):
         super(BaseDense, self).__init__(
@@ -136,7 +143,6 @@ class BaseConv2D(BaseLayer):
         NHWC format : (Tensorflow backend only)
             (batch size, output height, output width, **#output channels**)
 
-
     Parameters
     ----------
     filter_height : int
@@ -157,7 +163,7 @@ class BaseConv2D(BaseLayer):
             The output is subsapmled by ``strides[0]`` in height and
             ``striders[1]`` in width.
 
-        Note
+        Notes
             [Tensorflow only]
 
             When given type is tuple of four int, their order must be
@@ -177,6 +183,11 @@ class BaseConv2D(BaseLayer):
     kwargs
         use_cudnn_on_gpu
             [Tensorflow only] : Arguments passed to ``tf.nn.conv2d``
+
+    Notes
+    -----
+    To fetch paramter variables with :any:`get_variable`, use keys
+    ``weight`` and ``bias`` in the same scope as layer build.
     """
     def __init__(self, filter_height, filter_width, n_filters, strides,
                  padding='VALID', initializers=None, with_bias=True, **kwargs):
@@ -297,6 +308,14 @@ class BaseBatchNormalization(BaseLayer):
 
     .. math::
         y = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}} \\gamma + \\beta
+
+    Notes
+    -----
+    To fetch paramter variables with :any:`get_variable`, use keys ``mean``,
+    ``var``, ``scale`` and ``offset`` in the same scope as layer build.
+
+    To fetch update operation with :any:`get_operation` use key ``bn_update``
+    in the same scope as layer build.
 
     References
     ----------
