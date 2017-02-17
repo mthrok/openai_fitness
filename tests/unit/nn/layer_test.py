@@ -362,7 +362,6 @@ class TestDense(TestCase):
         np.testing.assert_almost_equal(
             bias, bias_val * np.ones((n_nodes,)))
 
-
     def test_copy_fail_without_reuse(self):
         """Copied layer fails to create node when reuse is not True"""
         fmt = luchador.get_nn_conv_format()
