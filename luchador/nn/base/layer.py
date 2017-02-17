@@ -11,7 +11,7 @@ import luchador.util
 _LG = logging.getLogger(__name__)
 
 
-class BaseLayer(luchador.util.SerializeMixin, object):
+class BaseLayer(luchador.util.StoreMixin, object):
     """Define common interface (``build``, ``parameters`` ...) of Layer"""
     __metaclass__ = abc.ABCMeta
 
@@ -41,6 +41,8 @@ class BaseLayer(luchador.util.SerializeMixin, object):
         list
             List of Variable instances consisting this layer
         """
+        if name:
+            return self._parameter_variables[name]
         return self._parameter_variables.values()
 
     def get_update_operation(self):
