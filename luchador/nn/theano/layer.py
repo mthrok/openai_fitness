@@ -6,9 +6,9 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.base import (
+from ..base import (
+    getter,
     layer as base_layer,
-    initializer as base_initializer,
 )
 from . import scope, wrapper, initializer
 
@@ -43,14 +43,14 @@ def _get_initializers(cfg, with_bias):
     w_cfg = cfg.get('weight')
     ret = {}
     ret['weight'] = (
-        base_initializer.get_initializer(w_cfg['typename'])(**w_cfg['args'])
+        getter.get_initializer(w_cfg['typename'])(**w_cfg['args'])
         if w_cfg else initializer.Xavier()
     )
 
     if with_bias:
         _cfg = cfg.get('bias')
         ret['bias'] = (
-            base_initializer.get_initializer(_cfg['typename'])(**_cfg['args'])
+            getter.get_initializer(_cfg['typename'])(**_cfg['args'])
             if _cfg else initializer.Constant(0.1)
         )
     return ret
