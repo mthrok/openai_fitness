@@ -20,5 +20,4 @@ def create_server(app, port=5000, host='0.0.0.0'):
     import cheroot.wsgi
     dispatcher = cheroot.wsgi.WSGIPathInfoDispatcher({'/': app})
     server = cheroot.wsgi.WSGIServer((host, port), dispatcher)
-    app.attr['server'] = server
     return server

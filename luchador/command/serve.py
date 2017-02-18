@@ -3,6 +3,8 @@ from __future__ import absolute_import
 
 import logging
 
+from paste.translogger import TransLogger
+
 import luchador.util
 import luchador.env.remote
 
@@ -10,7 +12,8 @@ _LG = logging.getLogger(__name__)
 
 
 def _run_server(app, port):
-    server = luchador.util.create_server(app, port=port)
+    server = luchador.util.create_server(TransLogger(app), port=port)
+    app.attr['server'] = server
     _LG.info('Starting server on port %d', port)
     try:
         server.start()

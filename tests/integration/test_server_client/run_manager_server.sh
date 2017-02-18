@@ -11,7 +11,13 @@ else
     ENV_PORT="5001"
 fi
 
+echo "*** Launching Manager Server"
 ${TEST_COMMAND} serve manager --port ${MAN_PORT} &
+PID="$!"
 sleep 3
+echo "*** Testing environment launch"
 python tests/integration/test_server_client/launch_remote_env.py --man-port ${MAN_PORT} --env-port ${ENV_PORT}
+echo "*** Testing running remote env"
 ${TEST_COMMAND} exercise example/RemoteEnv.yml --port ${ENV_PORT} --agent example/DQNAgent_train.yml --kill --episode 1
+echo "*** Killing manager server"
+kill "${PID}"

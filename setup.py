@@ -123,6 +123,7 @@ def _setup():
             'pyglet',
             'flask',
             'cheroot',
+            'paste',
             'requests',
         ],
         package_data={
