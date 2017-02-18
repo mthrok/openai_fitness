@@ -23,7 +23,7 @@ def _write_data_to_file(file_, data):
         if key in file_:
             del file_[key]
 
-        chunks = False if value.size == 1 else True
+        chunks = None if value.size == 1 else True
         file_.create_dataset(key, data=value, chunks=chunks)
 
     if 'LUCHADOR_NN_BACKEND' not in file_:

@@ -150,6 +150,7 @@ def make_container_model(input_config, model_configs, output_config):
     model.input = make_io_node(input_config)
     for conf in model_configs:
         name = conf['name']
+        _LG.info('Building Model: %s', name)
         model_ = make_model(conf)
         model.add_model(name, model_)
     model.output = make_io_node(output_config)
