@@ -1,0 +1,28 @@
+"""Misc operations which can be implemented with common backend interface"""
+from __future__ import absolute_import
+
+__all__ = ['clip_grad']
+
+
+def clip_grad(grads_and_vars, max_value, min_value):
+    """Clip gradient with
+
+    Parameters
+    ----------
+    grads_and_vars : list
+        Gradient and Variable tuples. Return value from ``compute_gradients``.
+
+    max_value, min_value : Number
+        Value to clip gradients
+
+    Returns
+    -------
+    list
+        Resulting gradients and vars pairs
+    """
+    ret = []
+    for grad, var in grads_and_vars:
+        name = '{}_clip'.format(grad.name)
+        grad = grad.clip(max_value=max_value, min_value=min_value, name=name)
+        ret.append((grad, var))
+    return ret
