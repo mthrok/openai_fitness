@@ -41,6 +41,9 @@ args:
           decay: 0.95
           epsilon: 0.000001
           learning_rate: 0.00025
+      clip_grads:
+        min_value: -1
+        max_value: 1
 
   saver_config:
     output_dir: *save_dir

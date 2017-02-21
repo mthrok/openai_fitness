@@ -1,11 +1,11 @@
 """Misc operations which can be implemented with common backend interface"""
 from __future__ import absolute_import
 
-__all__ = ['clip_grad']
+__all__ = ['clip_grads']
 
 
-def clip_grad(grads_and_vars, max_value, min_value):
-    """Clip gradient with
+def clip_grads(grads_and_vars, max_value, min_value):
+    """Clip gradients
 
     Parameters
     ----------

@@ -40,7 +40,7 @@ def _build_sync_op(src_model, tgt_model, scope):
 def _build_error(target_q, action_value_0, action):
     n_actions = action_value_0.shape[1]
     delta = (target_q - action_value_0)
-    error = nn.minimum(nn.abs(delta), (delta * delta))
+    error = delta * delta
     mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
     return (mask * error).sum(axis=1)
 
@@ -80,10 +80,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
     """
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, q_learning_config, optimizer_config):
+    def __init__(self, q_learning_config, optimizer_config, clip_grads=None):
         self._store_args(
             q_learning_config=q_learning_config,
             optimizer_config=optimizer_config,
+            clip_grads=clip_grads,
         )
         self.vars = None
         self.models = None
@@ -91,9 +92,14 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.optimizer = None
         self.session = None
 
-    def _validate_args(self, q_learning_config=None, **_):
+    def _validate_args(self, q_learning_config=None, clip_grads=None, **_):
         if q_learning_config is not None:
             _validate_q_learning_config(**q_learning_config)
+        if clip_grads:
+            if not ('min_value' in clip_grads and 'max_value' in clip_grads):
+                raise ValueError(
+                    'Both `min_value` and `max_value` '
+                    'must be given in `clip_grads`')
 
     def build(self, model_def, initial_parameter):
         """Build computation graph (error and sync ops) for Q learning
@@ -122,9 +128,9 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         weight = nn.Input(
             shape=(None,), name='sample_weight')
         self._init_optimizer()
-        optimize_op = self.optimizer.minimize(
-            loss=(error*weight).mean(),
-            wrt=model_0.get_parameter_variables())
+        optimize_op = self._build_optimize_op(
+            loss=(error * weight).mean(),
+            params=model_0.get_parameter_variables())
 
         self._init_session(initial_parameter)
 
@@ -167,6 +173,16 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         n_actions = action_value_1.shape[1]
         target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
         return target_q, post_q
+
+    def _build_optimize_op(self, loss, params):
+        grads_and_vars = self.optimizer.compute_gradients(
+            loss=loss, wrt=params)
+        # Remove untrainable variables
+        grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
+        if self.args.get('clip_grads'):
+            grads_and_vars = nn.clip_grads(
+                grads_and_vars, **self.args['clip_grads'])
+        return self.optimizer.apply_gradients(grads_and_vars)
 
     ###########################################################################
     def _init_optimizer(self):
