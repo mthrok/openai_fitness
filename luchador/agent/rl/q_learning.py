@@ -40,7 +40,7 @@ def _build_sync_op(src_model, tgt_model, scope):
 def _build_error(target_q, action_value_0, action):
     n_actions = action_value_0.shape[1]
     delta = (target_q - action_value_0)
-    error = delta * delta
+    error = nn.minimum(nn.abs(delta), (delta * delta))
     mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
     return (mask * error).sum(axis=1)
 
