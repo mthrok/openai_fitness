@@ -283,8 +283,8 @@ class Input(TensorMixin, base_wrapper.BaseInput):
             If None, default dtype is used
         """
         _dtype = dtype or luchador.get_nn_dtype()
-        name = _prefix_with_scope(name)
         tensor = tf.placeholder(dtype=_dtype, shape=shape, name=name)
+        name = _prefix_with_scope(name)
         dtype = _get_dtype_str(tensor)
         super(Input, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
