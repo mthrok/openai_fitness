@@ -7,7 +7,7 @@ import numbers
 import theano.tensor as T
 
 import luchador.util
-from luchador.nn.base import wrapper as base_wrapper
+from ..base import wrapper as base_wrapper
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -205,26 +205,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _tensor = self.unwrap().max(axis=axis, keepdims=keep_dims)
         _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
         return Tensor(tensor=_tensor, shape=_shape, name=name)
-
-    def clip(self, max_value, min_value, name=None):
-        """Clip value elementwise
-
-        Parameters
-        ----------
-        max_value, min_value : number or Wrapper
-            Clip values
-
-        Returns
-        -------
-        Tensor
-            The resulting Tensor
-        """
-        if isinstance(max_value, base_wrapper.BaseWrapper):
-            max_value = max_value.unwrap()
-        if isinstance(min_value, base_wrapper.BaseWrapper):
-            min_value = min_value.unwrap()
-        _tensor = self.unwrap().clip(a_max=max_value, a_min=min_value)
-        return Tensor(tensor=_tensor, shape=self.shape, name=name)
 
     def reshape(self, new_shape, name=None):
         """Reshape tensor.

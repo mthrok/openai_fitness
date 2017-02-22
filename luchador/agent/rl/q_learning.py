@@ -163,7 +163,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             reward = reward / config['scale_reward']
         if 'min_reward' in config and 'max_reward' in config:
             min_val, max_val = config['min_reward'], config['max_reward']
-            reward = reward.clip(min_value=min_val, max_value=max_val)
+            reward = nn.clip_by_value(
+                reward, min_value=min_val, max_value=max_val)
 
         # Build Target Q
         post_q = action_value_1.max(axis=1)

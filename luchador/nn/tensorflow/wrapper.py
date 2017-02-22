@@ -8,7 +8,7 @@ import tensorflow as tf
 
 import luchador
 import luchador.util
-from luchador.nn.base import wrapper as base_wrapper
+from ..base import wrapper as base_wrapper
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -131,28 +131,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         """
         _tensor = tf.reduce_max(
             self.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
-        return Tensor(tensor=_tensor, name=name)
-
-    def clip(self, max_value, min_value, name=None):
-        """Clip value elementwise
-
-        Parameters
-        ----------
-        max_value, min_value : number or Wrapper
-            Clip values
-
-        Returns
-        -------
-        Tensor
-            The resulting Tensor
-        """
-        if isinstance(max_value, base_wrapper.BaseWrapper):
-            max_value = max_value.unwrap()
-        if isinstance(min_value, base_wrapper.BaseWrapper):
-            min_value = min_value.unwrap()
-        _tensor = tf.clip_by_value(
-            self.unwrap(), clip_value_min=min_value, clip_value_max=max_value,
-            name=name)
         return Tensor(tensor=_tensor, name=name)
 
     def reshape(self, new_shape, name=None):
