@@ -1,6 +1,8 @@
 """Misc operations which can be implemented with common backend interface"""
 from __future__ import absolute_import
 
+import luchador.nn
+
 __all__ = ['clip_grads']
 
 
@@ -23,6 +25,7 @@ def clip_grads(grads_and_vars, max_value, min_value):
     ret = []
     for grad, var in grads_and_vars:
         name = '{}_clip'.format(grad.name)
-        grad = grad.clip(max_value=max_value, min_value=min_value, name=name)
+        grad = luchador.nn.backend.clip_by_value(
+            grad, max_value=max_value, min_value=min_value, name=name)
         ret.append((grad, var))
     return ret
