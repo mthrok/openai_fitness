@@ -42,8 +42,7 @@ args:
           epsilon: 0.000001
           learning_rate: 0.00025
       clip_grads:
-        min_value: -1
-        max_value: 1
+        clip_norm: 10
 
   saver_config:
     output_dir: *save_dir

@@ -45,6 +45,30 @@ def _build_error(target_q, action_value_0, action):
     return (mask * error).sum(axis=1)
 
 
+def _clip_grads(grads_and_vars, clip_norm):
+    """Clip gradients by norm
+
+    Parameters
+    ----------
+    grads_and_vars : list
+        Gradient and Variable tuples. Return value from ``compute_gradients``.
+
+    clip_norm : Number or Tensor
+        Value to clip gradients
+
+    Returns
+    -------
+    list
+        Resulting gradients and vars pairs
+    """
+    ret = []
+    for grad, var in grads_and_vars:
+        name = '{}_clip'.format(grad.name)
+        grad = nn.clip_by_norm(grad, clip_norm=clip_norm, name=name)
+        ret.append((grad, var))
+    return ret
+
+
 class DeepQLearning(luchador.util.StoreMixin, object):
     """Implement Neural Network part of DQN [1]_:
 
@@ -96,10 +120,8 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         if q_learning_config is not None:
             _validate_q_learning_config(**q_learning_config)
         if clip_grads:
-            if not ('min_value' in clip_grads and 'max_value' in clip_grads):
-                raise ValueError(
-                    'Both `min_value` and `max_value` '
-                    'must be given in `clip_grads`')
+            if 'clip_norm' not in clip_grads:
+                raise ValueError('`clip_norm` must be given in `clip_grads`')
 
     def build(self, model_def, initial_parameter):
         """Build computation graph (error and sync ops) for Q learning
@@ -181,7 +203,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         # Remove untrainable variables
         grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
         if self.args.get('clip_grads'):
-            grads_and_vars = nn.clip_grads(
+            grads_and_vars = _clip_grads(
                 grads_and_vars, **self.args['clip_grads'])
         return self.optimizer.apply_gradients(grads_and_vars)
 
