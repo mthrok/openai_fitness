@@ -43,8 +43,8 @@ def _print_summary(summary):
             '{path:{path_len}}{dtype:{dtype_len}}{shape:{shape_len}} '
             '{sum:10.3E}  {max:10.3E}  {min:10.3E}  {mean:10.3E}'
             .format(
-                dtype=s['dtype'], dtype_len=dtype_len,
-                shape=s['shape'], shape_len=shape_len,
+                dtype=smr['dtype'], dtype_len=dtype_len,
+                shape=smr['shape'], shape_len=shape_len,
                 path=path, path_len=path_len, sum=smr['sum'], max=smr['max'],
                 min=smr['min'], mean=smr['mean'],
             )
