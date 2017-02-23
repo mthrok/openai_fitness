@@ -151,7 +151,7 @@ class Sequential(BaseModel):
         list
             List of Tensors each of which hold output from layer
         """
-        return [cfg.output for cfg in self.layer_configs]
+        return [cfg.layer.output for cfg in self.layer_configs]
 
     def get_update_operations(self):
         """Get update opretaions from each layer
