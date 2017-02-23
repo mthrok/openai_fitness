@@ -56,6 +56,35 @@ def _map_padding(padding):
         return 'VALID'
 
 
+def _check_filter_shape(
+        input_shape, filter_shape, strides, data_format, padding):
+    flt_h, flt_w = filter_shape[0], filter_shape[1]
+    if data_format == 'NCHW':
+        img_h, img_w = input_shape[2], input_shape[3]
+        str_h, str_w = strides[2], strides[3]
+    else:
+        img_h, img_w = input_shape[1], input_shape[2]
+        str_h, str_w = strides[1], strides[2]
+    if padding == 'VALID':
+        warn_w = bool((img_w - flt_w) % str_w)
+        warn_h = bool((img_h - flt_h) % str_h)
+    else:
+        warn_w = bool((img_w - 1) % str_w)
+        warn_h = bool((img_h - 1) % str_h)
+    if warn_w:
+        warnings.warn(
+            'Convolution op will not cover the right side of the input.'
+            'Check the width configuration of filter and stride.',
+            RuntimeWarning
+        )
+    if warn_h:
+        warnings.warn(
+            'Convolution op will not cover the bottom part of the input.'
+            'Check the height configuration of filter and stride.',
+            RuntimeWarning
+        )
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
@@ -70,12 +99,15 @@ class Conv2D(base_layer.BaseConv2D):
         return self.args.get('data_format', luchador.get_nn_conv_format())
 
     def _get_strides(self):
-        s, fmt = self.args['strides'], self._get_format()
-        if isinstance(s, int):
-            s = [s] * 2
-        if len(s) == 2:
-            s = (1, 1, s[0], s[1]) if fmt == 'NCHW' else (1, s[0], s[1], 1)
-        return s
+        st, fmt = self.args['strides'], self._get_format()
+        if isinstance(st, int):
+            st = (st, st)
+        if len(st) == 2:
+            if fmt == 'NCHW':
+                st = (1, 1, st[0], st[1])
+            else:
+                st = (1, st[0], st[1], 1)
+        return st
 
     def _get_weight_shape(self, input_shape):
         n_out, fmt = self.args['n_filters'], self._get_format()
@@ -86,34 +118,6 @@ class Conv2D(base_layer.BaseConv2D):
     def _get_padding(self):
         return _map_padding(self.args['padding'])
 
-    def _check_filter_shape(self, input_shape, filter_shape):
-        flt_h, flt_w = filter_shape[0], filter_shape[1]
-        strides = self._get_strides()
-        if self._get_format() == 'NCHW':
-            img_h, img_w = input_shape[2], input_shape[3]
-            str_h, str_w = strides[2], strides[3]
-        else:
-            img_h, img_w = input_shape[1], input_shape[2]
-            str_h, str_w = strides[1], strides[2]
-        if self._get_padding() == 'VALID':
-            warn_w = bool((img_w - flt_w) % str_w)
-            warn_h = bool((img_h - flt_h) % str_h)
-        else:
-            warn_w = bool((img_w - 1) % str_w)
-            warn_h = bool((img_h - 1) % str_h)
-        if warn_w:
-            warnings.warn(
-                'Convolution op will not cover the right side of the input.'
-                'Check the width configuration of filter and stride.',
-                RuntimeWarning
-            )
-        if warn_h:
-            warnings.warn(
-                'Convolution op will not cover the bottom part of the input.'
-                'Check the height configuration of filter and stride.',
-                RuntimeWarning
-            )
-
     ###########################################################################
     def _instantiate_parameters(self, input_shape, input_dtype):
         _LG.debug('    Input: shape %s, dtype %s', input_shape, input_dtype)
@@ -121,7 +125,9 @@ class Conv2D(base_layer.BaseConv2D):
             self.args.get('initializers') or {}, self.args['with_bias'])
 
         w_shape = self._get_weight_shape(input_shape)
-        self._check_filter_shape(input_shape, w_shape)
+        _check_filter_shape(
+            input_shape, w_shape, self._get_strides(),
+            self._get_format(), self._get_padding())
         weight = scope.get_variable(
             name='weight', shape=w_shape, dtype=input_dtype,
             initializer=initializers['weight'])
