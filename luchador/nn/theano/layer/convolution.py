@@ -8,8 +8,8 @@ import warnings
 import theano.tensor as T
 
 from ...base import layer as base_layer
+from ...base import getter
 from .. import scope, wrapper
-from .common import get_initializers
 
 __all__ = ['Conv2D']
 
@@ -58,6 +58,37 @@ def _validate_strides(strides):
         pass
 
     raise ValueError('`strides` must be either int or tuple of two int')
+
+
+def _get_initializers(config):
+    """Get initializers for Conv2D
+
+    Parameters
+    ----------
+    config : dict
+        filter : dict
+            Initializer configuration for ``filter`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Xavier` is used.
+        bias : dict
+            Initializer configuration for ``bias`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Constant` with
+            ``value = 0.1`` is used.
+
+    Returns
+    -------
+    dict
+        Resulting initializers for ``filter`` and ``bias``
+    """
+    ret = {}
+
+    cfg = config.get('filter', {'typename': 'Xavier'})
+    type_ = cfg['typename']
+    ret['filter'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+
+    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
+    type_ = cfg['typename']
+    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+    return ret
 
 
 def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
@@ -136,13 +167,12 @@ class Conv2D(base_layer.BaseConv2D):
 
     ###########################################################################
     def _instantiate_parameters(self, filter_shape, dtype):
-        initializers = get_initializers(
-            self.args.get('initializers') or {}, self.args['with_bias'])
+        initializers = _get_initializers(self.args.get('initializers') or {})
 
-        w_init = initializers['weight']
-        w_var = scope.get_variable(
-            name='weight', shape=filter_shape, initializer=w_init, dtype=dtype)
-        self._add_parameter('weight', w_var)
+        f_init = initializers['filter']
+        f_var = scope.get_variable(
+            name='filter', shape=filter_shape, initializer=f_init, dtype=dtype)
+        self._add_parameter('filter', f_var)
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
             b_init = initializers['bias']
@@ -186,7 +216,7 @@ class Conv2D(base_layer.BaseConv2D):
         if not self._parameter_variables:
             self._instantiate_parameters(filter_shape, input_tensor.dtype)
 
-        filters = self._get_parameter('weight')
+        filters = self._get_parameter('filter')
         output_tensor = T.nnet.conv2d(
             input_tensor.unwrap(), filters=filters.unwrap(),
             input_shape=input_shape, filter_shape=filter_shape,

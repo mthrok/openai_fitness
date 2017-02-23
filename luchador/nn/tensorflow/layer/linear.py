@@ -7,12 +7,43 @@ import logging
 import tensorflow as tf
 
 from ...base import layer as base_layer
+from ...base import getter
 from .. import scope, wrapper
-from .common import get_initializers
 
 __all__ = ['Dense']
 
 _LG = logging.getLogger(__name__)
+
+
+def _get_initializers(config):
+    """Get initializers for Conv2D
+
+    Parameters
+    ----------
+    config : dict
+        weight : dict
+            Initializer configuration for ``weight`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Xavier` is used.
+        bias : dict
+            Initializer configuration for ``bias`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Constant` with
+            ``value = 0.1`` is used.
+
+    Returns
+    -------
+    dict
+        Resulting initializers for ``weight`` and ``bias``
+    """
+    ret = {}
+
+    cfg = config.get('weight', {'typename': 'Xavier'})
+    type_ = cfg['typename']
+    ret['weight'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+
+    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
+    type_ = cfg['typename']
+    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+    return ret
 
 
 class Dense(base_layer.BaseDense):
@@ -21,8 +52,7 @@ class Dense(base_layer.BaseDense):
     See :any:`BaseDense` for detail.
     """
     def _instantiate_parameters(self, n_inputs, dtype):
-        initializers = get_initializers(
-            self.args.get('initializers') or {}, self.args['with_bias'])
+        initializers = _get_initializers(self.args.get('initializers') or {})
 
         w_shape = (n_inputs, self.args['n_nodes'])
         weight = scope.get_variable(

@@ -9,8 +9,8 @@ import tensorflow as tf
 
 import luchador
 from ...base import layer as base_layer
+from ...base import getter
 from .. import scope, wrapper
-from .common import get_initializers
 
 __all__ = ['Conv2D']
 
@@ -53,6 +53,37 @@ def _map_padding(padding):
     if padding.upper() in ['HALF', 'SAME']:
         return 'SAME'
     return 'VALID'
+
+
+def _get_initializers(config):
+    """Get initializers for Conv2D
+
+    Parameters
+    ----------
+    config : dict
+        filter : dict
+            Initializer configuration for ``filter`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Xavier` is used.
+        bias : dict
+            Initializer configuration for ``bias`` parameter. If not present,
+            :func:`luchador.nn.theano.initializer.Constant` with
+            ``value = 0.1`` is used.
+
+    Returns
+    -------
+    dict
+        Resulting initializers for ``filter`` and ``bias``
+    """
+    ret = {}
+
+    cfg = config.get('filter', {'typename': 'Xavier'})
+    type_ = cfg['typename']
+    ret['filter'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+
+    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
+    type_ = cfg['typename']
+    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
+    return ret
 
 
 def _check_filter_shape(
@@ -100,6 +131,7 @@ class Conv2D(base_layer.BaseConv2D):
 
     See :any:`BaseConv2D` for detail.
     """
+    # pylint: disable=redefined-builtin
     def _validate_args(self, padding, strides, **args):
         _validate_padding(padding)
         _validate_strides(strides)
@@ -115,13 +147,12 @@ class Conv2D(base_layer.BaseConv2D):
 
     ###########################################################################
     def _instantiate_parameters(self, w_shape, input_dtype):
-        initializers = get_initializers(
-            self.args.get('initializers') or {}, self.args['with_bias'])
+        initializers = _get_initializers(self.args.get('initializers') or {})
 
-        weight = scope.get_variable(
-            name='weight', shape=w_shape, dtype=input_dtype,
-            initializer=initializers['weight'])
-        self._add_parameter('weight', weight)
+        filter = scope.get_variable(
+            name='filter', shape=w_shape, dtype=input_dtype,
+            initializer=initializers['filter'])
+        self._add_parameter('filter', filter)
 
         if self.args['with_bias']:
             b_shape = (self.args['n_filters'],)
@@ -145,9 +176,9 @@ class Conv2D(base_layer.BaseConv2D):
         _check_filter_shape(
             input_shape, filter_shape, strides, data_format, padding)
 
-        weight = self._get_parameter('weight')
+        filter = self._get_parameter('filter')
         output = tf.nn.conv2d(
-            input_tensor.unwrap(), weight.unwrap(),
+            input_tensor.unwrap(), filter.unwrap(),
             strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=data_format, name=self.args.get('name'))
 

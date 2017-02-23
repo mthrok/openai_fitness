@@ -35,8 +35,8 @@ class BaseConv2D(BaseLayer):
     filter_height : int
         filter height, (#rows in filter)
 
-    filter_weight : int
-        filter weight (#columns in filter)
+    filter_width : int
+        filter width (#columns in filter)
 
     n_filters : int
         #filters (#output channels)
@@ -74,7 +74,7 @@ class BaseConv2D(BaseLayer):
     Notes
     -----
     To fetch paramter variables with :any:`get_variable`, use keys
-    ``weight`` and ``bias`` in the same scope as layer build.
+    ``filter`` and ``bias`` in the same scope as layer build.
     """
     def __init__(self, filter_height, filter_width, n_filters, strides,
                  padding='VALID', initializers=None, with_bias=True, **kwargs):
