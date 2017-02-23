@@ -11,18 +11,14 @@ _LG = logging.getLogger(__name__)
 
 class LayerConfig(object):  # pylint: disable=too-few-public-methods
     """Class to hold complementary info for Layer class"""
-    def __init__(self, layer, scope, input_=None, output=None):
+    def __init__(self, layer, scope):
         self.layer = layer
         self.scope = scope
-        self.input = input_
-        self.output = output
 
     def __repr__(self):
         return repr({
             'scope': self.scope,
             'layer': self.layer,
-            'input': self.input,
-            'output': self.output,
         })
 
 
@@ -102,8 +98,6 @@ class Sequential(BaseModel):
         self.layer_configs.append(LayerConfig(
             layer=layer,
             scope=scope,
-            input_=None,
-            output=None,
         ))
         return self
 
@@ -128,11 +122,9 @@ class Sequential(BaseModel):
         """
         tensor = self.input = input_tensor
         for cfg in self.layer_configs:
-            cfg.input = tensor
             scope = cfg.scope or luchador.nn.get_variable_scope()
             with luchador.nn.variable_scope(scope):
                 tensor = cfg.layer(tensor)
-            cfg.output = tensor
         self.output = tensor
         return self.output
 

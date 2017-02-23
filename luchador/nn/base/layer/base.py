@@ -21,6 +21,9 @@ class BaseLayer(luchador.util.StoreMixin, object):
         super(BaseLayer, self).__init__()
         self._store_args(**kwargs)
 
+        self.input = None
+        self.output = None
+
         self._update_operation = None
         self._parameter_variables = OrderedDict()
 
@@ -108,7 +111,9 @@ class BaseLayer(luchador.util.StoreMixin, object):
         """
         _LG.info(
             '  Building layer %s on %s', type(self).__name__, input_tensor)
-        return self._build(input_tensor)
+        self.input = input_tensor
+        self.output = self._build(input_tensor)
+        return self.output
 
     @abc.abstractmethod
     def _build(self, input_tensor):
