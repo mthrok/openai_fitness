@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from .base import *  # noqa
 from .linear import *  # noqa
 from .math import *  # noqa
-from .reshape import *  # noqa
+from .transform import *  # noqa
 from .activation import *  # noqa
 from .convolution import *  # noqa
 from .normalization import *  # noqa
