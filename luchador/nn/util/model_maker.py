@@ -10,6 +10,17 @@ from .getter import get_input, get_layer, get_tensor
 _LG = logging.getLogger(__name__)
 
 
+def _get_existing_variable(name):
+    """Search an existing Variable in current scope or global scope"""
+    scope = luchador.nn.get_variable_scope()
+    with luchador.nn.variable_scope(scope, reuse=True):
+        try:
+            return luchador.nn.get_variable('{}/{}'.format(scope.name, name))
+        except ValueError:
+            pass
+        return luchador.nn.get_variable(name)
+
+
 def make_io_node(config):
     """Make/fetch ``Input``/``Tensor`` instances from configuration.
 
@@ -82,11 +93,13 @@ def make_io_node(config):
         return [make_io_node(cfg) for cfg in config]
 
     type_ = config.get('typename', 'No `typename` is found.')
-    if type_ not in ['Input', 'Tensor']:
+    if type_ not in ['Input', 'Tensor', 'Variable']:
         raise ValueError('Unexpected Input type: {}'.format(type_))
 
     if type_ == 'Tensor':
         ret = get_tensor(name=config['name'])
+    elif type_ == 'Variable':
+        ret = _get_existing_variable(name=config['name'])
     elif config.get('reuse'):
         ret = get_input(config['name'])
     else:
@@ -115,7 +128,15 @@ def make_layer(layer_config):
 
     type_ = layer_config['typename']
     args = layer_config.get('args', {})
-    return get_layer(type_)(**args)
+    layer = get_layer(type_)(**args)
+
+    if 'parameters' in layer_config:
+        parameters = {
+            key: make_io_node(config)
+            for key, config in layer_config['parameters'].items()
+        }
+        layer.set_parameter_variables(parameters)
+    return layer
 
 
 def make_sequential_model(layer_configs, input_config=None):
