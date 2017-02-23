@@ -33,7 +33,7 @@ class TestConv2D(TestCase):
         inputs = ('full', 'half', 'SAME', 'valid')
         expecteds = ('full', 'half', 'half', 'valid')
         for i, expected in zip(inputs, expecteds):
-            found = nn.layer._map_border_mode(i)
+            found = nn.layer.convolution._map_border_mode(i)
             self.assertEqual(expected, found)
 
     def _test_shape_inference(

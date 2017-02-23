@@ -18,5 +18,5 @@ class TestConv2D(unittest.TestCase):
         inputs = ('full', 'half', 'same', 'valid')
         expecteds = ('VALID', 'SAME', 'SAME', 'VALID')
         for i, expected in zip(inputs, expecteds):
-            found = nn.layer._map_padding(i)
+            found = nn.layer.convolution._map_padding(i)
             self.assertEqual(expected, found)
