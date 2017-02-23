@@ -94,8 +94,32 @@ def make_io_node(config):
     return ret
 
 
+def make_layer(layer_config):
+    """Make Layer instance
+
+    Parameters
+    ----------
+    layer_config : dict
+        typename : str
+            Name of Layer class to instanciate
+        args : dict
+            Constructor arguments for the Layer class
+
+    Returns
+    -------
+    layer
+        Layer object
+    """
+    if 'typename' not in layer_config:
+        raise RuntimeError('Layer `typename` is not given')
+
+    type_ = layer_config['typename']
+    args = layer_config.get('args', {})
+    return get_layer(type_)(**args)
+
+
 def make_sequential_model(layer_configs, input_config=None):
-    """Make model instance from model configuration
+    """Make Sequential model instance from model configuration
 
     Parameters
     ----------
@@ -114,12 +138,8 @@ def make_sequential_model(layer_configs, input_config=None):
     """
     model = Sequential()
     for config in layer_configs:
-        if 'typename' not in config:
-            raise RuntimeError(
-                'Layer `typename` is not given in {}'.format(config))
-
         _LG.info('  Constructing Layer: %s', config)
-        layer = get_layer(config['typename'])(**config.get('args', {}))
+        layer = make_layer(config)
         model.add_layer(layer=layer, scope=config.get('scope', ''))
 
     if input_config:
