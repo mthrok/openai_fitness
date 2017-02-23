@@ -52,8 +52,7 @@ def _validate_strides(strides):
 def _map_padding(padding):
     if padding.upper() in ['HALF', 'SAME']:
         return 'SAME'
-    else:
-        return 'VALID'
+    return 'VALID'
 
 
 def _check_filter_shape(
@@ -85,6 +84,17 @@ def _check_filter_shape(
         )
 
 
+def _get_strides(strides, data_format):
+    if isinstance(strides, int):
+        strides = (strides, strides)
+    if len(strides) == 2:
+        if data_format == 'NCHW':
+            strides = (1, 1, strides[0], strides[1])
+        else:
+            strides = (1, strides[0], strides[1], 1)
+    return strides
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
@@ -98,36 +108,16 @@ class Conv2D(base_layer.BaseConv2D):
     def _get_format(self):
         return self.args.get('data_format', luchador.get_nn_conv_format())
 
-    def _get_strides(self):
-        st, fmt = self.args['strides'], self._get_format()
-        if isinstance(st, int):
-            st = (st, st)
-        if len(st) == 2:
-            if fmt == 'NCHW':
-                st = (1, 1, st[0], st[1])
-            else:
-                st = (1, st[0], st[1], 1)
-        return st
-
-    def _get_weight_shape(self, input_shape):
-        n_out, fmt = self.args['n_filters'], self._get_format()
-        n_in = input_shape[1] if fmt == 'NCHW' else input_shape[3]
+    def _get_filter_shape(self, input_shape, data_format):
+        n_in = input_shape[1] if data_format == 'NCHW' else input_shape[3]
         height, width = self.args['filter_height'], self.args['filter_width']
-        return (height, width, n_in, n_out)
-
-    def _get_padding(self):
-        return _map_padding(self.args['padding'])
+        return (height, width, n_in, self.args['n_filters'])
 
     ###########################################################################
-    def _instantiate_parameters(self, input_shape, input_dtype):
-        _LG.debug('    Input: shape %s, dtype %s', input_shape, input_dtype)
+    def _instantiate_parameters(self, w_shape, input_dtype):
         initializers = get_initializers(
             self.args.get('initializers') or {}, self.args['with_bias'])
 
-        w_shape = self._get_weight_shape(input_shape)
-        _check_filter_shape(
-            input_shape, w_shape, self._get_strides(),
-            self._get_format(), self._get_padding())
         weight = scope.get_variable(
             name='weight', shape=w_shape, dtype=input_dtype,
             initializer=initializers['weight'])
@@ -141,23 +131,28 @@ class Conv2D(base_layer.BaseConv2D):
             self._add_parameter('bias', bias)
 
     def _build(self, input_tensor):
-        if not self._parameter_variables:
-            self._instantiate_parameters(
-                input_tensor.shape, input_tensor.dtype)
+        input_shape = input_tensor.shape
+        data_format = self._get_format()
+        filter_shape = self._get_filter_shape(input_shape, data_format)
 
-        weight = self._get_parameter('weight').unwrap()
-        strides = self._get_strides()
-        name = self.args.get('name')
+        if not self._parameter_variables:
+            self._instantiate_parameters(filter_shape, input_tensor.dtype)
+
+        strides = _get_strides(self.args['strides'], data_format)
+        padding = _map_padding(self.args['padding'])
         cudnn = self.args.get('use_cudnn_on_gpu', True)
-        fmt = self._get_format()
-        padding = self._get_padding()
+
+        _check_filter_shape(
+            input_shape, filter_shape, strides, data_format, padding)
+
+        weight = self._get_parameter('weight')
         output = tf.nn.conv2d(
-            input_tensor.unwrap(), weight, strides=strides,
-            padding=padding, use_cudnn_on_gpu=cudnn,
-            data_format=fmt, name=name)
+            input_tensor.unwrap(), weight.unwrap(),
+            strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
+            data_format=data_format, name=self.args.get('name'))
 
         if self.args['with_bias']:
             bias = self._get_parameter('bias').unwrap()
             output = tf.nn.bias_add(
-                output, bias, data_format=fmt, name='output')
+                output, bias, data_format=data_format, name='output')
         return wrapper.Tensor(output, name='output')
