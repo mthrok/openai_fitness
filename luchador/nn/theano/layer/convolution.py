@@ -59,6 +59,53 @@ def _validate_strides(strides):
     raise ValueError('`strides` must be either int or tuple of two int')
 
 
+def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
+    """Compute output shape
+
+    Parameters
+    ----------
+    input_shape : tuple
+        Input shape in order of (batch, n_input_channels, row, col)
+
+    filter_shape : tuple
+        Filter shape in order of (n_filters, n_input_channels, rows, cols)
+
+    subsample : tuple
+        Subsampling (stride) in (row, column) direction
+
+    border_mdoe : str
+        Either 'full', 'half', 'same' or 'valid'
+    """
+    # TODO: Add warning if
+    # parts of image are not covered because of subsampling
+    f_row, f_col = filter_shape[2:4]
+    in_row, in_col = input_shape[2:4]
+    sub_row, sub_col = subsample
+    # Process padding
+    if border_mode in ['full', 'valid']:
+        pass
+    elif border_mode == 'half':
+        in_row += 2 * (f_row // 2)
+        in_col += 2 * (f_col // 2)
+    elif isinstance(border_mode, int):
+        in_row += 2 * border_mode
+        in_col += 2 * border_mode
+    else:
+        in_row += 2 * border_mode[0]
+        in_col += 2 * border_mode[1]
+    # Process convolution
+    if border_mode == 'full':
+        out_row = (in_row + f_row - 2) // sub_row + 1
+        out_col = (in_col + f_col - 2) // sub_col + 1
+    else:
+        out_row = (in_row - f_row) // sub_row + 1
+        out_col = (in_col - f_col) // sub_col + 1
+    # Reconstruct
+    n_batches, n_filters = input_shape[0], filter_shape[0]
+    output_shape = (n_batches, n_filters, out_row, out_col)
+    return output_shape
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Theano.
 
@@ -90,50 +137,6 @@ class Conv2D(base_layer.BaseConv2D):
             return (self.args['strides'], self.args['strides'])
         return self.args['strides']
 
-    def _get_border_mode(self):
-        return _map_border_mode(self.args['padding'])
-
-    def _get_output_shape(self, input_shape, filter_shape):
-        """Compute output shape
-
-        Parameters
-        ----------
-        input_shape : tuple
-            Input shape in order of (batch, n_input_channels, row, col)
-
-        filter_shape : tuple
-            Filter shape in order of (n_filters, n_input_channels, rows, cols)
-        """
-        # TODO: Add warning if
-        # parts of image are not covered because of subsampling
-        f_row, f_col = filter_shape[2:4]
-        in_row, in_col = input_shape[2:4]
-        sub_row, sub_col = self._get_subsample()
-        border_mode = self._get_border_mode()
-        # Process padding
-        if border_mode in ['full', 'valid']:
-            pass
-        elif border_mode == 'half':
-            in_row += 2 * (f_row // 2)
-            in_col += 2 * (f_col // 2)
-        elif isinstance(border_mode, int):
-            in_row += 2 * border_mode
-            in_col += 2 * border_mode
-        else:
-            in_row += 2 * border_mode[0]
-            in_col += 2 * border_mode[1]
-        # Process convolution
-        if border_mode == 'full':
-            out_row = (in_row + f_row - 2) // sub_row + 1
-            out_col = (in_col + f_col - 2) // sub_col + 1
-        else:
-            out_row = (in_row - f_row) // sub_row + 1
-            out_col = (in_col - f_col) // sub_col + 1
-        # Reconstruct
-        n_batches, n_filters = input_shape[0], filter_shape[0]
-        output_shape = (n_batches, n_filters, out_row, out_col)
-        return output_shape
-
     def _build(self, input_tensor):
         """Build 2D conolution operation of the input tensor
 
@@ -148,8 +151,11 @@ class Conv2D(base_layer.BaseConv2D):
             4D Tensor with shape (batch, #output channel, row, col)
         """
         input_shape = input_tensor.shape
+        border_mode = _map_border_mode(self.args['padding'])
+        subsample = self._get_subsample()
+
         _LG.debug('    input_shape: %s', input_shape)
-        _LG.debug('    border_mode: %s', self._get_border_mode())
+        _LG.debug('    border_mode: %s', border_mode)
 
         if not len(input_shape) == 4:
             raise ValueError('Input tensor must be 4D. '
@@ -160,8 +166,6 @@ class Conv2D(base_layer.BaseConv2D):
 
         filters = self._get_parameter('weight').unwrap()
         filter_shape = filters.get_value().shape
-        subsample = self._get_subsample()
-        border_mode = self._get_border_mode()
 
         output_tensor = T.nnet.conv2d(
             input_tensor.unwrap(), filters=filters,
@@ -173,6 +177,7 @@ class Conv2D(base_layer.BaseConv2D):
             bias = bias.dimshuffle(('x', 0, 'x', 'x'))
             output_tensor = bias + output_tensor
 
-        output_shape = self._get_output_shape(input_shape, filter_shape)
+        output_shape = _get_output_shape(
+            input_shape, filter_shape, subsample, border_mode)
         _LG.debug('    output_shape: %s', output_shape)
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
