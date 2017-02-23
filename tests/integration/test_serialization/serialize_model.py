@@ -60,14 +60,8 @@ def _make_optimizer(filepath):
 
 
 def _gen_model_def(model_file):
-    fmt = luchador.get_nn_conv_format()
-    w, h, c = WIDTH, HEIGHT, CHANNEL
-    shape = (
-        '[null, {}, {}, {}]'.format(h, w, c) if fmt == 'NHWC' else
-        '[null, {}, {}, {}]'.format(c, h, w)
-    )
     return nn.get_model_config(
-        model_file, n_actions=N_ACTIONS, input_shape=shape)
+        model_file, n_actions=N_ACTIONS, input_shape=SHAPE)
 
 
 def _build_network(model_filepath, optimizer_filepath, initial_parameter):

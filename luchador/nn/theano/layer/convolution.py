@@ -8,11 +8,11 @@ import warnings
 import theano.tensor as T
 from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
-from ...base import layer as base_layer
 from ...base import getter
+from ...base import layer as base_layer
 from .. import scope, wrapper
 
-__all__ = ['Conv2D']
+__all__ = ['Conv2D', 'Conv2DTranspose']
 
 _LG = logging.getLogger(__name__)
 
@@ -200,3 +200,50 @@ class Conv2D(base_layer.BaseConv2D):
             output_tensor = bias + output_tensor
 
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
+
+
+class Conv2DTranspose(base_layer.BaseConv2DTranspose):
+    """Implement Conv2DTranspose layer in Theano.
+
+    See :any:`BaseConv2DTranspose` for detail.
+    """
+    def _validate_args(self, padding, strides, **_):
+        _validate_padding(padding)
+        _validate_strides(strides)
+
+    ###########################################################################
+    def _build_bias(self, shape, dtype):
+        if self._parameter_variables['bias'] is None:
+            init = _get_bias_init(self.args['initializers'])
+            bias = scope.get_variable(
+                name='bias', shape=shape, initializer=init, dtype=dtype)
+            self.set_parameter_variables(bias=bias)
+
+    def _build(self, input_tensor):
+        # In Theano, the notation of input and output is flipped because
+        # they are re-using the terminology from gradient computation.
+        filters = self._parameter_variables['filter']
+        if self.args['output_shape']:
+            output_shape = self.args['output_shape']
+        else:
+            original_input = self._parameter_variables['original_input']
+            output_shape = original_input.shape
+        border_mode = _map_border_mode(self.args['padding'])
+        subsample = _get_subsample(self.args['strides'])
+        tensor_ = T.nnet.abstract_conv.conv2d_grad_wrt_inputs(
+            output_grad=input_tensor.unwrap(),
+            filters=filters.unwrap(),
+            input_shape=output_shape,
+            filter_shape=filters.shape,
+            border_mode=border_mode,
+            subsample=subsample,
+        )
+
+        if self.args['with_bias']:
+            shape = (filters.shape[1],)
+            self._build_bias(shape=shape, dtype=input_tensor.dtype)
+            bias = self.get_parameter_variables('bias').unwrap()
+            bias = bias.dimshuffle(('x', 0, 'x', 'x'))
+            tensor_ = bias + tensor_
+
+        return wrapper.Tensor(tensor_, shape=output_shape, name='output')

@@ -8,11 +8,11 @@ import warnings
 import tensorflow as tf
 
 import luchador
-from ...base import layer as base_layer
 from ...base import getter
+from ...base import layer as base_layer
 from .. import scope, wrapper
 
-__all__ = ['Conv2D']
+__all__ = ['Conv2D', 'Conv2DTranspose']
 
 _LG = logging.getLogger(__name__)
 
@@ -109,6 +109,10 @@ def _get_bias_init(config):
         config['typename'])(**config.get('args', {}))
 
 
+def _get_format(data_format):
+    return data_format or luchador.get_nn_conv_format()
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
@@ -120,9 +124,6 @@ class Conv2D(base_layer.BaseConv2D):
         _validate_strides(strides)
 
     ###########################################################################
-    def _get_format(self):
-        return self.args.get('data_format', luchador.get_nn_conv_format())
-
     def _get_filter_shape(self, input_shape, data_format):
         n_in = input_shape[1] if data_format == 'NCHW' else input_shape[3]
         height, width = self.args['filter_height'], self.args['filter_width']
@@ -153,7 +154,7 @@ class Conv2D(base_layer.BaseConv2D):
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
-        data_format = self._get_format()
+        data_format = _get_format(self.args.get('data_format'))
         filter_shape = self._get_filter_shape(input_shape, data_format)
 
         self._build_parameters(filter_shape, input_tensor.dtype)
@@ -176,3 +177,49 @@ class Conv2D(base_layer.BaseConv2D):
             output = tf.nn.bias_add(
                 output, bias, data_format=data_format, name='output')
         return wrapper.Tensor(output, name='output')
+
+
+class Conv2DTranspose(base_layer.BaseConv2DTranspose):
+    """Implement Conv2DTranspose layer in Theano.
+
+    See :any:`BaseConv2DTranspose` for detail.
+    """
+    def _validate_args(self, padding, strides, **args):
+        _validate_padding(padding)
+        _validate_strides(strides)
+
+    def _build_bias(self, shape, dtype):
+        if self._parameter_variables['bias'] is None:
+            init = _get_bias_init(self.args['initializers'])
+            bias = scope.get_variable(
+                name='bias', shape=shape, initializer=init, dtype=dtype)
+            self.set_parameter_variables(bias=bias)
+
+    def _build(self, input_tensor):
+        filters = self._parameter_variables['filter']
+        if self.args['output_shape']:
+            output_shape = self.args['output_shape']
+        else:
+            original_input = self._parameter_variables['original_input']
+            output_shape = original_input.shape
+
+        if None in output_shape:
+            raise ValueError('output shape must be fully known.')
+
+        data_format = _get_format(self.args.get('data_format'))
+        tensor_ = tf.nn.conv2d_transpose(
+            value=input_tensor.unwrap(),
+            filter=filters.unwrap(),
+            output_shape=output_shape,
+            padding=_map_padding(self.args['padding']),
+            strides=_get_strides(self.args['strides'], data_format),
+            data_format=data_format,
+        )
+
+        if self.args['with_bias']:
+            shape = (filters.shape[2],)
+            self._build_bias(shape=shape, dtype=input_tensor.dtype)
+            bias = self.get_parameter_variables('bias').unwrap()
+            tensor_ = tf.nn.bias_add(
+                tensor_, bias, data_format=data_format, name='output')
+        return wrapper.Tensor(tensor_, name='output')

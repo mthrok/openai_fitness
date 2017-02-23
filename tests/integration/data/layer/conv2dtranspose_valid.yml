@@ -1,0 +1,57 @@
+model:
+  typename: Container
+  args:
+    input_config:
+      typename: Input
+      args:
+        shape: {input_shape}
+        name: input
+    output_config:
+      typename: Tensor
+      name: layer2/output
+    model_configs:
+      - name: layer1
+        typename: Sequential
+        args:
+          input_config:
+            typename: Input
+            reuse: True
+            name: input
+          layer_configs:
+            - scope: layer1
+              typename: Conv2D
+              args:
+                filter_height: 7
+                filter_width: 5
+                n_filters: 3
+                strides: 3
+                padding: VALID
+                with_bias: True
+      - name: layer2
+        typename: Sequential
+        args:
+          input_config:
+            typename: Tensor
+            name: layer1/output
+          layer_configs:
+            - scope: layer2
+              typename: Conv2DTranspose
+              args:
+                filter_height: null
+                filter_width: null
+                n_filters: null
+                strides: 3
+                padding: VALID
+                with_bias: True
+              parameters:
+                filter:
+                  typename: Variable
+                  name: layer1/filter
+                original_input:
+                  typename: Input
+                  reuse: True
+                  name: input
+
+input: input_mnist_10x4x28x27.h5
+
+parameter: parameter_randn_transpose.h5
