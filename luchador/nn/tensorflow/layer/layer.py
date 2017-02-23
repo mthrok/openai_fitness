@@ -8,11 +8,11 @@ import warnings
 import tensorflow as tf
 
 import luchador
-from ..base import (
+from ...base import (
     getter,
     layer as base_layer,
 )
-from . import scope, wrapper, initializer
+from .. import scope, wrapper, initializer
 
 # pylint: disable=too-few-public-methods, invalid-name
 

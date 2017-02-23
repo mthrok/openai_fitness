@@ -7,11 +7,11 @@ from collections import OrderedDict
 
 import theano.tensor as T
 
-from ..base import (
+from ...base import (
     getter,
     layer as base_layer,
 )
-from . import scope, wrapper, initializer
+from .. import scope, wrapper, initializer
 
 __all__ = [
     'Dense', 'Conv2D',
