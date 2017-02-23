@@ -56,11 +56,11 @@ class LayerInterfaceTest(fixture.TestCase):
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True)
             output = layer(input_)
-            weight = layer.get_parameter_variables('weight')
+            filters = layer.get_parameter_variables('filter')
             bias = layer.get_parameter_variables('bias')
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(weight, nn.get_variable('weight'))
+            self.assertIs(filters, nn.get_variable('filter'))
             self.assertIs(bias, nn.get_variable('bias'))
             self.assertIs(output, nn.get_tensor('output'))
             self.assertIs(input_, nn.get_input('input'))
