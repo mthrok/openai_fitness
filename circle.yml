@@ -52,13 +52,22 @@ stages:
         command: ./tests/integration/run_envs.sh
       - type: shell
         name: DQN Theano 32 bit
-        command: LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
       - type: shell
         name: DQN Theano 64 bit
-        command: LUCHADOR_NN_BACKEND=theano LUCHADOR_NN_CONV_FORMAT=NCHW THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
       - type: shell
         name: DQN TensorFlow
         command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_dqn.sh
+      - type: shell
+        name: AE Theano 32 bit
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_autoencoder.sh
+      - type: shell
+        name: AE Theano 64 bit
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_autoencoder.sh
+      - type: shell
+        name: AE Tensorflow
+        command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_autoencoder.sh
       # Style check
       - type: shell
         name: Style Check

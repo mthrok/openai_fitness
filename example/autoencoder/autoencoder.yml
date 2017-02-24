@@ -1,0 +1,99 @@
+autoencoder: &autoencoder
+  typename: Sequential
+  args:
+    input_config:
+      typename: Input
+      reuse: True
+      name: input_image
+    layer_configs:
+      #--------------------
+      # Decorder
+      #--------------------
+      - typename: Conv2D
+        args: &conv2d_1
+          n_filters: 32
+          filter_width: 5
+          filter_height: 5
+          strides: 2
+          padding: valid
+          name: layer1/conv2D
+      - typename: ReLU
+        args:
+          name: layer1/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer2/BN
+      #====================
+      - typename: Conv2D
+        args: &conv2d_2
+          n_filters: 64
+          filter_width: 3
+          filter_height: 3
+          strides: 2
+          padding: valid
+          name: layer3/conv2D
+      - typename: ReLU
+        args:
+          name: layer3/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer4/BN
+      #--------------------
+      # Noise
+      #--------------------
+      - typename: Anonymous
+        args:
+          exp: x + NormalRandom()
+          name: layer5/noise
+      #--------------------
+      # Encorder
+      #--------------------
+      - typename: Conv2DTranspose
+        args:
+          << : *conv2d_2
+          name: layer6/conv2DTranspose
+        parameters:
+          original_filter:
+            typename: Variable
+            name: layer3/conv2D/filter
+          original_input:
+            typename: Tensor
+            name: layer2/BN/output
+      - typename: ReLU
+        args:
+          name: layer6/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer7/BN
+      #====================
+      - typename: Conv2DTranspose
+        args:
+          << : *conv2d_1
+          name: layer8/conv2DTranspose
+        parameters:
+          original_filter:
+            typename: Variable
+            name: layer1/conv2D/filter
+          original_input:
+            typename: Input
+            reuse: True
+            name: input_image
+      - typename: ReLU
+        args:
+          name: layer8/ReLU
+typename: Container
+args:
+  input_config:
+    typename: Input
+    args:
+      name: input_image
+      shape: {input_shape}
+  output_config:
+    typename: Tensor
+    name: layer8/ReLU/output
+  model_configs: &model_configs
+    - << : *autoencoder
+      name: autoencoder
