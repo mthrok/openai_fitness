@@ -60,37 +60,6 @@ def _validate_strides(strides):
     raise ValueError('`strides` must be either int or tuple of two int')
 
 
-def _get_initializers(config):
-    """Get initializers for Conv2D
-
-    Parameters
-    ----------
-    config : dict
-        filter : dict
-            Initializer configuration for ``filter`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Xavier` is used.
-        bias : dict
-            Initializer configuration for ``bias`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Constant` with
-            ``value = 0.1`` is used.
-
-    Returns
-    -------
-    dict
-        Resulting initializers for ``filter`` and ``bias``
-    """
-    ret = {}
-
-    cfg = config.get('filter', {'typename': 'Xavier'})
-    type_ = cfg['typename']
-    ret['filter'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-
-    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
-    type_ = cfg['typename']
-    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-    return ret
-
-
 def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
     """Compute output shape
 
@@ -127,8 +96,8 @@ def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
     if border_mode == 'full':
         out_row = (in_row + f_row - 2) // sub_row + 1
         out_col = (in_col + f_col - 2) // sub_col + 1
-        warn_row = in_row < sub_row
-        warn_col = in_col < sub_col
+        warn_row = f_row < sub_row
+        warn_col = f_col < sub_col
     else:
         out_row = (in_row - f_row) // sub_row + 1
         out_col = (in_col - f_col) // sub_col + 1
@@ -156,6 +125,20 @@ def _get_subsample(strides):
     return strides
 
 
+def _get_filter_init(config):
+    """Make filter initializer. Default to Xavier"""
+    config = config or {'typename': 'Xavier'}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
+
+
+def _get_bias_init(config):
+    """Make bias initializer. Default to Constant (0.1)"""
+    config = config or {'typename': 'Constant', 'args': {'value': 0.1}}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Theano.
 
@@ -166,18 +149,27 @@ class Conv2D(base_layer.BaseConv2D):
         _validate_strides(strides)
 
     ###########################################################################
-    def _instantiate_parameters(self, filter_shape, dtype):
-        initializers = _get_initializers(self.args.get('initializers') or {})
+    def _build_filter(self, shape, dtype):
+        init = _get_filter_init(self.args['initializers'].get('filter'))
+        filter_ = scope.get_variable(
+            name='filter', shape=shape, initializer=init, dtype=dtype)
+        self._add_parameter('filter', filter_)
 
-        f_init = initializers['filter']
-        f_var = scope.get_variable(
-            name='filter', shape=filter_shape, initializer=f_init, dtype=dtype)
-        self._add_parameter('filter', f_var)
-        if self.args['with_bias']:
-            b_shape = (self.args['n_filters'],)
-            b_init = initializers['bias']
-            self._add_parameter('bias', scope.get_variable(
-                name='bias', shape=b_shape, initializer=b_init, dtype=dtype))
+    def _build_bias(self, shape, dtype):
+        init = _get_bias_init(self.args['initializers'].get('bias'))
+        bias = scope.get_variable(
+            name='bias', shape=shape, initializer=init, dtype=dtype)
+        self._add_parameter('bias', bias)
+
+    def _build_parameters(self, filter_shape, dtype):
+        if 'filter' not in self._parameter_variables:
+            self._build_filter(shape=filter_shape, dtype=dtype)
+
+        if not self.args['with_bias']:
+            return
+
+        if 'bias' not in self._parameter_variables:
+            self._build_bias(shape=(self.args['n_filters'],), dtype=dtype)
 
     def _build(self, input_tensor):
         """Build 2D conolution operation of the input tensor
@@ -213,8 +205,7 @@ class Conv2D(base_layer.BaseConv2D):
         _LG.debug('    filter_shape: %s', filter_shape)
         _LG.debug('    output_shape: %s', output_shape)
 
-        if not self._parameter_variables:
-            self._instantiate_parameters(filter_shape, input_tensor.dtype)
+        self._build_parameters(filter_shape, input_tensor.dtype)
 
         filters = self._get_parameter('filter')
         output_tensor = T.nnet.conv2d(

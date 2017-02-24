@@ -40,4 +40,5 @@ class BaseDense(BaseLayer):
     """
     def __init__(self, n_nodes, initializers=None, with_bias=True):
         super(BaseDense, self).__init__(
-            n_nodes=n_nodes, initializers=initializers, with_bias=with_bias)
+            n_nodes=n_nodes, initializers=initializers or {},
+            with_bias=with_bias)

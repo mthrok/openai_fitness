@@ -76,9 +76,12 @@ class BaseConv2D(BaseLayer):
     To fetch paramter variables with :any:`get_variable`, use keys
     ``filter`` and ``bias`` in the same scope as layer build.
     """
-    def __init__(self, filter_height, filter_width, n_filters, strides,
-                 padding='VALID', initializers=None, with_bias=True, **kwargs):
+    def __init__(
+            self, filter_height, filter_width, n_filters, strides,
+            padding='VALID', initializers=None, with_bias=True,
+            **kwargs):
         super(BaseConv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
-            initializers=initializers, with_bias=with_bias, **kwargs)
+            initializers=initializers or {}, with_bias=with_bias,
+            **kwargs)

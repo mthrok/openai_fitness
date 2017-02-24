@@ -15,35 +15,16 @@ __all__ = ['Dense']
 _LG = logging.getLogger(__name__)
 
 
-def _get_initializers(config):
-    """Get initializers for Conv2D
+def _get_weight_init(config):
+    config = config or {'typename': 'Xavier'}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
 
-    Parameters
-    ----------
-    config : dict
-        weight : dict
-            Initializer configuration for ``weight`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Xavier` is used.
-        bias : dict
-            Initializer configuration for ``bias`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Constant` with
-            ``value = 0.1`` is used.
 
-    Returns
-    -------
-    dict
-        Resulting initializers for ``weight`` and ``bias``
-    """
-    ret = {}
-
-    cfg = config.get('weight', {'typename': 'Xavier'})
-    type_ = cfg['typename']
-    ret['weight'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-
-    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
-    type_ = cfg['typename']
-    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-    return ret
+def _get_bias_init(config):
+    config = config or {'typename': 'Constant', 'args': {'value': 0.1}}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
 
 
 class Dense(base_layer.BaseDense):
@@ -51,21 +32,29 @@ class Dense(base_layer.BaseDense):
 
     See :any:`BaseDense` for detail.
     """
-    def _instantiate_parameters(self, n_inputs, dtype):
-        initializers = _get_initializers(self.args.get('initializers') or {})
-
-        w_shape = (n_inputs, self.args['n_nodes'])
+    def _build_weight(self, shape, dtype):
+        init = _get_weight_init(self.args['initializers'].get('weight'))
         weight = scope.get_variable(
-            name='weight', shape=w_shape, dtype=dtype,
-            initializer=initializers['weight'])
+            name='weight', shape=shape, initializer=init, dtype=dtype)
         self._add_parameter('weight', weight)
 
-        if self.args['with_bias']:
-            b_shape = (self.args['n_nodes'],)
-            bias = scope.get_variable(
-                name='bias', shape=b_shape, dtype=dtype,
-                initializer=initializers['bias'])
-            self._add_parameter('bias', bias)
+    def _build_bias(self, shape, dtype):
+        init = _get_bias_init(self.args['initializers'].get('bias'))
+        bias = scope.get_variable(
+            name='bias', shape=shape, initializer=init, dtype=dtype)
+        self._add_parameter('bias', bias)
+
+    def _instantiate_parameters(self, n_inputs, dtype):
+        if 'weight' not in self._parameter_variables:
+            shape = (n_inputs, self.args['n_nodes'])
+            self._build_weight(shape=shape, dtype=dtype)
+
+        if not self.args['with_bias']:
+            return
+
+        if 'bias' not in self._parameter_variables:
+            shape = (self.args['n_nodes'],)
+            self._build_bias(shape=shape, dtype=dtype)
 
     def _build(self, input_tensor):
         if not self._parameter_variables:

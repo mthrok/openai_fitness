@@ -55,37 +55,6 @@ def _map_padding(padding):
     return 'VALID'
 
 
-def _get_initializers(config):
-    """Get initializers for Conv2D
-
-    Parameters
-    ----------
-    config : dict
-        filter : dict
-            Initializer configuration for ``filter`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Xavier` is used.
-        bias : dict
-            Initializer configuration for ``bias`` parameter. If not present,
-            :func:`luchador.nn.theano.initializer.Constant` with
-            ``value = 0.1`` is used.
-
-    Returns
-    -------
-    dict
-        Resulting initializers for ``filter`` and ``bias``
-    """
-    ret = {}
-
-    cfg = config.get('filter', {'typename': 'Xavier'})
-    type_ = cfg['typename']
-    ret['filter'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-
-    cfg = config.get('bias', {'typename': 'Constant', 'args': {'value': 0.1}})
-    type_ = cfg['typename']
-    ret['bias'] = getter.get_initializer(type_)(**cfg.get('args', {}))
-    return ret
-
-
 def _check_filter_shape(
         input_shape, filter_shape, strides, data_format, padding):
     flt_h, flt_w = filter_shape[0], filter_shape[1]
@@ -126,6 +95,20 @@ def _get_strides(strides, data_format):
     return strides
 
 
+def _get_filter_init(config):
+    """Make filter initializer. Default to Xavier"""
+    config = config or {'typename': 'Xavier'}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
+
+
+def _get_bias_init(config):
+    """Make bias initializer. Default to Constant (0.1)"""
+    config = config or {'typename': 'Constant', 'args': {'value': 0.1}}
+    return getter.get_initializer(
+        config['typename'])(**config.get('args', {}))
+
+
 class Conv2D(base_layer.BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
@@ -146,28 +129,34 @@ class Conv2D(base_layer.BaseConv2D):
         return (height, width, n_in, self.args['n_filters'])
 
     ###########################################################################
-    def _instantiate_parameters(self, w_shape, input_dtype):
-        initializers = _get_initializers(self.args.get('initializers') or {})
+    def _build_filter(self, shape, dtype):
+        init = _get_filter_init(self.args['initializers'].get('filter'))
+        filter_ = scope.get_variable(
+            name='filter', shape=shape, dtype=dtype, initializer=init)
+        self._add_parameter('filter', filter_)
 
-        filter = scope.get_variable(
-            name='filter', shape=w_shape, dtype=input_dtype,
-            initializer=initializers['filter'])
-        self._add_parameter('filter', filter)
+    def _build_bias(self, shape, dtype):
+        init = _get_bias_init(self.args['initializers'].get('bias'))
+        bias = scope.get_variable(
+            name='bias', shape=shape, dtype=dtype, initializer=init)
+        self._add_parameter('bias', bias)
 
-        if self.args['with_bias']:
-            b_shape = (self.args['n_filters'],)
-            bias = scope.get_variable(
-                name='bias', shape=b_shape, dtype=input_dtype,
-                initializer=initializers['bias'])
-            self._add_parameter('bias', bias)
+    def _build_parameters(self, filter_shape, dtype):
+        if 'filter' not in self._parameter_variables:
+            self._build_filter(shape=filter_shape, dtype=dtype)
+
+        if not self.args['with_bias']:
+            return
+
+        if 'bias' not in self._parameter_variables:
+            self._build_bias(shape=(self.args['n_filters'],), dtype=dtype)
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
         data_format = self._get_format()
         filter_shape = self._get_filter_shape(input_shape, data_format)
 
-        if not self._parameter_variables:
-            self._instantiate_parameters(filter_shape, input_tensor.dtype)
+        self._build_parameters(filter_shape, input_tensor.dtype)
 
         strides = _get_strides(self.args['strides'], data_format)
         padding = _map_padding(self.args['padding'])
