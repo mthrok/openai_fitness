@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from ..base.cost import BaseCost
 from ..backend import cost
 
-__all__ = ['SSE', 'SigmoidCrossEntropy']
+__all__ = ['SSE', 'SigmoidCrossEntropy', 'SoftmaxCrossEntropy']
 # pylint: disable=too-few-public-methods, no-member
 
 
@@ -43,4 +43,20 @@ class SigmoidCrossEntropy(cost.SigmoidCrossEntropy, BaseCost):
     """
     def __init__(self, elementwise=False, name='SigmoidCrossEntropy'):
         super(SigmoidCrossEntropy, self).__init__(
+            elementwise=elementwise, name=name)
+
+
+class SoftmaxCrossEntropy(cost.SoftmaxCrossEntropy, BaseCost):
+    """Directly computes classification entropy from logit
+
+    Parameters
+    ----------
+    elementwise : Bool
+        When True, the cost tesnor returned by `build` method has the same
+        shape as its input Tensors. When False, the cost tensor is reduced to
+        scalar shape by taking average over batch and sum over feature.
+        Defalut: False.
+    """
+    def __init__(self, elementwise=False, name='SoftmaxCrossEntropy'):
+        super(SoftmaxCrossEntropy, self).__init__(
             elementwise=elementwise, name=name)

@@ -6,12 +6,12 @@ import theano.tensor as T
 
 from . import wrapper
 
-__all__ = ['SSE', 'SigmoidCrossEntropy']
+__all__ = ['SSE', 'SigmoidCrossEntropy', 'SoftmaxCrossEntropy']
 # pylint: disable=too-few-public-methods, no-member
 
 
 def _mean_sum(x):
-    return x.mean(axis=0).sum()
+    return x.sum(axis=1).mean()
 
 
 class SSE(object):
@@ -37,6 +37,24 @@ class SigmoidCrossEntropy(object):
         x = logit.unwrap()
         z = theano.gradient.disconnected_grad(target.unwrap())
         ce = T.nnet.relu(x) - x * z + T.log(1 + T.exp(-abs(x)))
+
+        output = ce if self.args['elementwise'] else _mean_sum(ce)
+        shape = target.shape if self.args['elementwise'] else (1,)
+        return wrapper.Tensor(output, shape=shape, name='output')
+
+
+class SoftmaxCrossEntropy(object):
+    """Implement SoftmaxCrossEntropy in Theano.
+
+    See :any:`BaseSoftmaxCrossEntropy` for detail.
+    """
+    def _build(self, target, logit):
+        x = logit.unwrap()
+        z = theano.gradient.disconnected_grad(target.unwrap())
+
+        xdev = x - x.max(1, keepdims=True)
+        log_sm = xdev - T.log(T.sum(T.exp(xdev), axis=1, keepdims=True))
+        ce = - z * log_sm
 
         output = ce if self.args['elementwise'] else _mean_sum(ce)
         shape = target.shape if self.args['elementwise'] else (1,)
