@@ -1,9 +1,11 @@
-run:
-  iteration: 10
-
 model:
   typename: Sequential
   args:
+    input_config:
+      typename: Input
+      args:
+        shape: {input_shape}
+        name: input
     layer_configs:
       - typename: BatchNormalization
         args:
@@ -15,3 +17,6 @@ model:
 input: input_randn_3x5_offset_3.h5
 
 parameter: parameter_bn.h5
+
+run:
+  iteration: 10
