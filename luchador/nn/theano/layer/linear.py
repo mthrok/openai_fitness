@@ -45,14 +45,14 @@ class Dense(base_layer.BaseDense):
         self._add_parameter('bias', bias)
 
     def _instantiate_parameters(self, n_inputs, dtype):
-        if 'weight' not in self._parameter_variables:
+        if self._parameter_variables['weight'] is None:
             shape = (n_inputs, self.args['n_nodes'])
             self._build_weight(shape=shape, dtype=dtype)
 
         if not self.args['with_bias']:
             return
 
-        if 'bias' not in self._parameter_variables:
+        if self._parameter_variables['bias'] is None:
             shape = (self.args['n_nodes'],)
             self._build_bias(shape=shape, dtype=dtype)
 

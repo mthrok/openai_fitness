@@ -42,3 +42,6 @@ class BaseDense(BaseLayer):
         super(BaseDense, self).__init__(
             n_nodes=n_nodes, initializers=initializers or {},
             with_bias=with_bias)
+
+        self._parameter_variables['weight'] = None
+        self._parameter_variables['bias'] = None

@@ -55,6 +55,12 @@ class BaseLayer(luchador.util.StoreMixin, object):
             Name and Variable pair. See each Layer's documentation to find the
             of correct name to give.
         """
+        keys = self._parameter_variables.keys()
+        for key in variables.keys():
+            if key not in keys:
+                raise ValueError(
+                    'Unexpected parameter name: `{}`. '
+                    'Accepted names are {}'.format(key, keys))
         self._parameter_variables.update(variables)
 
     def get_update_operation(self):
@@ -77,7 +83,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
     ###########################################################################
     # Setter for learnable parameters
     def _add_parameter(self, name, variable):
-        self._parameter_variables[name] = variable
+        self.set_parameter_variables({name: variable})
 
     def _get_parameter(self, name):
         return self._parameter_variables[name]

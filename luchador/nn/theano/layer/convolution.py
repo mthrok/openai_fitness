@@ -162,13 +162,13 @@ class Conv2D(base_layer.BaseConv2D):
         self._add_parameter('bias', bias)
 
     def _build_parameters(self, filter_shape, dtype):
-        if 'filter' not in self._parameter_variables:
+        if self._parameter_variables['filter'] is None:
             self._build_filter(shape=filter_shape, dtype=dtype)
 
         if not self.args['with_bias']:
             return
 
-        if 'bias' not in self._parameter_variables:
+        if self._parameter_variables['bias'] is None:
             self._build_bias(shape=(self.args['n_filters'],), dtype=dtype)
 
     def _build(self, input_tensor):

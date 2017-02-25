@@ -41,3 +41,8 @@ class BaseBatchNormalization(BaseLayer):
             scale=scale, offset=offset, learn=learn)
 
         self._axes = self._pattern = None
+
+        self._parameter_variables['mean'] = None
+        self._parameter_variables['var'] = None
+        self._parameter_variables['scale'] = None
+        self._parameter_variables['offset'] = None
