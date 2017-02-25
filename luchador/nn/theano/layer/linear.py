@@ -63,8 +63,7 @@ class Dense(base_layer.BaseDense):
             raise ValueError('Input tensor must be 2D. '
                              'Insted of {}'.format(len(input_shape)))
 
-        if not self._parameter_variables:
-            self._instantiate_parameters(input_shape[1], input_tensor.dtype)
+        self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
         weight = self.get_parameter_variables('weight').unwrap()
         output = T.dot(input_tensor.unwrap(), weight)
