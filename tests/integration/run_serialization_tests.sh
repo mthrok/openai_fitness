@@ -14,7 +14,7 @@ done
 
 # Get the list of models in luchador model directory
 MODELS=()
-for FILE in ${DATA_DIR}/model/*.yml
+for FILE in ${DATA_DIR}/serialization/*.yml
 do
     MODELS+=(${FILE})
 done
