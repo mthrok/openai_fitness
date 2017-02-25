@@ -43,5 +43,4 @@ class BaseDense(BaseLayer):
             n_nodes=n_nodes, initializers=initializers or {},
             with_bias=with_bias)
 
-        self._parameter_variables['weight'] = None
-        self._parameter_variables['bias'] = None
+        self._create_parameter_slots('weight', 'bias')

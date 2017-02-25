@@ -36,13 +36,13 @@ class Dense(base_layer.BaseDense):
         init = _get_weight_init(self.args['initializers'].get('weight'))
         weight = scope.get_variable(
             name='weight', shape=shape, initializer=init, dtype=dtype)
-        self._add_parameter('weight', weight)
+        self.set_parameter_variables({'weight': weight})
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
         bias = scope.get_variable(
             name='bias', shape=shape, initializer=init, dtype=dtype)
-        self._add_parameter('bias', bias)
+        self.set_parameter_variables({'bias': bias})
 
     def _instantiate_parameters(self, n_inputs, dtype):
         if self._parameter_variables['weight'] is None:
@@ -61,10 +61,10 @@ class Dense(base_layer.BaseDense):
             self._instantiate_parameters(
                 input_tensor.shape[1], input_tensor.dtype)
 
-        weight = self._get_parameter('weight').unwrap()
+        weight = self.get_parameter_variables('weight').unwrap()
         output = tf.matmul(input_tensor.unwrap(), weight)
 
         if self.args['with_bias']:
-            bias = self._get_parameter('bias').unwrap()
+            bias = self.get_parameter_variables('bias').unwrap()
             output = tf.add(output, bias, name='output')
         return wrapper.Tensor(output, name='output')

@@ -31,25 +31,25 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
             mean = scope.get_variable(
                 name='mean', shape=shape,
                 initializer=initializer.Constant(0), trainable=False)
-            self._add_parameter('mean', mean)
+            self.set_parameter_variables({'mean': mean})
 
         if self._parameter_variables['var'] is None:
             var = scope.get_variable(
                 name='var', shape=shape,
                 initializer=initializer.Constant(1), trainable=False)
-            self._add_parameter('var', var)
+            self.set_parameter_variables({'var': var})
 
         if self._parameter_variables['scale'] is None:
             scale = scope.get_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['scale']))
-            self._add_parameter('scale', scale)
+            self.set_parameter_variables({'scale': scale})
 
         if self._parameter_variables['offset'] is None:
             offset = scope.get_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['offset']))
-            self._add_parameter('offset', offset)
+            self.set_parameter_variables({'offset': offset})
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
@@ -58,10 +58,10 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
         input_ = input_tensor.unwrap()
         decay, epsilon = self.args['decay'], self.args['epsilon']
 
-        mean_acc = self._get_parameter('mean').unwrap()
-        var_acc = self._get_parameter('var').unwrap()
-        scale = self._get_parameter('scale').unwrap()
-        offset = self._get_parameter('offset').unwrap()
+        mean_acc = self.get_parameter_variables('mean').unwrap()
+        var_acc = self.get_parameter_variables('var').unwrap()
+        scale = self.get_parameter_variables('scale').unwrap()
+        offset = self.get_parameter_variables('offset').unwrap()
 
         if self.args['learn']:
             mean_in, var_in = tf.nn.moments(input_, self._axes)

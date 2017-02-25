@@ -153,13 +153,13 @@ class Conv2D(base_layer.BaseConv2D):
         init = _get_filter_init(self.args['initializers'].get('filter'))
         filter_ = scope.get_variable(
             name='filter', shape=shape, initializer=init, dtype=dtype)
-        self._add_parameter('filter', filter_)
+        self.set_parameter_variables({'filter': filter_})
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
         bias = scope.get_variable(
             name='bias', shape=shape, initializer=init, dtype=dtype)
-        self._add_parameter('bias', bias)
+        self.set_parameter_variables({'bias': bias})
 
     def _build_parameters(self, filter_shape, dtype):
         if self._parameter_variables['filter'] is None:
@@ -207,14 +207,14 @@ class Conv2D(base_layer.BaseConv2D):
 
         self._build_parameters(filter_shape, input_tensor.dtype)
 
-        filters = self._get_parameter('filter')
+        filters = self.get_parameter_variables('filter')
         output_tensor = T.nnet.conv2d(
             input_tensor.unwrap(), filters=filters.unwrap(),
             input_shape=input_shape, filter_shape=filter_shape,
             border_mode=border_mode, subsample=subsample)
 
         if self.args['with_bias']:
-            bias = self._get_parameter('bias').unwrap()
+            bias = self.get_parameter_variables('bias').unwrap()
             bias = bias.dimshuffle(('x', 0, 'x', 'x'))
             output_tensor = bias + output_tensor
 

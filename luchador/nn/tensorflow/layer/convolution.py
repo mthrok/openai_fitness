@@ -133,13 +133,13 @@ class Conv2D(base_layer.BaseConv2D):
         init = _get_filter_init(self.args['initializers'].get('filter'))
         filter_ = scope.get_variable(
             name='filter', shape=shape, dtype=dtype, initializer=init)
-        self._add_parameter('filter', filter_)
+        self.set_parameter_variables({'filter': filter_})
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
         bias = scope.get_variable(
             name='bias', shape=shape, dtype=dtype, initializer=init)
-        self._add_parameter('bias', bias)
+        self.set_parameter_variables({'bias': bias})
 
     def _build_parameters(self, filter_shape, dtype):
         if self._parameter_variables['filter'] is None:
@@ -165,14 +165,14 @@ class Conv2D(base_layer.BaseConv2D):
         _check_filter_shape(
             input_shape, filter_shape, strides, data_format, padding)
 
-        filter = self._get_parameter('filter')
+        filter = self.get_parameter_variables('filter')
         output = tf.nn.conv2d(
             input_tensor.unwrap(), filter.unwrap(),
             strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=data_format, name=self.args.get('name'))
 
         if self.args['with_bias']:
-            bias = self._get_parameter('bias').unwrap()
+            bias = self.get_parameter_variables('bias').unwrap()
             output = tf.nn.bias_add(
                 output, bias, data_format=data_format, name='output')
         return wrapper.Tensor(output, name='output')
