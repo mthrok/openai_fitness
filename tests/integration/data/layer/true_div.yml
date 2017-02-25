@@ -1,6 +1,9 @@
-layer:
-  typename: TrueDiv
+model:
+  typename: Sequential
   args:
-    denom: 255
+    layer_configs:
+      - typename: TrueDiv
+        args:
+          denom: 255
 
 input: input_randint_1x3x5x7.h5

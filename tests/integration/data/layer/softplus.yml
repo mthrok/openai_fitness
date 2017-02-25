@@ -1,4 +1,7 @@
-layer:
-  typename: Softplus
+model:
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Softplus
 
 input: input_randn_5x3.h5

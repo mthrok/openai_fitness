@@ -1,8 +1,11 @@
-layer:
-  typename: Dense
+model:
+  typename: Sequential
   args:
-    n_nodes: 7
-    with_bias: True
+    layer_configs:
+      - typename: Dense
+        args:
+          n_nodes: 7
+          with_bias: True
 
 input: input_randn_5x3.h5
 

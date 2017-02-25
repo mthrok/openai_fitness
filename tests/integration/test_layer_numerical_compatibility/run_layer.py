@@ -45,7 +45,7 @@ def _forward_prop(layer, input_value, parameter_file, n_ite):
     for _ in range(n_ite):
         ret = sess.run(
             outputs=output, inputs={input_: input_value.astype(input_.dtype)},
-            updates=layer.get_update_operation())
+            updates=layer.get_update_operations())
     _LG.info('Run forward path. Output shape: %s', ret.shape)
     return ret
 
@@ -91,10 +91,6 @@ def _run_forward_prop(layer, input_value, parameter_file, iteration=1):
         output = output_
 
     return output
-
-
-def _create_layer(typename, args=None):
-    return nn.get_layer(typename)(**(args or {}))
 
 
 def _load_input_value(filepath):
@@ -150,7 +146,7 @@ def _main():
     cfg, input_file, param_file = _load_config(args.config)
 
     output = _run_forward_prop(
-        layer=_create_layer(**cfg['layer']),
+        layer=nn.make_model(cfg['model']),
         input_value=_load_input_value(input_file),
         parameter_file=param_file,
         **cfg.get('run', {})

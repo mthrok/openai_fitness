@@ -1,4 +1,7 @@
-layer:
-  typename: ReLU
+model:
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: ReLU
 
 input: input_randn_5x3.h5

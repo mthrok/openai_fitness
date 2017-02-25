@@ -1,4 +1,7 @@
-layer:
-  typename: Sigmoid
+model:
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Sigmoid
 
 input: input_randn_5x3.h5

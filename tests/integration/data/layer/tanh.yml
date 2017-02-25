@@ -1,4 +1,7 @@
-layer:
-  typename: Tanh
+model:
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Tanh
 
 input: input_randn_5x3.h5

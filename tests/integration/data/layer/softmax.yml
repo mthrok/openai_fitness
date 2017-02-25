@@ -1,4 +1,7 @@
-layer:
-  typename: Softmax
+model:
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Softmax
 
 input: input_randn_5x3.h5
