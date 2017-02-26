@@ -31,25 +31,25 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
             mean = scope.get_variable(
                 name='mean', shape=shape,
                 initializer=initializer.Constant(0), trainable=False)
-            self.set_parameter_variables({'mean': mean})
+            self.set_parameter_variables(mean=mean)
 
         if self._parameter_variables['var'] is None:
             var = scope.get_variable(
                 name='var', shape=shape,
                 initializer=initializer.Constant(1), trainable=False)
-            self.set_parameter_variables({'var': var})
+            self.set_parameter_variables(var=var)
 
         if self._parameter_variables['scale'] is None:
             scale = scope.get_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['scale']))
-            self.set_parameter_variables({'scale': scale})
+            self.set_parameter_variables(scale=scale)
 
         if self._parameter_variables['offset'] is None:
             offset = scope.get_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['offset']))
-            self.set_parameter_variables({'offset': offset})
+            self.set_parameter_variables(offset=offset)
 
     def _build(self, input_tensor):
         input_shape = input_tensor.shape

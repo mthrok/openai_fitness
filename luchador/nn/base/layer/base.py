@@ -50,7 +50,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
             return self._parameter_variables[name]
         return self._parameter_variables.values()
 
-    def set_parameter_variables(self, variables):
+    def set_parameter_variables(self, **variables):
         """Set parameter variables
 
         Parameters

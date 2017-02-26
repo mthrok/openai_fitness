@@ -135,7 +135,7 @@ def make_layer(layer_config):
             key: make_io_node(config)
             for key, config in layer_config['parameters'].items()
         }
-        layer.set_parameter_variables(parameters)
+        layer.set_parameter_variables(**parameters)
     return layer
 
 

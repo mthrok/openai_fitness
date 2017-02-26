@@ -36,13 +36,13 @@ class Dense(base_layer.BaseDense):
         init = _get_weight_init(self.args['initializers'].get('weight'))
         weight = scope.get_variable(
             name='weight', shape=shape, initializer=init, dtype=dtype)
-        self.set_parameter_variables({'weight': weight})
+        self.set_parameter_variables(weight=weight)
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
         bias = scope.get_variable(
             name='bias', shape=shape, initializer=init, dtype=dtype)
-        self.set_parameter_variables({'bias': bias})
+        self.set_parameter_variables(bias=bias)
 
     def _instantiate_parameters(self, n_inputs, dtype):
         if self._parameter_variables['weight'] is None:
