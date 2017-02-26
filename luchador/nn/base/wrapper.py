@@ -105,11 +105,12 @@ class BaseWrapper(object):
     while having the common interface for both Theano and Tensorflow.
     `unwrap` method provides access to the underlying object.
     """
-    def __init__(self, tensor, shape, name, dtype):
+    def __init__(self, tensor, shape, name, dtype, trainable=False):
         self._tensor = tensor
         self.shape = tuple(shape)
         self.name = name
         self.dtype = dtype.name if isinstance(dtype, np.dtype) else dtype
+        self.trainable = trainable
 
     def unwrap(self):
         """Get the underlying tensor object"""
@@ -157,9 +158,9 @@ class BaseVariable(BaseWrapper):
     """Base wrapper class for Variable"""
     def __init__(self, tensor, shape, name, dtype, trainable):
         super(BaseVariable, self).__init__(
-            tensor=tensor, shape=shape, name=name, dtype=dtype)
+            tensor=tensor, shape=shape, name=name,
+            dtype=dtype, trainable=trainable)
         register_variable(name, self)
-        self.trainable = trainable
 
 
 class BaseTensor(BaseWrapper):
