@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import logging
+from collections import OrderedDict
 
 import luchador.nn
 from ..model import Sequential, Container
@@ -131,10 +132,10 @@ def make_layer(layer_config):
     layer = get_layer(type_)(**args)
 
     if 'parameters' in layer_config:
-        parameters = {
-            key: make_io_node(config)
+        parameters = OrderedDict([
+            (key, make_io_node(config))
             for key, config in layer_config['parameters'].items()
-        }
+        ])
         layer.set_parameter_variables(**parameters)
     return layer
 
