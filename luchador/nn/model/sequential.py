@@ -25,6 +25,13 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
             'output': self.output,
         })
 
+    def __call__(self, input_tensor):
+        self.input = input_tensor
+        scope = self.scope or luchador.nn.get_variable_scope()
+        with luchador.nn.variable_scope(scope):
+            self.output = self.layer(input_tensor)
+            return self.output
+
 
 class Sequential(BaseModel):
     """Network architecture which produces single output from single input
@@ -126,14 +133,9 @@ class Sequential(BaseModel):
         Tensor
             Output from the last layer
         """
-        tensor = self.input = input_tensor
-        for cfg in self.layer_configs:
-            cfg.input = tensor
-            scope = cfg.scope or luchador.nn.get_variable_scope()
-            with luchador.nn.variable_scope(scope):
-                tensor = cfg.layer(tensor)
-            cfg.output = tensor
-        self.output = tensor
+        self.output = self.input = input_tensor
+        for layer_config in self.layer_configs:
+            self.output = layer_config(self.output)
         return self.output
 
     ###########################################################################

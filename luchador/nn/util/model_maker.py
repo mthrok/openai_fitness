@@ -124,6 +124,7 @@ def make_layer(layer_config):
     layer
         Layer object
     """
+    _LG.info('  Constructing Layer: %s', layer_config)
     if 'typename' not in layer_config:
         raise RuntimeError('Layer `typename` is not given')
 
@@ -159,13 +160,14 @@ def make_sequential_model(layer_configs, input_config=None):
         Resulting model
     """
     model = Sequential()
+    if input_config:
+        model.input = model.output = make_io_node(input_config)
     for config in layer_configs:
-        _LG.info('  Constructing Layer: %s', config)
         layer = make_layer(config)
         model.add_layer(layer=layer, scope=config.get('scope', ''))
 
-    if input_config:
-        model(make_io_node(input_config))
+        if model.output:
+            model.output = model.layer_configs[-1](model.output)
     return model
 
 
