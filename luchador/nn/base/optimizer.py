@@ -6,6 +6,14 @@ import abc
 import luchador.util
 
 
+def _remove_dup(grads_and_vars):
+    """Remove duplicated Variables from grads_and_vars"""
+    # http://stackoverflow.com/a/480227
+    seen = set()
+    seen_add = seen.add
+    return [x for x in grads_and_vars if not (x[1] in seen or seen_add(x[1]))]
+
+
 class BaseOptimizer(luchador.util.StoreMixin):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
@@ -97,7 +105,9 @@ class BaseOptimizer(luchador.util.StoreMixin):
             Operation which updates parameter variables
         """
         grads_and_vars = [
-            (grad.unwrap(), var.unwrap()) for grad, var in grads_and_vars]
+            (grad.unwrap(), var.unwrap())
+            for grad, var in grads_and_vars if grad is not None]
+        grads_and_vars = _remove_dup(grads_and_vars)
         return self._apply_gradients(grads_and_vars, **kwargs)
 
     @abc.abstractmethod

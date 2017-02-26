@@ -26,7 +26,6 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
 
     def _minimize(self, loss, wrt, **kwargs):
         grads_and_vars = self.compute_gradients(loss, wrt, **kwargs)
-        grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
         return self.apply_gradients(grads_and_vars)
 
     @staticmethod
@@ -39,7 +38,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
             loss to be minimized
 
         wrt : Variable or list of Variables
-            Term for which loss Tensor is differentiated
+            Term for which loss Tensor is differentiated.
 
         kwargs
             Other arguments passed to ``theano.gradient.grad``
