@@ -19,13 +19,7 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         """Extract operand for elementwise operation"""
         if isinstance(other, numbers.Number):
             return other
-        if self.shape == other.shape:
-            return other.unwrap()
-        if self.size == 1 or other.size == 1:
-            return other.unwrap()
-        raise ValueError(
-            'Inconsistent shape: {} and {}'.format(self.shape, other.shape)
-        )
+        return other.unwrap()
 
     def __neg__(self, name=None):
         return Tensor(tensor=-self._tensor, name=name)
