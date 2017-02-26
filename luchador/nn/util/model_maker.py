@@ -168,7 +168,7 @@ def make_sequential_model(layer_configs, input_config=None):
     return model
 
 
-def make_container_model(input_config, model_configs, output_config):
+def make_container_model(input_config, model_configs, output_config=None):
     """Make ``Container`` model from model configuration
 
     Parameters
@@ -194,7 +194,9 @@ def make_container_model(input_config, model_configs, output_config):
         _LG.info('Building Model: %s', name)
         model_ = make_model(conf)
         model.add_model(name, model_)
-    model.output = make_io_node(output_config)
+
+    if output_config:
+        model.output = make_io_node(output_config)
     return model
 
 
