@@ -61,23 +61,8 @@ def _validate_strides(strides):
     raise ValueError('`strides` must be either int or tuple of two int')
 
 
-def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
-    """Compute output shape
-
-    Parameters
-    ----------
-    input_shape : tuple
-        Input shape in order of (batch, n_input_channels, row, col)
-
-    filter_shape : tuple
-        Filter shape in order of (n_filters, n_input_channels, rows, cols)
-
-    subsample : tuple
-        Subsampling (stride) in (row, column) direction
-
-    border_mdoe : str
-        Either 'full', 'half', 'same' or 'valid'
-    """
+def _check_output_shape(input_shape, filter_shape, border_mode, subsample):
+    """Issue warning if a part of image is not covered by filter"""
     f_row, f_col = filter_shape[2:4]
     in_row, in_col = input_shape[2:4]
     sub_row, sub_col = subsample
@@ -95,13 +80,9 @@ def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
         in_col += 2 * border_mode[1]
     # Process convolution
     if border_mode == 'full':
-        out_row = (in_row + f_row - 2) // sub_row + 1
-        out_col = (in_col + f_col - 2) // sub_col + 1
         warn_row = f_row < sub_row
         warn_col = f_col < sub_col
     else:
-        out_row = (in_row - f_row) // sub_row + 1
-        out_col = (in_col - f_col) // sub_col + 1
         warn_row = bool((in_row - f_row) % sub_row)
         warn_col = bool((in_col - f_col) % sub_col)
     if warn_col:
@@ -116,8 +97,6 @@ def _get_output_shape(input_shape, filter_shape, subsample, border_mode):
             'Check the height configuration of filter and stride.',
             RuntimeWarning
         )
-    # Reconstruct in NCHW format
-    return (input_shape[0], filter_shape[0], out_row, out_col)
 
 
 def _get_subsample(strides):
@@ -200,6 +179,7 @@ class Conv2D(base_layer.BaseConv2D):
         )
         output_shape = get_conv_output_shape(
             input_shape, filter_shape, border_mode, subsample)
+        _check_output_shape(input_shape, filter_shape, border_mode, subsample)
 
         _LG.debug('    border_mode: %s', border_mode)
         _LG.debug('    subsample: %s', subsample)
