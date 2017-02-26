@@ -57,9 +57,7 @@ class Dense(base_layer.BaseDense):
             self._build_bias(shape=shape, dtype=dtype)
 
     def _build(self, input_tensor):
-        if not self._parameter_variables:
-            self._instantiate_parameters(
-                input_tensor.shape[1], input_tensor.dtype)
+        self._instantiate_parameters(input_tensor.shape[1], input_tensor.dtype)
 
         weight = self.get_parameter_variables('weight').unwrap()
         output = tf.matmul(input_tensor.unwrap(), weight)
