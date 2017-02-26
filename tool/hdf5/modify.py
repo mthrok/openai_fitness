@@ -8,26 +8,38 @@ import numpy as np
 from .common import load_hdf5, unnest_hdf5
 
 
+def _summarize(value):
+    return {
+        'dtype': value.dtype,
+        'shape': value.shape,
+        'mean': np.mean(value),
+        'sum': np.sum(value),
+        'max': np.max(value),
+        'min': np.min(value),
+    }
+
+
 def _get_dataset_summary(file_):
-    return OrderedDict(
-        [(key, {
-            'dtype': value.dtype,
-            'shape': value.shape,
-            'mean': np.mean(value),
-            'sum': np.sum(value),
-            'max': np.max(value),
-            'min': np.min(value),
-        }) for key, value in file_.items()])
+    ret = {
+        'string': OrderedDict(),
+        'array': OrderedDict(),
+    }
+    for key, value in file_.items():
+        try:
+            ret['array'][key] = _summarize(value)
+        except TypeError:
+            ret['string'][key] = np.asarray(value)
+    return ret
 
 
 def _max_str(list_):
     return max([len(str(e)) for e in list_])
 
 
-def _print_summary(summary):
+def _print_array_summary(summary):
     dtype_len = _max_str([s['dtype'] for s in summary.values()]) + 1
     shape_len = _max_str([s['shape'] for s in summary.values()]) + 1
-    path_len = _max_str(summary.keys()) + 1
+    path_len = 1 + _max_str(summary.keys())
     print (
         '{path:{path_len}}{dtype:{dtype_len}}{shape:{shape_len}} '
         '{sum:>10}  {max:>10}  {min:>10}  {mean:>10}'
@@ -51,10 +63,23 @@ def _print_summary(summary):
         )
 
 
+def _print_string_summary(summary):
+    key_len = 1 + _max_str([key for key in summary.keys()])
+    value_len = 1 + _max_str([value for value in summary.values()])
+    for key, value in summary.items():
+        print (
+            '{key:{key_len}}{value:{value_len}}'.format(
+                key=key, key_len=key_len, value=value, value_len=value_len,
+            )
+        )
+
+
 def inspect(args):
     """Print statistics of HDF5 file"""
     file_ = unnest_hdf5(load_hdf5(args.input_file))
-    _print_summary(_get_dataset_summary(file_))
+    summary = _get_dataset_summary(file_)
+    _print_string_summary(summary['string'])
+    _print_array_summary(summary['array'])
 
 
 def rename(args):
