@@ -11,33 +11,6 @@ args:
       typename: TrueDiv
       args:
         denom: 255
-    - scope: layer1/conv2D
-      typename: Conv2D
-      args:
-        n_filters: 32
-        filter_width: 8
-        filter_height: 8
-        strides: 4
-        padding: valid
-    - scope: layer1/ReLU
-      typename: ReLU
-    - scope: layer2/Conv2DTranspose
-      typename: Conv2DTranspose
-      args:
-        filter_height: null
-        filter_width: null
-        n_filters: null
-        strides: 4
-        padding: valid
-        with_bias: True
-      parameters:
-        filter:
-          typename: Variable
-          name: layer1/conv2D/filter
-          reuse: True
-        original_input:
-          typename: Tensor
-          name: layer0/preprocessing/output
     - scope: layer3/BatchNormalization
       typename: BatchNormalization
       args:
