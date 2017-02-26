@@ -99,6 +99,8 @@ class BaseConv2D(BaseLayer):
 class BaseConv2DTranspose(BaseLayer):
     """Upsample 2D array with reversed convolution (gradient of convolution)
 
+    # TODO Add example pattern to create variable
+
     Internally (both Tensorflow, Theano), this is a convolution. Thus
     construction of this layer is a bit different from layer, thus you need
     to reuse filter variable from Conv2D.
@@ -176,6 +178,12 @@ class BaseConv2DTranspose(BaseLayer):
         When True bias term is added after convolution gradient.
         This parameter does not have to match with the original convolution.
 
+    output_shape : tuple
+        # TODO
+
+    CONV_FORMAT : str
+        # TODO
+
     Notes
     -----
     When ``padding='SAME'``, theano backend and tensorflow backend produces
@@ -185,12 +193,12 @@ class BaseConv2DTranspose(BaseLayer):
     def __init__(
             self, filter_height, filter_width, n_filters, strides,
             padding='VALID', initializers=None, with_bias=True,
-            output_shape=None):
+            output_shape=None, CONV_FORMAT=None):
         super(BaseConv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
-            output_shape=output_shape)
+            output_shape=output_shape, CONV_FORMAT=CONV_FORMAT)
 
         # TODO Add switch for filter
         self._create_parameter_slot('filter', train=True, serialize=True)

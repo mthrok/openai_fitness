@@ -179,15 +179,37 @@ class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
         return wrapper.Tensor(output, name='output')
 
 
+def _nchw2nhwc(shape):
+    return (shape[0], shape[2], shape[3], shape[1])
+
+
+def _nhwc2nchw(shape):
+    return (shape[0], shape[3], shape[1], shape[2])
+
+
 class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.
     """
+    def _get_output_shape(self):
+        if not self.args.get('CONV_FORMAT'):
+            return self.args['output_shape']
+
+        _be = luchador.get_nn_conv_format()
+        if _be == self.args['CONV_FORMAT']:
+            return self.args['output_shape']
+
+        if _be == 'NHWC':
+            _LG.info('  * Converting `output_shape` to NHWC')
+            return _nchw2nhwc(self.args['output_shape'])
+        _LG.info('  * Converting `output_shape` to NCHW')
+        return _nhwc2nchw(self.args['output_shape'])
+
     def _build(self, input_tensor):
         if self.args['output_shape']:
-            output_shape = self.args['output_shape']
-        elif 'original_input' in self._parameter_variables:
+            output_shape = self._get_output_shape()
+        elif self._parameter_variables['original_input'] is not None:
             output_shape = self._parameter_variables['original_input'].shape
         else:
             raise RuntimeError(

@@ -208,11 +208,21 @@ class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
+def _nhwc2nchw(shape):
+    return (shape[0], shape[3], shape[1], shape[2])
+
+
 class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.
     """
+    def _get_output_shape(self):
+        if self.args.get('CONV_FORMAT') == 'NHWC':
+            _LG.info('  * Converting `output_shape` to NCHW')
+            return _nhwc2nchw(self.args['output_shape'])
+        return self.args['output_shape']
+
     def _build(self, input_tensor):
         # In Theano, the notation of input and output is flipped because
         # they are re-using the terminology from gradient computation.
@@ -220,8 +230,8 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
         # Get the output shape of *this* layer
         # (== input shape of original convolution)
         if self.args['output_shape']:
-            output_shape = self.args['output_shape']
-        elif 'original_input' in self._parameter_variables:
+            output_shape = self._get_output_shape()
+        elif self._parameter_variables['original_input'] is not None:
             output_shape = self._parameter_variables['original_input'].shape
         else:
             raise RuntimeError(
