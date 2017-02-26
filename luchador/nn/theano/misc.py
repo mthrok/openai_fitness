@@ -7,7 +7,7 @@ from collections import OrderedDict
 import theano.tensor as T
 
 from ..base import wrapper as base_wrapper
-from .wrapper import Operation, Tensor
+from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
     'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs',
@@ -45,6 +45,9 @@ def build_sync_op(source_vars, target_vars, tau=None, name='sync'):
 
     _operations = OrderedDict()
     for source, target in zip(source_vars, target_vars):
+        if not isinstance(target, Variable):
+            continue
+
         src, tgt = source.unwrap(), target.unwrap()
         if tau:
             src = (1 - tau) * tgt + tau * src
