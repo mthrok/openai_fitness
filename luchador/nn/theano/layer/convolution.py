@@ -6,6 +6,7 @@ import logging
 import warnings
 
 import theano.tensor as T
+from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
 from ...base import layer as base_layer
 from ...base import getter
@@ -197,8 +198,8 @@ class Conv2D(base_layer.BaseConv2D):
             self.args['n_filters'], input_shape[1],
             self.args['filter_height'], self.args['filter_width']
         )
-        output_shape = _get_output_shape(
-            input_shape, filter_shape, subsample, border_mode)
+        output_shape = get_conv_output_shape(
+            input_shape, filter_shape, border_mode, subsample)
 
         _LG.debug('    border_mode: %s', border_mode)
         _LG.debug('    subsample: %s', subsample)
