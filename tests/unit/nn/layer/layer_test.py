@@ -11,7 +11,7 @@ import numpy as np
 from luchador import nn
 from tests.unit.fixture import TestCase
 
-# pylint: disable=invalid-name,too-many-locals
+# pylint: disable=invalid-name,too-many-locals,protected-access
 
 
 class TestInitializer(TestCase):
@@ -56,7 +56,6 @@ class TestReuse(TestCase):
     """Test parameter reuse"""
     def test_paramter_reuse_dense(self):
         """Dense layer is built using existing Variables"""
-        # pylint: disable=protected-access
         shape = (3, 5)
         with nn.variable_scope(self.get_scope()):
             layer1 = nn.layer.Dense(n_nodes=5)
@@ -64,7 +63,7 @@ class TestReuse(TestCase):
 
             tensor = nn.Input(shape=shape)
             out1 = layer1(tensor)
-            layer2.set_parameter_variables(layer1._parameter_variables)
+            layer2.set_parameter_variables(**layer1._parameter_variables)
             out2 = layer2(tensor)
 
         vars1 = layer1.get_parameter_variables()
@@ -87,7 +86,6 @@ class TestReuse(TestCase):
 
     def test_paramter_reuse_conv2d(self):
         """Conv2D layer is built using existing Variables"""
-        # pylint: disable=protected-access
         shape = (10, 11, 12, 13)
         with nn.variable_scope(self.get_scope()):
             layer1 = nn.layer.Conv2D(
@@ -99,7 +97,7 @@ class TestReuse(TestCase):
 
             tensor = nn.Input(shape=shape)
             out1 = layer1(tensor)
-            layer2.set_parameter_variables(layer1._parameter_variables)
+            layer2.set_parameter_variables(**layer1._parameter_variables)
             out2 = layer2(tensor)
 
         vars1 = layer1.get_parameter_variables()
