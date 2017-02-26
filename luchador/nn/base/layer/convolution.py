@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-from collections import OrderedDict
 
 from .base import BaseLayer
 
@@ -65,12 +64,17 @@ class BaseConv2D(BaseLayer):
         - Tensorflow : Either 'SAME' or 'VALID'
         - Theano : See doc for `theano.tensor.nnet.conv2d`
 
-    with_bias : bool
-        When True bias term is added after convolution
-
+    initializers: dict
+        bias : dict
+            Bias initializer configurations
+        filter : dict
+            Filter initializer configurations
     kwargs
         use_cudnn_on_gpu
             [Tensorflow only] : Arguments passed to ``tf.nn.conv2d``
+
+    with_bias : bool
+        When True bias term is added after convolution
 
     Notes
     -----
@@ -159,6 +163,15 @@ class BaseConv2DTranspose(BaseLayer):
     padding : (str or int or tuple of two ints)
         See :any:`BaseConv2D`
 
+    initializers: dict
+        bias : dict
+            Bias initializer configurations
+        filter : dict
+            Filter initializer configurations
+    kwargs
+        use_cudnn_on_gpu
+            [Tensorflow only] : Arguments passed to ``tf.nn.conv2d``
+
     with_bias : bool
         When True bias term is added after convolution gradient.
         This parameter does not have to match with the original convolution.
@@ -171,11 +184,12 @@ class BaseConv2DTranspose(BaseLayer):
     """
     def __init__(
             self, filter_height, filter_width, n_filters, strides,
-            padding='VALID', with_bias=True, output_shape=None):
+            padding='VALID', initializers=None, with_bias=True,
+            output_shape=None):
         super(BaseConv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
-            initializers=None, with_bias=with_bias,
+            initializers=initializers or {}, with_bias=with_bias,
             output_shape=output_shape)
 
         # TODO Add switch for filter

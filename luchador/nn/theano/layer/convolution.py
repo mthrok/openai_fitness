@@ -119,16 +119,12 @@ def _get_bias_init(config):
         config['typename'])(**config.get('args', {}))
 
 
-class Conv2D(base_layer.BaseConv2D):
-    """Implement Conv2D layer in Theano.
-
-    See :any:`BaseConv2D` for detail.
-    """
+class _Conv2DMixin(object):
+    # pylint: disable=no-self-use, too-few-public-methods
     def _validate_args(self, padding, strides, **_):
         _validate_padding(padding)
         _validate_strides(strides)
 
-    ###########################################################################
     def _build_filter(self, shape, dtype):
         init = _get_filter_init(self.args['initializers'].get('filter'))
         filter_ = scope.get_variable(
@@ -141,7 +137,7 @@ class Conv2D(base_layer.BaseConv2D):
             name='bias', shape=shape, initializer=init, dtype=dtype)
         self.set_parameter_variables(bias=bias)
 
-    def _build_parameters(self, filter_shape, dtype):
+    def _build_parameters(self, filter_shape, bias_shape, dtype):
         if self._parameter_variables['filter'] is None:
             self._build_filter(shape=filter_shape, dtype=dtype)
 
@@ -149,8 +145,20 @@ class Conv2D(base_layer.BaseConv2D):
             return
 
         if self._parameter_variables['bias'] is None:
-            self._build_bias(shape=(self.args['n_filters'],), dtype=dtype)
+            self._build_bias(shape=bias_shape, dtype=dtype)
 
+    def _get_filter_shape(self, n_outputs):
+        return (
+            self.args['n_filters'], n_outputs,
+            self.args['filter_height'], self.args['filter_width']
+        )
+
+
+class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
+    """Implement Conv2D layer in Theano.
+
+    See :any:`BaseConv2D` for detail.
+    """
     def _build(self, input_tensor):
         """Build 2D conolution operation of the input tensor
 
@@ -173,10 +181,8 @@ class Conv2D(base_layer.BaseConv2D):
 
         border_mode = _map_border_mode(self.args['padding'])
         subsample = _get_subsample(self.args['strides'])
-        filter_shape = (
-            self.args['n_filters'], input_shape[1],
-            self.args['filter_height'], self.args['filter_width']
-        )
+        filter_shape = self._get_filter_shape(input_shape[1])
+        bias_shape = (filter_shape[0],)
         output_shape = get_conv_output_shape(
             input_shape, filter_shape, border_mode, subsample)
         _check_output_shape(input_shape, filter_shape, border_mode, subsample)
@@ -186,7 +192,7 @@ class Conv2D(base_layer.BaseConv2D):
         _LG.debug('    filter_shape: %s', filter_shape)
         _LG.debug('    output_shape: %s', output_shape)
 
-        self._build_parameters(filter_shape, input_tensor.dtype)
+        self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 
         filters = self.get_parameter_variables('filter')
         output_tensor = T.nnet.conv2d(
@@ -202,32 +208,33 @@ class Conv2D(base_layer.BaseConv2D):
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
-class Conv2DTranspose(base_layer.BaseConv2DTranspose):
+class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.
     """
-    def _validate_args(self, padding, strides, **_):
-        _validate_padding(padding)
-        _validate_strides(strides)
-
-    ###########################################################################
-    def _build_bias(self, shape, dtype):
-        if self._parameter_variables['bias'] is None:
-            init = _get_bias_init(self.args['initializers'])
-            bias = scope.get_variable(
-                name='bias', shape=shape, initializer=init, dtype=dtype)
-            self.set_parameter_variables(bias=bias)
-
     def _build(self, input_tensor):
         # In Theano, the notation of input and output is flipped because
         # they are re-using the terminology from gradient computation.
-        filters = self._parameter_variables['filter']
+
+        # Get the output shape of *this* layer
+        # (== input shape of original convolution)
         if self.args['output_shape']:
             output_shape = self.args['output_shape']
+        elif 'original_input' in self._parameter_variables:
+            output_shape = self._parameter_variables['original_input'].shape
         else:
-            original_input = self._parameter_variables['original_input']
-            output_shape = original_input.shape
+            raise RuntimeError(
+                'Output shape is not given. Output shape must be given as '
+                'either constructor `ouptut_shape` parameter or parameter '
+                'variable `original_input` via `set_parameter_variables`.'
+            )
+
+        filter_shape = self._get_filter_shape(output_shape[1])
+        bias_shape = (filter_shape[1],)
+        self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
+
+        filters = self.get_parameter_variables('filter')
         border_mode = _map_border_mode(self.args['padding'])
         subsample = _get_subsample(self.args['strides'])
         tensor_ = T.nnet.abstract_conv.conv2d_grad_wrt_inputs(
@@ -240,8 +247,6 @@ class Conv2DTranspose(base_layer.BaseConv2DTranspose):
         )
 
         if self.args['with_bias']:
-            shape = (filters.shape[1],)
-            self._build_bias(shape=shape, dtype=input_tensor.dtype)
             bias = self.get_parameter_variables('bias').unwrap()
             bias = bias.dimshuffle(('x', 0, 'x', 'x'))
             tensor_ = bias + tensor_
