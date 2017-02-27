@@ -41,7 +41,7 @@ args:
       args:
         << : *conv2d_same
         output_shape: [32, 32, 20, 20]
-        CONV_FORMAT: NCHW
+        data_format: NCHW
     - scope: layer3/ReLU
       typename: ReLU
     #---------------------------------------------

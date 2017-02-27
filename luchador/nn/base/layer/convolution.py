@@ -150,39 +150,42 @@ class BaseConv2DTranspose(BaseLayer):
 
     Parameters
     ----------
-    filter_height : int
-        filter height, (#rows in filter)
+    _sentinel: Used to force the usage of keyward argument.
 
-    filter_width : int
-        filter width (#columns in filter)
+    filter_height, filter_width : int
+        The shape of filter. Only required when not reusing an existing
+        filter Variable. This should be the same value as corresponding Conv2D
+        layer.
 
     n_filters : int
-        #filters (#output channels)
+        The input channel of filter. Only required when not reusing an existing
+        filter Variable. This should be the same value as corresponding Conv2D
+        layer.
 
     strides : (int, tuple of two ints, or tuple of four ints)
-        See :any:`BaseConv2D`
+        Not optional. See :any:`BaseConv2D`. This has to consistent with input
+        shape and output shape.
 
     padding : (str or int or tuple of two ints)
-        See :any:`BaseConv2D`
+        Not optional. See :any:`BaseConv2D`. This has to consistent with input
+        shape and output shape.
 
     initializers: dict
-        bias : dict
-            Bias initializer configurations
-        filter : dict
-            Filter initializer configurations
-    kwargs
-        use_cudnn_on_gpu
-            [Tensorflow only] : Arguments passed to ``tf.nn.conv2d``
+        Initializer configurations. See :any:`BaseConv2D`.
 
     with_bias : bool
-        When True bias term is added after convolution gradient.
-        This parameter does not have to match with the original convolution.
+        When True bias term is added after upsampling.
+        This parameter needs not to match the original convolution.
 
-    output_shape : tuple
-        # TODO
+    output_shape : tuple of 4 ints
+        The shape of upsampled input. When this is omitted, must give
+        `original_input` parameter using `set_parameter_variables` method,
+        so that output shape can be inferred at build time. Cannot contain
+        `None` when using Tensorflow backend.
 
-    CONV_FORMAT : str
-        # TODO
+    data_format : str
+        NCHW or NHWC. When output_shape is given, by supplying this format,
+        output_shape is automatically converted to runtime format.
 
     Notes
     -----
@@ -190,15 +193,23 @@ class BaseConv2DTranspose(BaseLayer):
     slightly different, as internal padding mechanism is different, thus cannot
     be 100% numerically compatible.
     """
+    # TODO: Add reuse
     def __init__(
-            self, filter_height, filter_width, n_filters, strides,
-            padding='VALID', initializers=None, with_bias=True,
-            output_shape=None, CONV_FORMAT=None):
+            self, _sentinel=None,
+            filter_height=None, filter_width=None, n_filters=None,
+            strides=None, padding='VALID',
+            initializers=None, with_bias=True,
+            output_shape=None, data_format=None):
+        if _sentinel is not None:
+            raise ValueError(
+                'Constructor arguments of Conv2DTranspose must be keywards.'
+            )
+
         super(BaseConv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
-            output_shape=output_shape, CONV_FORMAT=CONV_FORMAT)
+            output_shape=output_shape, data_format=data_format)
 
         # TODO Add switch for filter
         self._create_parameter_slot('filter', train=True, serialize=True)

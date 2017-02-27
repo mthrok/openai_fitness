@@ -193,11 +193,11 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     See :any:`BaseConv2DTranspose` for detail.
     """
     def _get_output_shape(self):
-        if not self.args.get('CONV_FORMAT'):
+        if not self.args.get('data_format'):
             return self.args['output_shape']
 
         _be = luchador.get_nn_conv_format()
-        if _be == self.args['CONV_FORMAT']:
+        if _be == self.args['data_format']:
             return self.args['output_shape']
 
         if _be == 'NHWC':

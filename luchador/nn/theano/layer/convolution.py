@@ -218,7 +218,7 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     See :any:`BaseConv2DTranspose` for detail.
     """
     def _get_output_shape(self):
-        if self.args.get('CONV_FORMAT') == 'NHWC':
+        if self.args.get('data_format') == 'NHWC':
             _LG.info('  * Converting `output_shape` to NCHW')
             return _nhwc2nchw(self.args['output_shape'])
         return self.args['output_shape']
@@ -235,9 +235,10 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
             output_shape = self._parameter_variables['original_input'].shape
         else:
             raise RuntimeError(
-                'Output shape is not given. Output shape must be given as '
-                'either constructor `ouptut_shape` parameter or parameter '
-                'variable `original_input` via `set_parameter_variables`.'
+                'Output shape is not given. Output shape must be given '
+                'either as constructor `ouptut_shape` parameter or as '
+                'parameter variable named `original_input` given via '
+                '`set_parameter_variables` method.'
             )
 
         filter_shape = self._get_filter_shape(output_shape[1])
