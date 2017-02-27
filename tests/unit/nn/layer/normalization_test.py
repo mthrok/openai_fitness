@@ -166,8 +166,8 @@ class BatchNormalizationTest(TestCase):
             bn = nn.layer.BatchNormalization(learn=True, decay=0.999)
             normalized = bn(input_tensor)
 
-        mean_tensor = bn.get_parameter_variables('mean')
-        var_tensor = bn.get_parameter_variables('var')
+        mean_tensor = bn.get_parameters_to_serialize('mean')
+        var_tensor = bn.get_parameters_to_serialize('var')
         updates = bn.get_update_operation()
 
         input_value = np.random.randn(*shape) - 100

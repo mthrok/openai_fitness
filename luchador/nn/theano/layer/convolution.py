@@ -188,14 +188,14 @@ class Conv2D(base_layer.BaseConv2D):
 
         self._build_parameters(filter_shape, input_tensor.dtype)
 
-        filters = self.get_parameter_variables('filter')
+        filters = self.get_parameters_to_train('filter')
         output_tensor = T.nnet.conv2d(
             input_tensor.unwrap(), filters=filters.unwrap(),
             input_shape=input_shape, filter_shape=filter_shape,
             border_mode=border_mode, subsample=subsample)
 
         if self.args['with_bias']:
-            bias = self.get_parameter_variables('bias').unwrap()
+            bias = self.get_parameters_to_train('bias').unwrap()
             bias = bias.dimshuffle(('x', 0, 'x', 'x'))
             output_tensor = bias + output_tensor
 

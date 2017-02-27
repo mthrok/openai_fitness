@@ -43,7 +43,10 @@ class TestInitializer(TestCase):
         session.initialize()
 
         weight, bias = session.run(
-            outputs=dense.get_parameter_variables()
+            outputs=[
+                dense.get_parameters_to_train('weight'),
+                dense.get_parameters_to_train('bias'),
+            ],
         )
 
         np.testing.assert_almost_equal(
@@ -66,8 +69,8 @@ class TestReuse(TestCase):
             layer2.set_parameter_variables(**layer1._parameter_variables)
             out2 = layer2(tensor)
 
-        vars1 = layer1.get_parameter_variables()
-        vars2 = layer2.get_parameter_variables()
+        vars1 = layer1.get_parameters_to_train()
+        vars2 = layer2.get_parameters_to_train()
         for var1, var2 in zip(vars1, vars2):
             self.assertIs(var1, var2)
 
@@ -100,8 +103,8 @@ class TestReuse(TestCase):
             layer2.set_parameter_variables(**layer1._parameter_variables)
             out2 = layer2(tensor)
 
-        vars1 = layer1.get_parameter_variables()
-        vars2 = layer2.get_parameter_variables()
+        vars1 = layer1.get_parameters_to_train()
+        vars2 = layer2.get_parameters_to_train()
         for var1, var2 in zip(vars1, vars2):
             self.assertIs(var1, var2)
 
