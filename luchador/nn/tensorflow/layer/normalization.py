@@ -58,10 +58,10 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
         input_ = input_tensor.unwrap()
         decay, epsilon = self.args['decay'], self.args['epsilon']
 
-        mean_acc = self.get_parameters_to_train('mean').unwrap()
-        var_acc = self.get_parameters_to_train('var').unwrap()
-        scale = self.get_parameters_to_train('scale').unwrap()
-        offset = self.get_parameters_to_train('offset').unwrap()
+        mean_acc = self._parameter_variables['mean'].unwrap()
+        var_acc = self._parameter_variables['var'].unwrap()
+        scale = self._parameter_variables['scale'].unwrap()
+        offset = self._parameter_variables['offset'].unwrap()
 
         if self.args['learn']:
             mean_in, var_in = tf.nn.moments(input_, self._axes)
