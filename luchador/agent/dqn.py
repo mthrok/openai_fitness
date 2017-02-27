@@ -314,7 +314,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
     def _summarize_layer_params(self):
         """Summarize layer parameter statistic"""
-        dataset = self._ql.get_parameters_to_serialize()
+        dataset = self._ql.get_parameters_to_summarize()
         self._summary_writer.summarize(
             global_step=self._n_train, dataset=dataset)
 
