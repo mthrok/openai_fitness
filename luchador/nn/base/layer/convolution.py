@@ -86,5 +86,6 @@ class BaseConv2D(BaseLayer):
             initializers=initializers or {}, with_bias=with_bias,
             **kwargs)
 
-        keys = ['filter', 'bias'] if with_bias else ['filter']
-        self._create_parameter_slots(*keys)
+        self._create_parameter_slot('filter', train=True, serialize=True)
+        if with_bias:
+            self._create_parameter_slot('bias', train=True, serialize=True)

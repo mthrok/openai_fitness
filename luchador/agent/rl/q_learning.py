@@ -32,8 +32,8 @@ def _make_model(model_def, scope):
 
 def _build_sync_op(src_model, tgt_model, scope):
     with nn.variable_scope(scope):
-        src_vars = src_model.get_parameter_variables()
-        tgt_vars = tgt_model.get_parameter_variables()
+        src_vars = src_model.get_parameters_to_train()
+        tgt_vars = tgt_model.get_parameters_to_train()
         return nn.build_sync_op(src_vars, tgt_vars, name='sync')
 
 
@@ -152,7 +152,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self._init_optimizer()
         optimize_op = self._build_optimize_op(
             loss=(error * weight).mean(),
-            params=model_0.get_parameter_variables())
+            params=model_0.get_parameters_to_train())
 
         self._init_session(initial_parameter)
 
@@ -296,10 +296,10 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         )
 
     ###########################################################################
-    def fetch_all_parameters(self):
+    def get_parameters_to_serialize(self):
         """Fetch network parameters and optimizer parameters for saving"""
         params = (
-            self.models['model_0'].get_parameter_variables() +
+            self.models['model_0'].get_parameters_to_serialize() +
             self.optimizer.get_parameter_variables()
         )
         params_val = self.session.run(outputs=params, name='save_params')
@@ -308,16 +308,16 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         ])
 
     ###########################################################################
-    def fetch_layer_params(self):
-        """Fetch paramters of each layer"""
-        params = self.models['model_0'].get_parameter_variables()
+    def get_parameters_to_summarize(self):
+        """Fetch parameters of each layer"""
+        params = self.models['model_0'].get_parameters_to_serialize()
         params_vals = self.session.run(outputs=params, name='model_0_params')
         return {
             '/'.join(v.name.split('/')[1:]): val
             for v, val in zip(params, params_vals)
         }
 
-    def fetch_layer_outputs(self, state):
+    def get_layer_outputs(self, state):
         """Fetch outputs from each layer
 
         Parameters

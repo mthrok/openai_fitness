@@ -309,12 +309,12 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
     def _save_parameters(self):
         """Save trained parameters to file"""
-        data = self._ql.fetch_all_parameters()
+        data = self._ql.get_parameters_to_serialize()
         self._saver.save(data, global_step=self._n_train)
 
     def _summarize_layer_params(self):
         """Summarize layer parameter statistic"""
-        dataset = self._ql.fetch_layer_params()
+        dataset = self._ql.get_parameters_to_serialize()
         self._summary_writer.summarize(
             global_step=self._n_train, dataset=dataset)
 
@@ -323,7 +323,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         samples, _ = self._sample()
         if luchador.get_nn_conv_format() == 'NHWC':
             samples['state0'] = _transpose(samples['state0'])
-        dataset = self._ql.fetch_layer_outputs(samples['state0'])
+        dataset = self._ql.get_layer_outputs(samples['state0'])
         self._summary_writer.summarize(
             global_step=self._n_train, dataset=dataset)
 
