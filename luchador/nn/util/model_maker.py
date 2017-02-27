@@ -118,6 +118,9 @@ def make_layer(layer_config):
             Name of Layer class to instanciate
         args : dict
             Constructor arguments for the Layer class
+        parameters: dict
+            Parameter Variables to resuse. Keys are parameter keys
+            and values are configuration acceptable by :func:`make_io_node`.
 
     Returns
     -------
@@ -128,9 +131,7 @@ def make_layer(layer_config):
     if 'typename' not in layer_config:
         raise RuntimeError('Layer `typename` is not given')
 
-    type_ = layer_config['typename']
-    args = layer_config.get('args', {})
-    layer = get_layer(type_)(**args)
+    layer = get_layer(layer_config['typename'])(**layer_config.get('args', {}))
 
     if 'parameters' in layer_config:
         parameters = OrderedDict([

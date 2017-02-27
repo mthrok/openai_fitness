@@ -69,12 +69,19 @@ class BaseConv2D(BaseLayer):
             Bias initializer configurations
         filter : dict
             Filter initializer configurations
-    kwargs
-        use_cudnn_on_gpu
-            [Tensorflow only] : Arguments passed to ``tf.nn.conv2d``
 
     with_bias : bool
         When True bias term is added after convolution
+
+    kwargs
+        use_cudnn_on_gpu : bool
+            [Tensorflow only] Argument passed to ``tf.nn.conv2d``
+
+        data_format : str
+            [Tensorflow only] Argument passed to ``tf.nn.conv2d``. Use this
+            if you need to ignore the default runtime convolution format (
+            defined with `LUCHADOR_NN_CONV_FORMAT` environmental variable)
+            and to force the format.
 
     Notes
     -----
@@ -99,50 +106,120 @@ class BaseConv2D(BaseLayer):
 class BaseConv2DTranspose(BaseLayer):
     """Upsample 2D array with reversed convolution (gradient of convolution)
 
-    # TODO Add example pattern to create variable
-
-    Internally (both Tensorflow, Theano), this is a convolution. Thus
-    construction of this layer is a bit different from layer, thus you need
-    to reuse filter variable from Conv2D.
+    Internally (both Tensorflow, Theano), this re-uses the implementation for
+    gradient computation of convolution, thus construction of this layer is
+    somewhat confusing. You need to feed the constructor parameters for the
+    original Conv2D layer, and you need to provide the shape of the original
+    input to the Conv2D layer either as constructor argument or by setting
+    parameter variable `original_input`. This is because, by nature, depending
+    on the configuration, the shape of the output of this layer (the gradient
+    of the original convolution layer) may not be determined uniquely.
 
     Examples
     --------
-    >>> # Create convolution layer
+    Create convolution layer, assuming we are using NCHW data format.
+
     >>> conv2d = nn.layer.Conv2D(
     >>>     filter_height=7, filter_width=5, n_filters=3,
     >>>     strides=3, padding='valid')
-    >>> input = nn.Input(shape=(32, 4, 84, 84))
-    >>> conv_output = conv2d(input)
+    >>> input = nn.Input(shape=(32, 4, 84, 84), name='original_input')
+    >>> with nn.variable_scope('convolution'):
+    >>>     conv_output = conv2d(input)
+    >>> print(conv_output.shape)
+    (32, 3, 26, 27)
 
-    >>> # Create convolution transpose layer with the same `padding` and
-    >>> # `strides` parameters as the original convoultion layer,
+    Create convolution transpose layer with the same convolution parameter
+    (``filter_height``, ``filter_width``, ``n_filters``, ``strides``,
+    ``padding``) as the original convolution, and feed the original input
+    shape as ``output_shape``.
+
     >>> conv2d_t = nn.layer.Conv2DTranspose(
+    >>>     filter_height=7, filter_width=5, n_filters=3,
+    >>>     strides=3, padding='valid', output_shape=(32, 4, 84, 84))
+    >>> with nn.variable_scope('transpose'):
+    >>>     conv_t_output = conv2d_t(conv_output)
+    >>> print(conv_t_output.shape)
+    (32, 4, 84, 84)
+
+    As it is tedious to manually provide ``output_shape``, you can provide
+    ``original_input`` parameter separately and omit ``output_shape`` in
+    constructor.
+
+    >>> conv2d_t2 = nn.layer.Conv2DTranspose(
+    >>>     filter_height=7, filter_width=5, n_filters=3,
     >>>     strides=3, padding='valid')
+    >>> conv2d_t2.set_parameter_variables(original_input=input)
+    >>> with nn.variable_scope('transpose_2'):
+    >>>     conv_t2_output = conv2d_t2(conv_output)
+    >>> print(conv_t2_output.shape)
+    (32, 4, 84, 84)
 
-    >>> # Set `filter` and `original_input`. The output shape of transposed
-    >>> # Convolution cannot be uniquely determined.
-    >>> filter_var = conv2d.get_parameter_variables('filter')
-    >>> conv2d_t.set_parameter_variables(
-    >>>     filter=filter_var, original_input=input)
-    >>> output = conv2d_t(conv_output)
+    Similarly, you can provide reference to the original ``filter`` parameter
+    and omit filter shape parameters in constructor. You however cannot omit
+    ``strides`` and ``padding``.
 
-    If you know the output size, you can give it as constructor argument and
-    need not to set ``original_input``. You still need to set ``filter``.
+    >>> conv2d_t3 = nn.layer.Conv2DTranspose(strides=3, padding='valid')
+    >>> original_filter = conv2d.get_parameter_variables('filter')
+    >>> conv2d_t3.set_parameter_variables(
+    >>>     original_input=input, original_filter=original_filter)
+    >>> with nn.variable_scope('transpose_3'):
+    >>>     conv_t3_output = conv2d_t3(conv_output)
+    >>> print(conv_t3_output.shape)
+    (32, 4, 84, 84)
 
-    :py:func:`luchador.nn.util.model_maker.make_model` function can handle this
-    by adding ``parameters``.
+    If you want to use the same filter parameter as the original convolution
+    layer (tied weights), you can feed the parameter as ``filter`` instead of
+    ``original_filter``
+
+    >>> conv2d_t4 = nn.layer.Conv2DTranspose(strides=3, padding='valid')
+    >>> conv2d_t4.set_parameter_variables(
+    >>>     original_input=input, filter=original_filter)
+    >>> conv_t4_output = conv2d_t4(conv_output)
+    >>> print(conv_t4_output.shape)
+    (32, 4, 84, 84)
+
+    :py:func:`luchador.nn.util.model_maker.make_layer` function can handle this
+    by adding ``parameters`` field. The following configuration will create the
+    same layer as ``conv2d_t4``.
 
     .. code-block:: YAML
 
         typename: Conv2DTranspose
         args:
             strides: 3
-            padding: VALID
+            padding: valid
             with_bias: True
         parameters:
             filter:
                 typename: Variable
-                name: layer1/filter
+                name: convolution/filter
+            original_input:
+                typename: Input
+                reuse: True
+                name: input
+
+    If you are providing ``output_shape`` constructor argument in YAML file,
+    you cannot know in which convolution format luchador will be run. So by
+    adding ``output_shape_format`` which describes which convolution format it
+    adopts, the layer convert the ``output_shape`` automatically.
+
+    The following configuration file can be used in both ``NCHW`` and ``NHWC``
+    format.
+
+    .. code-block:: YAML
+
+        typename: Conv2DTranspose
+        args:
+            strides: 3
+            padding: valid
+            with_bias: True
+            output_shape: [32, 32, 20, 20]
+            output_shape_format: NCHW
+        parameters:
+            original_input:
+                typename: Input
+                reuse: True
+                name: input
             original_input:
                 typename: Input
                 reuse: True
@@ -171,11 +248,14 @@ class BaseConv2DTranspose(BaseLayer):
         shape and output shape.
 
     initializers: dict
-        Initializer configurations. See :any:`BaseConv2D`.
+        bias : dict
+            Bias initializer configurations
+        filter : dict
+            Filter initializer configurations
 
     with_bias : bool
         When True bias term is added after upsampling.
-        This parameter needs not to match the original convolution.
+        This parameter does not have to match with the original convolution.
 
     output_shape : tuple of 4 ints
         The shape of upsampled input. When this is omitted, must give
@@ -183,9 +263,16 @@ class BaseConv2DTranspose(BaseLayer):
         so that output shape can be inferred at build time. Cannot contain
         `None` when using Tensorflow backend.
 
-    data_format : str
+    output_shape_format : str
         NCHW or NHWC. When output_shape is given, by supplying this format,
         output_shape is automatically converted to runtime format.
+
+    kwargs
+        data_format : str
+            [Tensorflow only] Argument passed to ``tf.nn.conv2d``. Use this
+            if you need to ignore the default runtime convolution format (
+            defined with `LUCHADOR_NN_CONV_FORMAT` environmental variable)
+            and to force the format.
 
     Notes
     -----
@@ -193,35 +280,23 @@ class BaseConv2DTranspose(BaseLayer):
     slightly different, as internal padding mechanism is different, thus cannot
     be 100% numerically compatible.
     """
-    # TODO: Add reuse
     def __init__(
             self, _sentinel=None,
             filter_height=None, filter_width=None, n_filters=None,
-            strides=None, padding='VALID',
-            initializers=None, with_bias=True,
-            output_shape=None, data_format=None):
-        if _sentinel is not None:
-            raise ValueError(
-                'Constructor arguments of Conv2DTranspose must be keywards.'
-            )
-
+            strides=None, padding='VALID', initializers=None,
+            with_bias=True, output_shape=None, output_shape_format=None,
+            **kwargs):
         super(BaseConv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
-            output_shape=output_shape, data_format=data_format)
+            output_shape=output_shape, output_shape_format=output_shape_format,
+            **kwargs)
 
-        # TODO Add switch for filter
         self._create_parameter_slot('filter', train=True, serialize=True)
-        self._create_parameter_slot(
-            'original_input', train=False, serialize=False)
         if with_bias:
             self._create_parameter_slot('bias', train=True, serialize=True)
-
-    def get_parameter_variables(self, name=None):
-        variables = {
-            key: value for key, value in self._parameter_variables.items()
-            if not key == 'original_input'}
-        if name:
-            return variables[name]
-        return variables.values()
+        self._create_parameter_slot(
+            'original_input', train=False, serialize=False)
+        self._create_parameter_slot(
+            'original_filter', train=False, serialize=False)

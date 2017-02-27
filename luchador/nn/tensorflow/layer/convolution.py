@@ -192,12 +192,12 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
 
     See :any:`BaseConv2DTranspose` for detail.
     """
-    def _get_output_shape(self):
-        if not self.args.get('data_format'):
+    def _get_output_shape_from_arg(self):
+        if not self.args.get('output_shape_format'):
             return self.args['output_shape']
 
         _be = luchador.get_nn_conv_format()
-        if _be == self.args['data_format']:
+        if _be == self.args['output_shape_format']:
             return self.args['output_shape']
 
         if _be == 'NHWC':
@@ -206,11 +206,11 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
         _LG.info('  * Converting `output_shape` to NCHW')
         return _nhwc2nchw(self.args['output_shape'])
 
-    def _build(self, input_tensor):
+    def _get_output_shape(self):
         if self.args['output_shape']:
-            output_shape = self._get_output_shape()
+            return self._get_output_shape_from_arg()
         elif self._parameter_variables['original_input'] is not None:
-            output_shape = self._parameter_variables['original_input'].shape
+            return self._parameter_variables['original_input'].shape
         else:
             raise RuntimeError(
                 'Output shape is not given. Output shape must be given as '
@@ -218,20 +218,30 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
                 'variable `original_input` via `set_parameter_variables`.'
             )
 
+    def _infer_filter_shape(self, output_shape, data_format):
+        if self.get_parameter_variables('filter') is not None:
+            return self.get_parameter_variables('filter').shape
+        if self.get_parameter_variables('original_filter') is not None:
+            return self.get_parameter_variables('original_filter').shape
+        return self._get_filter_shape(output_shape, data_format)
+
+    def _build(self, input_tensor):
+        output_shape = self._get_output_shape()
+
         if None in output_shape:
             raise ValueError('output shape must be fully known in TF backend.')
 
         data_format = _get_format(self.args.get('data_format'))
-        filter_shape = self._get_filter_shape(output_shape, data_format)
+        filter_shape = self._infer_filter_shape(output_shape, data_format)
         bias_shape = (filter_shape[2], )
         self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 
         filter_ = self.get_parameter_variables('filter')
+        padding = _map_padding(self.args['padding'])
+        strides = _get_strides(self.args['strides'], data_format)
         tensor_ = tf.nn.conv2d_transpose(
             value=input_tensor.unwrap(), filter=filter_.unwrap(),
-            output_shape=output_shape,
-            padding=_map_padding(self.args['padding']),
-            strides=_get_strides(self.args['strides'], data_format),
+            output_shape=output_shape, padding=padding, strides=strides,
             data_format=data_format,
         )
 

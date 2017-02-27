@@ -217,31 +217,37 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
 
     See :any:`BaseConv2DTranspose` for detail.
     """
-    def _get_output_shape(self):
-        if self.args.get('data_format') == 'NHWC':
+    def _get_output_shape_from_arg(self):
+        if self.args.get('output_shape_format') == 'NHWC':
             _LG.info('  * Converting `output_shape` to NCHW')
             return _nhwc2nchw(self.args['output_shape'])
         return self.args['output_shape']
 
+    def _get_output_shape(self):
+        if self.args['output_shape']:
+            return self._get_output_shape_from_arg()
+        if self._parameter_variables['original_input'] is not None:
+            return self._parameter_variables['original_input'].shape
+        raise RuntimeError(
+            'Output shape is not given. Output shape must be given '
+            'either as constructor `ouptut_shape` parameter or as '
+            'parameter variable named `original_input` given via '
+            '`set_parameter_variables` method.'
+        )
+
+    def _infer_filter_shape(self, n_filters):
+        if self.get_parameter_variables('filter') is not None:
+            return self.get_parameter_variables('filter').shape
+        if self.get_parameter_variables('original_filter') is not None:
+            return self.get_parameter_variables('original_filter').shape
+        return self._get_filter_shape(n_filters)
+
     def _build(self, input_tensor):
         # In Theano, the notation of input and output is flipped because
         # they are re-using the terminology from gradient computation.
+        output_shape = self._get_output_shape()
 
-        # Get the output shape of *this* layer
-        # (== input shape of original convolution)
-        if self.args['output_shape']:
-            output_shape = self._get_output_shape()
-        elif self._parameter_variables['original_input'] is not None:
-            output_shape = self._parameter_variables['original_input'].shape
-        else:
-            raise RuntimeError(
-                'Output shape is not given. Output shape must be given '
-                'either as constructor `ouptut_shape` parameter or as '
-                'parameter variable named `original_input` given via '
-                '`set_parameter_variables` method.'
-            )
-
-        filter_shape = self._get_filter_shape(output_shape[1])
+        filter_shape = self._infer_filter_shape(output_shape[1])
         bias_shape = (filter_shape[1],)
         self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 
@@ -249,17 +255,12 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
         border_mode = _map_border_mode(self.args['padding'])
         subsample = _get_subsample(self.args['strides'])
         tensor_ = T.nnet.abstract_conv.conv2d_grad_wrt_inputs(
-            output_grad=input_tensor.unwrap(),
-            filters=filters.unwrap(),
-            input_shape=output_shape,
-            filter_shape=filters.shape,
-            border_mode=border_mode,
-            subsample=subsample,
+            output_grad=input_tensor.unwrap(), filters=filters.unwrap(),
+            input_shape=output_shape, filter_shape=filters.shape,
+            border_mode=border_mode, subsample=subsample,
         )
 
         if self.args['with_bias']:
             bias = self.get_parameter_variables('bias').unwrap()
-            bias = bias.dimshuffle(('x', 0, 'x', 'x'))
-            tensor_ = bias + tensor_
-
+            tensor_ = bias.dimshuffle(('x', 0, 'x', 'x')) + tensor_
         return wrapper.Tensor(tensor_, shape=output_shape, name='output')
