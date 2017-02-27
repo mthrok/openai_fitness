@@ -74,16 +74,21 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         """
         wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
         var_list = [v.unwrap() for v in wrt if v.trainable]
+
+        if not var_list:
+            raise ValueError('No variables to optimize.')
+
         grads_and_vars = self.optimizer.compute_gradients(
             loss=loss.unwrap(), var_list=var_list, **kwargs)
         ret, i = [], 0
         for var in wrt:
+            tensor = None
             if var.trainable:
-                name_ = '{}_grad'.format(var.name)
-                tensor = wrapper.Tensor(grads_and_vars[i][0], name=name_)
+                grad = grads_and_vars[i][0]
                 i += 1
-            else:
-                tensor = None
+                if grad is not None:
+                    name_ = '{}_grad'.format(var.name)
+                    tensor = wrapper.Tensor(grad, name=name_)
             ret.append((tensor, var))
         return ret
 

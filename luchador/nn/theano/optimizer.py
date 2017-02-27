@@ -54,15 +54,20 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         if not wrt_:
             raise ValueError('No variables to optimize.')
 
-        grads = theano.grad(loss.unwrap(), wrt_, **kwargs)
+        # So as to match the behavior to that of Tensorflow, we return None
+        # for disconnected inputs
+        grads = theano.grad(
+            loss.unwrap(), wrt_, disconnected_inputs='warn',
+            return_disconnected='None', **kwargs)
         ret, i = [], 0
         for var in wrt:
+            tensor = None
             if var.trainable:
-                name_ = '{}_grad'.format(var.name)
-                tensor = wrapper.Tensor(grads[i], shape=var.shape, name=name_)
+                grad = grads[i]
                 i += 1
-            else:
-                tensor = None
+                if grad is not None:
+                    name_ = '{}_grad'.format(var.name)
+                    tensor = wrapper.Tensor(grad, shape=var.shape, name=name_)
             ret.append((tensor, var))
         return ret
 
