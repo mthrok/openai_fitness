@@ -176,7 +176,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             self._summary_writer.add_graph(self._ql.session.graph)
 
         model_0 = self._ql.models['model_0']
-        params = model_0.get_parameter_variables()
+        params = model_0.get_parameters_to_serialize()
         outputs = model_0.get_output_tensors()
         self._summary_writer.register(
             'histogram', tag='params',
