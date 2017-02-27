@@ -8,6 +8,7 @@ import warnings
 import theano.tensor as T
 from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
+from ... import common
 from ...base import getter
 from ...base import layer as base_layer
 from .. import scope, wrapper
@@ -208,10 +209,6 @@ class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
-def _nhwc2nchw(shape):
-    return (shape[0], shape[3], shape[1], shape[2])
-
-
 class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
@@ -220,7 +217,7 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     def _get_output_shape_from_arg(self):
         if self.args.get('output_shape_format') == 'NHWC':
             _LG.info('  * Converting `output_shape` to NCHW')
-            return _nhwc2nchw(self.args['output_shape'])
+            return common.nhwc2nchw(self.args['output_shape'])
         return self.args['output_shape']
 
     def _get_output_shape(self):

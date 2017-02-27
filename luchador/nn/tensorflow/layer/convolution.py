@@ -8,6 +8,7 @@ import warnings
 import tensorflow as tf
 
 import luchador
+from ... import common
 from ...base import getter
 from ...base import layer as base_layer
 from .. import scope, wrapper
@@ -179,14 +180,6 @@ class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
         return wrapper.Tensor(output, name='output')
 
 
-def _nchw2nhwc(shape):
-    return (shape[0], shape[2], shape[3], shape[1])
-
-
-def _nhwc2nchw(shape):
-    return (shape[0], shape[3], shape[1], shape[2])
-
-
 class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
@@ -202,9 +195,9 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
 
         if _be == 'NHWC':
             _LG.info('  * Converting `output_shape` to NHWC')
-            return _nchw2nhwc(self.args['output_shape'])
+            return common.nchw2nhwc(self.args['output_shape'])
         _LG.info('  * Converting `output_shape` to NCHW')
-        return _nhwc2nchw(self.args['output_shape'])
+        return common.nhwc2nchw(self.args['output_shape'])
 
     def _get_output_shape(self):
         if self.args['output_shape']:
