@@ -124,7 +124,7 @@ def _main():
 
     if args.output:
         saver = Saver(output_dir=args.output)
-        saver.save(dql.fetch_all_parameters(), global_step=1)
+        saver.save(dql.get_parameters_to_serialize(), global_step=1)
 
 
 if __name__ == '__main__':
