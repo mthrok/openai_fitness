@@ -300,6 +300,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         """Fetch network parameters and optimizer parameters for saving"""
         params = (
             self.models['model_0'].get_parameters_to_serialize() +
+            self.models['model_1'].get_parameters_to_serialize() +
             self.optimizer.get_parameter_variables()
         )
         params_val = self.session.run(outputs=params, name='save_params')
