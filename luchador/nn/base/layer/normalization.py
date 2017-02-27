@@ -19,6 +19,8 @@ class BaseBatchNormalization(BaseLayer):
     .. math::
         y = \\frac{x - \\mu}{\\sqrt{\\sigma^2 + \\epsilon}} \\gamma + \\beta
 
+    # TODO Add parameter
+
     Notes
     -----
     To fetch paramter variables with :any:`get_variable`, use keys ``mean``,
@@ -34,11 +36,12 @@ class BaseBatchNormalization(BaseLayer):
            Internal Covariate Shift. http://arxiv.org/abs/1502.03167.
 
     """
-    def __init__(self, scale=1.0, offset=0.0, epsilon=1e-4,
-                 learn=True, decay=0.999):
+    def __init__(
+            self, scale=1.0, offset=0.0, epsilon=1e-4, learn=True,
+            decay=0.999, name='BatchNormalization'):
         super(BaseBatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
-            scale=scale, offset=offset, learn=learn)
+            scale=scale, offset=offset, learn=learn, name=name)
 
         self._axes = self._pattern = None
         for key in ['mean', 'var']:

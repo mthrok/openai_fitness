@@ -13,30 +13,60 @@ __all__ = [
 
 
 class BaseReLU(BaseLayer):
-    """Apply rectified linear activation elementwise"""
-    def __init__(self):
-        super(BaseReLU, self).__init__()
+    """Apply rectified linear activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='ReLU'):
+        super(BaseReLU, self).__init__(name=name)
 
 
 class BaseSigmoid(BaseLayer):
-    """Apply sigmoid activation elementwise"""
-    def __init__(self):
-        super(BaseSigmoid, self).__init__()
+    """Apply sigmoid activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Sigmoid'):
+        super(BaseSigmoid, self).__init__(name=name)
 
 
 class BaseTanh(BaseLayer):
-    """Apply tanh activation elementwise"""
-    def __init__(self):
-        super(BaseTanh, self).__init__()
+    """Apply tanh activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Tanh'):
+        super(BaseTanh, self).__init__(name=name)
 
 
 class BaseSoftmax(BaseLayer):
-    """Apply softmax activation elementwise"""
-    def __init__(self):
-        super(BaseSoftmax, self).__init__()
+    """Apply softmax activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Softmax'):
+        super(BaseSoftmax, self).__init__(name=name)
 
 
 class BaseSoftplus(BaseLayer):
-    """Apply softplus activation elementwise"""
-    def __init__(self):
-        super(BaseSoftplus, self).__init__()
+    """Apply softplus activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Softplus'):
+        super(BaseSoftplus, self).__init__(name=name)

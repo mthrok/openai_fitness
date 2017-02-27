@@ -33,15 +33,19 @@ class BaseDense(BaseLayer):
     with_bias : bool
         When True, bias term is added after multiplication.
 
+    name : str
+        Used as base scope when building parameters and output
+
     Notes
     -----
     To fetch paramter variables with :any:`get_variable`, use keys
     ``weight`` and ``bias`` in the same scope as layer build.
     """
-    def __init__(self, n_nodes, initializers=None, with_bias=True):
+    def __init__(
+            self, n_nodes, initializers=None, with_bias=True, name='Dense'):
         super(BaseDense, self).__init__(
             n_nodes=n_nodes, initializers=initializers or {},
-            with_bias=with_bias)
+            with_bias=with_bias, name=name)
 
         self._create_parameter_slot('weight', train=True, serialize=True)
         if with_bias:

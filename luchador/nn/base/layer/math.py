@@ -16,15 +16,27 @@ _LG = logging.getLogger(__name__)
 
 
 class BaseAdd(BaseLayer):
-    """Add tensors"""
-    def __init__(self):
-        super(BaseAdd, self).__init__()
+    """Add tensors
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Add'):
+        super(BaseAdd, self).__init__(name=name)
 
 
 class BaseSub(BaseLayer):
-    """Subtract tensors"""
-    def __init__(self):
-        super(BaseSub, self).__init__()
+    """Subtract tensors
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Sub'):
+        super(BaseSub, self).__init__(name=name)
 
 
 class BaseTrueDiv(BaseLayer):
@@ -34,9 +46,12 @@ class BaseTrueDiv(BaseLayer):
     ----------
     denom : float
         The value of denominator
+
+    name : str
+        Used as base scope when building parameters and output
     """
-    def __init__(self, denom):
-        super(BaseTrueDiv, self).__init__(denom=denom)
+    def __init__(self, denom, name='TrueDiv'):
+        super(BaseTrueDiv, self).__init__(denom=denom, name=name)
         self.denom = None
 
 
@@ -51,18 +66,33 @@ class BaseMean(BaseLayer):
         If true, retains reduced dimensions with length 1.
     dtype : str
         Output dtype
+    name : str
+        Used as base scope when building parameters and output
     """
-    def __init__(self, axis, keep_dims=False):
-        super(BaseMean, self).__init__(axis=axis, keep_dims=keep_dims)
+    def __init__(self, axis, keep_dims=False, name='Mean'):
+        super(BaseMean, self).__init__(
+            axis=axis, keep_dims=keep_dims, name=name)
 
 
 class BaseSin(BaseLayer):
-    """Apply sin activation elementwise"""
-    def __init__(self):
-        super(BaseSin, self).__init__()
+    """Apply sin activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Sin'):
+        super(BaseSin, self).__init__(name=name)
 
 
 class BaseCos(BaseLayer):
-    """Apply cos activation elementwise"""
-    def __init__(self):
-        super(BaseCos, self).__init__()
+    """Apply cos activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, name='Cos'):
+        super(BaseCos, self).__init__(name=name)

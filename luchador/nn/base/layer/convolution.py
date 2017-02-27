@@ -73,6 +73,9 @@ class BaseConv2D(BaseLayer):
     with_bias : bool
         When True bias term is added after convolution
 
+    name : str
+        Used as base scope when building parameters and output
+
     kwargs
         use_cudnn_on_gpu : bool
             [Tensorflow only] Argument passed to ``tf.nn.conv2d``
@@ -91,12 +94,12 @@ class BaseConv2D(BaseLayer):
     def __init__(
             self, filter_height, filter_width, n_filters, strides,
             padding='VALID', initializers=None, with_bias=True,
-            **kwargs):
+            name='Conv2D', **kwargs):
         super(BaseConv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
-            **kwargs)
+            name=name, **kwargs)
 
         self._create_parameter_slot('filter', train=True, serialize=True)
         if with_bias:

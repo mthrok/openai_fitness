@@ -17,15 +17,25 @@ class BaseNHWC2NCHW(BaseLayer):
     """Convert NCHW data from to NHWC
 
     Rearrange the order of axes in 4D tensor from NHWC to NCHW
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
     """
-    def __init__(self):
-        super(BaseNHWC2NCHW, self).__init__()
+    def __init__(self, name='NHWC2NCHW'):
+        super(BaseNHWC2NCHW, self).__init__(name=name)
 
 
 class BaseNCHW2NHWC(BaseLayer):
     """Convert NCHW data flow to NHWC
 
     Rearrange the order of axes in 4D tensor from NCHW to NHWC
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
     """
-    def __init__(self):
-        super(BaseNCHW2NHWC, self).__init__()
+    def __init__(self, name='NCHW2NHWC'):
+        super(BaseNCHW2NHWC, self).__init__(name=name)
