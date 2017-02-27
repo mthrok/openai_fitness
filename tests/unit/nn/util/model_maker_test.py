@@ -40,8 +40,8 @@ class ModelMakerTest(fixture.TestCase):
         out2 = layer2(tensor)
 
         for key in ['weight', 'bias']:
-            var1 = layer1.get_parameters_to_train(key)
-            var2 = layer2.get_parameters_to_train(key)
+            var1 = layer1.get_parameter_variables(key)
+            var2 = layer2.get_parameter_variables(key)
             self.assertIs(var1, var2)
 
         session = nn.Session()
@@ -86,8 +86,8 @@ class ModelMakerTest(fixture.TestCase):
             out2 = layer2(tensor)
 
         for key in ['weight', 'bias']:
-            var1 = layer1.get_parameters_to_train(key)
-            var2 = layer2.get_parameters_to_train(key)
+            var1 = layer1.get_parameter_variables(key)
+            var2 = layer2.get_parameter_variables(key)
             self.assertIs(var1, var2)
 
         session = nn.Session()

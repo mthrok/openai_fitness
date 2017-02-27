@@ -165,14 +165,14 @@ class Conv2D(base_layer.BaseConv2D):
         _check_filter_shape(
             input_shape, filter_shape, strides, data_format, padding)
 
-        filter = self.get_parameters_to_train('filter')
+        filter = self.get_parameter_variables('filter')
         output = tf.nn.conv2d(
             input_tensor.unwrap(), filter.unwrap(),
             strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=data_format, name=self.args.get('name'))
 
         if self.args['with_bias']:
-            bias = self.get_parameters_to_train('bias').unwrap()
+            bias = self.get_parameter_variables('bias').unwrap()
             output = tf.nn.bias_add(
                 output, bias, data_format=data_format, name='output')
         return wrapper.Tensor(output, name='output')

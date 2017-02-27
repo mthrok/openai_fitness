@@ -86,10 +86,10 @@ class TestContainer(fixture.TestCase):
         )
 
         self.assertEqual(
-            container.get_parameters_to_train(),
+            container.get_parameter_variables(),
             (
-                models[0].get_parameters_to_train() +
-                models[1].get_parameters_to_train()
+                models[0].get_parameter_variables() +
+                models[1].get_parameter_variables()
             )
         )
         self.assertEqual(
@@ -115,8 +115,8 @@ class TestContainer(fixture.TestCase):
         )
         model = models[0].models['seq_1']
         self.assertEqual(
-            container.get_parameters_to_train(),
-            model.get_parameters_to_train(),
+            container.get_parameter_variables(),
+            model.get_parameter_variables(),
         )
         self.assertEqual(
             container.get_output_tensors(),

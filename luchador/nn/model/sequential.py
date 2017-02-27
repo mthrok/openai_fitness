@@ -140,6 +140,19 @@ class Sequential(BaseModel):
 
     ###########################################################################
     # Functions for retrieving variables, tensors and operations
+    def get_parameter_variables(self):
+        """Get parameter Variables
+
+        Returns
+        -------
+        list
+            List of Variables from layer parameters
+        """
+        ret = []
+        for cfg in self.layer_configs:
+            ret.extend(cfg.layer.get_parameter_variables())
+        return ret
+
     def get_parameters_to_train(self):
         """Get parameter Variables to be fet to gradient computation.
 

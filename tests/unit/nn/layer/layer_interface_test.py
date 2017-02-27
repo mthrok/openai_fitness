@@ -38,8 +38,8 @@ class LayerInterfaceTest(fixture.TestCase):
             input_ = nn.Input(shape=(32, 5), name='input')
             layer = nn.get_layer('Dense')(n_nodes=4, with_bias=True)
             output = layer(input_)
-            weight = layer.get_parameters_to_train('weight')
-            bias = layer.get_parameters_to_train('bias')
+            weight = layer.get_parameter_variables('weight')
+            bias = layer.get_parameter_variables('bias')
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(weight, nn.get_variable('weight'))
@@ -56,8 +56,8 @@ class LayerInterfaceTest(fixture.TestCase):
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True)
             output = layer(input_)
-            filters = layer.get_parameters_to_train('filter')
-            bias = layer.get_parameters_to_train('bias')
+            filters = layer.get_parameter_variables('filter')
+            bias = layer.get_parameter_variables('bias')
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(filters, nn.get_variable('filter'))
@@ -141,10 +141,10 @@ class LayerInterfaceTest(fixture.TestCase):
             input_ = nn.Input(shape=(32, 4), name='input')
             layer = nn.get_layer('BatchNormalization')()
             output = layer(input_)
-            mean = layer._parameter_variables['mean']
-            var = layer._parameter_variables['var']
-            scale = layer.get_parameters_to_train('scale')
-            offset = layer.get_parameters_to_train('offset')
+            mean = layer.get_parameter_variables('mean')
+            var = layer.get_parameter_variables('var')
+            scale = layer.get_parameter_variables('scale')
+            offset = layer.get_parameter_variables('offset')
             update = layer.get_update_operation()
 
         with nn.variable_scope(vs, reuse=True):

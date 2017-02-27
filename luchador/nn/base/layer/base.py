@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import abc
 import logging
+from collections import OrderedDict
 
 import luchador.util
 
@@ -21,7 +22,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
         self._store_args(**kwargs)
 
         self._update_operation = None
-        self._parameter_variables = {}
+        self._parameter_variables = OrderedDict()
 
         self._parameters_to_train = []
         self._parameters_to_serialize = []
@@ -34,6 +35,26 @@ class BaseLayer(luchador.util.StoreMixin, object):
             self._parameters_to_train.append(name)
         if serialize:
             self._parameters_to_serialize.append(name)
+
+    def get_parameter_variables(self, name=None):
+        """Get parameter variables
+
+        Parameters
+        ----------
+        name : str or None
+            The name of the parameter (such as ``weight``) to retrieve.
+            If not given, all parameter Variables consisting this layer are
+            returned.
+
+        Returns
+        -------
+        [list of] Variable
+            When name is given, a single Variable is returned, otherwise
+            list of Variables are returned.
+        """
+        if name:
+            return self._parameter_variables[name]
+        return self._parameter_variables.values()
 
     def get_parameters_to_train(self, name=None):
         """Get parameter variables for training.
