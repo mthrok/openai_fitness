@@ -232,19 +232,19 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
             '`set_parameter_variables` method.'
         )
 
-    def _infer_filter_shape(self, n_filters):
+    def _get_filter_shape(self, n_filters):
         if self.get_parameter_variables('filter') is not None:
             return self.get_parameter_variables('filter').shape
         if self.get_parameter_variables('original_filter') is not None:
             return self.get_parameter_variables('original_filter').shape
-        return self._get_filter_shape(n_filters)
+        return super(Conv2DTranspose, self)._get_filter_shape(n_filters)
 
     def _build(self, input_tensor):
         # In Theano, the notation of input and output is flipped because
         # they are re-using the terminology from gradient computation.
         output_shape = self._get_output_shape()
 
-        filter_shape = self._infer_filter_shape(output_shape[1])
+        filter_shape = self._get_filter_shape(output_shape[1])
         bias_shape = (filter_shape[1],)
         self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 

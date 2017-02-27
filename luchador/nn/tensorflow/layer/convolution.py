@@ -116,7 +116,7 @@ def _get_format(data_format):
 
 class _Conv2DMixin(object):
     # pylint: disable=no-self-use, too-few-public-methods
-    def _validate_args(self, padding, strides, **args):
+    def _validate_args(self, padding, strides, **_):
         _validate_padding(padding)
         _validate_strides(strides)
 
@@ -211,12 +211,13 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
                 'variable `original_input` via `set_parameter_variables`.'
             )
 
-    def _infer_filter_shape(self, output_shape, data_format):
+    def _get_filter_shape(self, output_shape, data_format):
         if self.get_parameter_variables('filter') is not None:
             return self.get_parameter_variables('filter').shape
         if self.get_parameter_variables('original_filter') is not None:
             return self.get_parameter_variables('original_filter').shape
-        return self._get_filter_shape(output_shape, data_format)
+        return super(Conv2DTranspose, self)._get_filter_shape(
+            output_shape, data_format)
 
     def _build(self, input_tensor):
         output_shape = self._get_output_shape()
@@ -225,7 +226,7 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
             raise ValueError('output shape must be fully known in TF backend.')
 
         data_format = _get_format(self.args.get('data_format'))
-        filter_shape = self._infer_filter_shape(output_shape, data_format)
+        filter_shape = self._get_filter_shape(output_shape, data_format)
         bias_shape = (filter_shape[2], )
         self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 
