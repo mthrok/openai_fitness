@@ -3,13 +3,18 @@ from __future__ import absolute_import
 
 import logging
 
-from .base_model import BaseModel
+from .graph import Graph
 
 _LG = logging.getLogger(__name__)
 
 
-class Sequential(BaseModel):
+class Sequential(Graph):
     """Network architecture which produces single output from single input
+
+    This class is a specialization of :any:``Graph`` model, where you only
+    need to supply one input to the model and the resulting output is
+    propageted layer by layer. As a result, you cannot use nodes that require
+    multiple inputs such as Cost.
 
     Examples
     --------
@@ -71,8 +76,11 @@ class Sequential(BaseModel):
     """
     def __init__(self):
         super(Sequential, self).__init__()
-        # Layer configurations
-        self.layers = []
+
+    @property
+    def layers(self):
+        """Layer lists"""
+        return self.nodes
 
     @property
     def input(self):
@@ -81,12 +89,22 @@ class Sequential(BaseModel):
             return self.layers[0].input
         return None
 
+    @input.setter
+    def input(self, val):
+        """For resolving inheritance conflict"""
+        pass
+
     @property
     def output(self):
         """Return the output of the last layer else None"""
         if self.layers:
             return self.layers[-1].output
         return None
+
+    @output.setter
+    def output(self, val):
+        """For resolving inheritance conflict"""
+        pass
 
     ###########################################################################
     def add_layer(self, layer):
@@ -122,58 +140,3 @@ class Sequential(BaseModel):
         for layer in self.layers:
             tensor = layer(tensor)
         return tensor
-
-    ###########################################################################
-    # Functions for retrieving variables, tensors and operations
-    def get_parameters_to_train(self):
-        """Get parameter Variables to be fet to gradient computation.
-
-        Returns
-        -------
-        list
-            List of Variables from layer parameters
-        """
-        ret = []
-        for layer in self.layers:
-            ret.extend(layer.get_parameters_to_train())
-        return ret
-
-    def get_parameters_to_serialize(self):
-        """Get parameter Variables to be serialized.
-
-        Returns
-        -------
-        list
-            List of Variables from layer parameters
-        """
-        ret = []
-        for layer in self.layers:
-            ret.extend(layer.get_parameters_to_serialize())
-        return ret
-
-    def get_output_tensors(self):
-        """Get Tensor objects which represent the output of each layer
-
-        Returns
-        -------
-        list
-            List of Tensors each of which hold output from layer
-        """
-        return [layer.output for layer in self.layers]
-
-    def get_update_operations(self):
-        """Get update opretaions from each layer
-
-        Returns
-        -------
-        list
-            List of update operations from each layer
-        """
-        ret = []
-        for layer in self.layers:
-            ret.extend(layer.get_update_operations())
-        return ret
-
-    ###########################################################################
-    def __repr__(self):
-        return repr({self.__class__.__name__: self.layers})

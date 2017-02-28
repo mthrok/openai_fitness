@@ -84,6 +84,23 @@ autoencoder: &autoencoder
       - typename: ReLU
         args:
           name: layer8/ReLU
+
+error: &error
+  typename: Graph
+  args:
+    node_configs:
+      - typename: SSE
+        args:
+          name: reconstruction_error
+        input:
+          target:
+            typename: Input
+            reuse: True
+            name: input_image
+          prediction:
+            typename: Tensor
+            name: layer8/ReLU/output
+
 typename: Container
 args:
   input_config:
@@ -92,8 +109,14 @@ args:
       name: input_image
       shape: {input_shape}
   output_config:
-    typename: Tensor
-    name: layer8/ReLU/output
+    reconstruction:
+      typename: Tensor
+      name: layer8/ReLU/output
+    error:
+      typename: Tensor
+      name: reconstruction_error/output
   model_configs: &model_configs
     - << : *autoencoder
       name: autoencoder
+    - << : *error
+      name: error

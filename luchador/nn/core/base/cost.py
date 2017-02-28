@@ -5,29 +5,20 @@ import abc
 import logging
 
 import luchador.util
-from . import scope as scope_module
+from .node import Node
+from .scope import variable_scope
 
 __all__ = ['BaseCost', 'get_cost']
 _LG = logging.getLogger(__name__)
 
 
-class BaseCost(luchador.util.StoreMixin, object):
+class BaseCost(luchador.util.StoreMixin, Node):
     """Define common interface for cost computation class"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **args):
-        """Validate args and set it as instance property
-
-        See Also
-        --------
-        luchador.common.StoreMixin
-            Underlying mechanism to store constructor arguments
-        """
         super(BaseCost, self).__init__()
         self._store_args(**args)
-
-        self.input = None
-        self.output = None
 
     def __call__(self, target, prediction):
         """Convenience method to call `build`"""
@@ -53,12 +44,20 @@ class BaseCost(luchador.util.StoreMixin, object):
             '  Building cost %s between target: %s and prediction: %s',
             type(self).__name__, target, prediction
         )
-        with scope_module.variable_scope(self.args['name']):
-            return self._build(target, prediction)
+        self.input = {
+            'target': target,
+            'prediction': prediction,
+        }
+        with variable_scope(self.args['name']):
+            self.output = self._build(target, prediction)
+            return self.output
 
     @abc.abstractmethod
     def _build(self, target, prediction):
-        pass
+        """Actual build method"""
+        raise NotImplementedError(
+            '`_build` method is not implemented for {}'.format(self.__class__)
+        )
 
 
 def get_cost(name):

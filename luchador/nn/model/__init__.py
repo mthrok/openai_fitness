@@ -1,6 +1,9 @@
 """Define skeleton for network architecture"""
 from __future__ import absolute_import
-# pylint: disable=wildcard-import
-from .base_model import *  # noqa
-from .sequential import *  # noqa: F401, F403
-from .container import *  # noqa: F401, F403
+
+from .sequential import Sequential
+from .graph import Graph
+from .container import Container
+
+
+__all__ = ['Sequential', 'Graph', 'Container']

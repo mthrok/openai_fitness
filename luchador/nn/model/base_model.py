@@ -10,6 +10,8 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
     """Base Model class"""
     def __init__(self):
         super(BaseModel, self).__init__()
+        self.input = None
+        self.output = None
 
 
 def get_model(name):

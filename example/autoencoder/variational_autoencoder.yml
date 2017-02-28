@@ -1,0 +1,249 @@
+encoder: &encoder
+  typename: Sequential
+  args:
+    input_config:
+      typename: Input
+      reuse: True
+      name: input_image
+    layer_configs:
+      #====================
+      - typename: Conv2D
+        args: &conv2d_1
+          n_filters: 32
+          filter_width: 5
+          filter_height: 5
+          strides: 2
+          padding: valid
+          name: layer1/conv2D
+      - typename: ReLU
+        args:
+          name: layer1/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer2/BN
+      #====================
+      - typename: Conv2D
+        args: &conv2d_2
+          n_filters: 64
+          filter_width: 3
+          filter_height: 3
+          strides: 2
+          padding: valid
+          name: layer3/conv2D
+      - typename: ReLU
+        args:
+          name: layer3/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer4/BN
+      #====================
+
+variation: &variation
+  typename: Graph
+  args:
+    node_configs:
+      #====================
+      - typename: Conv2D
+        args: &conv2d_mean
+          n_filters: 64
+          filter_width: 3
+          filter_height: 3
+          strides: 2
+          padding: valid
+          name: layer5/mean
+        input:
+          typename: Tensor
+          name: layer4/BN/output
+      #====================
+      - typename: Conv2D
+        args:
+          << : *conv2d_mean
+          name: layer6/stddev
+        input:
+          typename: Tensor
+          name: layer4/BN/output
+      #====================
+      - typename: Anonymous
+        args:
+          exp: x['mean'] + x['stddev'] * NormalRandom(std=0.1)
+          name: layer7/merge
+        input:
+          mean:
+            typename: Tensor
+            name: layer5/mean/output
+          stddev:
+            typename: Tensor
+            name: layer6/stddev/output
+      - typename: ReLU
+        args:
+          name: layer7/ReLU
+        input:
+          typename: Tensor
+          name: layer7/merge/output
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer8/BN
+        input:
+          typename: Tensor
+          name: layer7/ReLU/output
+      #====================
+      - typename: Conv2DTranspose
+        args:
+          << : *conv2d_mean
+          name: layer9/conv2DTranspose
+        parameters:
+          original_filter:
+            typename: Variable
+            name: layer5/mean/filter
+          original_input:
+            typename: Tensor
+            name: layer4/BN/output
+        input:
+          typename: Tensor
+          name: layer8/BN/output
+      - typename: ReLU
+        args:
+          name: layer9/ReLU
+        input:
+          typename: Tensor
+          name: layer9/conv2DTranspose/output
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer10/BN
+        input:
+          typename: Tensor
+          name: layer9/ReLU/output
+      #====================
+
+decoder: &decoder
+  typename: Sequential
+  args:
+    input_config:
+      typename: Tensor
+      name: layer10/BN/output
+    layer_configs:
+      #====================
+      - typename: Conv2DTranspose
+        args:
+          << : *conv2d_2
+          name: layer11/conv2DTranspose
+        parameters:
+          original_filter:
+            typename: Variable
+            name: layer3/conv2D/filter
+          original_input:
+            typename: Tensor
+            name: layer2/BN/output
+      - typename: ReLU
+        args:
+          name: layer11/ReLU
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer12/BN
+      #====================
+      - typename: Conv2DTranspose
+        args:
+          << : *conv2d_1
+          name: layer13/conv2DTranspose
+        parameters:
+          original_filter:
+            typename: Variable
+            name: layer1/conv2D/filter
+          original_input:
+            typename: Input
+            reuse: True
+            name: input_image
+      - typename: ReLU
+        args:
+          name: layer13/ReLU
+      #====================
+
+autoencoder: &autoencoder
+  typename: Container
+  args:
+    input_config:
+      typename: Input
+      name: input_image
+      reuse: True
+    output_config:
+      typename: Tensor
+      name: layer13/ReLU/output
+    model_configs:
+      - << : *encoder
+        name: encoder
+      - << : *variation
+        name: variation
+      - << : *decoder
+        name: decder
+
+error: &error
+  typename: Graph
+  args:
+    node_configs:
+      #--------------------
+      # Reconstruction Error
+      #--------------------
+      - typename: SSE
+        args:
+          name: reconstruction_error
+        input:
+          target:
+            typename: Input
+            reuse: True
+            name: input_image
+          prediction:
+            typename: Tensor
+            name: layer13/ReLU/output
+      #--------------------
+      # Latent variable error
+      #--------------------
+      - typename: Anonymous
+        args:
+          name: latent_error
+          exp: 0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3])  
+        input:
+          mean:
+            typename: Tensor
+            name: layer5/mean/output
+          stddev:
+            typename: Tensor
+            name: layer6/stddev/output
+      #--------------------
+      # Sum of above two errors
+      #--------------------
+      - typename: Anonymous
+        args:
+          exp: reduce_mean(x['recon'] + x['latent'])
+          name: error
+        input:
+          recon:
+            typename: Tensor
+            name: reconstruction_error/output
+          latent:
+            typename: Tensor
+            name: latent_error/output
+
+typename: Container
+args:
+  input_config:
+    typename: Input
+    args:
+      name: input_image
+      shape: {input_shape}
+  output_config:
+    reconstruction:
+      typename: Tensor
+      name: layer13/ReLU/output
+    error:
+      typename: Tensor
+      name: error/output
+  model_configs: &model_configs
+    - << : *autoencoder
+      name: autoencoder
+    - << : *error
+      name: error

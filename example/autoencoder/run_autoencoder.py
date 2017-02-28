@@ -74,12 +74,8 @@ def _build_model(model_file, input_shape):
     return nn.make_model(model_def)
 
 
-def _build_cost(autoencoder):
-    sse = nn.get_cost('SSE')()
-    return sse(target=autoencoder.input, prediction=autoencoder.output)
-
-
-def _build_optimization(autoencoder, cost):
+def _build_optimization(autoencoder):
+    cost = autoencoder.output['error']
     optimizer = nn.get_optimizer('Adam')(learning_rate=0.01)
     wrt = autoencoder.get_parameters_to_train()
     minimize_op = optimizer.minimize(loss=cost, wrt=wrt)
@@ -87,7 +83,7 @@ def _build_optimization(autoencoder, cost):
     return update_op + [minimize_op]
 
 
-def _train(session, autoencoder, cost, updates, images, batch_size):
+def _train(session, autoencoder, updates, images, batch_size):
     n_images = len(images)
     n_batch = n_images//batch_size
     train_data = images[:batch_size * n_batch]
@@ -98,7 +94,8 @@ def _train(session, autoencoder, cost, updates, images, batch_size):
         batch = train_data[i*batch_size:(i+1)*batch_size, ...]
         cost_ = session.run(
             inputs={autoencoder.input: batch},
-            outputs=cost, updates=updates, name='opt',
+            outputs=autoencoder.output['error'],
+            updates=updates, name='opt',
         )
         cst += cost_.tolist()
         if i and i % 100 == 0:
@@ -141,8 +138,7 @@ def _main():
     )
 
     autoencoder = _build_model(args.model, input_shape)
-    cost = _build_cost(autoencoder)
-    updates = _build_optimization(autoencoder, cost)
+    updates = _build_optimization(autoencoder)
     images = _load_data(args.mnist, data_format)
 
     session = nn.Session()
@@ -153,14 +149,13 @@ def _main():
         summary.add_graph(session.graph)
 
     try:
-        _train(
-            session, autoencoder, cost, updates, images['train'], batch_size)
+        _train(session, autoencoder, updates, images['train'], batch_size)
     except KeyboardInterrupt:
         pass
 
     orig = images['test'][:batch_size, ...]
     recon = session.run(
-        outputs=autoencoder.output,
+        outputs=autoencoder.output['reconstruction'],
         inputs={autoencoder.input: orig}
     )
 

@@ -4,9 +4,10 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
-from ...model import Sequential, Container
+from ...model import Sequential, Graph, Container
 from .common import ConfigDict, parse_config
 from .io import make_io_node
+from .node import make_node
 from .layer import make_layer
 
 _LG = logging.getLogger(__name__)
@@ -41,18 +42,33 @@ def _make_sequential_model(layer_configs, input_config=None):
     return model
 
 
+def _make_graph_model(node_configs, input_config=None, output_config=None):
+    model = Graph()
+
+    if input_config:
+        model.input = make_io_node(input_config)
+
+    for node_config in node_configs:
+        node = make_node(node_config)
+        model.add_node(node)
+
+    if output_config:
+        model.output = make_io_node(output_config)
+    return model
+
+
 def _make_container_model(input_config, model_configs, output_config=None):
     """Make ``Container`` model from model configuration
 
     Parameters
     ----------
-    input_config : [list of] dict
+    input_config : [list or dict of] dict
         See :any::make_io_node
 
     model_config : list
         Model configuration.
 
-    output_config : [list of] dict
+    output_config : [list of dict of] dict
         See :any::make_io_node
 
     Returns
@@ -75,6 +91,8 @@ def _make_model(model_config):
     _type = model_config.get('typename', 'No model type found')
     if _type == 'Sequential':
         return _make_sequential_model(**model_config.get('args', {}))
+    if _type == 'Graph':
+        return _make_graph_model(**model_config.get('args', {}))
     if _type == 'Container':
         return _make_container_model(**model_config.get('args', {}))
     raise ValueError('Unexpected model type: {}'.format(_type))
@@ -99,12 +117,12 @@ def make_model(model_config):
 
     Parameters
     ----------
-    model_config : [list of] dict
-        Model configuration in dict or list of configurations.
+    model_config : [list or dict of] model configuration
+        Model configuration.
 
     Returns
     -------
-    [list of] Model
+    [list or dict of] Model
         Resulting model[s]
     """
     model_config = parse_config(model_config)

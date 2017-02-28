@@ -25,7 +25,7 @@ def _log_wrt(wrt):
         _LG.info('    %20s', var)
 
 
-class BaseOptimizer(luchador.util.StoreMixin):
+class BaseOptimizer(luchador.util.StoreMixin, object):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
 
