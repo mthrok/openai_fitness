@@ -28,8 +28,9 @@ class LayerInterfaceTest(fixture.TestCase):
             output = layer(input_)
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(output, nn.get_tensor('{}/output'.format(layer_name)))
             self.assertIs(input_, nn.get_input('input'))
+            self.assertIs(
+                output, nn.get_tensor('{}/output'.format(layer_name)))
 
     def test_dense(self):
         """Compnents consisting Dense layer are retrieved"""
@@ -64,6 +65,29 @@ class LayerInterfaceTest(fixture.TestCase):
             self.assertIs(filters, nn.get_variable('Conv2D/filter'))
             self.assertIs(bias, nn.get_variable('Conv2D/bias'))
             self.assertIs(output, nn.get_tensor('Conv2D/output'))
+            self.assertIs(input_, nn.get_input('input'))
+
+    def test_conv2dtranspose(self):
+        """Compnents consisting Conv2DTranspose layer are retrieved"""
+        scope = self.get_scope()
+        with nn.variable_scope(scope) as vs:
+            input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
+            layer = nn.get_layer('Conv2D')(
+                filter_height=4, filter_width=4, n_filters=4,
+                strides=1, with_bias=True, name='Conv2D')
+            output = layer(input_)
+            layer = nn.get_layer('Conv2DTranspose')(
+                filter_height=4, filter_width=4, n_filters=4,
+                strides=1, with_bias=True, output_shape=input_.shape,
+                name='Conv2DT')
+            output = layer(output)
+            filters = layer.get_parameter_variables('filter')
+            bias = layer.get_parameter_variables('bias')
+
+        with nn.variable_scope(vs, reuse=True):
+            self.assertIs(filters, nn.get_variable('Conv2DT/filter'))
+            self.assertIs(bias, nn.get_variable('Conv2DT/bias'))
+            self.assertIs(output, nn.get_tensor('Conv2DT/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_true_div(self):
