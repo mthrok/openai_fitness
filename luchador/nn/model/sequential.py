@@ -74,6 +74,20 @@ class Sequential(BaseModel):
         # Layer configurations
         self.layers = []
 
+    @property
+    def input(self):
+        """Return the input of the first layer else None"""
+        if self.layers:
+            return self.layers[0].input
+        return None
+
+    @property
+    def output(self):
+        """Return the output of the last layer else None"""
+        if self.layers:
+            return self.layers[-1].input
+        return None
+
     ###########################################################################
     def add_layer(self, layer):
         """Add layer to model
@@ -92,12 +106,12 @@ class Sequential(BaseModel):
         """Convenience function to call ``build``"""
         return self.build(input_tensor)
 
-    def build(self, input_tensor):
+    def build(self, tensor):
         """Build the model on top of input tensor.
 
         Parameters
         ----------
-        input_tensor : Tensor
+        tensor : Tensor
             Input to this model
 
         Returns
@@ -105,10 +119,9 @@ class Sequential(BaseModel):
         Tensor
             Output from the last layer
         """
-        self.output = self.input = input_tensor
         for layer in self.layers:
-            self.output = layer(self.output)
-        return self.output
+            tensor = layer(tensor)
+        return tensor
 
     ###########################################################################
     # Functions for retrieving variables, tensors and operations

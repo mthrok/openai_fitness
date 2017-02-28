@@ -15,6 +15,8 @@ class Container(BaseModel):
     def __init__(self):
         super(Container, self).__init__()
         self.models = OrderedDict()
+        self.input = None
+        self.output = None
 
     def add_model(self, name, model):
         """Add model.

@@ -162,13 +162,12 @@ def make_sequential_model(layer_configs, input_config=None):
     """
     model = Sequential()
     if input_config:
-        model.input = model.output = make_io_node(input_config)
+        tensor = make_io_node(input_config)
     for config in layer_configs:
         layer = make_layer(config)
+        if input_config:
+            tensor = layer(tensor)
         model.add_layer(layer)
-
-        if model.output:
-            model.output = layer(model.output)
     return model
 
 
@@ -194,10 +193,8 @@ def make_container_model(input_config, model_configs, output_config=None):
     model = Container()
     model.input = make_io_node(input_config)
     for conf in model_configs:
-        name = conf['name']
-        _LG.info('Building Model: %s', name)
-        model_ = make_model(conf)
-        model.add_model(name, model_)
+        _LG.info('Building Model: %s', conf.get('name', 'No name defined'))
+        model.add_model(conf['name'], make_model(conf))
 
     if output_config:
         model.output = make_io_node(output_config)
