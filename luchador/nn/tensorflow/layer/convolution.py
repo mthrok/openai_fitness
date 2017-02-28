@@ -11,8 +11,7 @@ import luchador
 from ... import common
 from ...base.getter import get_initializer
 from ...base.layer import BaseConv2D, BaseConv2DTranspose
-from ..scope import get_variable
-from ..wrapper import Tensor
+from .. import wrapper
 from .common import LayerMixin
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
@@ -129,13 +128,13 @@ class _Conv2DMixin(object):
 
     def _build_filter(self, shape, dtype):
         init = _get_filter_init(self.args['initializers'].get('filter'))
-        filter_ = get_variable(
+        filter_ = wrapper.get_variable(
             name='filter', shape=shape, dtype=dtype, initializer=init)
         self.set_parameter_variables(filter=filter_)
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
-        bias = get_variable(
+        bias = wrapper.get_variable(
             name='bias', shape=shape, dtype=dtype, initializer=init)
         self.set_parameter_variables(bias=bias)
 
@@ -179,7 +178,7 @@ class Conv2D(_Conv2DMixin, LayerMixin, BaseConv2D):
             bias = self.get_parameter_variables('bias').unwrap()
             output = tf.nn.bias_add(
                 output, bias, data_format=data_format, name='output')
-        return Tensor(output, name='output')
+        return wrapper.Tensor(output, name='output')
 
 
 class Conv2DTranspose(_Conv2DMixin, LayerMixin, BaseConv2DTranspose):
@@ -245,4 +244,4 @@ class Conv2DTranspose(_Conv2DMixin, LayerMixin, BaseConv2DTranspose):
             bias = self.get_parameter_variables('bias')
             tensor_ = tf.nn.bias_add(
                 tensor_, bias.unwrap(), data_format=data_format, name='output')
-        return Tensor(tensor_, name='output')
+        return wrapper.Tensor(tensor_, name='output')

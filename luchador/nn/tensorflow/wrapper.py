@@ -8,7 +8,10 @@ import tensorflow as tf
 
 import luchador
 import luchador.util
-from ..base import wrapper as base_wrapper
+from ..base import (
+    wrapper as base_wrapper,
+    initializer as base_initializer,
+)
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation']
 
@@ -270,3 +273,57 @@ class Operation(base_wrapper.BaseOperation):
 
         name = _prefix_with_scope(name) if name else None
         super(Operation, self).__init__(op=op, name=name)
+
+
+def get_variable(
+        name, shape=None, dtype=None,
+        initializer=None, regularizer=None, trainable=True, **kwargs):
+    """Create Variable with the given configuration or retrieve existing one
+
+    This function works mostly same as tf.get_variable, except when retrieving
+    existing Variable, you only need name and need not to give shape and dtype.
+
+    Mapping from name to VariableWrapper is internally cached so that you can
+    retrieve variable with only name.
+
+    Parameters
+    ----------
+    name : str
+        Name of Variable to create or retrieve
+
+    shape : list
+        Used to create new Variable. Ignored when retrieving one
+
+    dtype : str
+        Used to create new Variable. Ignored when retrieving one
+
+    initializer : luchador.nn.Initializer or tf.Initializer
+        Initializer object
+
+    kwargs
+        Other arguments passed to ``tf.get_variable``
+        See
+        https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
+    """
+    if isinstance(initializer, base_initializer.BaseInitializer):
+        initializer = initializer.unwrap()
+
+    scope = tf.get_variable_scope()
+    if scope.reuse:
+        name = '{}/{}'.format(scope.name, name) if scope.name else name
+        var = base_wrapper.retrieve_variable(name)
+        if var is None:
+            raise ValueError(
+                'Variable {} does not exist, disallowed. '
+                'Did you mean to set reuse=None in VarScope?'
+                .format(name)
+            )
+        return var
+    else:
+        dtype = dtype or luchador.get_nn_dtype()
+
+        variable = tf.get_variable(
+            name, shape=shape, dtype=dtype, initializer=initializer,
+            regularizer=regularizer, trainable=trainable, **kwargs)
+
+        return Variable(variable, trainable=trainable)

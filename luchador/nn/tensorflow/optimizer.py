@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import luchador.util
 from luchador.nn.base import optimizer as base_optimizer
-from . import scope, initializer, wrapper
+from . import initializer, wrapper
 # pylint: disable=invalid-name, too-many-locals
 
 __all__ = [
@@ -133,7 +133,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         """
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = scope.get_variable(
+        slot_var = wrapper.get_variable(
             name=name, shape=var.get_shape(), dtype=var.dtype,
             initializer=tf.constant_initializer(0))
         self.slot.append(slot_var)
@@ -146,7 +146,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         Currently only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = scope.get_variable(
+        slot_var = wrapper.get_variable(
             name=name, shape=[],
             initializer=initializer.Constant(initial_value))
         self.slot.append(slot_var)

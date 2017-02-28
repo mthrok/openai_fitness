@@ -8,12 +8,11 @@ import theano.tensor as T
 
 import luchador.util
 from luchador.nn.base import optimizer as base_optimizer
-from . import scope, initializer, wrapper
+from . import initializer, wrapper
 
 __all__ = [
     'OptimizerMixin',
-    'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp',
-    'Adam', 'Adamax'
+    'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
 ]
 
 # pylint: disable=invalid-name, too-many-locals
@@ -93,7 +92,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         value = var.get_value(borrow=True)
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = scope.get_variable(
+        slot_var = wrapper.get_variable(
             name=name, shape=value.shape, dtype=value.dtype,
             initializer=initializer.Constant(0),
             broadcastable=var.broadcastable)
@@ -120,7 +119,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
             Wrapped Variable of the resulting slot variable.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = scope.get_variable(
+        slot_var = wrapper.get_variable(
             name=name, shape=[], broadcastable=True,
             initializer=initializer.Constant(initial_value))
         self.slot.append(slot_var)

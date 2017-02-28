@@ -8,7 +8,7 @@ from collections import OrderedDict
 import theano.tensor as T
 
 from ...base import layer as base_layer
-from .. import scope, wrapper, initializer
+from .. import wrapper, initializer
 from .common import LayerMixin
 
 __all__ = ['BatchNormalization']
@@ -32,27 +32,27 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         _LG.debug('  Pattern: %s', self._pattern)
 
         if self._parameter_variables['mean'] is None:
-            mean = scope.get_variable(
+            mean = wrapper.get_variable(
                 name='mean', shape=shape, trainable=False,
                 initializer=initializer.Constant(0), dtype=dtype)
             self.set_parameter_variables(mean=mean)
 
         if self._parameter_variables['var'] is None:
-            var = scope.get_variable(
+            var = wrapper.get_variable(
                 name='var', shape=shape, trainable=False,
                 initializer=initializer.Constant(1), dtype=dtype)
             self.set_parameter_variables(var=var)
 
         if self._parameter_variables['scale'] is None:
             scale_val = self.args['scale']
-            scale = scope.get_variable(
+            scale = wrapper.get_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=initializer.Constant(scale_val), dtype=dtype)
             self.set_parameter_variables(scale=scale)
 
         if self._parameter_variables['offset'] is None:
             offset_val = self.args['offset']
-            offset = scope.get_variable(
+            offset = wrapper.get_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=initializer.Constant(offset_val), dtype=dtype)
             self.set_parameter_variables(offset=offset)

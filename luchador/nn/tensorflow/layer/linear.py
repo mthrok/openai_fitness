@@ -8,7 +8,7 @@ import tensorflow as tf
 
 from ...base import layer as base_layer
 from ...base import getter
-from .. import scope, wrapper
+from .. import wrapper
 from .common import LayerMixin
 
 __all__ = ['Dense']
@@ -35,13 +35,13 @@ class Dense(LayerMixin, base_layer.BaseDense):
     """
     def _build_weight(self, shape, dtype):
         init = _get_weight_init(self.args['initializers'].get('weight'))
-        weight = scope.get_variable(
+        weight = wrapper.get_variable(
             name='weight', shape=shape, initializer=init, dtype=dtype)
         self.set_parameter_variables(weight=weight)
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
-        bias = scope.get_variable(
+        bias = wrapper.get_variable(
             name='bias', shape=shape, initializer=init, dtype=dtype)
         self.set_parameter_variables(bias=bias)
 

@@ -166,7 +166,7 @@ class Session(BaseSession):
             for name, value in dataset.items():
 
                 try:
-                    variable = scope.get_variable(name=name)
+                    variable = wrapper.get_variable(name=name)
                     _LG.info(
                         '  Loading %-24s %10s -> %s %s',
                         value.shape, value.dtype, variable.dtype, name)

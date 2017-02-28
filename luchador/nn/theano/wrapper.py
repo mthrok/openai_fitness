@@ -3,48 +3,18 @@ from __future__ import division
 from __future__ import absolute_import
 
 import numbers
+import warnings
 
+import numpy as np
+import theano
 import theano.tensor as T
 
 import luchador.util
 from ..base import wrapper as base_wrapper
+from . import scope as scope_module
+from .initializer import Normal
 
-__all__ = ['Variable', 'Tensor', 'Input', 'Operation']
-
-
-###############################################################################
-_CURRENT_REUSE_FLAG = False
-_CURRENT_VARIABLE_SCOPE = ''
-
-
-def set_flag_(flag):
-    """Set reuse flag. Internal user only"""
-    # pylint: disable=global-statement
-    global _CURRENT_REUSE_FLAG
-    _CURRENT_REUSE_FLAG = flag
-
-
-def set_scope_(scope):
-    """Set scope value. Internal user only"""
-    # pylint: disable=global-statement
-    global _CURRENT_VARIABLE_SCOPE
-    _CURRENT_VARIABLE_SCOPE = scope
-
-
-def get_flag_():
-    """Get reuse flag. Internal user only"""
-    return _CURRENT_REUSE_FLAG
-
-
-def get_scope_():
-    """Get scope value. Internal user only"""
-    return _CURRENT_VARIABLE_SCOPE
-
-
-def _reset():
-    """Reset variable scope and remove cached variables. For Testing"""
-    set_flag_(False)
-    set_scope_('')
+__all__ = ['Variable', 'Tensor', 'Input', 'Operation', 'get_variable']
 
 
 ###############################################################################
@@ -258,9 +228,17 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
+def _get_scope():
+    return scope_module.get_variable_scope()
+
+
+def _is_reuse():
+    return _get_scope().reuse
+
+
 def _prefix_with_scope(name):
-    scope_ = get_scope_()
-    return '{}/{}'.format(scope_, name) if scope_ else name
+    scope = _get_scope().name
+    return '{}/{}'.format(scope, name) if scope else name
 
 
 class Variable(TensorMixin, base_wrapper.BaseVariable):
@@ -335,3 +313,53 @@ class Operation(base_wrapper.BaseOperation):
     def __init__(self, op, name=None):
         name = _prefix_with_scope(name) if name else None
         super(Operation, self).__init__(op=op, name=name)
+
+
+def get_variable(
+        name, shape=None, dtype=None, initializer=None,
+        regularizer=None, trainable=True, **kwargs):
+    """Create/Fetch variable in the current scope
+
+    regularizer is not supported and has no effect.
+    """
+    if regularizer:
+        warnings.warn('`regularizer` is not implemented in Theano backend.')
+
+    # 1. Check the current variable scope
+    scope = _get_scope().name
+    name_ = '{}/{}'.format(scope, name) if scope else name
+
+    var = base_wrapper.retrieve_variable(name_)
+    if _is_reuse():  # Search for an existing variable
+        if var is None:
+            raise ValueError(
+                'Variable {} does not exist, disallowed. '
+                'Did you mean to set reuse=None in VarScope?'
+                .format(name_)
+            )
+        return var
+    else:  # Create new variable
+        if var is not None:
+            raise ValueError(
+                'Variable {} already exists, disallowed. '
+                'Did you mean to set reuse=True in VarScope?'
+                .format(name_)
+            )
+        if shape is None:
+            raise ValueError(
+                'Shape of a new variable ({}) must be fully defined, '
+                'but instead was {}.'.format(name_, shape))
+
+        if not initializer:
+            initializer = Normal(dtype=dtype)
+
+        # Scalar variable should not have `broadcastable`
+        if not shape and 'broadcastable' in kwargs:
+            del kwargs['broadcastable']
+
+        return Variable(
+            theano.shared(
+                value=np.array(initializer.sample(shape), dtype=dtype),
+                name=name_, allow_downcast=True, **kwargs
+            ), trainable=trainable, name=name,
+        )

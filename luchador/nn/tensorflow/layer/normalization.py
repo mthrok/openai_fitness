@@ -8,7 +8,7 @@ import tensorflow as tf
 
 import luchador
 from ...base import layer as base_layer
-from .. import scope, wrapper, initializer
+from .. import wrapper, initializer
 from .common import LayerMixin
 
 __all__ = ['BatchNormalization']
@@ -29,25 +29,25 @@ class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
         shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
         if self._parameter_variables['mean'] is None:
-            mean = scope.get_variable(
+            mean = wrapper.get_variable(
                 name='mean', shape=shape,
                 initializer=initializer.Constant(0), trainable=False)
             self.set_parameter_variables(mean=mean)
 
         if self._parameter_variables['var'] is None:
-            var = scope.get_variable(
+            var = wrapper.get_variable(
                 name='var', shape=shape,
                 initializer=initializer.Constant(1), trainable=False)
             self.set_parameter_variables(var=var)
 
         if self._parameter_variables['scale'] is None:
-            scale = scope.get_variable(
+            scale = wrapper.get_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['scale']))
             self.set_parameter_variables(scale=scale)
 
         if self._parameter_variables['offset'] is None:
-            offset = scope.get_variable(
+            offset = wrapper.get_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['offset']))
             self.set_parameter_variables(offset=offset)

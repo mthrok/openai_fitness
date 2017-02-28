@@ -14,5 +14,6 @@ from .wrapper import (  # noqa: F401
     Variable,
     Tensor,
     Operation,
+    get_variable,
 )
 from .misc import *  # noqa: F401, F403
