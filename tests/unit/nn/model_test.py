@@ -34,10 +34,10 @@ seq_1: &seq_1
           - null
           - 4
     layer_configs:
-      - scope: seq1/layer1/dense
-        typename: Dense
+      - typename: Dense
         args:
           n_nodes: 5
+          name: seq1/layer1/dense
 
 seq_2:
   typename: Sequential
@@ -50,10 +50,10 @@ seq_2:
           - null
           - 5
     layer_configs:
-      - scope: seq2/layer1/dense
-        typename: Dense
+      - typename: Dense
         args:
           n_nodes: 6
+          name: seq2/layer1/dense
 
 con_1:
   typename: Container

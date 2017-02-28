@@ -8,6 +8,7 @@ import theano.tensor as T
 
 from ...base import layer as base_layer
 from ..wrapper import Tensor
+from .common import LayerMixin
 
 __all__ = [
     'Flatten', 'Tile', 'Concat',
@@ -16,7 +17,7 @@ __all__ = [
 _LG = logging.getLogger(__name__)
 
 
-class Flatten(base_layer.BaseFlatten):
+class Flatten(LayerMixin, base_layer.BaseFlatten):
     """Implement Flatten layer in Theano
 
     See :any:`BaseFlatten` for detail.
@@ -34,7 +35,7 @@ class Flatten(base_layer.BaseFlatten):
         return Tensor(output_tensor, shape=output_shape, name='output')
 
 
-class Tile(base_layer.BaseTile):
+class Tile(LayerMixin, base_layer.BaseTile):
     """Implement Tile layer in Theano
 
     See :any:`BaseFlatten` for detail.
@@ -62,7 +63,7 @@ def _compute_concat_shape(shapes, axis):
     return _shape
 
 
-class Concat(base_layer.BaseConcat):
+class Concat(LayerMixin, base_layer.BaseConcat):
     """Implement Concat layer in Theano
 
     See :any: `BaseConcat` for detail.

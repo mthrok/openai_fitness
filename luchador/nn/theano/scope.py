@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import theano
 
-from luchador.nn.base import wrapper as base_wrapper
+from ..base import wrapper as base_wrapper
 from . import wrapper
 from .initializer import Normal
 

@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 import logging
 
-import luchador.nn
 from .base_model import BaseModel
 
 _LG = logging.getLogger(__name__)
@@ -27,10 +26,8 @@ class LayerConfig(object):  # pylint: disable=too-few-public-methods
 
     def __call__(self, input_tensor):
         self.input = input_tensor
-        scope = self.scope or luchador.nn.get_variable_scope()
-        with luchador.nn.variable_scope(scope):
-            self.output = self.layer(input_tensor)
-            return self.output
+        self.output = self.layer(input_tensor)
+        return self.output
 
 
 class Sequential(BaseModel):

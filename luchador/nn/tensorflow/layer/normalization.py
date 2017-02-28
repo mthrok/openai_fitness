@@ -9,13 +9,14 @@ import tensorflow as tf
 import luchador
 from ...base import layer as base_layer
 from .. import scope, wrapper, initializer
+from .common import LayerMixin
 
 __all__ = ['BatchNormalization']
 
 _LG = logging.getLogger(__name__)
 
 
-class BatchNormalization(base_layer.BaseBatchNormalization):
+class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
     """Implement BatchNormalization in Tensorflow.
 
     See :any:`BaseBatchNormalization` for detail.

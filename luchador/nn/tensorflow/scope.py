@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 import luchador
-from luchador.nn.base import (
+from ..base import (
     wrapper as base_wrapper,
     initializer as base_initializer,
 )

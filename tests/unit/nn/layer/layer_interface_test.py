@@ -24,11 +24,11 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = '{}/{}'.format(self.get_scope(), layer_name)
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=input_shape, name='input')
-            layer = nn.get_layer(layer_name)()
+            layer = nn.get_layer(layer_name)(name=layer_name)
             output = layer(input_)
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('{}/output'.format(layer_name)))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_dense(self):
@@ -36,15 +36,16 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 5), name='input')
-            layer = nn.get_layer('Dense')(n_nodes=4, with_bias=True)
+            layer = nn.get_layer('Dense')(
+                n_nodes=4, with_bias=True, name='Dense')
             output = layer(input_)
             weight = layer.get_parameter_variables('weight')
             bias = layer.get_parameter_variables('bias')
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(weight, nn.get_variable('weight'))
-            self.assertIs(bias, nn.get_variable('bias'))
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(weight, nn.get_variable('Dense/weight'))
+            self.assertIs(bias, nn.get_variable('Dense/bias'))
+            self.assertIs(output, nn.get_tensor('Dense/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_conv2d(self):
@@ -54,15 +55,15 @@ class LayerInterfaceTest(fixture.TestCase):
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
             layer = nn.get_layer('Conv2D')(
                 filter_height=4, filter_width=4, n_filters=4,
-                strides=1, with_bias=True)
+                strides=1, with_bias=True, name='Conv2D')
             output = layer(input_)
             filters = layer.get_parameter_variables('filter')
             bias = layer.get_parameter_variables('bias')
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(filters, nn.get_variable('filter'))
-            self.assertIs(bias, nn.get_variable('bias'))
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(filters, nn.get_variable('Conv2D/filter'))
+            self.assertIs(bias, nn.get_variable('Conv2D/bias'))
+            self.assertIs(output, nn.get_tensor('Conv2D/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_true_div(self):
@@ -70,10 +71,10 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope):
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('TrueDiv')(denom=1.0)
+            layer = nn.get_layer('TrueDiv')(denom=1.0, name='TrueDiv')
             output = layer(input_)
 
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('TrueDiv/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_mean(self):
@@ -81,10 +82,10 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope):
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('Mean')(axis=[1, 2])
+            layer = nn.get_layer('Mean')(axis=[1, 2], name='Mean')
             output = layer(input_)
 
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('Mean/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_tile(self):
@@ -92,10 +93,10 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope):
             input_ = nn.Input(shape=(32,), name='input')
-            layer = nn.get_layer('Tile')(pattern=(1, 2))
+            layer = nn.get_layer('Tile')(pattern=(1, 2), name='Tile')
             output = layer(input_)
 
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('Tile/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_concat(self):
@@ -106,9 +107,9 @@ class LayerInterfaceTest(fixture.TestCase):
                 nn.Input(shape=(32, 4), name='input'),
                 nn.Input(shape=(32, 5), name='input'),
             ]
-            layer = nn.get_layer('Concat')(axis=1)
+            layer = nn.get_layer('Concat')(axis=1, name='Concat')
             output = layer(input_)
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('Concat/output'))
 
     def test_add(self):
         """Compnents consisting Add layer are retrieved"""
@@ -118,9 +119,9 @@ class LayerInterfaceTest(fixture.TestCase):
                 nn.Input(shape=(32, 4), name='input'),
                 nn.Input(shape=(32, 4), name='input'),
             ]
-            layer = nn.get_layer('Add')()
+            layer = nn.get_layer('Add')(name='Add')
             output = layer(input_)
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('Add/output'))
 
     def test_sub(self):
         """Compnents consisting Sub layer are retrieved"""
@@ -130,16 +131,16 @@ class LayerInterfaceTest(fixture.TestCase):
                 nn.Input(shape=(32, 4), name='input'),
                 nn.Input(shape=(32, 4), name='input'),
             ]
-            layer = nn.get_layer('Sub')()
+            layer = nn.get_layer('Sub')(name='Sub')
             output = layer(input_)
-            self.assertIs(output, nn.get_tensor('output'))
+            self.assertIs(output, nn.get_tensor('Sub/output'))
 
     def test_bn(self):
         """Compnents consisting BatchNormalization layer are retrieved"""
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 4), name='input')
-            layer = nn.get_layer('BatchNormalization')()
+            layer = nn.get_layer('BatchNormalization')(name='BN')
             output = layer(input_)
             mean = layer.get_parameter_variables('mean')
             var = layer.get_parameter_variables('var')
@@ -148,9 +149,9 @@ class LayerInterfaceTest(fixture.TestCase):
             update = layer.get_update_operation()
 
         with nn.variable_scope(vs, reuse=True):
-            self.assertIs(mean, nn.get_variable('mean'))
-            self.assertIs(var, nn.get_variable('var'))
-            self.assertIs(scale, nn.get_variable('scale'))
-            self.assertIs(offset, nn.get_variable('offset'))
-            self.assertIs(output, nn.get_tensor('output'))
-            self.assertIs(update, nn.get_operation('bn_update'))
+            self.assertIs(mean, nn.get_variable('BN/mean'))
+            self.assertIs(var, nn.get_variable('BN/var'))
+            self.assertIs(scale, nn.get_variable('BN/scale'))
+            self.assertIs(offset, nn.get_variable('BN/offset'))
+            self.assertIs(output, nn.get_tensor('BN/output'))
+            self.assertIs(update, nn.get_operation('BN/bn_update'))

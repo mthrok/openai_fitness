@@ -9,6 +9,7 @@ import tensorflow as tf
 import luchador
 from ...base import layer as base_layer
 from ..wrapper import Tensor
+from .common import LayerMixin
 
 __all__ = [
     'Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos',
@@ -17,7 +18,7 @@ __all__ = [
 _LG = logging.getLogger(__name__)
 
 
-class Add(base_layer.BaseAdd):
+class Add(LayerMixin, base_layer.BaseAdd):
     """Implement Add layer in Tensorflow
 
     See :any: `BaseAdd` for detail.
@@ -32,7 +33,7 @@ class Add(base_layer.BaseAdd):
         return ret.__add__(var_list[-1], name='output')
 
 
-class Sub(base_layer.BaseAdd):
+class Sub(LayerMixin, base_layer.BaseAdd):
     """Implement Sub layer in Tensorflow
 
     See :any: `BaseSub` for detail.
@@ -44,7 +45,7 @@ class Sub(base_layer.BaseAdd):
         return var_list[0].__sub__(var_list[1], name='output')
 
 
-class TrueDiv(base_layer.BaseTrueDiv):
+class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
     """Implement TrueDiv in Tensorflow.
 
     See :any:`BaseTrueDiv` for detail.
@@ -67,16 +68,18 @@ class TrueDiv(base_layer.BaseTrueDiv):
         return Tensor(output, name='output')
 
 
-class Mean(base_layer.BaseMean):
+class Mean(LayerMixin, base_layer.BaseMean):
     """Implement Mean layer in Tensorflow.
 
     See :any:`BaseMean` for detail.
     """
     def _build(self, input_tensor):
-        return input_tensor.mean(name='output', **self.args)
+        return input_tensor.mean(
+            axis=self.args['axis'], keep_dims=self.args['keep_dims'],
+            name='output')
 
 
-class Sin(base_layer.BaseSin):
+class Sin(LayerMixin, base_layer.BaseSin):
     """Implement Sin in Tensorflow.
 
     See :any:`BaseSin` for detail.
@@ -86,7 +89,7 @@ class Sin(base_layer.BaseSin):
         return Tensor(output, name='output')
 
 
-class Cos(base_layer.BaseCos):
+class Cos(LayerMixin, base_layer.BaseCos):
     """Implement Cos in Tensorflow.
 
     See :any:`BaseCos` for detail.

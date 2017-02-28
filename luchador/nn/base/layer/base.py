@@ -140,26 +140,9 @@ class BaseLayer(luchador.util.StoreMixin, object):
         """Convenience method to call `build`"""
         return self.build(input_tensor)
 
-    def build(self, input_tensor):
-        """Build layer computation graph on top of the given tensor
-
-        Parameters
-        ----------
-        input_tensor : Tensor
-            Tensor object. Requirement for this object (such as shape and
-            dtype) varies from Layer types.
-
-        Returns
-        -------
-        Tensor
-            Tensor which holds the output of built computation
-        """
-        _LG.info(
-            '  Building layer %s on %s', type(self).__name__, input_tensor)
-        return self._build(input_tensor)
-
     @abc.abstractmethod
-    def _build(self, input_tensor):
+    def build(self, input_tensor):
+        """Build layer on top of the given tensor"""
         raise NotImplementedError(
             '`_build` method is not implemented for {}'.format(self.__class__)
         )

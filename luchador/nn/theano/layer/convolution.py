@@ -9,9 +9,11 @@ import theano.tensor as T
 from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
 from ... import common
-from ...base import getter
-from ...base import layer as base_layer
-from .. import scope, wrapper
+from ...base.getter import get_initializer
+from ...base.layer import BaseConv2D, BaseConv2DTranspose
+from ..scope import get_variable
+from ..wrapper import Tensor
+from .common import LayerMixin
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
 
@@ -109,15 +111,13 @@ def _get_subsample(strides):
 def _get_filter_init(config):
     """Make filter initializer. Default to Xavier"""
     config = config or {'typename': 'Xavier'}
-    return getter.get_initializer(
-        config['typename'])(**config.get('args', {}))
+    return get_initializer(config['typename'])(**config.get('args', {}))
 
 
 def _get_bias_init(config):
     """Make bias initializer. Default to Constant (0.1)"""
     config = config or {'typename': 'Constant', 'args': {'value': 0.1}}
-    return getter.get_initializer(
-        config['typename'])(**config.get('args', {}))
+    return get_initializer(config['typename'])(**config.get('args', {}))
 
 
 class _Conv2DMixin(object):
@@ -128,13 +128,13 @@ class _Conv2DMixin(object):
 
     def _build_filter(self, shape, dtype):
         init = _get_filter_init(self.args['initializers'].get('filter'))
-        filter_ = scope.get_variable(
+        filter_ = get_variable(
             name='filter', shape=shape, initializer=init, dtype=dtype)
         self.set_parameter_variables(filter=filter_)
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
-        bias = scope.get_variable(
+        bias = get_variable(
             name='bias', shape=shape, initializer=init, dtype=dtype)
         self.set_parameter_variables(bias=bias)
 
@@ -155,7 +155,7 @@ class _Conv2DMixin(object):
         )
 
 
-class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
+class Conv2D(_Conv2DMixin, LayerMixin, BaseConv2D):
     """Implement Conv2D layer in Theano.
 
     See :any:`BaseConv2D` for detail.
@@ -206,10 +206,10 @@ class Conv2D(_Conv2DMixin, base_layer.BaseConv2D):
             bias = bias.dimshuffle(('x', 0, 'x', 'x'))
             output_tensor = bias + output_tensor
 
-        return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
+        return Tensor(output_tensor, shape=output_shape, name='output')
 
 
-class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
+class Conv2DTranspose(_Conv2DMixin, LayerMixin, BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.
@@ -260,4 +260,4 @@ class Conv2DTranspose(_Conv2DMixin, base_layer.BaseConv2DTranspose):
         if self.args['with_bias']:
             bias = self.get_parameter_variables('bias').unwrap()
             tensor_ = bias.dimshuffle(('x', 0, 'x', 'x')) + tensor_
-        return wrapper.Tensor(tensor_, shape=output_shape, name='output')
+        return Tensor(tensor_, shape=output_shape, name='output')
