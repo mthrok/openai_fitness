@@ -1,100 +1,60 @@
-model_type: Sequential
-input:
-  typename: Input
-  args:
-    dtype: uint8
-    shape: {input_shape}
-    name: state
-layer_configs:
-  - typename: TrueDiv
+typename: Sequential
+args:
+  input_config:
+    typename: Input
     args:
-      denom: 255
-      name: layer0/preprocessing
-  - typename: Conv2D
-    args:
-      n_filters: 32
-      filter_width: 8
-      filter_height: 8
-      strides: 4
-      padding: valid
-      name: layer1/conv2D
-      initializers:
-        bias: &initializer1
-          typename: Uniform
-          args:
-            # 1 / sqrt(8 * 8 * 32) = 0.022097
-            maxval: 0.022
-            minval: -0.022
-        weight: *initializer1
-  - typename: ReLU
-    args:
-      name: layer1/ReLU
-  - typename: Conv2D
-    args:
-      n_filters: 64
-      filter_width: 4
-      filter_height: 4
-      strides: 2
-      padding: valid
-      name: layer2/conv2D
-      initializers:
-        bias: &initializer2
-          typename: Uniform
-          args:
-            # 1 / sqrt(4 * 4 * 64) = 0.03125
-            maxval: 0.031
-            minval: -0.031
-        weight: *initializer2
-  - typename: ReLU
-    args:
-      name: layer2/ReLU
-  - typename: Conv2D
-    args:
-      filter_width: 3
-      filter_height: 3
-      n_filters: 64
-      strides: 1
-      padding: valid
-      name: layer3/conv2D
-      initializers:
-        bias: &initializer3
-          typename: Uniform
-          args:
-            # 1 / sqrt(3 * 3 * 64) = 0.04166
-            maxval: 0.042
-            minval: -0.042
-        weight: *initializer3
-  - typename: ReLU
-    args:
-      name: layer3/ReLU
-  - typename: Flatten
-    args:
-      name: layer4/flatten
-  - typename: Dense
-    args:
-      n_nodes: 512
-      name: layer5/dense
-      initializers:
-        bias: &initializer5
-          typename: Uniform
-          args:
-            # 1 / sqrt(3136) = 0.01785
-            # 3136 is expected #inputs to this layer when the input size to layer0 is 84 * 84 * 4
-            maxval: 0.018
-            minval: -0.018
-        weight: *initializer5
-  - typename: ReLU
-    args:
-      name: layer5/ReLU
-  - typename: Dense
-    args:
-      n_nodes: {n_actions}
-      name: layer6/dense
-      initializers:
-        bias: &initializer6
-          typename: Uniform
-          args:
-            # 1 / sqrt(512) = 0.04419
-            maxval: 0.044
-            minval: -0.044
-        weight: *initializer6
+      dtype: uint8
+      shape: {input_shape}
+      name: state
+  layer_configs:
+    - typename: TrueDiv
+      args:
+        denom: 255
+        name: layer0/preprocessing
+    - typename: Conv2D
+      args:
+        n_filters: 32
+        filter_width: 8
+        filter_height: 8
+        strides: 4
+        padding: valid
+        name: layer1/conv2D
+    - typename: ReLU
+      args:
+        name: layer1/ReLU
+    - typename: Conv2D
+      args:
+        n_filters: 64
+        filter_width: 4
+        filter_height: 4
+        strides: 2
+        padding: valid
+        name: layer2/conv2D
+    - typename: ReLU
+      args:
+        name: layer2/ReLU
+    - typename: Conv2D
+      args:
+        filter_width: 3
+        filter_height: 3
+        n_filters: 64
+        strides: 1
+        padding: valid
+        name: layer3/conv2D
+    - typename: ReLU
+      args:
+        name: layer3/ReLU
+    - typename: Flatten
+      args:
+        name: layer4/flatten
+    - typename: Dense
+      args:
+        n_nodes: 512
+        name: layer5/dense
+    - typename: ReLU
+      args:
+        name: layer5/ReLU
+    - typename: Dense
+      args:
+        n_nodes: {n_actions}
+        name: layer6/dense
