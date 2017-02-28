@@ -7,8 +7,7 @@ model:
         shape: {input_shape}
         name: input
     layer_configs:
-      - scope: layer1
-        typename: Conv2D
+      - typename: Conv2D
         args:
           filter_height: 7
           filter_width: 5
@@ -16,8 +15,8 @@ model:
           strides: 3
           padding: VALID
           with_bias: True
-      - scope: layer2
-        typename: Conv2DTranspose
+          name: layer1
+      - typename: Conv2DTranspose
         args:
           filter_height: null
           filter_width: null
@@ -25,6 +24,7 @@ model:
           strides: 3
           padding: VALID
           with_bias: True
+          name: layer2
         parameters:
           filter:
             typename: Variable

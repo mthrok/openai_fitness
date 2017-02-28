@@ -173,7 +173,7 @@ class Conv2D(_Conv2DMixin, LayerMixin, BaseConv2D):
         output = tf.nn.conv2d(
             input_tensor.unwrap(), filter_.unwrap(),
             strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
-            data_format=data_format, name=self.args.get('name'))
+            data_format=data_format)
 
         if self.args['with_bias']:
             bias = self.get_parameter_variables('bias').unwrap()

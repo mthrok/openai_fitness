@@ -11,6 +11,7 @@ model:
         args:
           n_nodes: 7
           with_bias: False
+          name: ''
 
 input: input_randn_5x3.h5
 

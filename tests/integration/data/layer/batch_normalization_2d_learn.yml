@@ -13,6 +13,7 @@ model:
           offset: 0.5
           learn: True
           decay: 0.999
+          name: ''
 
 input: input_randn_3x5_offset_3.h5
 

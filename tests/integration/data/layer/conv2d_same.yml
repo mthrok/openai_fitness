@@ -15,6 +15,7 @@ model:
           strides: 1
           padding: SAME
           with_bias: True
+          name: ''
 
 input: input_mnist_10x4x28x27.h5
 
