@@ -5,6 +5,6 @@ import luchador
 
 # pylint: disable=wildcard-import
 if luchador.get_nn_backend() == 'tensorflow':
-    from .tensorflow import *  # noqa: F401
+    from .tensorflow import *  # noqa
 else:
-    from .theano import *  # noqa: F401
+    from .theano import *  # noqa
