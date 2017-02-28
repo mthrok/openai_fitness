@@ -85,7 +85,7 @@ class Sequential(BaseModel):
     def output(self):
         """Return the output of the last layer else None"""
         if self.layers:
-            return self.layers[-1].input
+            return self.layers[-1].output
         return None
 
     ###########################################################################
