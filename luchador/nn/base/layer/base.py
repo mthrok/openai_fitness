@@ -21,6 +21,9 @@ class BaseLayer(luchador.util.StoreMixin, object):
         super(BaseLayer, self).__init__()
         self._store_args(**kwargs)
 
+        self.input = None
+        self.output = None
+
         self._update_operation = None
         self._parameter_variables = OrderedDict()
 

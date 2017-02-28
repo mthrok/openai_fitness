@@ -8,28 +8,6 @@ from .base_model import BaseModel
 _LG = logging.getLogger(__name__)
 
 
-class LayerConfig(object):  # pylint: disable=too-few-public-methods
-    """Class to hold complementary info for Layer class"""
-    def __init__(self, layer, scope, input_=None, output=None):
-        self.layer = layer
-        self.scope = scope
-        self.input = input_
-        self.output = output
-
-    def __repr__(self):
-        return repr({
-            'scope': self.scope,
-            'layer': self.layer,
-            'input': self.input,
-            'output': self.output,
-        })
-
-    def __call__(self, input_tensor):
-        self.input = input_tensor
-        self.output = self.layer(input_tensor)
-        return self.output
-
-
 class Sequential(BaseModel):
     """Network architecture which produces single output from single input
 
@@ -37,11 +15,11 @@ class Sequential(BaseModel):
     --------
     >>> from luchador import nn
     >>> cnn = nn.Sequential()
-    >>> cnn.add_layer(nn.Conv2D(8, 8, 4, 4), scope='layer1')
-    >>> cnn.add_layer(nn.Conv2D(4, 4, 16, 2), scope='layer2')
-    >>> cnn.add_layer(nn.Flatten(), scope='layer3')
-    >>> cnn.add_layer(nn.Dense(256), scope='layer4')
-    >>> cnn.add_layer(nn.Dense(10), scope='layer5')
+    >>> cnn.add_layer(nn.Conv2D(8, 8, 4, 4, name='layer1'))
+    >>> cnn.add_layer(nn.Conv2D(4, 4, 16, 2, name='layer2'))
+    >>> cnn.add_layer(nn.Flatten(name='layer3'))
+    >>> cnn.add_layer(nn.Dense(256, name='layer4'))
+    >>> cnn.add_layer(nn.Dense(10, name='layer5'))
 
     The above defines nerwork with two convolution layers followed by
     two affin transformation layers. You can use ``nn.Input`` to define
@@ -75,6 +53,12 @@ class Sequential(BaseModel):
      {'name': 'layer5/weight', 'shape': (256, 10)},
      {'name': 'layer5/bias',   'shape': (10,)}]
 
+    ``get_parameter_variables`` method retrieves all the internal parameters,
+    and this may include some internal reference variables, which are not
+    suitable for serializatoin/gradient computation.
+    Use ``get_parameters_to_serialize`` and ``get_parameters_to_train``
+    for retrieving parameters for this purpose.
+
     To retrieve output tensors from each layers, use
     ``get_output_tensors`` method
 
@@ -88,27 +72,18 @@ class Sequential(BaseModel):
     def __init__(self):
         super(Sequential, self).__init__()
         # Layer configurations
-        self.layer_configs = []
+        self.layers = []
 
     ###########################################################################
-    def add_layer(self, layer, scope=None):
+    def add_layer(self, layer):
         """Add layer to model
 
         Parameters
         ----------
         layer : Layer
             Layer instance to add to model
-
-        scope : str
-            Variable scope used when instantiating layer. Layers parmeters are
-            instantiated under this scope.
         """
-        self.layer_configs.append(LayerConfig(
-            layer=layer,
-            scope=scope,
-            input_=None,
-            output=None,
-        ))
+        self.layers.append(layer)
         return self
 
     ###########################################################################
@@ -131,8 +106,8 @@ class Sequential(BaseModel):
             Output from the last layer
         """
         self.output = self.input = input_tensor
-        for layer_config in self.layer_configs:
-            self.output = layer_config(self.output)
+        for layer in self.layers:
+            self.output = layer(self.output)
         return self.output
 
     ###########################################################################
@@ -146,8 +121,8 @@ class Sequential(BaseModel):
             List of Variables from layer parameters
         """
         ret = []
-        for cfg in self.layer_configs:
-            ret.extend(cfg.layer.get_parameter_variables())
+        for layer in self.layers:
+            ret.extend(layer.get_parameter_variables())
         return ret
 
     def get_parameters_to_train(self):
@@ -159,8 +134,8 @@ class Sequential(BaseModel):
             List of Variables from layer parameters
         """
         ret = []
-        for cfg in self.layer_configs:
-            ret.extend(cfg.layer.get_parameters_to_train())
+        for layer in self.layers:
+            ret.extend(layer.get_parameters_to_train())
         return ret
 
     def get_parameters_to_serialize(self):
@@ -172,8 +147,8 @@ class Sequential(BaseModel):
             List of Variables from layer parameters
         """
         ret = []
-        for cfg in self.layer_configs:
-            ret.extend(cfg.layer.get_parameters_to_serialize())
+        for layer in self.layers:
+            ret.extend(layer.get_parameters_to_serialize())
         return ret
 
     def get_output_tensors(self):
@@ -184,7 +159,7 @@ class Sequential(BaseModel):
         list
             List of Tensors each of which hold output from layer
         """
-        return [cfg.output for cfg in self.layer_configs]
+        return [layer.output for layer in self.layers]
 
     def get_update_operations(self):
         """Get update opretaions from each layer
@@ -195,8 +170,8 @@ class Sequential(BaseModel):
             List of update operations from each layer
         """
         ret = []
-        for cfg in self.layer_configs:
-            update = cfg.layer.get_update_operation()
+        for layer in self.layers:
+            update = layer.get_update_operation()
             if update:
                 ret.append(update)
         return ret
@@ -204,6 +179,6 @@ class Sequential(BaseModel):
     ###########################################################################
     def __repr__(self):
         return repr({
-            'model_type': self.__class__.__name__,
-            'layer_configs': self.layer_configs,
+            'typename': self.__class__.__name__,
+            'layers': self.layers,
         })

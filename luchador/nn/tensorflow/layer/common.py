@@ -28,8 +28,10 @@ class LayerMixin(object):
         _LG.info(
             '  Building layer %s on %s', type(self).__name__, input_tensor)
 
+        self.input = input_tensor
         with scope.variable_scope(self.args['name']):
-            return self._build(input_tensor)
+            self.output = self._build(input_tensor)
+            return self.output
 
     @abc.abstractmethod
     def _build(self, input_tensor):

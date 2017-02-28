@@ -7,12 +7,11 @@ args:
       shape: {input_shape}
       name: state
   layer_configs:
-    - scope: layer0/preprocessing
-      typename: TrueDiv
+    - typename: TrueDiv
       args:
         denom: 255
-    - scope: layer1/conv2D
-      typename: Conv2D
+        name: layer0/preprocessing
+    - typename: Conv2D
       args:
         n_filters: 32
         filter_width: 8
@@ -20,15 +19,16 @@ args:
         strides: 4
         padding: valid
         with_bias: False
-    - scope: layer1/BN
-      typename: BatchNormalization
+        name: layer1/conv2D
+    - typename: BatchNormalization
       args:
         learn: True
         decay: 0.999
-    - scope: layer1/ReLU
-      typename: ReLU
-    - scope: layer2/conv2D
-      typename: Conv2D
+        name: layer1/BN
+    - typename: ReLU
+      args:
+        name: layer1/ReLU
+    - typename: Conv2D
       args:
         n_filters: 64
         filter_width: 4
@@ -36,15 +36,16 @@ args:
         strides: 2
         padding: valid
         with_bias: False
-    - scope: layer2/BN
-      typename: BatchNormalization
+        name: layer2/conv2D
+    - typename: BatchNormalization
       args:
         learn: True
         decay: 0.999
-    - scope: layer2/ReLU
-      typename: ReLU
-    - scope: layer3/conv2D
-      typename: Conv2D
+        name: layer2/BN
+    - typename: ReLU
+      args:
+        name: layer2/ReLU
+    - typename: Conv2D
       args:
         filter_width: 3
         filter_height: 3
@@ -52,28 +53,32 @@ args:
         strides: 1
         padding: valid
         with_bias: False
-    - scope: layer3/BN
-      typename: BatchNormalization
+        name: layer3/conv2D
+    - typename: BatchNormalization
       args:
         learn: True
         decay: 0.999
-    - scope: layer3/ReLU
-      typename: ReLU
-    - scope: layer4/flatten
-      typename: Flatten
-    - scope: layer5/dense
-      typename: Dense
+        name: layer3/BN
+    - typename: ReLU
+      args:
+        name: layer3/ReLU
+    - typename: Flatten
+      args:
+        name: layer4/flatten
+    - typename: Dense
       args:
         n_nodes: 512
         with_bias: False
-    - scope: layer5/BN
-      typename: BatchNormalization
+        name: layer5/dense
+    - typename: BatchNormalization
       args:
         learn: True
         decay: 0.999
-    - scope: layer5/ReLU
-      typename: ReLU
-    - scope: layer6/dense
-      typename: Dense
+        name: layer5/BN
+    - typename: ReLU
+      args:
+        name: layer5/ReLU
+    - typename: Dense
       args:
         n_nodes: {n_actions}
+        name: layer6/dense

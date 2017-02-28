@@ -165,10 +165,10 @@ def make_sequential_model(layer_configs, input_config=None):
         model.input = model.output = make_io_node(input_config)
     for config in layer_configs:
         layer = make_layer(config)
-        model.add_layer(layer=layer, scope=config.get('scope', ''))
+        model.add_layer(layer)
 
         if model.output:
-            model.output = model.layer_configs[-1](model.output)
+            model.output = layer(model.output)
     return model
 
 
