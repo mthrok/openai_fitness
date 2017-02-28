@@ -35,7 +35,7 @@ def _normalize_batch(shape, offset, scale):
     bn = nn.layer.BatchNormalization(
         scale=scale, offset=offset, learn=True, decay=0.0)
     normalized = bn(input_tensor)
-    updates = bn.get_update_operation()
+    updates = bn.get_update_operations()
     session = nn.Session()
     session.initialize()
     return session.run(
@@ -168,7 +168,7 @@ class BatchNormalizationTest(TestCase):
 
         mean_tensor = bn.get_parameter_variables('mean')
         var_tensor = bn.get_parameter_variables('var')
-        updates = bn.get_update_operation()
+        updates = bn.get_update_operations()
 
         input_value = np.random.randn(*shape) - 100
         true_mean = input_value.mean(axis=0)

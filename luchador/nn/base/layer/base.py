@@ -25,7 +25,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
         self.input = None
         self.output = None
 
-        self._update_operation = None
+        self._update_operations = []
         self._parameter_variables = OrderedDict()
 
         self._parameters_to_train = []
@@ -60,32 +60,16 @@ class BaseLayer(luchador.util.StoreMixin, object):
             return self._parameter_variables[name]
         return self._parameter_variables.values()
 
-    def get_parameters_to_train(self, name=None):
+    def get_parameters_to_train(self):
         """Get parameter variables for training.
 
         This function is mainly for retrieving variables which are fed to
         gradient computation as `wrt`.
 
-        Parameters
-        ----------
-        name : str or None
-            The name of the parameter (such as ``weight``) to retrieve.
-            If not given, all parameter Variables consisting this layer are
-            returned.
-
         Returns
         -------
-        [list of] Variable
-            When name is given, a single Variable is returned, otherwise
-            list of Variables are returned.
+        list of Variable
         """
-        if name and name not in self._parameters_to_train:
-            raise ValueError(
-                'Unexpected training parameter name ({}) was given. '
-                'Must be one of {}'.format(name, self._parameters_to_train)
-            )
-        if name:
-            return self._parameter_variables[name]
         return [
             self._parameter_variables[key]
             for key in self._parameters_to_train]
@@ -121,7 +105,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
 
     ###########################################################################
     # Getter for update operation
-    def get_update_operation(self):
+    def get_update_operations(self):
         """Get Operation which updates Layer parameter
 
         For layers which require updates other than back propagate
@@ -136,7 +120,7 @@ class BaseLayer(luchador.util.StoreMixin, object):
             If update Operation is defined (BatchNormalization), Operation is
             returned, else None
         """
-        return self._update_operation
+        return self._update_operations
 
     ###########################################################################
     # Functions for building computation graph

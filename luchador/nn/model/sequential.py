@@ -184,14 +184,9 @@ class Sequential(BaseModel):
         """
         ret = []
         for layer in self.layers:
-            update = layer.get_update_operation()
-            if update:
-                ret.append(update)
+            ret.extend(layer.get_update_operations())
         return ret
 
     ###########################################################################
     def __repr__(self):
-        return repr({
-            'typename': self.__class__.__name__,
-            'layers': self.layers,
-        })
+        return repr({self.__class__.__name__: self.layers})

@@ -75,10 +75,17 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
             new_mean_acc = decay * mean_acc + (1 - decay) * mean_in
             new_var_acc = decay * var_acc + (1 - decay) * var_in
 
-            self._update_operation = wrapper.Operation(
-                op=OrderedDict(
-                    [(mean_acc, new_mean_acc), (var_acc, new_var_acc)]),
-                name='bn_update',
+            self._update_operations.append(
+                wrapper.Operation(
+                    op={mean_acc: new_mean_acc},
+                    name='update_mean',
+                )
+            )
+            self._update_operations.append(
+                wrapper.Operation(
+                    op={var_acc: new_var_acc},
+                    name='update_var',
+                )
             )
 
             mean_acc = new_mean_acc

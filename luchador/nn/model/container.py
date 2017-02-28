@@ -99,7 +99,4 @@ class Container(BaseModel):
 
     ###########################################################################
     def __repr__(self):
-        return repr({
-            'model_type': self.__class__.__name__,
-            'models': self.models,
-        })
+        return repr({self.__class__.__name__: self.models})
