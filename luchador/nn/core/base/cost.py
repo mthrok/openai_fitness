@@ -5,6 +5,7 @@ import abc
 import logging
 
 import luchador.util
+from . import scope as scope_module
 
 _LG = logging.getLogger(__name__)
 
@@ -23,6 +24,9 @@ class BaseCost(luchador.util.StoreMixin, object):
         """
         super(BaseCost, self).__init__()
         self._store_args(**args)
+
+        self.input = None
+        self.output = None
 
     def __call__(self, target, prediction):
         """Convenience method to call `build`"""
@@ -44,7 +48,12 @@ class BaseCost(luchador.util.StoreMixin, object):
         Tensor
             Tensor holding the cost between the given input tensors.
         """
-        return self._build(target, prediction)
+        _LG.info(
+            '  Building cost %s between target: %s and prediction: %s',
+            type(self).__name__, target, prediction
+        )
+        with scope_module.variable_scope(self.args['name']):
+            return self._build(target, prediction)
 
     @abc.abstractmethod
     def _build(self, target, prediction):
@@ -67,8 +76,8 @@ class BaseSSE(BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False):
-        super(BaseSSE, self).__init__(elementwise=elementwise)
+    def __init__(self, elementwise=False, name='SSE'):
+        super(BaseSSE, self).__init__(elementwise=elementwise, name=name)
 
 
 class BaseSigmoidCrossEntropy(BaseCost):
@@ -86,5 +95,6 @@ class BaseSigmoidCrossEntropy(BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False):
-        super(BaseSigmoidCrossEntropy, self).__init__(elementwise=elementwise)
+    def __init__(self, elementwise=False, name='SigmoidCrossEntropy'):
+        super(BaseSigmoidCrossEntropy, self).__init__(
+            elementwise=elementwise, name=name)

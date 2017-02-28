@@ -22,8 +22,8 @@ class SSE(cost.SSE, BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False):
-        super(SSE, self).__init__(elementwise=elementwise)
+    def __init__(self, elementwise=False, name='SSE'):
+        super(SSE, self).__init__(elementwise=elementwise, name=name)
 
 
 class SigmoidCrossEntropy(cost.SigmoidCrossEntropy, BaseCost):
@@ -41,5 +41,6 @@ class SigmoidCrossEntropy(cost.SigmoidCrossEntropy, BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False):
-        super(SigmoidCrossEntropy, self).__init__(elementwise=elementwise)
+    def __init__(self, elementwise=False, name='SigmoidCrossEntropy'):
+        super(SigmoidCrossEntropy, self).__init__(
+            elementwise=elementwise, name=name)

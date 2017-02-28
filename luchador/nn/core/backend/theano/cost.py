@@ -25,7 +25,7 @@ class SSE(object):
         error = T.square(target_ - pred_)
         output = error if self.args['elementwise'] else _mean_sum(error)
         shape = target.shape if self.args['elementwise'] else (1,)
-        return wrapper.Tensor(output, shape=shape)
+        return wrapper.Tensor(output, shape=shape, name='output')
 
 
 class SigmoidCrossEntropy(object):
@@ -40,4 +40,4 @@ class SigmoidCrossEntropy(object):
 
         output = ce if self.args['elementwise'] else _mean_sum(ce)
         shape = target.shape if self.args['elementwise'] else (1,)
-        return wrapper.Tensor(output, shape=shape)
+        return wrapper.Tensor(output, shape=shape, name='output')
