@@ -270,6 +270,9 @@ class BaseConv2DTranspose(BaseLayer):
         NCHW or NHWC. When output_shape is given, by supplying this format,
         output_shape is automatically converted to runtime format.
 
+    name : str
+        Used as base scope when building parameters and output
+
     kwargs
         data_format : str
             [Tensorflow only] Argument passed to ``tf.nn.conv2d``. Use this
@@ -288,13 +291,13 @@ class BaseConv2DTranspose(BaseLayer):
             filter_height=None, filter_width=None, n_filters=None,
             strides=None, padding='VALID', initializers=None,
             with_bias=True, output_shape=None, output_shape_format=None,
-            **kwargs):
+            name='Conv2DTranspose', **kwargs):
         super(BaseConv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
             output_shape=output_shape, output_shape_format=output_shape_format,
-            **kwargs)
+            name=name, **kwargs)
 
         self._create_parameter_slot('filter', train=True, serialize=True)
         if with_bias:
