@@ -8,24 +8,24 @@ args:
       name: state
   layer_configs:
     #---------------------------------------------
-    - scope: layer0/preprocessing
-      typename: TrueDiv
+    - typename: TrueDiv
       args:
         denom: 255
+        name: layer0/preprocessing
     #=============================================
-    - scope: layer1/conv2D_valid
-      typename: Conv2D
+    - typename: Conv2D
       args: &conv2d_valid
         n_filters: 32
         filter_width: 8
         filter_height: 8
         strides: 4
         padding: valid
-    - scope: layer1/Sigmoid
-      typename: Sigmoid
+        name: layer1/conv2D_valid
+    - typename: Sigmoid
+      args:
+        name: layer1/Sigmoid
     #---------------------------------------------
-    - scope: layer2/conv2D_same
-      typename: Conv2D
+    - typename: Conv2D
       args: &conv2d_same
         n_filters: 64
         filter_width: 4
@@ -33,22 +33,25 @@ args:
         strides: 2
         padding: same
         with_bias: False
-    - scope: layer2/tanh
-      typename: Tanh
+        name: layer2/conv2D_same
+    - typename: Tanh
+      args:
+        name: layer2/tanh
     #---------------------------------------------
-    - scope: layer3/conv2DT_same
-      typename: Conv2DTranspose
+    - typename: Conv2DTranspose
       args:
         << : *conv2d_same
         output_shape: [32, 32, 20, 20]
         output_shape_format: NCHW
-    - scope: layer3/ReLU
-      typename: ReLU
+        name: layer3/conv2DT_same
+    - typename: ReLU
+      args:
+        name: layer3/ReLU
     #---------------------------------------------
-    - scope: layer4/conv2DT_valid
-      typename: Conv2DTranspose
+    - typename: Conv2DTranspose
       args:
         << : *conv2d_valid
+        name: layer4/conv2DT_valid
       parameters:
         filter:
           typename: Variable
@@ -57,9 +60,11 @@ args:
         original_input:
           typename: Tensor
           name: layer0/preprocessing/output
-    - scope: layer4/ReLU
-      typename: ReLU
+    - typename: ReLU
+      args:
+        name: layer4/ReLU
     #=============================================
-    - scope: layer5/flatten
-      typename: Flatten
+    - typename: Flatten
+      args:
+        name: layer5/flatten
     #---------------------------------------------

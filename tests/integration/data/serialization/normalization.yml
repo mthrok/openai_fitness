@@ -7,35 +7,38 @@ args:
       shape: {input_shape}
       name: state
   layer_configs:
-    - scope: layer0/preprocessing
-      typename: TrueDiv
+    - typename: TrueDiv
       args:
         denom: 255
-    - scope: layer3/BatchNormalization
-      typename: BatchNormalization
+        name: layer0/preprocessing
+    - typename: BatchNormalization
       args:
         learn: True
-    - scope: layer3/ReLU
-      typename: ReLU
-    - scope: layer4/flatten
-      typename: Flatten
-    - scope: layer5/dense
-      typename: Dense
+        name: layer3/BatchNormalization
+    - typename: ReLU
+      args:
+        name: layer3/ReLU
+    - typename: Flatten
+      args:
+        name: layer4/flatten
+    - typename: Dense
       args:
         n_nodes: 512
         with_bias: False
-    - scope: layer5/BatchNormalization
-      typename: BatchNormalization
+        name: layer5/dense
+    - typename: BatchNormalization
       args:
         learn: True
-    - scope: layer5/ReLU
-      typename: ReLU
-    - scope: layer6/dense
-      typename: Dense
+        name: layer5/BatchNormalization
+    - typename: ReLU
+      args:
+        name: layer5/ReLU
+    - typename: Dense
       args:
         n_nodes: {n_actions}
         with_bias: False
-    - scope: layer6/BatchNormalization
-      typename: BatchNormalization
+        name: layer6/dense
+    - typename: BatchNormalization
       args:
         learn: True
+        name: layer6/BatchNormalization
