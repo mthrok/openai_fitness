@@ -6,14 +6,13 @@ import tensorflow as tf
 
 from ...base import layer as base_layer
 from ..wrapper import Tensor
-from .common import LayerMixin
 
 __all__ = [
     'Flatten', 'Tile', 'Concat',
 ]
 
 
-class Flatten(LayerMixin, base_layer.BaseFlatten):
+class Flatten(base_layer.BaseFlatten):
     """Implement Flatten in Tensorflow.
 
     See :any:`BaseFlatten` for detail.
@@ -26,7 +25,7 @@ class Flatten(LayerMixin, base_layer.BaseFlatten):
         return Tensor(output, name='output')
 
 
-class Tile(LayerMixin, base_layer.BaseTile):
+class Tile(base_layer.BaseTile):
     """Implement Tile layer in Tensorflow
 
     See :any:`BaseFlatten` for detail.
@@ -35,7 +34,7 @@ class Tile(LayerMixin, base_layer.BaseTile):
         return input_tensor.tile(self.args['pattern'], name='output')
 
 
-class Concat(LayerMixin, base_layer.BaseConcat):
+class Concat(base_layer.BaseConcat):
     """Implement Concat in Tensorflow.
 
     See :any:`BaseConcat` for detail.

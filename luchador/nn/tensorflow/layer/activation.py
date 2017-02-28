@@ -8,7 +8,6 @@ import tensorflow as tf
 
 from ...base import layer as base_layer
 from ..wrapper import Tensor
-from .common import LayerMixin
 
 __all__ = [
     'ReLU', 'Softplus',
@@ -19,7 +18,7 @@ __all__ = [
 _LG = logging.getLogger(__name__)
 
 
-class ReLU(LayerMixin, base_layer.BaseReLU):
+class ReLU(base_layer.BaseReLU):
     """Implement ReLU in Tensorflow.
 
     See :any:`BaseReLU` for detail.
@@ -29,7 +28,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
         return Tensor(output, name='output')
 
 
-class Softplus(LayerMixin, base_layer.BaseSoftplus):
+class Softplus(base_layer.BaseSoftplus):
     """Implement Softplus in Tensorflow.
 
     See :any:`BaseSoftplus` for detail.
@@ -39,7 +38,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
         return Tensor(output, name='output')
 
 
-class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
+class Sigmoid(base_layer.BaseSigmoid):
     """Implement Sigmoid in Tensorflow.
 
     See :any:`BaseSigmoid` for detail.
@@ -49,7 +48,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
         return Tensor(output, name='output')
 
 
-class Tanh(LayerMixin, base_layer.BaseTanh):
+class Tanh(base_layer.BaseTanh):
     """Implement Tanh in Tensorflow.
 
     See :any:`BaseTanh` for detail.
@@ -59,7 +58,7 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
         return Tensor(output, name='output')
 
 
-class Softmax(LayerMixin, base_layer.BaseSoftmax):
+class Softmax(base_layer.BaseSoftmax):
     """Implement Softmax in Tensorflow.
 
     See :any:`BaseSoftmax` for detail.

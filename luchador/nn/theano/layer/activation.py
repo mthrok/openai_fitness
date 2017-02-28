@@ -6,7 +6,6 @@ import theano.tensor as T
 
 from ...base import layer as base_layer
 from ..wrapper import Tensor
-from .common import LayerMixin
 
 __all__ = [
     'ReLU', 'Softplus',
@@ -15,7 +14,7 @@ __all__ = [
 ]
 
 
-class ReLU(LayerMixin, base_layer.BaseReLU):
+class ReLU(base_layer.BaseReLU):
     """Implement ReLU layer in Theano.
 
     See :any:`BaseReLU` for detail.
@@ -27,7 +26,7 @@ class ReLU(LayerMixin, base_layer.BaseReLU):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Softplus(LayerMixin, base_layer.BaseSoftplus):
+class Softplus(base_layer.BaseSoftplus):
     """Implemente Softplus layer in Theano.
 
     See :any:`BaseSoftplus` for detail.
@@ -38,7 +37,7 @@ class Softplus(LayerMixin, base_layer.BaseSoftplus):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
+class Sigmoid(base_layer.BaseSigmoid):
     """Implement Sigmoid layer in Theano.
 
     See :any:`BaseSigmoid` for detail.
@@ -49,7 +48,7 @@ class Sigmoid(LayerMixin, base_layer.BaseSigmoid):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Tanh(LayerMixin, base_layer.BaseTanh):
+class Tanh(base_layer.BaseTanh):
     """Implement Tanh layer in Theano.
 
     See :any:`BaseTanh` for detail.
@@ -60,7 +59,7 @@ class Tanh(LayerMixin, base_layer.BaseTanh):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Softmax(LayerMixin, base_layer.BaseSoftmax):
+class Softmax(base_layer.BaseSoftmax):
     """Implement Softmax layer in Theano.
 
     See :any:`BaseSoftmax` for detail.

@@ -9,7 +9,6 @@ import theano.tensor as T
 from ...base import layer as base_layer
 from ...base import getter
 from .. import wrapper
-from .common import LayerMixin
 
 __all__ = ['Dense']
 
@@ -28,7 +27,7 @@ def _get_bias_init(config):
         config['typename'])(**config.get('args', {}))
 
 
-class Dense(LayerMixin, base_layer.BaseDense):
+class Dense(base_layer.BaseDense):
     """Implement Dense layer in Theano.
 
     See :any:`BaseDense` for detail.

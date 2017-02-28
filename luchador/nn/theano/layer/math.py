@@ -6,14 +6,13 @@ import theano.tensor as T
 
 from ...base import layer as base_layer
 from ..wrapper import Tensor
-from .common import LayerMixin
 
 __all__ = [
     'Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos'
 ]
 
 
-class Add(LayerMixin, base_layer.BaseAdd):
+class Add(base_layer.BaseAdd):
     """Implement Add layer in Theano
 
     See :any: `BaseAdd` for detail.
@@ -28,7 +27,7 @@ class Add(LayerMixin, base_layer.BaseAdd):
         return ret.__add__(var_list[-1], name='output')
 
 
-class Sub(LayerMixin, base_layer.BaseAdd):
+class Sub(base_layer.BaseAdd):
     """Implement Sub layer in Theano
 
     See :any: `BaseSub` for detail.
@@ -40,7 +39,7 @@ class Sub(LayerMixin, base_layer.BaseAdd):
         return var_list[0].__sub__(var_list[1], name='output')
 
 
-class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
+class TrueDiv(base_layer.BaseTrueDiv):
     """Implement TrueDiv layer in Theano.
 
     See :any:`BaseTrueDiv` for detail.
@@ -56,7 +55,7 @@ class TrueDiv(LayerMixin, base_layer.BaseTrueDiv):
         return Tensor(output, shape=input_tensor.shape, name='output')
 
 
-class Mean(LayerMixin, base_layer.BaseMean):
+class Mean(base_layer.BaseMean):
     """Implement Mean layer in Theano.
 
     See :any:`BaseMean` for detail.
@@ -67,7 +66,7 @@ class Mean(LayerMixin, base_layer.BaseMean):
             name='output')
 
 
-class Sin(LayerMixin, base_layer.BaseSin):
+class Sin(base_layer.BaseSin):
     """Implement Sin layer in Theano
 
     See :any:`BaseSin` for detail.
@@ -78,7 +77,7 @@ class Sin(LayerMixin, base_layer.BaseSin):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Cos(LayerMixin, base_layer.BaseCos):
+class Cos(base_layer.BaseCos):
     """Implement Cos layer in Theano
 
     See :any:`BaseSin` for detail.

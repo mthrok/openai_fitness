@@ -9,14 +9,13 @@ import theano.tensor as T
 
 from ...base import layer as base_layer
 from .. import wrapper, initializer
-from .common import LayerMixin
 
 __all__ = ['BatchNormalization']
 
 _LG = logging.getLogger(__name__)
 
 
-class BatchNormalization(LayerMixin, base_layer.BaseBatchNormalization):
+class BatchNormalization(base_layer.BaseBatchNormalization):
     """Implement BN layer in Theano.
 
     See :any:`BaseBatchNormalization` for detail.

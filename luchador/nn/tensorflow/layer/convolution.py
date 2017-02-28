@@ -12,7 +12,6 @@ from ... import common
 from ...base.getter import get_initializer
 from ...base.layer import BaseConv2D, BaseConv2DTranspose
 from .. import wrapper
-from .common import LayerMixin
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
 
@@ -149,7 +148,7 @@ class _Conv2DMixin(object):
             self._build_bias(shape=bias_shape, dtype=dtype)
 
 
-class Conv2D(_Conv2DMixin, LayerMixin, BaseConv2D):
+class Conv2D(_Conv2DMixin, BaseConv2D):
     """Implement Conv2D layer in Tensorflow.
 
     See :any:`BaseConv2D` for detail.
@@ -181,7 +180,7 @@ class Conv2D(_Conv2DMixin, LayerMixin, BaseConv2D):
         return wrapper.Tensor(output, name='output')
 
 
-class Conv2DTranspose(_Conv2DMixin, LayerMixin, BaseConv2DTranspose):
+class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.

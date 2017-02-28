@@ -7,6 +7,7 @@ import logging
 from collections import OrderedDict
 
 import luchador.util
+from .. import scope as scope_module
 
 _LG = logging.getLogger(__name__)
 
@@ -143,9 +144,31 @@ class BaseLayer(luchador.util.StoreMixin, object):
         """Convenience method to call `build`"""
         return self.build(input_tensor)
 
-    @abc.abstractmethod
     def build(self, input_tensor):
-        """Build layer on top of the given tensor"""
+        """Build layer computation graph on top of the given tensor
+
+        Parameters
+        ----------
+        input_tensor : Tensor
+            Tensor object. Requirement for this object (such as shape and
+            dtype) varies from Layer types.
+
+        Returns
+        -------
+        Tensor
+            Tensor which holds the output of built computation
+        """
+        _LG.info(
+            '  Building layer %s on %s', type(self).__name__, input_tensor)
+
+        self.input = input_tensor
+        with scope_module.variable_scope(self.args['name']):
+            self.output = self._build(input_tensor)
+            return self.output
+
+    @abc.abstractmethod
+    def _build(self, input_tensor):
+        """Actual build method"""
         raise NotImplementedError(
             '`_build` method is not implemented for {}'.format(self.__class__)
         )
