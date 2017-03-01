@@ -65,11 +65,11 @@ class Dense(base_layer.BaseDense):
 
         self._instantiate_parameters(input_shape[1], input_tensor.dtype)
 
-        weight = self.get_parameter_variables('weight').unwrap()
+        weight = self.get_parameter_variable('weight').unwrap()
         output = T.dot(input_tensor.unwrap(), weight)
 
         if self.args['with_bias']:
-            bias = self.get_parameter_variables('bias').unwrap()
+            bias = self.get_parameter_variable('bias').unwrap()
             output = output + bias
         output_shape = (input_shape[0], self.args['n_nodes'])
         return wrapper.Tensor(output, shape=output_shape, name='output')

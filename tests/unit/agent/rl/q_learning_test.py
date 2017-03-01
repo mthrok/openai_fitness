@@ -63,8 +63,8 @@ class DQNTest(fixture.TestCase):
         with nn.variable_scope(self.get_scope()):
             dqn = _make_dqn(model_def=model_def)
 
-        params0 = dqn.models['model_0'].get_parameter_variables()
-        params1 = dqn.models['model_1'].get_parameter_variables()
+        params0 = dqn.models['model_0'].get_parameters_to_train()
+        params1 = dqn.models['model_1'].get_parameters_to_train()
 
         # check that variables are different before sync
         vars0 = dqn.session.run(outputs=params0)

@@ -2,8 +2,11 @@
 from __future__ import absolute_import
 
 import abc
+import logging
 
 import luchador.util
+
+_LG = logging.getLogger(__name__)
 
 
 def _remove_dup(grads_and_vars):
@@ -85,6 +88,12 @@ class BaseOptimizer(luchador.util.StoreMixin):
             not wrapped with Luchador's Variable but bare TensorVariable
             native to backend.
         """
+        _LG.info('Computing gradient for %s', loss)
+        if luchador.util.is_iteratable(wrt):
+            for var in wrt:
+                _LG.info('    %s', var)
+        else:
+            _LG.info('    %s', wrt)
         return self._compute_gradients(loss, wrt, **kwargs)
 
     @abc.abstractmethod

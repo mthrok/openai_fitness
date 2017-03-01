@@ -59,10 +59,10 @@ class Dense(base_layer.BaseDense):
     def _build(self, input_tensor):
         self._instantiate_parameters(input_tensor.shape[1], input_tensor.dtype)
 
-        weight = self.get_parameter_variables('weight').unwrap()
+        weight = self.get_parameter_variable('weight').unwrap()
         output = tf.matmul(input_tensor.unwrap(), weight)
 
         if self.args['with_bias']:
-            bias = self.get_parameter_variables('bias').unwrap()
+            bias = self.get_parameter_variable('bias').unwrap()
             output = tf.add(output, bias, name='output')
         return wrapper.Tensor(output, name='output')

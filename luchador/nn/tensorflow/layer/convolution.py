@@ -138,13 +138,13 @@ class _Conv2DMixin(object):
         self.set_parameter_variables(bias=bias)
 
     def _build_parameters(self, filter_shape, bias_shape, dtype):
-        if self._parameter_variables['filter'] is None:
+        if self.get_parameter_variable('filter') is None:
             self._build_filter(shape=filter_shape, dtype=dtype)
 
         if not self.args['with_bias']:
             return
 
-        if self._parameter_variables['bias'] is None:
+        if self.get_parameter_variable('bias') is None:
             self._build_bias(shape=bias_shape, dtype=dtype)
 
 
@@ -167,14 +167,14 @@ class Conv2D(_Conv2DMixin, BaseConv2D):
         _check_filter_shape(
             input_shape, filter_shape, strides, data_format, padding)
 
-        filter_ = self.get_parameter_variables('filter')
+        filter_ = self.get_parameter_variable('filter')
         output = tf.nn.conv2d(
             input_tensor.unwrap(), filter_.unwrap(),
             strides=strides, padding=padding, use_cudnn_on_gpu=cudnn,
             data_format=data_format)
 
         if self.args['with_bias']:
-            bias = self.get_parameter_variables('bias').unwrap()
+            bias = self.get_parameter_variable('bias').unwrap()
             output = tf.nn.bias_add(
                 output, bias, data_format=data_format, name='output')
         return wrapper.Tensor(output, name='output')
@@ -212,10 +212,10 @@ class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
             )
 
     def _get_filter_shape(self, output_shape, data_format):
-        if self.get_parameter_variables('filter') is not None:
-            return self.get_parameter_variables('filter').shape
-        if self.get_parameter_variables('original_filter') is not None:
-            return self.get_parameter_variables('original_filter').shape
+        if self.get_parameter_variable('filter') is not None:
+            return self.get_parameter_variable('filter').shape
+        if self.get_parameter_variable('original_filter') is not None:
+            return self.get_parameter_variable('original_filter').shape
         return super(Conv2DTranspose, self)._get_filter_shape(
             output_shape, data_format)
 
@@ -230,7 +230,7 @@ class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
         bias_shape = (filter_shape[2], )
         self._build_parameters(filter_shape, bias_shape, input_tensor.dtype)
 
-        filter_ = self.get_parameter_variables('filter')
+        filter_ = self.get_parameter_variable('filter')
         padding = _map_padding(self.args['padding'])
         strides = _get_strides(self.args['strides'], data_format)
         tensor_ = tf.nn.conv2d_transpose(
@@ -240,7 +240,7 @@ class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
         )
 
         if self.args['with_bias']:
-            bias = self.get_parameter_variables('bias')
+            bias = self.get_parameter_variable('bias')
             tensor_ = tf.nn.bias_add(
                 tensor_, bias.unwrap(), data_format=data_format, name='output')
         return wrapper.Tensor(tensor_, name='output')

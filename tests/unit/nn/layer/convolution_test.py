@@ -58,8 +58,8 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIsNot(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )
 
     def test_original_input(self):
@@ -89,8 +89,8 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIsNot(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )
 
     def test_original_filter(self):
@@ -111,7 +111,7 @@ class Conv2DTransposeTest(TestCase):
         with nn.variable_scope(self.get_scope('convolution')):
             conv_output = conv2d(input_var)
 
-        original_filter = conv2d.get_parameter_variables('filter')
+        original_filter = conv2d.get_parameter_variable('filter')
         conv2d_t = nn.layer.Conv2DTranspose(
             filter_height=h, filter_width=w, n_filters=c,
             strides=strides, padding=padding)
@@ -123,8 +123,8 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIsNot(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )
 
     def test_tied_weight(self):
@@ -144,7 +144,7 @@ class Conv2DTransposeTest(TestCase):
         with nn.variable_scope(self.get_scope('convolution')):
             conv_output = conv2d(input_var)
 
-        original_filter = conv2d.get_parameter_variables('filter')
+        original_filter = conv2d.get_parameter_variable('filter')
         conv2d_t = nn.layer.Conv2DTranspose(
             filter_height=h, filter_width=w, n_filters=c,
             strides=strides, padding=padding)
@@ -156,8 +156,8 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIs(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )
 
     def test_output_shape_format_nchw(self):
@@ -188,8 +188,8 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIsNot(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )
 
     def test_output_shape_format_nhwc(self):
@@ -220,6 +220,6 @@ class Conv2DTransposeTest(TestCase):
 
         self._check(input_var, conv_t_output)
         self.assertIsNot(
-            conv2d.get_parameter_variables('filter'),
-            conv2d_t.get_parameter_variables('filter'),
+            conv2d.get_parameter_variable('filter'),
+            conv2d_t.get_parameter_variable('filter'),
         )

@@ -40,8 +40,8 @@ class LayerInterfaceTest(fixture.TestCase):
             layer = nn.get_layer('Dense')(
                 n_nodes=4, with_bias=True, name='Dense')
             output = layer(input_)
-            weight = layer.get_parameter_variables('weight')
-            bias = layer.get_parameter_variables('bias')
+            weight = layer.get_parameter_variable('weight')
+            bias = layer.get_parameter_variable('bias')
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(weight, nn.get_variable('Dense/weight'))
@@ -58,8 +58,8 @@ class LayerInterfaceTest(fixture.TestCase):
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True, name='Conv2D')
             output = layer(input_)
-            filters = layer.get_parameter_variables('filter')
-            bias = layer.get_parameter_variables('bias')
+            filters = layer.get_parameter_variable('filter')
+            bias = layer.get_parameter_variable('bias')
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(filters, nn.get_variable('Conv2D/filter'))
@@ -81,8 +81,8 @@ class LayerInterfaceTest(fixture.TestCase):
                 strides=1, with_bias=True, output_shape=input_.shape,
                 name='Conv2DT')
             output = layer(output)
-            filters = layer.get_parameter_variables('filter')
-            bias = layer.get_parameter_variables('bias')
+            filters = layer.get_parameter_variable('filter')
+            bias = layer.get_parameter_variable('bias')
 
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(filters, nn.get_variable('Conv2DT/filter'))
@@ -166,10 +166,10 @@ class LayerInterfaceTest(fixture.TestCase):
             input_ = nn.Input(shape=(32, 4), name='input')
             layer = nn.get_layer('BatchNormalization')(name='BN')
             output = layer(input_)
-            mean = layer.get_parameter_variables('mean')
-            var = layer.get_parameter_variables('var')
-            scale = layer.get_parameter_variables('scale')
-            offset = layer.get_parameter_variables('offset')
+            mean = layer.get_parameter_variable('mean')
+            var = layer.get_parameter_variable('var')
+            scale = layer.get_parameter_variable('scale')
+            offset = layer.get_parameter_variable('offset')
             updates = layer.get_update_operations()
 
         with nn.variable_scope(vs, reuse=True):
