@@ -17,6 +17,13 @@ def _remove_dup(grads_and_vars):
     return [x for x in grads_and_vars if not (x[1] in seen or seen_add(x[1]))]
 
 
+def _log_wrt(wrt):
+    if not luchador.util.is_iteratable(wrt):
+        wrt = [wrt]
+    for var in wrt:
+        _LG.info('    %20s', var)
+
+
 class BaseOptimizer(luchador.util.StoreMixin):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
@@ -89,11 +96,7 @@ class BaseOptimizer(luchador.util.StoreMixin):
             native to backend.
         """
         _LG.info('Computing gradient for %s', loss)
-        if luchador.util.is_iteratable(wrt):
-            for var in wrt:
-                _LG.info('    %s', var)
-        else:
-            _LG.info('    %s', wrt)
+        _log_wrt(wrt)
         return self._compute_gradients(loss, wrt, **kwargs)
 
     @abc.abstractmethod

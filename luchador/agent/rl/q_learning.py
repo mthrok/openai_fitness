@@ -32,8 +32,8 @@ def _make_model(model_def, scope):
 
 def _build_sync_op(src_model, tgt_model, scope):
     with nn.variable_scope(scope):
-        src_vars = src_model.get_parameters_to_train()
-        tgt_vars = tgt_model.get_parameters_to_train()
+        src_vars = src_model.get_parameters_to_serialize()
+        tgt_vars = tgt_model.get_parameters_to_serialize()
         return nn.build_sync_op(src_vars, tgt_vars, name='sync')
 
 
