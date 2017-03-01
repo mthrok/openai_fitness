@@ -10,8 +10,8 @@ import theano
 import theano.tensor as T
 
 import luchador.util
-from luchador.nn.core.base import wrapper as base_wrapper
-from luchador.nn.core.base.backend import scope as scope_module
+from ...base import wrapper as base_wrapper
+from ...base import scope as scope_module
 from .initializer import Normal
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation', 'get_variable']

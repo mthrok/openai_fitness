@@ -11,7 +11,7 @@ import numpy as np
 from numpy.random import RandomState
 from scipy.stats import truncnorm as tnorm
 
-from theano import config as theano_config
+import theano.config
 
 from luchador.nn.core.base import initializer as base_initializer
 from .random import get_rng
@@ -30,7 +30,7 @@ class InitializerMixin(object):  # pylint: disable=too-few-public-methods
             self._rng = RandomState(seed) if seed else get_rng()
 
     def _sample(self, shape):
-        dtype = self.args['dtype'] or theano_config.floatX
+        dtype = self.args['dtype'] or theano.config.floatX
         return self._sample_values(shape).astype(dtype)
 
     @abc.abstractmethod

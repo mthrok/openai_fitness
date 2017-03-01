@@ -8,7 +8,7 @@ from . import (  # noqa: F401
     cost,
     optimizer,
 )
-from luchador.nn.core.base.backend.tensorflow.scope import *  # noqa
+from ...base.scope import *  # noqa
 from .wrapper import (  # noqa: F401
     Input,
     Variable,

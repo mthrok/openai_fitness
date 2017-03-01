@@ -6,8 +6,8 @@ import logging
 import tensorflow as tf
 
 import luchador.util
-from luchador.nn.core.base.session import BaseSession
-from luchador.nn.core.base.backend import scope
+from ...base.session import BaseSession
+from ...base import scope
 from . import wrapper
 
 _LG = logging.getLogger(__name__)
