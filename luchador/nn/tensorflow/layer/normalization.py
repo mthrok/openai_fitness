@@ -27,25 +27,25 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
         self._axes = tuple(i for i in range(dim) if not i == channel)
         shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
-        if self._parameter_variables['mean'] is None:
+        if self.get_parameter_variable('mean') is None:
             mean = wrapper.get_variable(
                 name='mean', shape=shape,
                 initializer=initializer.Constant(0), trainable=False)
             self.set_parameter_variables(mean=mean)
 
-        if self._parameter_variables['var'] is None:
+        if self.get_parameter_variable('var') is None:
             var = wrapper.get_variable(
                 name='var', shape=shape,
                 initializer=initializer.Constant(1), trainable=False)
             self.set_parameter_variables(var=var)
 
-        if self._parameter_variables['scale'] is None:
+        if self.get_parameter_variable('scale') is None:
             scale = wrapper.get_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['scale']))
             self.set_parameter_variables(scale=scale)
 
-        if self._parameter_variables['offset'] is None:
+        if self.get_parameter_variable('offset') is None:
             offset = wrapper.get_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=initializer.Constant(self.args['offset']))
@@ -58,10 +58,10 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
         input_ = input_tensor.unwrap()
         decay, epsilon = self.args['decay'], self.args['epsilon']
 
-        mean_acc = self.get_parameter_variables('mean').unwrap()
-        var_acc = self.get_parameter_variables('var').unwrap()
-        scale = self.get_parameter_variables('scale').unwrap()
-        offset = self.get_parameter_variables('offset').unwrap()
+        mean_acc = self.get_parameter_variable('mean').unwrap()
+        var_acc = self.get_parameter_variable('var').unwrap()
+        scale = self.get_parameter_variable('scale').unwrap()
+        offset = self.get_parameter_variable('offset').unwrap()
 
         if self.args['learn']:
             mean_in, var_in = tf.nn.moments(input_, self._axes)
