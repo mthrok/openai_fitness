@@ -1,5 +1,5 @@
 initializer:
-  typename: Kaiming
+  typename: KaimingInitializer
   args:
     uniform: True
 

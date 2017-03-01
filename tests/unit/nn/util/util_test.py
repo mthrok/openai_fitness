@@ -15,7 +15,7 @@ class UtilTest(fixture.TestCase):
             x = nn.Input(shape=(), name='x')
             w1 = nn.get_variable(
                 name='w', shape=(),
-                initializer=nn.initializer.Constant(w_0),
+                initializer=nn.initializer.ConstantInitializer(w_0),
             )
             y1 = w1 * x
             sgd.minimize(y1, w1)
@@ -27,7 +27,7 @@ class UtilTest(fixture.TestCase):
         with nn.variable_scope('{}/2'.format(self.get_scope())):
             w2 = nn.get_variable(
                 name='w', shape=(),
-                initializer=nn.initializer.Constant(w_0),
+                initializer=nn.initializer.ConstantInitializer(w_0),
             )
             y2 = w2 * x
             sgd.minimize(y2, w2)

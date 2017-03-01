@@ -9,7 +9,7 @@ from tests.unit import fixture
 
 
 def _create_variables(shape=(3, 4)):
-    init = nn.initializer.Constant
+    init = nn.initializer.ConstantInitializer
     with nn.variable_scope('source'):
         src = nn.get_variable('source', shape=shape, initializer=init(value=1))
     with nn.variable_scope('target'):

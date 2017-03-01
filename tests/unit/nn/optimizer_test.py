@@ -21,7 +21,7 @@ def _get_y_equals_x_squared(scope, x_init):
     with nn.variable_scope(scope):
         x = nn.get_variable(
             name='x', shape=(), trainable=True,
-            initializer=nn.initializer.Constant(x_init))
+            initializer=nn.initializer.ConstantInitializer(x_init))
         y = x * x
     return x, y
 
@@ -95,7 +95,8 @@ class OptimizerGradientTest(fixture.TestCase):
         sgd = nn.optimizer.SGD(learning_rate=1.0)
         shape = (32, 1)
         with nn.variable_scope(self.get_scope()):
-            initializer = nn.get_initializer('Uniform')(minval=-3, maxval=3)
+            initializer = nn.get_initializer(
+                'UniformInitializer')(minval=-3, maxval=3)
             x = nn.get_variable(name='x', shape=shape, initializer=initializer)
             y = x * x / 2
             grads_and_vars = [

@@ -1,5 +1,5 @@
 initializer:
-  typename: Xavier
+  typename: XavierInitializer
   args:
     uniform: True
 

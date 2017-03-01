@@ -21,7 +21,7 @@ def create_image(height=210, width=160, channel=3):
 
 def get_all_initializers():
     """Get the all subclasses of BaseInitializer class"""
-    class_ = nn.base.initializer.BaseInitializer
+    class_ = nn.core.base.initializer.BaseInitializer
     return {
         name: Class for name, Class
         in inspect.getmembers(nn.initializer, inspect.isclass)
@@ -31,7 +31,7 @@ def get_all_initializers():
 
 def get_all_optimizers():
     """Get the all subclasses of BaseOptimizer class"""
-    class_ = nn.base.optimizer.BaseOptimizer
+    class_ = nn.core.base.optimizer.BaseOptimizer
     return {
         name: Class for name, Class
         in inspect.getmembers(nn.optimizer, inspect.isclass)
@@ -41,7 +41,7 @@ def get_all_optimizers():
 
 def get_all_layers():
     """Get the all subclasses of BaseLayer class"""
-    class_ = nn.base.layer.BaseLayer
+    class_ = nn.core.base.layer.BaseLayer
     return {
         name: Class for name, Class
         in inspect.getmembers(nn.layer, inspect.isclass)
@@ -51,7 +51,7 @@ def get_all_layers():
 
 def get_all_costs():
     """Get the all subclasses of BaseCost class"""
-    class_ = nn.base.cost.BaseCost
+    class_ = nn.core.base.cost.BaseCost
     return {
         name: Class for name, Class
         in inspect.getmembers(nn.cost, inspect.isclass)
@@ -64,7 +64,7 @@ def create_constant_variable(shape, dtype, value=7, name='constant_varriable'):
     """Create Variable for test"""
     return nn.get_variable(
         name=name, shape=shape, dtype=dtype,
-        initializer=nn.initializer.Constant(value)
+        initializer=nn.initializer.ConstantInitializer(value)
     )
 
 
@@ -73,7 +73,8 @@ def create_random_variable(
     """Create Variable with uniform randoml values for test"""
     return nn.get_variable(
         name=name, shape=shape, dtype=dtype,
-        initializer=nn.initializer.Uniform(minval=min_val, maxval=max_val)
+        initializer=nn.initializer.UniformInitializer(
+            minval=min_val, maxval=max_val)
     )
 
 

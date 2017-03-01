@@ -10,6 +10,8 @@ import numpy as np
 import luchador.util
 from luchador import nn
 
+_BE = luchador.get_nn_backend()
+
 
 def _parse_command_line_args():
     from argparse import ArgumentParser as AP
@@ -35,10 +37,10 @@ def _create_initializer(typename, args):
 
 
 def _transpose_needed(initializer, shape):
+    names = ['XavierInitializer', 'KaimingInitializer']
     return (
-        len(shape) == 4 and
-        initializer.__class__.__name__ in ['Xavier', 'Kaiming'] and
-        luchador.get_nn_backend() == 'tensorflow'
+        len(shape) == 4 and _BE == 'tensorflow' and
+        initializer.__class__.__name__ in names
     )
 
 

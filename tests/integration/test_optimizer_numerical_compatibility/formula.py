@@ -24,7 +24,7 @@ class x2(_Formula):
     def get():
         x = nn.get_variable(
             name='x', shape=[],
-            initializer=nn.initializer.Constant(3))
+            initializer=nn.initializer.ConstantInitializer(3))
         y = x * x
         return {
             'loss': y,
@@ -44,7 +44,7 @@ class x6(_Formula):
     def get():
         x = nn.get_variable(
             name='x', shape=[],
-            initializer=nn.initializer.Constant(2.0))
+            initializer=nn.initializer.ConstantInitializer(2.0))
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)
         return {
             'loss': y,

@@ -1,12 +1,13 @@
+"""Implement initializers"""
 from __future__ import absolute_import
 
 from ..base.initializer import BaseInitializer
-from .. backend import initializer as init_module
+from ..backend import initializer
+
+# pylint: disable=anomalous-backslash-in-string
 
 
-###############################################################################
-# pylint: disable=abstract-method
-class Constant(init_module.Constant, BaseInitializer):
+class ConstantInitializer(initializer.Constant, BaseInitializer):
     """Initialize Variale with constant value
 
     Parameters
@@ -18,10 +19,10 @@ class Constant(init_module.Constant, BaseInitializer):
         Data type to sample. If None, default dtype is used.
     """
     def __init__(self, value, dtype=None):
-        super(BaseConstant, self).__init__(value=value, dtype=dtype)
+        super(ConstantInitializer, self).__init__(value=value, dtype=dtype)
 
 
-class BaseUniform(BaseInitializer):
+class UniformInitializer(initializer.Uniform, BaseInitializer):
     """Initialize Variale with samples from uniform distribution
 
     Parameters
@@ -36,11 +37,11 @@ class BaseUniform(BaseInitializer):
         Data type to sample. If None, default dtype is used.
     """
     def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
-        super(BaseUniform, self).__init__(
+        super(UniformInitializer, self).__init__(
             minval=minval, maxval=maxval, seed=seed, dtype=dtype)
 
 
-class BaseNormal(BaseInitializer):
+class NormalInitializer(initializer.Normal, BaseInitializer):
     """Initialize Variale with samples from normal distribution
 
     Parameters
@@ -55,13 +56,12 @@ class BaseNormal(BaseInitializer):
         Data type to sample. If None, default dtype is used.
     """
     def __init__(self, mean=0.0, stddev=1.0, seed=None, dtype=None):
-        super(BaseNormal, self).__init__(
+        super(NormalInitializer, self).__init__(
             mean=mean, stddev=stddev, seed=seed, dtype=dtype)
 
 
-class BaseXavier(BaseInitializer):
-    # pylint: disable=anomalous-backslash-in-string
-    """Implement Xavier initialization [1]_ in Tensorflow manner [2]_
+class XavierInitializer(initializer.Xavier, BaseInitializer):
+    """Implement Xavier initialization [AISTATS2010]_ in TF manner [TFXAVIER]_
 
     Parameters
     ----------
@@ -95,28 +95,27 @@ class BaseXavier(BaseInitializer):
 
     References
     ----------
-    .. [1] Xavier Glorot and Yoshua Bengio (2010):
-           Understanding the difficulty of training deep feedforward neural
-           networks. International conference on artificial intelligence and
-           statistics.
-    .. [2]
-           https://www.tensorflow.org/versions/r0.11/api_docs/python/contrib.layers.html#xavier_initializer
+    .. [AISTATS2010] Xavier Glorot and Yoshua Bengio (2010):
+        Understanding the difficulty of training deep feedforward neural
+        networks. International conference on artificial intelligence and
+        statistics.
+    .. [TFXAVIER]
+        https://www.tensorflow.org/versions/r1.0/api_docs/python/tf/contrib/layers/xavier_initializer
     """
     def __init__(self, uniform=True, seed=None, dtype=None):
-        super(BaseXavier, self).__init__(
+        super(XavierInitializer, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)
 
 
-class BaseKaiming(BaseInitializer):
+class KaimingInitializer(initializer.Kaiming, BaseInitializer):
     """Implement Kaiming initialization
 
     References
     ----------
-    .. [1] Kaiming He et al. (2015):
-           Delving deep into rectifiers: Surpassing human-level performance on
-           imagenet classification. arXiv preprint arXiv:1502.01852.
+    .. [ARXIV01852] Kaiming He et al. (2015):
+        Delving deep into rectifiers: Surpassing human-level performance on
+        imagenet classification. arXiv preprint arXiv:1502.01852.
     """
     def __init__(self, uniform=True, seed=None, dtype=None):
-        super(BaseKaiming, self).__init__(
+        super(KaimingInitializer, self).__init__(
             uniform=uniform, seed=seed, dtype=dtype)
-

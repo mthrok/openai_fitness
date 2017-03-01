@@ -11,15 +11,15 @@ import numpy as np
 from numpy.random import RandomState
 from scipy.stats import truncnorm as tnorm
 
-import theano.config
+import theano
 
-from luchador.nn.core.base import initializer as base_initializer
 from .random import get_rng
 
 __all__ = [
     'InitializerMixin',
     'Constant', 'Uniform', 'Normal', 'Xavier', 'Kaiming'
 ]
+# pylint: disable=too-few-public-methods,no-member
 
 
 class InitializerMixin(object):  # pylint: disable=too-few-public-methods
@@ -38,29 +38,29 @@ class InitializerMixin(object):  # pylint: disable=too-few-public-methods
         pass
 
 
-class Constant(InitializerMixin, base_initializer.BaseConstant):
+class Constant(InitializerMixin):
     """Implement Constant in Theano backend.
 
-    See :any:`BaseConstant` for detail.
+    See :any:`ConstantInitializer` for detail.
     """
     def _sample_values(self, shape):
         return self.args['value'] * np.ones(shape)
 
 
-class Uniform(InitializerMixin, base_initializer.BaseUniform):
+class Uniform(InitializerMixin):
     """Implement Uniform in Theano backend.
 
-    See :any:`BaseUniform` for detail.
+    See :any:`UniformInitializer` for detail.
     """
     def _sample_values(self, shape):
         low, high = self.args['minval'], self.args['maxval']
         return self._rng.uniform(low=low, high=high, size=shape)
 
 
-class Normal(InitializerMixin, base_initializer.BaseNormal):
+class Normal(InitializerMixin):
     """Implement Normal in Theano backend.
 
-    See :any:`BaseNormal` for detail.
+    See :any:`NormalInitializer` for detail.
     """
     def _sample_values(self, shape):
         loc, scale = self.args['mean'], self.args['stddev']
@@ -81,10 +81,10 @@ def _sample_truncated_normal(stddev, shape, rng):
     return tnorm.rvs(-2, 2, scale=scale, size=shape, random_state=rng)
 
 
-class Xavier(InitializerMixin, base_initializer.BaseXavier):
+class Xavier(InitializerMixin):
     """Implement Xavier in Theano backend.
 
-    See :any:`BaseXavier` for detail.
+    See :any:`XavierInitializer` for detail.
     """
     def _sample_values(self, shape):
         if len(shape) not in [2, 4]:
@@ -99,10 +99,10 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
             return _sample_truncated_normal(stddev, shape, self._rng)
 
 
-class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
+class Kaiming(InitializerMixin):
     """Implement Kaiming initialization in Theano backend.
 
-    See :any:`BaseKaiming` for detail.
+    See :any:`KaimingInitializer` for detail.
     """
     def _sample_values(self, shape):
         if len(shape) not in [2, 4]:

@@ -9,14 +9,13 @@ import tensorflow as tf
 from tensorflow.contrib import layers as tf_layers
 
 import luchador
-from luchador.nn.core.base import initializer as base_initializer
 
-__all__ = [
-    'InitializerMixin', 'Constant', 'Uniform', 'Normal', 'Xavier', 'Kaiming'
-]
+__all__ = ['Constant', 'Uniform', 'Normal', 'Xavier', 'Kaiming']
+# pylint: disable=too-few-public-methods
+# pylint: disable=attribute-defined-outside-init,no-member
 
 
-class InitializerMixin(object):  # pylint: disable=too-few-public-methods
+class InitializerMixin(object):
     """Provide TF-specific Initializer methods"""
     def unwrap(self):
         """Returns the underlying TF native initializer"""
@@ -32,20 +31,20 @@ class InitializerMixin(object):  # pylint: disable=too-few-public-methods
         return tf.as_dtype(self.args['dtype'] or luchador.get_nn_dtype())
 
 
-class Constant(InitializerMixin, base_initializer.BaseConstant):
+class Constant(InitializerMixin):
     """Implement Constant in Tensorflow backend.
 
-    See :any:`BaseConstant` for detail.
+    See :any:`ConstantInitializer` for detail.
     """
     def _run_backend_specific_init(self):
         self._initializer = tf.constant_initializer(
             value=self.args['value'], dtype=self._get_dtype())
 
 
-class Uniform(InitializerMixin, base_initializer.BaseUniform):
+class Uniform(InitializerMixin):
     """Implement Uniform in Tensorflow backend.
 
-    See :any:`BaseUniform` for detail.
+    See :any:`UniformInitializer` for detail.
     """
     def _run_backend_specific_init(self):
         self._initializer = tf.random_uniform_initializer(
@@ -53,10 +52,10 @@ class Uniform(InitializerMixin, base_initializer.BaseUniform):
             seed=self.args['seed'], dtype=self._get_dtype())
 
 
-class Normal(InitializerMixin, base_initializer.BaseNormal):
+class Normal(InitializerMixin):
     """Implement Normal in Tensorflow backend.
 
-    See :any:`BaseNormal` for detail.
+    See :any:`NormalInitializer` for detail.
     """
     def _run_backend_specific_init(self):
         self._initializer = tf.random_normal_initializer(
@@ -64,10 +63,10 @@ class Normal(InitializerMixin, base_initializer.BaseNormal):
             seed=self.args['seed'], dtype=self._get_dtype())
 
 
-class Xavier(InitializerMixin, base_initializer.BaseXavier):
+class Xavier(InitializerMixin):
     """Implement Xavier in Tensorflow backend.
 
-    See :any:`BaseXavier` for detail.
+    See :any:`XavierInitializer` for detail.
     """
     def _run_backend_specific_init(self):
         self._initializer = tf_layers.xavier_initializer(
@@ -75,10 +74,10 @@ class Xavier(InitializerMixin, base_initializer.BaseXavier):
             dtype=self._get_dtype())
 
 
-class Kaiming(InitializerMixin, base_initializer.BaseKaiming):
+class Kaiming(InitializerMixin):
     """Implement Kaiming He initializer in Tensorflow backend.
 
-    See :any:`BaseKaiming` for detail.
+    See :any:`KaimingInitializer` for detail.
     """
     def _run_backend_specific_init(self):
         self._initializer = tf_layers.variance_scaling_initializer(

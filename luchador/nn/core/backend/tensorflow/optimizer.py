@@ -148,7 +148,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = wrapper.get_variable(
             name=name, shape=[],
-            initializer=initializer.Constant(initial_value))
+            initializer=tf.constant_initializer(initial_value))
         self.slot.append(slot_var)
         return slot_var.unwrap()
 

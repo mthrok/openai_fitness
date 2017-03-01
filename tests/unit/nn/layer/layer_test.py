@@ -24,13 +24,13 @@ class TestInitializer(TestCase):
                 n_nodes=5,
                 initializers={
                     'weight': {
-                        'typename': 'Constant',
+                        'typename': 'ConstantInitializer',
                         'args': {
                             'value': weight_val,
                         },
                     },
                     'bias': {
-                        'typename': 'Constant',
+                        'typename': 'ConstantInitializer',
                         'args': {
                             'value': bias_val,
                         }

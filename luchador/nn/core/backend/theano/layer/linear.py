@@ -16,13 +16,14 @@ _LG = logging.getLogger(__name__)
 
 
 def _get_weight_init(config):
-    config = config or {'typename': 'Xavier'}
+    config = config or {'typename': 'XavierInitializer'}
     return getter.get_initializer(
         config['typename'])(**config.get('args', {}))
 
 
 def _get_bias_init(config):
-    config = config or {'typename': 'Constant', 'args': {'value': 0.1}}
+    config = config or {
+        'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
     return getter.get_initializer(
         config['typename'])(**config.get('args', {}))
 

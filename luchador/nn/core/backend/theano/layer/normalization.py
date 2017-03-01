@@ -7,7 +7,8 @@ import logging
 import theano.tensor as T
 
 from luchador.nn.core.base import layer as base_layer
-from .. import wrapper, initializer
+from luchador.nn.core.base.getter import get_initializer
+from .. import wrapper
 
 __all__ = ['BatchNormalization']
 
@@ -29,30 +30,32 @@ class BatchNormalization(base_layer.BaseBatchNormalization):
         _LG.debug('     Axes: %s', self._axes)
         _LG.debug('  Pattern: %s', self._pattern)
 
+        const_init = get_initializer('ConstantInitializer')
+
         if self._parameter_variables['mean'] is None:
             mean = wrapper.get_variable(
                 name='mean', shape=shape, trainable=False,
-                initializer=initializer.Constant(0), dtype=dtype)
+                initializer=const_init(0), dtype=dtype)
             self.set_parameter_variables(mean=mean)
 
         if self._parameter_variables['var'] is None:
             var = wrapper.get_variable(
                 name='var', shape=shape, trainable=False,
-                initializer=initializer.Constant(1), dtype=dtype)
+                initializer=const_init(1), dtype=dtype)
             self.set_parameter_variables(var=var)
 
         if self._parameter_variables['scale'] is None:
             scale_val = self.args['scale']
             scale = wrapper.get_variable(
                 name='scale', shape=shape, trainable=True,
-                initializer=initializer.Constant(scale_val), dtype=dtype)
+                initializer=const_init(scale_val), dtype=dtype)
             self.set_parameter_variables(scale=scale)
 
         if self._parameter_variables['offset'] is None:
             offset_val = self.args['offset']
             offset = wrapper.get_variable(
                 name='offset', shape=shape, trainable=True,
-                initializer=initializer.Constant(offset_val), dtype=dtype)
+                initializer=const_init(offset_val), dtype=dtype)
             self.set_parameter_variables(offset=offset)
 
     def _build(self, input_tensor):

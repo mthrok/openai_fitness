@@ -12,7 +12,7 @@ import theano.tensor as T
 import luchador.util
 from ...base import wrapper as base_wrapper
 from ...base import scope as scope_module
-from .initializer import Normal
+from ...base.getter import get_initializer
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation', 'get_variable']
 
@@ -351,7 +351,7 @@ def get_variable(
                 'but instead was {}.'.format(name_, shape))
 
         if not initializer:
-            initializer = Normal(dtype=dtype)
+            initializer = get_initializer('NormalInitializer')(dtype=dtype)
 
         # Scalar variable should not have `broadcastable`
         if not shape and 'broadcastable' in kwargs:

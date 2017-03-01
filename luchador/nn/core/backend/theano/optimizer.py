@@ -7,8 +7,9 @@ import theano
 import theano.tensor as T
 
 import luchador.util
-from luchador.nn.core.base import optimizer as base_optimizer
-from . import initializer, wrapper
+from ...base import optimizer as base_optimizer
+from ...base.getter import get_initializer
+from . import wrapper
 
 __all__ = [
     'OptimizerMixin',
@@ -94,7 +95,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
             self.args['name'], var.name.split(':')[0], slot_name)
         slot_var = wrapper.get_variable(
             name=name, shape=value.shape, dtype=value.dtype,
-            initializer=initializer.Constant(0),
+            initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
         self.slot.append(slot_var)
         return slot_var
@@ -121,7 +122,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = wrapper.get_variable(
             name=name, shape=[], broadcastable=True,
-            initializer=initializer.Constant(initial_value))
+            initializer=get_initializer('ConstantInitializer')(initial_value))
         self.slot.append(slot_var)
         return slot_var
 

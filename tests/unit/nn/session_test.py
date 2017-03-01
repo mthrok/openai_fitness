@@ -44,7 +44,7 @@ class SessionTest(fixture.TestCase):
             x = nn.Input(shape=(), name='x')
             w = nn.get_variable(
                 name='w', shape=(),
-                initializer=nn.initializer.Constant(w_0),
+                initializer=nn.initializer.ConstantInitializer(w_0),
             )
             y = w * x
 
