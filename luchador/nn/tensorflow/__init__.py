@@ -8,7 +8,7 @@ from . import (  # noqa: F401
     cost,
     optimizer,
 )
-from .scope import *  # noqa: F401, F403
+from ..base.backend.tensorflow.scope import *  # noqa
 from .wrapper import (  # noqa: F401
     Input,
     Variable,

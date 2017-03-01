@@ -11,7 +11,7 @@ import theano.tensor as T
 
 import luchador.util
 from ..base import wrapper as base_wrapper
-from . import scope as scope_module
+from ..base.backend import scope as scope_module
 from .initializer import Normal
 
 __all__ = ['Variable', 'Tensor', 'Input', 'Operation', 'get_variable']
