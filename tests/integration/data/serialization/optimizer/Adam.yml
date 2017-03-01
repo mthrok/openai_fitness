@@ -1,0 +1,6 @@
+typename: Adam
+args:
+  learning_rate: 0.001
+  beta1: 0.9
+  beta2: 0.999
+  epsilon: !!float 1e-8

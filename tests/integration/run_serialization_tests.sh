@@ -7,20 +7,20 @@ DATA_DIR="${BASE_DIR}/data"
 
 # Get the list of optimizers in optimizer directory
 OPTIMIZERS=()
-for FILE in ${DATA_DIR}/optimizer/*.yml
+for FILE in ${DATA_DIR}/serialization/optimizer/*.yml
 do
     OPTIMIZERS+=(${FILE})
 done
 
 # Get the list of models in luchador model directory
 MODELS=()
-for FILE in ${DATA_DIR}/serialization/*.yml
+for FILE in ${DATA_DIR}/serialization/model/*.yml
 do
     MODELS+=(${FILE})
 done
 
 # Run serialization test on each model + optimizer combination
-for MODEL in ${MODELS}
+for MODEL in "${MODELS[@]}"
 do
     for OPTIMIZER in "${OPTIMIZERS[@]}"
     do

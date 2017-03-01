@@ -1,0 +1,5 @@
+typename: NeonRMSProp
+args:
+  learning_rate: 0.001
+  decay: 0.95
+  epsilon: 0.01

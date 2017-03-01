@@ -1,0 +1,6 @@
+typename: GravesRMSProp
+args:
+  learning_rate: 0.001
+  decay1: 0.95
+  decay2: 0.95
+  epsilon: 0.01
