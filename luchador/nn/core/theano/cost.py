@@ -6,7 +6,7 @@ import logging
 import theano
 import theano.tensor as T
 
-from luchador.nn.base import cost as base_cost
+from ..base import cost as base_cost
 from . import wrapper
 
 __all__ = ['SSE', 'SigmoidCrossEntropy']

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 import luchador.util
-from luchador.nn.base import optimizer as base_optimizer
+from ..base import optimizer as base_optimizer
 from . import initializer, wrapper
 # pylint: disable=invalid-name, too-many-locals
 

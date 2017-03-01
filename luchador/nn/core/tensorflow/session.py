@@ -6,7 +6,7 @@ import logging
 import tensorflow as tf
 
 import luchador.util
-from luchador.nn.base.session import BaseSession
+from ..base.session import BaseSession
 from ..base.backend import scope
 from . import wrapper
 

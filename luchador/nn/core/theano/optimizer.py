@@ -7,7 +7,7 @@ import theano
 import theano.tensor as T
 
 import luchador.util
-from luchador.nn.base import optimizer as base_optimizer
+from ..base import optimizer as base_optimizer
 from . import initializer, wrapper
 
 __all__ = [

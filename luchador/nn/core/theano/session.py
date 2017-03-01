@@ -8,7 +8,7 @@ import theano
 import numpy as np
 
 import luchador.util
-from luchador.nn.base.session import BaseSession
+from ..base.session import BaseSession
 from ..base.backend import scope
 from . import wrapper
 

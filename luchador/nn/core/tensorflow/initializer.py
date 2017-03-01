@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.contrib import layers as tf_layers
 
 import luchador
-from luchador.nn.base import initializer as base_initializer
+from ..base import initializer as base_initializer
 
 __all__ = [
     'InitializerMixin', 'Constant', 'Uniform', 'Normal', 'Xavier', 'Kaiming'

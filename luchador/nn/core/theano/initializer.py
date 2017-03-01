@@ -13,7 +13,7 @@ from scipy.stats import truncnorm as tnorm
 
 from theano import config as theano_config
 
-from luchador.nn.base import initializer as base_initializer
+from ..base import initializer as base_initializer
 from .random import get_rng
 
 __all__ = [

@@ -3,8 +3,10 @@ from __future__ import absolute_import
 
 from luchador.util import get_subclasses
 import luchador.nn
-from ..base import wrapper as base_wrapper
-from ..base.getter import get_cost, get_layer, get_optimizer, get_initializer
+from ..core.base import wrapper as base_wrapper
+from ..core.base.getter import (
+    get_cost, get_layer, get_optimizer, get_initializer
+)
 from ..model import BaseModel
 
 __all__ = [

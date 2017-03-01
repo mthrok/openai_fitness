@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador.nn.base import cost as base_cost
+from ..base import cost as base_cost
 from . import wrapper
 
 __all__ = ['SSE', 'SigmoidCrossEntropy']
