@@ -1,0 +1,11 @@
+typename: Sequential
+args:
+  input_config:
+    typename: Input
+    args:
+      name: input
+      shape: {input_shape}
+  layer_configs:
+  - typename: Anonymous
+    args:
+      exp: {exp}
