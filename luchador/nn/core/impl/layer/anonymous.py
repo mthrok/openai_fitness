@@ -3,19 +3,21 @@ from __future__ import division
 from __future__ import absolute_import
 
 from ...base import BaseLayer
-from ...backend import Tensor
+from ...backend import wrapper, misc
 
 __all__ = ['Anonymous']
 # pylint: disable=abstract-method
 
 
 def _get_safe_function(input_tensor):
-    return {
+    maps = {
         'x': input_tensor,
-        'abs': abs,
         'True': True,
         'False': False,
     }
+    for key in misc.__all__:
+        maps[key] = getattr(misc, key)
+    return maps
 
 
 class Anonymous(BaseLayer):
@@ -27,4 +29,4 @@ class Anonymous(BaseLayer):
         # pylint: disable=eval-used
         local = _get_safe_function(input_tensor)
         y = eval(self.args['exp'], {'__builtins__': None}, local)
-        return Tensor(tensor=y.unwrap(), shape=y.shape, name='output')
+        return wrapper.Tensor(tensor=y.unwrap(), shape=y.shape, name='output')

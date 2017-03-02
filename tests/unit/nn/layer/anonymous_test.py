@@ -38,7 +38,7 @@ class AnonymousSingleInputTest(TestCase):
         """Anonymous layer can handle abs"""
         input_val = np.random.rand(3, 4)
         output_val = abs(input_val)
-        _test('abs(x)', input_val, output_val, self.get_scope())
+        _test('abs(x, name="output")', input_val, output_val, self.get_scope())
 
     def test_add(self):
         """Anonymous layer can handle addition"""
