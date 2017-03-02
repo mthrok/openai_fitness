@@ -4,20 +4,16 @@ from __future__ import absolute_import
 
 import theano.tensor as T
 
-from luchador.nn.core.base import layer as base_layer
 from ..wrapper import Tensor
 
-__all__ = [
-    'ReLU', 'Softplus',
-    'Sigmoid', 'Tanh',
-    'Softmax',
-]
+__all__ = ['ReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
+# pylint: disable=too-few-public-methods, no-self-use
 
 
-class ReLU(base_layer.BaseReLU):
+class ReLU(object):
     """Implement ReLU layer in Theano.
 
-    See :any:`BaseReLU` for detail.
+    See :any:`ReLU` for detail.
     """
     def _build(self, input_tensor):
         """Build rectified linear activation operation on input tensor"""
@@ -26,10 +22,10 @@ class ReLU(base_layer.BaseReLU):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Softplus(base_layer.BaseSoftplus):
+class Softplus(object):
     """Implemente Softplus layer in Theano.
 
-    See :any:`BaseSoftplus` for detail.
+    See :any:`Softplus` for detail.
     """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
@@ -37,10 +33,10 @@ class Softplus(base_layer.BaseSoftplus):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Sigmoid(base_layer.BaseSigmoid):
+class Sigmoid(object):
     """Implement Sigmoid layer in Theano.
 
-    See :any:`BaseSigmoid` for detail.
+    See :any:`Sigmoid` for detail.
     """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
@@ -48,10 +44,10 @@ class Sigmoid(base_layer.BaseSigmoid):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Tanh(base_layer.BaseTanh):
+class Tanh(object):
     """Implement Tanh layer in Theano.
 
-    See :any:`BaseTanh` for detail.
+    See :any:`Tanh` for detail.
     """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
@@ -59,10 +55,10 @@ class Tanh(base_layer.BaseTanh):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Softmax(base_layer.BaseSoftmax):
+class Softmax(object):
     """Implement Softmax layer in Theano.
 
-    See :any:`BaseSoftmax` for detail.
+    See :any:`Softmax` for detail.
     """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape

@@ -6,13 +6,12 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base import layer as base_layer
 from luchador.nn.core.base import getter
 from .. import wrapper
 
 __all__ = ['Dense']
-
 _LG = logging.getLogger(__name__)
+# pylint: disable=no-member, too-few-public-methods
 
 
 def _get_weight_init(config):
@@ -28,7 +27,7 @@ def _get_bias_init(config):
         config['typename'])(**config.get('args', {}))
 
 
-class Dense(base_layer.BaseDense):
+class Dense(object):
     """Implement Dense layer in Theano.
 
     See :any:`BaseDense` for detail.

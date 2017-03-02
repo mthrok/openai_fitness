@@ -6,16 +6,16 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base import layer as base_layer
 from luchador.nn.core.base.getter import get_initializer
 from .. import wrapper
 
 __all__ = ['BatchNormalization']
-
 _LG = logging.getLogger(__name__)
 
+# pylint: disable=no-self-member,attribute-defined-outside-init,no-member
 
-class BatchNormalization(base_layer.BaseBatchNormalization):
+
+class BatchNormalization(object):
     """Implement BN layer in Theano.
 
     See :any:`BaseBatchNormalization` for detail.

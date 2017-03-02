@@ -2,18 +2,14 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
+from ...base import BaseLayer
+from ...backend import layer
 
-from .base import BaseLayer
-
-__all__ = ['BaseConv2D', 'BaseConv2DTranspose']
-
-_LG = logging.getLogger(__name__)
-
+__all__ = ['Conv2D', 'Conv2DTranspose']
 # pylint: disable=abstract-method
 
 
-class BaseConv2D(BaseLayer):
+class Conv2D(layer.Conv2D, BaseLayer):
     """Apply 2D convolution.
 
     Input Tensor : 4D tensor
@@ -95,7 +91,7 @@ class BaseConv2D(BaseLayer):
             self, filter_height, filter_width, n_filters, strides,
             padding='VALID', initializers=None, with_bias=True,
             name='Conv2D', **kwargs):
-        super(BaseConv2D, self).__init__(
+        super(Conv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
@@ -106,7 +102,7 @@ class BaseConv2D(BaseLayer):
             self._create_parameter_slot('bias', train=True, serialize=True)
 
 
-class BaseConv2DTranspose(BaseLayer):
+class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
     """Upsample 2D array with reversed convolution (gradient of convolution)
 
     Internally (both Tensorflow, Theano), this re-uses the implementation for
@@ -243,11 +239,11 @@ class BaseConv2DTranspose(BaseLayer):
         layer.
 
     strides : (int, tuple of two ints, or tuple of four ints)
-        Not optional. See :any:`BaseConv2D`. This has to consistent with input
+        Not optional. See :any:`Conv2D`. This has to consistent with input
         shape and output shape.
 
     padding : (str or int or tuple of two ints)
-        Not optional. See :any:`BaseConv2D`. This has to consistent with input
+        Not optional. See :any:`Conv2D`. This has to consistent with input
         shape and output shape.
 
     initializers: dict
@@ -292,7 +288,7 @@ class BaseConv2DTranspose(BaseLayer):
             strides=None, padding='VALID', initializers=None,
             with_bias=True, output_shape=None, output_shape_format=None,
             name='Conv2DTranspose', **kwargs):
-        super(BaseConv2DTranspose, self).__init__(
+        super(Conv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,

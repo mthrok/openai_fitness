@@ -4,15 +4,14 @@ from __future__ import absolute_import
 
 import theano.tensor as T
 
-from luchador.nn.core.base import layer as base_layer
 from ..wrapper import Tensor
 
-__all__ = [
-    'Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos'
-]
+__all__ = ['Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos']
+# pylint: disable=no-member,too-few-public-methods,no-self-use,
+# pylint: disable=attribute-defined-outside-init
 
 
-class Add(base_layer.BaseAdd):
+class Add(object):
     """Implement Add layer in Theano
 
     See :any: `BaseAdd` for detail.
@@ -27,7 +26,7 @@ class Add(base_layer.BaseAdd):
         return ret.__add__(var_list[-1], name='output')
 
 
-class Sub(base_layer.BaseAdd):
+class Sub(object):
     """Implement Sub layer in Theano
 
     See :any: `BaseSub` for detail.
@@ -39,7 +38,7 @@ class Sub(base_layer.BaseAdd):
         return var_list[0].__sub__(var_list[1], name='output')
 
 
-class TrueDiv(base_layer.BaseTrueDiv):
+class TrueDiv(object):
     """Implement TrueDiv layer in Theano.
 
     See :any:`BaseTrueDiv` for detail.
@@ -55,7 +54,7 @@ class TrueDiv(base_layer.BaseTrueDiv):
         return Tensor(output, shape=input_tensor.shape, name='output')
 
 
-class Mean(base_layer.BaseMean):
+class Mean(object):
     """Implement Mean layer in Theano.
 
     See :any:`BaseMean` for detail.
@@ -66,7 +65,7 @@ class Mean(base_layer.BaseMean):
             name='output')
 
 
-class Sin(base_layer.BaseSin):
+class Sin(object):
     """Implement Sin layer in Theano
 
     See :any:`BaseSin` for detail.
@@ -77,7 +76,7 @@ class Sin(base_layer.BaseSin):
         return Tensor(output_tensor, shape=input_shape, name='output')
 
 
-class Cos(base_layer.BaseCos):
+class Cos(object):
     """Implement Cos layer in Theano
 
     See :any:`BaseSin` for detail.

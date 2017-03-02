@@ -2,18 +2,14 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
+from ...base import BaseLayer
+from ...backend import layer
 
-from .base import BaseLayer
-
-__all__ = ['BaseDense']
-
-_LG = logging.getLogger(__name__)
-
+__all__ = ['Dense']
 # pylint: disable=abstract-method
 
 
-class BaseDense(BaseLayer):
+class Dense(layer.Dense, BaseLayer):
     """Apply 2D affine transformation.
 
     Input Tensor
@@ -43,7 +39,7 @@ class BaseDense(BaseLayer):
     """
     def __init__(
             self, n_nodes, initializers=None, with_bias=True, name='Dense'):
-        super(BaseDense, self).__init__(
+        super(Dense, self).__init__(
             n_nodes=n_nodes, initializers=initializers or {},
             with_bias=with_bias, name=name)
 

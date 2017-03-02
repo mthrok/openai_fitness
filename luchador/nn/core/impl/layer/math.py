@@ -2,20 +2,14 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
+from ...base import BaseLayer
+from ...backend import layer
 
-from .base import BaseLayer
-
-__all__ = [
-    'BaseAdd', 'BaseSub', 'BaseTrueDiv', 'BaseMean', 'BaseSin', 'BaseCos'
-]
-
-_LG = logging.getLogger(__name__)
-
+__all__ = ['Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos']
 # pylint: disable=abstract-method
 
 
-class BaseAdd(BaseLayer):
+class Add(layer.Add, BaseLayer):
     """Add tensors
 
     Parameters
@@ -24,10 +18,10 @@ class BaseAdd(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Add'):
-        super(BaseAdd, self).__init__(name=name)
+        super(Add, self).__init__(name=name)
 
 
-class BaseSub(BaseLayer):
+class Sub(layer.Sub, BaseLayer):
     """Subtract tensors
 
     Parameters
@@ -36,10 +30,10 @@ class BaseSub(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Sub'):
-        super(BaseSub, self).__init__(name=name)
+        super(Sub, self).__init__(name=name)
 
 
-class BaseTrueDiv(BaseLayer):
+class TrueDiv(layer.TrueDiv, BaseLayer):
     """Apply real-valued division to input tensor elementwise
 
     Parameters
@@ -51,11 +45,11 @@ class BaseTrueDiv(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, denom, name='TrueDiv'):
-        super(BaseTrueDiv, self).__init__(denom=denom, name=name)
+        super(TrueDiv, self).__init__(denom=denom, name=name)
         self.denom = None
 
 
-class BaseMean(BaseLayer):
+class Mean(layer.Mean, BaseLayer):
     """Apply mean to input tensor
 
     Parameters
@@ -70,11 +64,11 @@ class BaseMean(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, axis, keep_dims=False, name='Mean'):
-        super(BaseMean, self).__init__(
+        super(Mean, self).__init__(
             axis=axis, keep_dims=keep_dims, name=name)
 
 
-class BaseSin(BaseLayer):
+class Sin(layer.Sin, BaseLayer):
     """Apply sin activation elementwise
 
     Parameters
@@ -83,10 +77,10 @@ class BaseSin(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Sin'):
-        super(BaseSin, self).__init__(name=name)
+        super(Sin, self).__init__(name=name)
 
 
-class BaseCos(BaseLayer):
+class Cos(layer.Cos, BaseLayer):
     """Apply cos activation elementwise
 
     Parameters
@@ -95,4 +89,4 @@ class BaseCos(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Cos'):
-        super(BaseCos, self).__init__(name=name)
+        super(Cos, self).__init__(name=name)

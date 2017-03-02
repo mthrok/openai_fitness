@@ -10,12 +10,13 @@ from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
 from luchador.nn.core import common
 from luchador.nn.core.base.getter import get_initializer
-from luchador.nn.core.base.layer import BaseConv2D, BaseConv2DTranspose
+
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
 
 _LG = logging.getLogger(__name__)
+# pylint: disable=too-few-public-methods, no-member
 
 
 def _map_border_mode(padding):
@@ -154,7 +155,7 @@ class _Conv2DMixin(object):
         )
 
 
-class Conv2D(_Conv2DMixin, BaseConv2D):
+class Conv2D(_Conv2DMixin):
     """Implement Conv2D layer in Theano.
 
     See :any:`BaseConv2D` for detail.
@@ -208,7 +209,7 @@ class Conv2D(_Conv2DMixin, BaseConv2D):
         return wrapper.Tensor(output_tensor, shape=output_shape, name='output')
 
 
-class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
+class Conv2DTranspose(_Conv2DMixin):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.

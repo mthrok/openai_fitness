@@ -2,18 +2,14 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
+from ...base import BaseLayer
+from ...backend import layer
 
-from .base import BaseLayer
-
-__all__ = ['BaseBatchNormalization']
-
-_LG = logging.getLogger(__name__)
-
+__all__ = ['BatchNormalization']
 # pylint: disable=abstract-method
 
 
-class BaseBatchNormalization(BaseLayer):
+class BatchNormalization(layer.BatchNormalization, BaseLayer):
     """Apply batch normalization [1]_:
 
     .. math::
@@ -39,7 +35,7 @@ class BaseBatchNormalization(BaseLayer):
     def __init__(
             self, scale=1.0, offset=0.0, epsilon=1e-4, learn=True,
             decay=0.999, name='BatchNormalization'):
-        super(BaseBatchNormalization, self).__init__(
+        super(BatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
             scale=scale, offset=offset, learn=learn, name=name)
 

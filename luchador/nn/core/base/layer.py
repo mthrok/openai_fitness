@@ -7,7 +7,7 @@ import logging
 from collections import OrderedDict
 
 import luchador.util
-from .. import scope as scope_module
+from . import scope as scope_module
 
 _LG = logging.getLogger(__name__)
 

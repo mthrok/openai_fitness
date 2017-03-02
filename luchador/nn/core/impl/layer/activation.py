@@ -2,17 +2,13 @@
 from __future__ import division
 from __future__ import absolute_import
 
-from .base import BaseLayer
+from ...base.layer import BaseLayer
+from ...backend import layer
 
-__all__ = [
-    'BaseReLU', 'BaseSigmoid', 'BaseTanh',
-    'BaseSoftmax', 'BaseSoftplus',
-]
-
-# pylint: disable=abstract-method
+__all__ = ['ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'Softplus']
 
 
-class BaseReLU(BaseLayer):
+class ReLU(layer.ReLU, BaseLayer):
     """Apply rectified linear activation elementwise
 
     Parameters
@@ -21,10 +17,10 @@ class BaseReLU(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='ReLU'):
-        super(BaseReLU, self).__init__(name=name)
+        super(ReLU, self).__init__(name=name)
 
 
-class BaseSigmoid(BaseLayer):
+class Sigmoid(layer.ReLU, BaseLayer):
     """Apply sigmoid activation elementwise
 
     Parameters
@@ -33,10 +29,10 @@ class BaseSigmoid(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Sigmoid'):
-        super(BaseSigmoid, self).__init__(name=name)
+        super(Sigmoid, self).__init__(name=name)
 
 
-class BaseTanh(BaseLayer):
+class Tanh(layer.ReLU, BaseLayer):
     """Apply tanh activation elementwise
 
     Parameters
@@ -45,10 +41,10 @@ class BaseTanh(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Tanh'):
-        super(BaseTanh, self).__init__(name=name)
+        super(Tanh, self).__init__(name=name)
 
 
-class BaseSoftmax(BaseLayer):
+class Softmax(layer.Softmax, BaseLayer):
     """Apply softmax activation elementwise
 
     Parameters
@@ -57,10 +53,10 @@ class BaseSoftmax(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Softmax'):
-        super(BaseSoftmax, self).__init__(name=name)
+        super(Softmax, self).__init__(name=name)
 
 
-class BaseSoftplus(BaseLayer):
+class Softplus(layer.Softplus, BaseLayer):
     """Apply softplus activation elementwise
 
     Parameters
@@ -69,4 +65,4 @@ class BaseSoftplus(BaseLayer):
         Used as base scope when building parameters and output
     """
     def __init__(self, name='Softplus'):
-        super(BaseSoftplus, self).__init__(name=name)
+        super(Softplus, self).__init__(name=name)

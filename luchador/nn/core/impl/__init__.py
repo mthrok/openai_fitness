@@ -1,6 +1,7 @@
 """Initialize Neural Network module"""
 from __future__ import absolute_import
-
-from . import initializer
-from . import cost
-from . import optimizer
+# pylint: disable=import-self
+from . import initializer  # noqa
+from . import cost  # noqa
+from . import optimizer  # noqa
+from . import layer  # noqa

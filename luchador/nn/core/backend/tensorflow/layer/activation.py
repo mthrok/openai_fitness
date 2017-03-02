@@ -6,7 +6,6 @@ import logging
 
 import tensorflow as tf
 
-from luchador.nn.core.base import layer as base_layer
 from ..wrapper import Tensor
 
 __all__ = [
@@ -14,11 +13,11 @@ __all__ = [
     'Sigmoid', 'Tanh',
     'Softmax',
 ]
-
 _LG = logging.getLogger(__name__)
+# pylint: disable=no-self-use
 
 
-class ReLU(base_layer.BaseReLU):
+class ReLU(object):
     """Implement ReLU in Tensorflow.
 
     See :any:`BaseReLU` for detail.
@@ -28,7 +27,7 @@ class ReLU(base_layer.BaseReLU):
         return Tensor(output, name='output')
 
 
-class Softplus(base_layer.BaseSoftplus):
+class Softplus(object):
     """Implement Softplus in Tensorflow.
 
     See :any:`BaseSoftplus` for detail.
@@ -38,7 +37,7 @@ class Softplus(base_layer.BaseSoftplus):
         return Tensor(output, name='output')
 
 
-class Sigmoid(base_layer.BaseSigmoid):
+class Sigmoid(object):
     """Implement Sigmoid in Tensorflow.
 
     See :any:`BaseSigmoid` for detail.
@@ -48,7 +47,7 @@ class Sigmoid(base_layer.BaseSigmoid):
         return Tensor(output, name='output')
 
 
-class Tanh(base_layer.BaseTanh):
+class Tanh(object):
     """Implement Tanh in Tensorflow.
 
     See :any:`BaseTanh` for detail.
@@ -58,7 +57,7 @@ class Tanh(base_layer.BaseTanh):
         return Tensor(output, name='output')
 
 
-class Softmax(base_layer.BaseSoftmax):
+class Softmax(object):
     """Implement Softmax in Tensorflow.
 
     See :any:`BaseSoftmax` for detail.

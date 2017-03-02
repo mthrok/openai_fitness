@@ -4,15 +4,15 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador.nn.core.base import layer as base_layer
 from ..wrapper import Tensor
 
 __all__ = [
     'Flatten', 'Tile', 'Concat',
 ]
+# pylint: disable=no-self-use,no-member
 
 
-class Flatten(base_layer.BaseFlatten):
+class Flatten(object):
     """Implement Flatten in Tensorflow.
 
     See :any:`BaseFlatten` for detail.
@@ -25,7 +25,7 @@ class Flatten(base_layer.BaseFlatten):
         return Tensor(output, name='output')
 
 
-class Tile(base_layer.BaseTile):
+class Tile(object):
     """Implement Tile layer in Tensorflow
 
     See :any:`BaseFlatten` for detail.
@@ -34,7 +34,7 @@ class Tile(base_layer.BaseTile):
         return input_tensor.tile(self.args['pattern'], name='output')
 
 
-class Concat(base_layer.BaseConcat):
+class Concat(object):
     """Implement Concat in Tensorflow.
 
     See :any:`BaseConcat` for detail.

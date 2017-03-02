@@ -7,16 +7,15 @@ import logging
 import tensorflow as tf
 
 import luchador
-from luchador.nn.core.base import layer as base_layer
 from luchador.nn.core.base.getter import get_initializer
-from .. import wrapper, initializer
+from .. import wrapper
 
 __all__ = ['BatchNormalization']
-
 _LG = logging.getLogger(__name__)
+# pylint: disable=no-self-use,no-member,attribute-defined-outside-init
 
 
-class BatchNormalization(base_layer.BaseBatchNormalization):
+class BatchNormalization(object):
     """Implement BatchNormalization in Tensorflow.
 
     See :any:`BaseBatchNormalization` for detail.

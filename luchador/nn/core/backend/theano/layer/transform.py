@@ -6,17 +6,14 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base import layer as base_layer
 from ..wrapper import Tensor
 
-__all__ = [
-    'Flatten', 'Tile', 'Concat',
-]
-
+__all__ = ['Flatten', 'Tile', 'Concat']
 _LG = logging.getLogger(__name__)
+# pylint:disable=no-member,no-self-use
 
 
-class Flatten(base_layer.BaseFlatten):
+class Flatten(object):
     """Implement Flatten layer in Theano
 
     See :any:`BaseFlatten` for detail.
@@ -34,7 +31,7 @@ class Flatten(base_layer.BaseFlatten):
         return Tensor(output_tensor, shape=output_shape, name='output')
 
 
-class Tile(base_layer.BaseTile):
+class Tile(object):
     """Implement Tile layer in Theano
 
     See :any:`BaseFlatten` for detail.
@@ -62,7 +59,7 @@ def _compute_concat_shape(shapes, axis):
     return _shape
 
 
-class Concat(base_layer.BaseConcat):
+class Concat(object):
     """Implement Concat layer in Theano
 
     See :any: `BaseConcat` for detail.

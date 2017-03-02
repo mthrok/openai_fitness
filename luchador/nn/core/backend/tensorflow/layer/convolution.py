@@ -10,12 +10,11 @@ import tensorflow as tf
 import luchador
 from luchador.nn.core import common
 from luchador.nn.core.base.getter import get_initializer
-from luchador.nn.core.base.layer import BaseConv2D, BaseConv2DTranspose
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
-
 _LG = logging.getLogger(__name__)
+# pylint: disable=no-member
 
 
 def _validate_padding(padding):
@@ -105,7 +104,8 @@ def _get_filter_init(config):
 
 def _get_bias_init(config):
     """Make bias initializer. Default to Constant (0.1)"""
-    config = config or {'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
+    config = config or {
+        'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
     return get_initializer(
         config['typename'])(**config.get('args', {}))
 
@@ -148,7 +148,7 @@ class _Conv2DMixin(object):
             self._build_bias(shape=bias_shape, dtype=dtype)
 
 
-class Conv2D(_Conv2DMixin, BaseConv2D):
+class Conv2D(_Conv2DMixin):
     """Implement Conv2D layer in Tensorflow.
 
     See :any:`BaseConv2D` for detail.
@@ -180,7 +180,7 @@ class Conv2D(_Conv2DMixin, BaseConv2D):
         return wrapper.Tensor(output, name='output')
 
 
-class Conv2DTranspose(_Conv2DMixin, BaseConv2DTranspose):
+class Conv2DTranspose(_Conv2DMixin):
     """Implement Conv2DTranspose layer in Theano.
 
     See :any:`BaseConv2DTranspose` for detail.
