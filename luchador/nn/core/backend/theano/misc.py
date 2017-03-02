@@ -93,6 +93,12 @@ def abs(var, name=None):
     return var.__abs__(name=name)
 
 
+def exp(var, name=None):
+    """Returns exponential of the given variable"""
+    _tensor = T.exp(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
 def maximum(var1, var2, name=None):
     """Compute elementwise max among tensors
 
