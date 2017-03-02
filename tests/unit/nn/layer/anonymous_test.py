@@ -23,7 +23,7 @@ def _test(exp, input_val, output_val, scope):
     output_val_ = session.run(
         outputs=output_var, inputs={input_var: input_val})
 
-    np.testing.assert_almost_equal(output_val_, output_val)
+    np.testing.assert_almost_equal(output_val_, output_val, decimal=4)
 
 
 class AnonymousSingleInputTest(TestCase):
