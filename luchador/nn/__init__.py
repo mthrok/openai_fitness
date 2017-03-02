@@ -3,10 +3,12 @@ from __future__ import absolute_import
 
 import logging
 
-# pylint: disable=wildcard-import, redefined-builtin
+# pylint: disable=wildcard-import
 import luchador
 from .core import *  # noqa
 from .util import *  # noqa
+from .saver import Saver  # noqa
+from .summary import SummaryWriter  # noqa
 
 _LG = logging.getLogger(__name__)
 _LG.info('Luchador Version: %s', luchador.__version__)

@@ -8,8 +8,6 @@ import numpy as np
 import luchador
 import luchador.util
 from luchador import nn
-from luchador.nn.saver import Saver
-from luchador.nn.summary import SummaryWriter
 
 from .base import BaseAgent
 from .recorder import PrioritizedQueue
@@ -165,12 +163,12 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
     def _init_saver(self):
         config = self.args['saver_config']
-        self._saver = Saver(**config)
+        self._saver = nn.Saver(**config)
 
     def _init_summary_writer(self):
         """Initialize SummaryWriter and create set of summary operations"""
         config = self.args['summary_writer_config']
-        self._summary_writer = SummaryWriter(**config)
+        self._summary_writer = nn.SummaryWriter(**config)
 
         if self._ql.session.graph:
             self._summary_writer.add_graph(self._ql.session.graph)
