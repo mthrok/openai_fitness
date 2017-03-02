@@ -34,6 +34,12 @@ class AnonymousSingleInputTest(TestCase):
         output_val = -input_val
         _test('-x', input_val, output_val, self.get_scope())
 
+    def test_abs(self):
+        """Anonymous layer can handle abs"""
+        input_val = np.random.rand(3, 4)
+        output_val = abs(input_val)
+        _test('abs(x)', input_val, output_val, self.get_scope())
+
     def test_add(self):
         """Anonymous layer can handle addition"""
         input_val = np.random.rand(3, 4)
@@ -60,3 +66,49 @@ class AnonymousSingleInputTest(TestCase):
         input_val = np.random.rand(3, 4)
         output_val = input_val / 7
         _test('x / 7', input_val, output_val, self.get_scope())
+
+    def test_reshape(self):
+        """Anonymous layer can handle reshape"""
+        input_val = np.random.rand(3, 4)
+        output_val = input_val.reshape((-1, 1))
+        _test('x.reshape((-1, 1))', input_val, output_val, self.get_scope())
+
+    def test_tile(self):
+        """Anonymous layer can handle tile"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.tile(input_val, (3, 5))
+        _test('x.tile((3, 5))', input_val, output_val, self.get_scope())
+
+    def test_max(self):
+        """Anonymous layer can handle max"""
+        input_val = np.random.rand(3, 4)
+        output_val = input_val.max(axis=1)
+        _test('x.max(axis=1)', input_val, output_val, self.get_scope())
+
+    def test_sum(self):
+        """Anonymous layer can handle sum"""
+        input_val = np.random.rand(3, 4)
+        output_val = input_val.sum(axis=1)
+        _test('x.sum(axis=1)', input_val, output_val, self.get_scope())
+
+    def test_mean(self):
+        """Anonymous layer can handle mean"""
+        input_val = np.random.rand(3, 4)
+        output_val = input_val.mean(axis=1)
+        _test('x.mean(axis=1)', input_val, output_val, self.get_scope())
+
+    def test_mean_shift(self):
+        """Anonymous layer can handle complex arithmetic"""
+        input_val = np.random.rand(3, 4)
+        mean_ = np.tile(input_val.mean(axis=1, keepdims=True), (1, 4))
+        output_val = input_val - mean_
+        _test(
+            'x - x.mean(axis=1, keep_dims=True).tile((1, 4))',
+            input_val, output_val, self.get_scope()
+        )
+
+    def test_norm(self):
+        """Anonymous layer can handle complex arithmetic"""
+        input_val = np.random.rand(3, 4)
+        output_val = (input_val * input_val).sum()
+        _test('(x * x).sum()', input_val, output_val, self.get_scope())
