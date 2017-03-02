@@ -8,14 +8,12 @@ import theano
 import numpy as np
 
 import luchador.util
-from ...base.session import BaseSession
 from ...base import scope
 from . import wrapper
 
-
-_LG = logging.getLogger(__name__)
-
 __all__ = ['Session']
+_LG = logging.getLogger(__name__)
+# pylint: disable=no-member
 
 
 def _get_full_class(cls):
@@ -84,46 +82,18 @@ def _construct_function(inputs, outputs, updates, givens):
     return theano.function(inputs_, outputs_, updates=updates_, givens=givens_)
 
 
-class Session(BaseSession):
+class Session(object):
     """Handles operations and computations in similar way as Tensorflow session
     """
     def __init__(self, **_):
         super(Session, self).__init__()
         self._cached_functions = {}
 
-    @property
-    def graph(self):
+    def _get_graph(self):  # pylint: disable=no-self-use
         return None
 
-    def run(self, outputs=None, inputs=None,
-            updates=None, givens=None, name=None):
-        """Run computation and update values
-
-        Parameters
-        ----------
-        outputs : list of Tensors
-            Tensors of which values are fetched
-
-        inputs : dict
-            Keys are the input Tensors required to compute values of output
-            Tensors. Values are actual values to feed to Tensors.
-
-        updates : Operation or list of Operations
-            Updates variables
-
-        givens : dict
-            Same as inputs
-
-        name : str
-            When given, the resulting Theano function is internally cached so
-            that next time calling the same operation, only inputs and
-            givens are required.
-
-        Returns
-        -------
-        [list of] NumPy ND Arrays
-            The resulting values corresponding the given `outputs` values
-        """
+    def _run(self, outputs=None, inputs=None,
+             updates=None, givens=None, name=None):
         outputs = outputs if outputs else []
         inputs = inputs if inputs else {}
         if name in self._cached_functions:
@@ -139,30 +109,14 @@ class Session(BaseSession):
             return values
         return values[0]
 
-    def initialize(self):
-        """Compatibility for TF backend. Does nothing in Theano backend"""
+    def _initialize(self):
         pass
 
-    def close(self):
-        """Compatibility for TF backend. Does nothing in Theano backend"""
+    def _close(self):
         pass
 
     ###########################################################################
-    def load_dataset(self, dataset, cast=True, strict=True):
-        """Set the value of Variables with the given values
-
-        Args:
-          dataset(Dict): The keys are the names of Variables to be set, values
-            are the NumPy arrays with which value are used.
-
-          cast (Bool): If True, values are casted to the dtype of Variables.
-            When False and if dtypes of Variables and dataset do not match,
-            It raise TypeError.
-
-          strict (Bool): When True, if dataset contains a value for Variable
-            which is not defined, then ValueError exception is raised.
-            Otherwise it will be skipped.
-        """
+    def _load_dataset(self, dataset, cast=True, strict=True):
         ops = OrderedDict()
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
@@ -203,4 +157,4 @@ class Session(BaseSession):
                             .format(src_shape, tgt_shape)
                         )
                 ops[variable.unwrap()] = value
-        self.run(name=None, updates=wrapper.Operation(op=ops))
+        self.run(updates=wrapper.Operation(op=ops))

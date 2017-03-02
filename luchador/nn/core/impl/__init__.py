@@ -5,3 +5,4 @@ from . import initializer  # noqa
 from . import cost  # noqa
 from . import optimizer  # noqa
 from . import layer  # noqa
+from .session import Session  # noqa

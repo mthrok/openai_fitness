@@ -6,13 +6,12 @@ import logging
 import tensorflow as tf
 
 import luchador.util
-from ...base.session import BaseSession
 from ...base import scope
 from . import wrapper
 
-_LG = logging.getLogger(__name__)
-
 __all__ = ['Session']
+_LG = logging.getLogger(__name__)
+# pylint: disable=no-member
 
 
 def _get_full_class(cls):
@@ -93,43 +92,17 @@ def _construct_feed_dict(inputs, givens):
     return feed_dict
 
 
-class Session(BaseSession):
+class Session(object):
     """Wrap Tensorflow Session class to work with luchador API"""
     def __init__(self, graph=None, config=None):
         super(Session, self).__init__()
         self.session = tf.Session('', graph, config)
 
-    @property
-    def graph(self):
+    def _get_graph(self):
         return self.session.graph
 
-    def run(self, outputs=None, inputs=None,
-            updates=None, givens=None, name=None):
-        """Run computation and update values
-
-        Parameters
-        ----------
-        outputs : list of Tensors
-            Tensors of which values are fetched
-
-        inputs : dict
-            Keys are the input Tensors required to compute values of output
-            Tensors. Values are actual values to feed to Tensors.
-
-        updates : Operation or list of Operations
-            Updates variables
-
-        givens : dict
-            Same as inputs
-
-        name : str
-            Not used. Compatibility for theano backend
-
-        Returns
-        -------
-        [list of] NumPy ND Arrays
-            The resulting values corresponding the given `outputs` values
-        """
+    def _run(self, outputs=None, inputs=None,
+             updates=None, givens=None, **_):
         outputs = outputs if outputs else []
         inputs = inputs if inputs else {}
         fetches = _construct_fetches(outputs, updates)
@@ -139,29 +112,14 @@ class Session(BaseSession):
             return values[:len(outputs)]
         return values[0]
 
-    def close(self):
-        """Close this session and frees all associated resources"""
-        return self.session.close()
-
-    def initialize(self):
-        """Initialize all variables"""
+    def _initialize(self):
         self.session.run(tf.global_variables_initializer())
 
+    def _close(self):
+        return self.session.close()
+
     ###########################################################################
-    def load_dataset(self, dataset, cast=True, strict=True):
-        """Set the value of Variables with the given values
-
-        Args:
-          dataset(Dict): The keys are the names of Variables to be set, values
-            are the NumPy arrays with which value are used.
-
-          cast (Bool): Not used in Tensorflow backend as it casts dtype
-            internally.
-
-          strict (Bool): When True, if dataset contains a value for Variable
-            which is not defined, then ValueError exception is raised.
-            Otherwise it will be skipped.
-        """
+    def _load_dataset(self, dataset, strict=True, **_):
         ops = []
         with scope.variable_scope(scope.VariableScope(reuse=True, name='')):
             for name, value in dataset.items():
