@@ -34,14 +34,14 @@ def _build_sync_op(src_model, tgt_model, scope):
     with nn.variable_scope(scope):
         src_vars = src_model.get_parameters_to_serialize()
         tgt_vars = tgt_model.get_parameters_to_serialize()
-        return nn.build_sync_op(src_vars, tgt_vars, name='sync')
+        return nn.ops.build_sync_op(src_vars, tgt_vars, name='sync')
 
 
 def _build_error(target_q, action_value_0, action):
     n_actions = action_value_0.shape[1]
     delta = (target_q - action_value_0)
-    error = nn.minimum(nn.abs(delta), (delta * delta))
-    mask = nn.one_hot(action, n_classes=n_actions, dtype=error.dtype)
+    error = nn.ops.minimum(nn.ops.abs(delta), (delta * delta))
+    mask = nn.ops.one_hot(action, n_classes=n_actions, dtype=error.dtype)
     return (mask * error).sum(axis=1)
 
 
@@ -64,7 +64,7 @@ def _clip_grads(grads_and_vars, clip_norm):
     ret = []
     for grad, var in grads_and_vars:
         name = '{}_clip'.format(grad.name)
-        grad = nn.clip_by_norm(grad, clip_norm=clip_norm, name=name)
+        grad = nn.ops.clip_by_norm(grad, clip_norm=clip_norm, name=name)
         ret.append((grad, var))
     return ret
 
@@ -185,7 +185,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             reward = reward / config['scale_reward']
         if 'min_reward' in config and 'max_reward' in config:
             min_val, max_val = config['min_reward'], config['max_reward']
-            reward = nn.clip_by_value(
+            reward = nn.ops.clip_by_value(
                 reward, min_value=min_val, max_value=max_val)
 
         # Build Target Q

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
-import luchador.nn
+from .. import core
 from ..model import Sequential, Container
 from .getter import get_input, get_layer, get_tensor
 
@@ -13,13 +13,13 @@ _LG = logging.getLogger(__name__)
 
 def _get_existing_variable(name):
     """Search an existing Variable in current scope or global scope"""
-    scope = luchador.nn.get_variable_scope()
-    with luchador.nn.variable_scope(scope, reuse=True):
+    scope = core.get_variable_scope()
+    with core.variable_scope(scope, reuse=True):
         try:
-            return luchador.nn.get_variable('{}/{}'.format(scope.name, name))
+            return core.get_variable('{}/{}'.format(scope.name, name))
         except ValueError:
             pass
-        return luchador.nn.get_variable(name)
+        return core.get_variable(name)
 
 
 def make_io_node(config):
@@ -104,7 +104,7 @@ def make_io_node(config):
     elif config.get('reuse'):
         ret = get_input(config['name'])
     else:
-        ret = luchador.nn.backend.Input(**config['args'])
+        ret = core.Input(**config['args'])
     return ret
 
 

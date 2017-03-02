@@ -7,6 +7,8 @@ import numpy as np
 from luchador import nn
 from tests.unit import fixture
 
+# pylint: disable=invalid-name
+
 
 def _create_variables(shape=(3, 4)):
     init = nn.initializer.ConstantInitializer
@@ -17,12 +19,14 @@ def _create_variables(shape=(3, 4)):
     return src, tgt
 
 
-class TestMisc(unittest.TestCase):
+class TestOps(unittest.TestCase):
+    """Test ops module"""
     def test_sync_without_tau(self):
         """sync op copies values from source variables to target variables"""
         with nn.variable_scope(self.id().replace('.', '/')):
             source_var, target_var = _create_variables()
-            sync_op = nn.build_sync_op([source_var], [target_var], tau=None)
+            sync_op = nn.ops.build_sync_op(
+                [source_var], [target_var], tau=None)
 
         session = nn.Session()
         session.initialize()
@@ -42,7 +46,8 @@ class TestMisc(unittest.TestCase):
         tau = 0.1
         with nn.variable_scope(self.id().replace('.', '/')):
             source_var, target_var = _create_variables()
-            sync_op = nn.build_sync_op([source_var], [target_var], tau=tau)
+            sync_op = nn.ops.build_sync_op(
+                [source_var], [target_var], tau=tau)
 
         session = nn.Session()
         session.initialize()
@@ -70,7 +75,7 @@ class TestTensorOpsClipByValue(fixture.TestCase):
         shape, min_value, max_value = (10, 10), 0.4, 0.6
         with nn.variable_scope(self.get_scope()):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
-            tensor1 = nn.clip_by_value(
+            tensor1 = nn.ops.clip_by_value(
                 variable0, max_value=max_value, min_value=min_value)
 
         session = nn.Session()
@@ -91,7 +96,7 @@ class TestTensorOpsClipByValue(fixture.TestCase):
                 shape=[], dtype='float32', value=min_value, name='min_var')
             max_variable = fixture.create_constant_variable(
                 shape=[], dtype='float32', value=max_value, name='max_var')
-            tensor1 = nn.clip_by_value(
+            tensor1 = nn.ops.clip_by_value(
                 variable0, max_value=max_variable, min_value=min_variable)
 
         session = nn.Session()
@@ -112,7 +117,7 @@ class TestTensorOpsClipByValue(fixture.TestCase):
                 shape=[], dtype='float32', name='min_tensor')
             max_tensor = max_value * fixture.create_ones_tensor(
                 shape=[], dtype='float32', name='max_tensor')
-            tensor1 = nn.clip_by_value(
+            tensor1 = nn.ops.clip_by_value(
                 variable0, max_value=max_tensor, min_value=min_tensor)
 
         session = nn.Session()
@@ -131,7 +136,7 @@ class TestTensorOpsClipByValue(fixture.TestCase):
             variable0 = fixture.create_random_variable(shape, dtype='float32')
             min_input = nn.Input(shape=[], dtype='float32')
             max_input = nn.Input(shape=[], dtype='float32')
-            tensor1 = nn.clip_by_value(
+            tensor1 = nn.ops.clip_by_value(
                 variable0, max_value=max_input, min_value=min_input)
 
         session = nn.Session()
@@ -155,7 +160,7 @@ class TestTensorOpsClipByNorm(fixture.TestCase):
         shape, clip_norm = (3, 4), 15.0
         with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape, dtype='float32')
-            output = nn.clip_by_norm(input_, clip_norm=clip_norm)
+            output = nn.ops.clip_by_norm(input_, clip_norm=clip_norm)
 
         session = nn.Session()
 
@@ -180,7 +185,8 @@ class TestTensorOpsClipByNorm(fixture.TestCase):
         shape, clip_norm, axis = (3, 4), 15.0, 1
         with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape, dtype='float32')
-            output = nn.clip_by_norm(input_, clip_norm=clip_norm, axes=axis)
+            output = nn.ops.clip_by_norm(
+                input_, clip_norm=clip_norm, axes=axis)
 
         session = nn.Session()
 
@@ -206,7 +212,7 @@ class TestTensorOpsClipByNorm(fixture.TestCase):
         with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape, dtype='float32')
             clip_var = nn.Input(shape=[], dtype='float32')
-            output = nn.clip_by_norm(input_, clip_norm=clip_var)
+            output = nn.ops.clip_by_norm(input_, clip_norm=clip_var)
 
         session = nn.Session()
 
