@@ -8,7 +8,7 @@ from luchador.nn.core.base import wrapper as base_wrapper
 from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
-    'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs', 'exp',
+    'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs', 'exp', 'log'
     'clip_by_value', 'clip_by_norm',
 ]
 
@@ -95,6 +95,12 @@ def abs(var, name=None):
 def exp(var, name=None):
     """Returns exponential of the given variable"""
     _tensor = tf.exp(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def log(var, name=None):
+    """Returns exponential of the given variable"""
+    _tensor = tf.log(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
