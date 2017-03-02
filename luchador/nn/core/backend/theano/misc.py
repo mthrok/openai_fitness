@@ -10,7 +10,7 @@ from luchador.nn.core.base import wrapper as base_wrapper
 from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
-    'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs', 'exp', 'log'
+    'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs', 'exp', 'log',
     'clip_by_value', 'clip_by_norm',
 ]
 
