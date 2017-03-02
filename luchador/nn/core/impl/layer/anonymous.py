@@ -10,7 +10,7 @@ __all__ = ['Anonymous']
 
 
 class Anonymous(BaseLayer):
-    def __init__(self, exp='', name='Anonymous'):
+    def __init__(self, exp, name='Anonymous'):
         super(Anonymous, self).__init__(name=name, exp=exp)
 
     def _build(self, x):
