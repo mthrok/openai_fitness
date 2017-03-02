@@ -20,7 +20,7 @@ class _NoiseMixin(object):  # pylint: disable=too-few-public-methods
         dtype = input_tensor.dtype
         noise = self._sample(shape=shape, dtype=dtype)
 
-        if self.args['add']:
+        if self.args['mode'] == 'add':
             tensor = input_tensor.unwrap() + noise
         else:
             tensor = input_tensor.unwrap() * noise

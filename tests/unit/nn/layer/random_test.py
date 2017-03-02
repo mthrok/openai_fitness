@@ -43,6 +43,24 @@ class NormalNoiseTest(TestCase):
             self.assertIs(output, nn.get_tensor('{}/output'.format(name)))
             self.assertIs(input_, nn.get_input('input'))
 
+    def test_multiply_mode(self):
+        """NormalNoise works in multiply mode"""
+        shape, mode = (4, 5), 'multiply'
+        with nn.variable_scope(self.get_scope()):
+            noise = nn.layer.NormalNoise(mode=mode)
+            in_var = nn.Input(shape=shape, name='original_input')
+            out_var = noise(in_var)
+
+        in_val = np.zeros(shape, dtype=in_var.dtype)
+
+        session = nn.Session()
+        out_val = session.run(
+            outputs=out_var, givens={in_var: in_val})
+
+        self.assertEqual(in_var.shape, out_var.shape)
+        self.assertEqual(in_var.shape, out_val.shape)
+        np.testing.assert_almost_equal(out_val, in_val)
+
 
 class UniformNoiseTest(TestCase):
     """Test for UniformNoise class"""
@@ -74,3 +92,21 @@ class UniformNoiseTest(TestCase):
         with nn.variable_scope(vs, reuse=True):
             self.assertIs(output, nn.get_tensor('{}/output'.format(name)))
             self.assertIs(input_, nn.get_input('input'))
+
+    def test_multiply_mode(self):
+        """UniformNoise works in multiply mode"""
+        shape, mode = (4, 5), 'multiply'
+        with nn.variable_scope(self.get_scope()):
+            noise = nn.layer.UniformNoise(mode=mode)
+            in_var = nn.Input(shape=shape, name='original_input')
+            out_var = noise(in_var)
+
+        in_val = np.zeros(shape, dtype=in_var.dtype)
+
+        session = nn.Session()
+        out_val = session.run(
+            outputs=out_var, givens={in_var: in_val})
+
+        self.assertEqual(in_var.shape, out_var.shape)
+        self.assertEqual(in_var.shape, out_val.shape)
+        np.testing.assert_almost_equal(out_val, in_val)

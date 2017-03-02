@@ -7,8 +7,8 @@ from ...backend import layer
 
 
 def _validate_mode(mode):
-    if mode.lower() not in ['add', 'multiple']:
-        raise ValueError('`mode` must be either "add" or "multiple"')
+    if mode.lower() not in ['add', 'multiply']:
+        raise ValueError('`mode` must be either "add" or "multiply"')
 
 
 class NormalNoise(layer.NormalNoise, BaseLayer):
