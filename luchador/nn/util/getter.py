@@ -2,7 +2,8 @@
 from __future__ import absolute_import
 
 from luchador.util import get_subclasses
-import luchador.nn
+
+from .. import core
 from ..core.base import wrapper as base_wrapper
 from ..core.base.getter import (
     get_cost, get_layer, get_optimizer, get_initializer
@@ -54,7 +55,7 @@ def get_input(name):
     Input
     """
     try:
-        scope = luchador.nn.backend.get_variable_scope().name
+        scope = core.get_variable_scope().name
         return base_wrapper.retrieve_input('{}/{}'.format(scope, name))
     except ValueError:
         pass
@@ -74,7 +75,7 @@ def get_tensor(name):
     Tensor
     """
     try:
-        scope = luchador.nn.backend.get_variable_scope().name
+        scope = core.get_variable_scope().name
         return base_wrapper.retrieve_tensor('{}/{}'.format(scope, name))
     except ValueError:
         pass
@@ -132,7 +133,7 @@ def get_operation(name):
     Operation
     """
     try:
-        scope = luchador.nn.backend.get_variable_scope().name
+        scope = core.get_variable_scope().name
         return base_wrapper.retrieve_operation('{}/{}'.format(scope, name))
     except ValueError:
         pass

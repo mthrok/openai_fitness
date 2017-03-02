@@ -8,7 +8,6 @@ from . import (  # noqa: F401
     cost,
     optimizer,
 )
-from ...base.scope import *  # noqa
 from .wrapper import (  # noqa: F401
     Input,
     Variable,
