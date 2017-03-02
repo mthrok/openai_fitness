@@ -67,6 +67,18 @@ class AnonymousSingleInputTest(TestCase):
         output_val = input_val / 7
         _test('x / 7', input_val, output_val, self.get_scope())
 
+    def test_exp(self):
+        """Anonymous layer can handle exponential"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.exp(input_val)
+        _test('exp(x)', input_val, output_val, self.get_scope())
+
+    def test_log(self):
+        """Anonymous layer can handle log"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.log(input_val)
+        _test('log(x)', input_val, output_val, self.get_scope())
+
     def test_reshape(self):
         """Anonymous layer can handle reshape"""
         input_val = np.random.rand(3, 4)
