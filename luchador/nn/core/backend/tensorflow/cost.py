@@ -1,20 +1,19 @@
 """Implement Cost classes in Tensorflow"""
-
 from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador.nn.core.base import cost as base_cost
 from . import wrapper
 
 __all__ = ['SSE', 'SigmoidCrossEntropy']
+# pylint: disable=too-few-public-methods, no-member
 
 
 def _mean_sum(err):
     return tf.reduce_sum(tf.reduce_mean(err, reduction_indices=0))
 
 
-class SSE(base_cost.BaseSSE):
+class SSE(object):
     """Implement SSE in Tensorflow.
 
     See :any:`BaseSSE` for detail.
@@ -28,7 +27,7 @@ class SSE(base_cost.BaseSSE):
             return wrapper.Tensor(output)
 
 
-class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
+class SigmoidCrossEntropy(object):
     """Implement SigmoidCrossEntropy in Tensorflow.
 
     See :any:`BaseSigmoidCrossEntropy` for detail.

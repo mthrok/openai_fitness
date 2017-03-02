@@ -1,24 +1,20 @@
 """Implement Cost classes in Theano"""
 from __future__ import absolute_import
 
-import logging
-
 import theano
 import theano.tensor as T
 
-from luchador.nn.core.base import cost as base_cost
 from . import wrapper
 
 __all__ = ['SSE', 'SigmoidCrossEntropy']
-
-_LG = logging.getLogger(__name__)
+# pylint: disable=too-few-public-methods, no-member
 
 
 def _mean_sum(x):
     return x.mean(axis=0).sum()
 
 
-class SSE(base_cost.BaseSSE):
+class SSE(object):
     """Implement SSE in Theano.
 
     See :any:`BaseSSE` for detail.
@@ -32,7 +28,7 @@ class SSE(base_cost.BaseSSE):
         return wrapper.Tensor(output, shape=shape)
 
 
-class SigmoidCrossEntropy(base_cost.BaseSigmoidCrossEntropy):
+class SigmoidCrossEntropy(object):
     """Implement SigmoidCrossEntropy in Theano.
 
     See :any:`BaseSigmoidCrossEntropy` for detail.
