@@ -7,7 +7,6 @@ import theano
 import theano.tensor as T
 
 import luchador.util
-from ...base import optimizer as base_optimizer
 from ...base.getter import get_initializer
 from . import wrapper
 
@@ -15,11 +14,10 @@ __all__ = [
     'OptimizerMixin',
     'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
 ]
+# pylint: disable=invalid-name,too-many-locals,too-few-public-methods,no-member
 
-# pylint: disable=invalid-name, too-many-locals
 
-
-class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
+class OptimizerMixin(object):
     """Adds Theano-specific helper methods to base Optimizer"""
     def _run_backend_specific_init(self):
         pass
@@ -127,7 +125,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         return slot_var
 
 
-class SGD(OptimizerMixin, base_optimizer.BaseSGD):
+class SGD(OptimizerMixin):
     """Implement RMSProp in Theano backend.
 
     See :any:`BaseRMSProp` for detail.
@@ -139,7 +137,7 @@ class SGD(OptimizerMixin, base_optimizer.BaseSGD):
         return wrapper.Operation(op=updates)
 
 
-class RMSProp(OptimizerMixin, base_optimizer.BaseRMSProp):
+class RMSProp(OptimizerMixin):
     """Implement RMSProp in Theano backend.
 
     See :any:`BaseRMSProp` for detail.
@@ -163,7 +161,7 @@ class RMSProp(OptimizerMixin, base_optimizer.BaseRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class NeonRMSProp(OptimizerMixin, base_optimizer.BaseNeonRMSProp):
+class NeonRMSProp(OptimizerMixin):
     """Implement NeonRMSProp in Theano backend.
 
     See :any:`BaseNeonRMSProp` for detail.
@@ -184,7 +182,7 @@ class NeonRMSProp(OptimizerMixin, base_optimizer.BaseNeonRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class GravesRMSProp(OptimizerMixin, base_optimizer.BaseGravesRMSProp):
+class GravesRMSProp(OptimizerMixin):
     """Implement GravesRMSProp in Theano backend.
 
     See :any:`BaseGravesRMSProp` for detail.
@@ -213,7 +211,7 @@ class GravesRMSProp(OptimizerMixin, base_optimizer.BaseGravesRMSProp):
         return wrapper.Operation(op=updates)
 
 
-class Adam(OptimizerMixin, base_optimizer.BaseAdam):
+class Adam(OptimizerMixin):
     """Implement Adam in Theano backend.
 
     See :any:`BaseAdam` for detail.
@@ -244,7 +242,7 @@ class Adam(OptimizerMixin, base_optimizer.BaseAdam):
         return wrapper.Operation(op=updates)
 
 
-class Adamax(OptimizerMixin, base_optimizer.BaseAdamax):
+class Adamax(OptimizerMixin):
     """Implement Adamax in Theano backend.
 
     See :any:`BaseAdamax` for detail.

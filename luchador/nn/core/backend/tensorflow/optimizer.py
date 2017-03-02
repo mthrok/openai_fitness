@@ -4,15 +4,13 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 import luchador.util
-from luchador.nn.core.base import optimizer as base_optimizer
-from . import initializer, wrapper
-# pylint: disable=invalid-name, too-many-locals
+from . import wrapper
 
 __all__ = [
-    'OptimizerMixin',
-    'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp',
-    'Adam', 'Adamax'
+    'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
 ]
+# pylint: disable=invalid-name,too-many-locals,no-member
+# pylint: disable=too-few-public-methods,attribute-defined-outside-init
 
 
 def _parse_kwargs(kwargs):
@@ -35,7 +33,7 @@ def _parse_kwargs(kwargs):
     return [kws_compute_gradients, kws_apply_gradients]
 
 
-class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
+class OptimizerMixin(object):
     """Adds TF-specific helper methods to base Optimizer"""
     def _run_backend_specific_init(self):
         """Initialize underlying TF optimizer to SGD
@@ -153,7 +151,7 @@ class OptimizerMixin(object):  # pylint: disable=too-few-public-methods
         return slot_var.unwrap()
 
 
-class SGD(OptimizerMixin, base_optimizer.BaseSGD):
+class SGD(OptimizerMixin):
     """Implement SGD in Tensorflow backend.
 
     See :any:`BaseSGD` for detail.
@@ -165,7 +163,7 @@ class SGD(OptimizerMixin, base_optimizer.BaseSGD):
             use_locking=self.args.get('use_locking', False))
 
 
-class RMSProp(OptimizerMixin, base_optimizer.BaseRMSProp):
+class RMSProp(OptimizerMixin):
     """Implement RMSProp in Tensorflow backend.
 
     See :any:`BaseRMSProp` for detail.
@@ -179,7 +177,7 @@ class RMSProp(OptimizerMixin, base_optimizer.BaseRMSProp):
             use_locking=self.args.get('use_locking', False))
 
 
-class NeonRMSProp(OptimizerMixin, base_optimizer.BaseNeonRMSProp):
+class NeonRMSProp(OptimizerMixin):
     """Implement NeonRMSProp in Tensorflow backend.
 
     See :any:`BaseNeonRMSProp` for detail.
@@ -205,7 +203,7 @@ class NeonRMSProp(OptimizerMixin, base_optimizer.BaseNeonRMSProp):
         return wrapper.Operation(tf.group(*updates))
 
 
-class GravesRMSProp(OptimizerMixin, base_optimizer.BaseGravesRMSProp):
+class GravesRMSProp(OptimizerMixin):
     """Implement GravesRMSProp in Tensorflow backend.
 
     See :any:`BaseGravesRMSProp` for detail.
@@ -237,7 +235,7 @@ class GravesRMSProp(OptimizerMixin, base_optimizer.BaseGravesRMSProp):
         return wrapper.Operation(tf.group(*updates))
 
 
-class Adam(OptimizerMixin, base_optimizer.BaseAdam):
+class Adam(OptimizerMixin):
     """Implement Adam in Tensorflow backend.
 
     See :any:`BaseAdam` for detail.
@@ -263,7 +261,7 @@ class Adam(OptimizerMixin, base_optimizer.BaseAdam):
         return ret
 
 
-class Adamax(OptimizerMixin, base_optimizer.BaseAdamax):
+class Adamax(OptimizerMixin):
     """Implement Adamax in Tensorflow backend.
 
     See :any:`BaseAdamax` for detail.
