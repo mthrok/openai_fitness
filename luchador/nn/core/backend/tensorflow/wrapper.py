@@ -165,6 +165,18 @@ class Operation(base_wrapper.BaseOperation):
         super(Operation, self).__init__(op=op, name=name)
 
 
+def make_variable(
+        name, shape=None, dtype=None,
+        initializer=None, regularizer=None, trainable=True, **kwargs):
+    dtype = dtype or luchador.get_nn_dtype()
+    if isinstance(initializer, base_initializer.BaseInitializer):
+        initializer = initializer.unwrap()
+    variable = tf.get_variable(
+        name, shape=shape, dtype=dtype, initializer=initializer,
+        regularizer=regularizer, trainable=trainable, **kwargs)
+    return Variable(variable, trainable=trainable)
+
+
 def get_variable(
         name, shape=None, dtype=None,
         initializer=None, regularizer=None, trainable=True, **kwargs):
@@ -195,8 +207,6 @@ def get_variable(
         See
         https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
-    if isinstance(initializer, base_initializer.BaseInitializer):
-        initializer = initializer.unwrap()
 
     scope = tf.get_variable_scope()
     if scope.reuse:
@@ -210,10 +220,6 @@ def get_variable(
             )
         return var
     else:
-        dtype = dtype or luchador.get_nn_dtype()
-
-        variable = tf.get_variable(
-            name, shape=shape, dtype=dtype, initializer=initializer,
+        return make_variable(
+            name=name, shape=shape, dtype=dtype, initializer=initializer,
             regularizer=regularizer, trainable=trainable, **kwargs)
-
-        return Variable(variable, trainable=trainable)

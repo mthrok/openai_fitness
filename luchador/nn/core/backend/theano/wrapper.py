@@ -170,6 +170,35 @@ class Operation(base_wrapper.BaseOperation):
         super(Operation, self).__init__(op=op, name=name)
 
 
+def make_variable(
+        name, shape=None, dtype=None,
+        initializer=None, regularizer=None, trainable=True, **kwargs):
+    if regularizer:
+        warnings.warn('`regularizer` is not implemented in Theano backend.')
+
+    scope = _get_scope().name
+    name_ = '{}/{}'.format(scope, name) if scope else name
+
+    if shape is None:
+        raise ValueError(
+            'Shape of a new variable ({}) must be fully defined, '
+            'but instead was {}.'.format(name_, shape))
+
+    if not initializer:
+        initializer = get_initializer('NormalInitializer')(dtype=dtype)
+
+    # Scalar variable should not have `broadcastable`
+    if not shape and 'broadcastable' in kwargs:
+        del kwargs['broadcastable']
+
+    return Variable(
+        theano.shared(
+            value=np.array(initializer.sample(shape), dtype=dtype),
+            name=name_, allow_downcast=True, **kwargs
+        ), trainable=trainable, name=name,
+    )
+
+
 def get_variable(
         name, shape=None, dtype=None, initializer=None,
         regularizer=None, trainable=True, **kwargs):
@@ -177,9 +206,6 @@ def get_variable(
 
     regularizer is not supported and has no effect.
     """
-    if regularizer:
-        warnings.warn('`regularizer` is not implemented in Theano backend.')
-
     # 1. Check the current variable scope
     scope = _get_scope().name
     name_ = '{}/{}'.format(scope, name) if scope else name
@@ -200,21 +226,6 @@ def get_variable(
                 'Did you mean to set reuse=True in VarScope?'
                 .format(name_)
             )
-        if shape is None:
-            raise ValueError(
-                'Shape of a new variable ({}) must be fully defined, '
-                'but instead was {}.'.format(name_, shape))
-
-        if not initializer:
-            initializer = get_initializer('NormalInitializer')(dtype=dtype)
-
-        # Scalar variable should not have `broadcastable`
-        if not shape and 'broadcastable' in kwargs:
-            del kwargs['broadcastable']
-
-        return Variable(
-            theano.shared(
-                value=np.array(initializer.sample(shape), dtype=dtype),
-                name=name_, allow_downcast=True, **kwargs
-            ), trainable=trainable, name=name,
-        )
+        return make_variable(
+            name=name, shape=shape, dtype=dtype, initializer=initializer,
+            regularizer=regularizer, trainable=trainable, **kwargs)
