@@ -50,7 +50,7 @@ class SoftmaxCrossEntropy(object):
         x = logit.unwrap()
         z = tf.stop_gradient(target.unwrap())
 
-        ce = tf.softmax_cross_entropy_with_logits(labes=z, logits=x)
+        ce = tf.nn.softmax_cross_entropy_with_logits(labels=z, logits=x)
 
-        output = ce if self.args['elementwise'] else _mean_sum(ce)
+        output = ce if self.args['elementwise'] else tf.reduce_mean(ce)
         return wrapper.Tensor(output, name='output')

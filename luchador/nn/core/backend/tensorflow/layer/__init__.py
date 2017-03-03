@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from .linear import *  # noqa
 from .math import *  # noqa
 from .random import *  # noqa
-from .pooling import *  # noqa
 from .transform import *  # noqa
 from .activation import *  # noqa
 from .convolution import *  # noqa

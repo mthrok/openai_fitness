@@ -54,8 +54,8 @@ class SoftmaxCrossEntropy(object):
 
         xdev = x - x.max(1, keepdims=True)
         log_sm = xdev - T.log(T.sum(T.exp(xdev), axis=1, keepdims=True))
-        ce = - z * log_sm
+        ce = (- z * log_sm).sum(axis=1)
 
-        output = ce if self.args['elementwise'] else _mean_sum(ce)
+        output = ce if self.args['elementwise'] else ce.mean()
         shape = target.shape if self.args['elementwise'] else (1,)
         return wrapper.Tensor(output, shape=shape, name='output')

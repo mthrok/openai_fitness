@@ -124,3 +124,44 @@ class CostSSETest(unittest.TestCase):
         sse_np = np.square(target - prediction)
         sse_np = np.mean(np.sum(sse_np, axis=1))
         np.testing.assert_almost_equal(sse_be, sse_np, decimal=5)
+
+
+class CostSoftmaxCrossEntropyTest(unittest.TestCase):
+    """Test SofmaxCrossEntropy test"""
+    longMessage = True
+
+    def test_sce_element_wise(self):
+        """SoftmaxCrossEntropy output value is correct"""
+        batch, n_classes = 32, 3
+
+        shape = (batch, n_classes)
+        target = np.random.randn(*shape)
+        prediction = np.random.randn(*shape)
+
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sce = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=True)
+            sce_be = _compute_cost(sce, target, prediction)
+
+        xdev = prediction - np.max(prediction, 1, keepdims=True)
+        log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
+        sce_np = - target * log_sm
+        sce_np = np.sum(sce_np, axis=1)
+        np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
+
+    def test_sce_scalar(self):
+        """SoftmaxCrossEntropy output value is correct"""
+        batch, n_classes = 32, 3
+
+        shape = (batch, n_classes)
+        target = np.random.randn(*shape)
+        prediction = np.random.randn(*shape)
+
+        with nn.variable_scope(self.id().replace('.', '/')):
+            sce = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=False)
+            sce_be = _compute_cost(sce, target, prediction)
+
+        xdev = prediction - np.max(prediction, 1, keepdims=True)
+        log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
+        sce_np = - target * log_sm
+        sce_np = np.mean(np.sum(sce_np, axis=1))
+        np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
