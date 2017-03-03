@@ -35,41 +35,6 @@ class TestFlatten(TestCase):
         np.testing.assert_almost_equal(expected, output_value)
 
 
-class TestTile(TestCase):
-    """Test Tile layer"""
-    def _test_tile(self, pattern, input_shape, input_value):
-        scope = self.get_scope()
-        with nn.variable_scope(scope, reuse=False):
-            input_tensor = nn.Input(shape=input_shape)
-            tile = nn.layer.Tile(pattern=pattern)
-            output_tensor = tile(input_tensor)
-
-        session = nn.Session()
-        output_value = session.run(
-            outputs=output_tensor, inputs={input_tensor: input_value})
-
-        expected = np.tile(input_value, pattern)
-        np.testing.assert_almost_equal(expected, output_value)
-
-    def test_tile_shaped(self):
-        """N x 1 is tiled to N x M"""
-        value = np.array([i for i in range(32)]).reshape((-1, 1))
-        shape, pattern = (32, 1), (1, 5)
-        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
-
-    def test_tile_None(self):
-        """None x 1 is tiled to None x M"""
-        value = np.array([i for i in range(64)]).reshape((-1, 1))
-        shape, pattern = (None, 1), (1, 5)
-        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
-
-    def test_tile(self):
-        """[N,] is tiled to N x 1 x M"""
-        value = np.array([i for i in range(32)])
-        shape, pattern = (32,), (1, 1, 5)
-        self._test_tile(pattern=pattern, input_shape=shape, input_value=value)
-
-
 class TestConcat(TestCase):
     """Test Concat Layer behavior"""
     def test_concate_2d_axis_1(self):

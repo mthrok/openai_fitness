@@ -6,9 +6,7 @@ import tensorflow as tf
 
 from ..wrapper import Tensor
 
-__all__ = [
-    'Flatten', 'Tile', 'Concat',
-]
+__all__ = ['Flatten', 'Concat']
 # pylint: disable=no-self-use,no-member
 
 
@@ -23,15 +21,6 @@ class Flatten(object):
         out_shape = (-1, n_nodes)
         output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
         return Tensor(output, name='output')
-
-
-class Tile(object):
-    """Implement Tile layer in Tensorflow
-
-    See :any:`BaseFlatten` for detail.
-    """
-    def _build(self, input_tensor):
-        return input_tensor.tile(self.args['pattern'], name='output')
 
 
 class Concat(object):

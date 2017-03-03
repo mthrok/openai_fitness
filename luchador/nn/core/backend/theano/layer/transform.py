@@ -8,7 +8,7 @@ import theano.tensor as T
 
 from ..wrapper import Tensor
 
-__all__ = ['Flatten', 'Tile', 'Concat']
+__all__ = ['Flatten', 'Concat']
 _LG = logging.getLogger(__name__)
 # pylint:disable=no-member,no-self-use
 
@@ -29,15 +29,6 @@ class Flatten(object):
         output_tensor = T.reshape(input_tensor.unwrap(), output_shape)
         _LG.debug('    output_shape: %s', output_shape)
         return Tensor(output_tensor, shape=output_shape, name='output')
-
-
-class Tile(object):
-    """Implement Tile layer in Theano
-
-    See :any:`BaseFlatten` for detail.
-    """
-    def _build(self, input_tensor):
-        return input_tensor.tile(self.args['pattern'], name='output')
 
 
 def _compute_concat_shape(shapes, axis):

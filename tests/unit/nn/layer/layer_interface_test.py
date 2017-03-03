@@ -101,17 +101,6 @@ class LayerInterfaceTest(fixture.TestCase):
             self.assertIs(output, nn.get_tensor('TrueDiv/output'))
             self.assertIs(input_, nn.get_input('input'))
 
-    def test_tile(self):
-        """Compnents consisting Tile layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            input_ = nn.Input(shape=(32,), name='input')
-            layer = nn.get_layer('Tile')(pattern=(1, 2), name='Tile')
-            output = layer(input_)
-
-            self.assertIs(output, nn.get_tensor('Tile/output'))
-            self.assertIs(input_, nn.get_input('input'))
-
     def test_concat(self):
         """Compnents consisting Concat layer are retrieved"""
         scope = self.get_scope()
