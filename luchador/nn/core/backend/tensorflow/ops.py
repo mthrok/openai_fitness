@@ -227,7 +227,7 @@ def tile(var, pattern, name=None):
 
     if len(pattern) > var.n_dim:
         prepend = (1, ) * (len(pattern) - var.n_dim)
-        tensor = var.reshape(prepend + var.shape).unwrap()
+        tensor = reshape(var, prepend + var.shape).unwrap()
     else:
         prepend = (1, ) * (var.n_dim - len(pattern))
         pattern = prepend + pattern
