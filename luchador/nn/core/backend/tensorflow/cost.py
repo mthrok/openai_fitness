@@ -10,7 +10,7 @@ __all__ = ['SSE', 'SigmoidCrossEntropy', 'SoftmaxCrossEntropy']
 
 
 def _mean_sum(err):
-    return tf.reduce_mean(tf.reduce_sum(err, reduction_indices=1))
+    return tf.reduce_sum(tf.reduce_mean(err, reduction_indices=0))
 
 
 class SSE(object):
@@ -52,5 +52,5 @@ class SoftmaxCrossEntropy(object):
 
         ce = tf.nn.softmax_cross_entropy_with_logits(labels=z, logits=x)
 
-        output = ce if self.args['elementwise'] else tf.reduce_mean(ce)
+        output = ce if self.args['elementwise'] else _mean_sum(ce)
         return wrapper.Tensor(output, name='output')

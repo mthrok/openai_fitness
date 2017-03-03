@@ -43,7 +43,7 @@ def _compute_cost(cost, target, logit):
             target_tensor: target,
         },
     )
-    return output_value
+    return output_value, output_tensor
 
 
 class CostSCETest(unittest.TestCase):
@@ -62,12 +62,13 @@ class CostSCETest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sce = luchador.nn.cost.SigmoidCrossEntropy(elementwise=True)
-            sce_be = _compute_cost(sce, target, logit)
+            sce_be, sce_var = _compute_cost(sce, target, logit)
 
         x, z = logit, target
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
 
         np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
+        self.assertEqual(sce_be.shape, sce_var.shape)
 
     def test_sce_scalar(self):
         """SigmoidCrossEntropy output value is correct"""
@@ -81,13 +82,14 @@ class CostSCETest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sce = luchador.nn.cost.SigmoidCrossEntropy(elementwise=False)
-            sce_be = _compute_cost(sce, target, logit)
+            sce_be, sce_var = _compute_cost(sce, target, logit)
 
         x, z = logit, target
         sce_np = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
         sce_np = np.mean(np.sum(sce_np, axis=1), axis=0)
 
         np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
+        self.assertEqual(sce_be.shape, sce_var.shape)
 
 
 class CostSSETest(unittest.TestCase):
@@ -104,10 +106,12 @@ class CostSSETest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sse = luchador.nn.cost.SSE(elementwise=True)
-            sse_be = _compute_cost(sse, target, prediction)
+            sse_be, sse_var = _compute_cost(sse, target, prediction)
 
         sse_np = np.square(target - prediction)
+
         np.testing.assert_almost_equal(sse_be, sse_np, decimal=5)
+        self.assertEqual(sse_be.shape, sse_var.shape)
 
     def test_sse_scalar(self):
         """SSE output value is correct"""
@@ -119,11 +123,13 @@ class CostSSETest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sse = luchador.nn.cost.SSE(elementwise=False)
-            sse_be = _compute_cost(sse, target, prediction)
+            sse_be, sse_var = _compute_cost(sse, target, prediction)
 
         sse_np = np.square(target - prediction)
         sse_np = np.mean(np.sum(sse_np, axis=1))
+
         np.testing.assert_almost_equal(sse_be, sse_np, decimal=5)
+        self.assertEqual(sse_be.shape, sse_var.shape)
 
 
 class CostSoftmaxCrossEntropyTest(unittest.TestCase):
@@ -140,13 +146,15 @@ class CostSoftmaxCrossEntropyTest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sce = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=True)
-            sce_be = _compute_cost(sce, target, prediction)
+            sce_be, sce_var = _compute_cost(sce, target, prediction)
 
         xdev = prediction - np.max(prediction, 1, keepdims=True)
         log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
         sce_np = - target * log_sm
         sce_np = np.sum(sce_np, axis=1)
+
         np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
+        self.assertEqual(sce_be.shape, sce_var.shape)
 
     def test_sce_scalar(self):
         """SoftmaxCrossEntropy output value is correct"""
@@ -158,10 +166,12 @@ class CostSoftmaxCrossEntropyTest(unittest.TestCase):
 
         with nn.variable_scope(self.id().replace('.', '/')):
             sce = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=False)
-            sce_be = _compute_cost(sce, target, prediction)
+            sce_be, sce_var = _compute_cost(sce, target, prediction)
 
         xdev = prediction - np.max(prediction, 1, keepdims=True)
         log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
         sce_np = - target * log_sm
         sce_np = np.mean(np.sum(sce_np, axis=1))
+
         np.testing.assert_almost_equal(sce_be, sce_np, decimal=5)
+        self.assertEqual(sce_var.shape, sce_be.shape)

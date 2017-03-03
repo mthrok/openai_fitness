@@ -11,7 +11,7 @@ __all__ = ['SSE', 'SigmoidCrossEntropy', 'SoftmaxCrossEntropy']
 
 
 def _mean_sum(x):
-    return x.sum(axis=1).mean()
+    return x.mean(axis=0).sum()
 
 
 class SSE(object):
@@ -24,7 +24,7 @@ class SSE(object):
         target_ = theano.gradient.disconnected_grad(target.unwrap())
         error = T.square(target_ - pred_)
         output = error if self.args['elementwise'] else _mean_sum(error)
-        shape = target.shape if self.args['elementwise'] else (1,)
+        shape = target.shape if self.args['elementwise'] else tuple()
         return wrapper.Tensor(output, shape=shape, name='output')
 
 
@@ -39,7 +39,7 @@ class SigmoidCrossEntropy(object):
         ce = T.nnet.relu(x) - x * z + T.log(1 + T.exp(-abs(x)))
 
         output = ce if self.args['elementwise'] else _mean_sum(ce)
-        shape = target.shape if self.args['elementwise'] else (1,)
+        shape = target.shape if self.args['elementwise'] else tuple()
         return wrapper.Tensor(output, shape=shape, name='output')
 
 
@@ -56,6 +56,6 @@ class SoftmaxCrossEntropy(object):
         log_sm = xdev - T.log(T.sum(T.exp(xdev), axis=1, keepdims=True))
         ce = (- z * log_sm).sum(axis=1)
 
-        output = ce if self.args['elementwise'] else ce.mean()
-        shape = target.shape if self.args['elementwise'] else (1,)
+        output = ce if self.args['elementwise'] else _mean_sum(ce)
+        shape = (target.shape[0],) if self.args['elementwise'] else tuple()
         return wrapper.Tensor(output, shape=shape, name='output')
