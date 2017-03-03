@@ -9,7 +9,7 @@ class LayerInterfaceTest(fixture.TestCase):
     def test_non_parametric_layers(self):
         """Compnents consisting layer are retrieved"""
         layer_names = [
-            'ReLU', 'Sigmoid', 'Tanh', 'Sin', 'Cos', 'Softmax', 'Softplus',
+            'ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'Softplus',
         ]
         for name in layer_names:
             self._test_layer_io(name, input_shape=(32, 10))
@@ -99,17 +99,6 @@ class LayerInterfaceTest(fixture.TestCase):
             output = layer(input_)
 
             self.assertIs(output, nn.get_tensor('TrueDiv/output'))
-            self.assertIs(input_, nn.get_input('input'))
-
-    def test_mean(self):
-        """Compnents consisting Mean layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('Mean')(axis=[1, 2], name='Mean')
-            output = layer(input_)
-
-            self.assertIs(output, nn.get_tensor('Mean/output'))
             self.assertIs(input_, nn.get_input('input'))
 
     def test_tile(self):

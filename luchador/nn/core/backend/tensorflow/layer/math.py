@@ -9,9 +9,7 @@ import tensorflow as tf
 import luchador
 from ..wrapper import Tensor
 
-__all__ = [
-    'Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos',
-]
+__all__ = ['Add', 'Sub', 'TrueDiv']
 _LG = logging.getLogger(__name__)
 # pylint:disable=no-member,no-self-use,attribute-defined-outside-init
 
@@ -63,35 +61,4 @@ class TrueDiv(object):
             self._instantiate_denominator(dtype)
 
         output = tf.truediv(tensor, self.denom, 'ouptut')
-        return Tensor(output, name='output')
-
-
-class Mean(object):
-    """Implement Mean layer in Tensorflow.
-
-    See :any:`BaseMean` for detail.
-    """
-    def _build(self, input_tensor):
-        return input_tensor.mean(
-            axis=self.args['axis'], keep_dims=self.args['keep_dims'],
-            name='output')
-
-
-class Sin(object):
-    """Implement Sin in Tensorflow.
-
-    See :any:`BaseSin` for detail.
-    """
-    def _build(self, input_tensor):
-        output = tf.sin(input_tensor.unwrap(), 'output')
-        return Tensor(output, name='output')
-
-
-class Cos(object):
-    """Implement Cos in Tensorflow.
-
-    See :any:`BaseCos` for detail.
-    """
-    def _build(self, input_tensor):
-        output = tf.cos(input_tensor.unwrap(), 'output')
         return Tensor(output, name='output')

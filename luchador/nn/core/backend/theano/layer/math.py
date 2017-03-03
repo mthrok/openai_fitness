@@ -6,7 +6,7 @@ import theano.tensor as T
 
 from ..wrapper import Tensor
 
-__all__ = ['Add', 'Sub', 'TrueDiv', 'Mean', 'Sin', 'Cos']
+__all__ = ['Add', 'Sub', 'TrueDiv']
 # pylint: disable=no-member,too-few-public-methods,no-self-use,
 # pylint: disable=attribute-defined-outside-init
 
@@ -52,36 +52,3 @@ class TrueDiv(object):
             self._instantiate_denominator(input_tensor.dtype)
         output = input_tensor.unwrap() / self.denom
         return Tensor(output, shape=input_tensor.shape, name='output')
-
-
-class Mean(object):
-    """Implement Mean layer in Theano.
-
-    See :any:`BaseMean` for detail.
-    """
-    def _build(self, input_tensor):
-        return input_tensor.mean(
-            axis=self.args['axis'], keep_dims=self.args['keep_dims'],
-            name='output')
-
-
-class Sin(object):
-    """Implement Sin layer in Theano
-
-    See :any:`BaseSin` for detail.
-    """
-    def _build(self, input_tensor):
-        input_shape = input_tensor.shape
-        output_tensor = T.sin(input_tensor.unwrap())
-        return Tensor(output_tensor, shape=input_shape, name='output')
-
-
-class Cos(object):
-    """Implement Cos layer in Theano
-
-    See :any:`BaseSin` for detail.
-    """
-    def _build(self, input_tensor):
-        input_shape = input_tensor.shape
-        output_tensor = T.cos(input_tensor.unwrap())
-        return Tensor(output_tensor, shape=input_shape, name='output')

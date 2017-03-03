@@ -79,6 +79,24 @@ class AnonymousSingleInputTest(TestCase):
         output_val = np.log(input_val)
         _test('log(x)', input_val, output_val, self.get_scope())
 
+    def test_sin(self):
+        """Anonymous layer can handle sin"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.sin(input_val)
+        _test('sin(x)', input_val, output_val, self.get_scope())
+
+    def test_cos(self):
+        """Anonymous layer can handle cos"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.cos(input_val)
+        _test('cos(x)', input_val, output_val, self.get_scope())
+
+    def test_mean(self):
+        """Anonymous layer can handle cos"""
+        input_val = np.random.rand(3, 4, 5, 6)
+        output_val = np.mean(input_val, axis=(1, 2))
+        _test('mean(x, axis=(1, 2))', input_val, output_val, self.get_scope())
+
     def test_reshape(self):
         """Anonymous layer can handle reshape"""
         input_val = np.random.rand(3, 4)

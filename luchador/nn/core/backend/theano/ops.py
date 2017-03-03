@@ -10,7 +10,8 @@ from luchador.nn.core.base import wrapper as base_wrapper
 from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
-    'build_sync_op', 'one_hot', 'maximum', 'minimum', 'abs', 'exp', 'log',
+    'build_sync_op', 'one_hot', 'maximum', 'minimum',
+    'abs', 'exp', 'log', 'sin', 'cos',
     'clip_by_value', 'clip_by_norm',
 ]
 
@@ -102,6 +103,18 @@ def exp(var, name=None):
 def log(var, name=None):
     """Returns exponential of the given variable"""
     _tensor = T.log(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def sin(var, name=None):
+    """Returns sin of the given variable"""
+    _tensor = T.sin(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def cos(var, name=None):
+    """Returns cos of the given variable"""
+    _tensor = T.cos(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
