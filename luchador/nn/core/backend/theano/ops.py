@@ -1,4 +1,7 @@
-"""Module for providing backend-common interface for misc task"""
+"""Module for providing backend-common interface for miscellaneous task
+
+Functions in this module are accessible via Anonymous Layer.
+"""
 from __future__ import absolute_import
 
 from collections import OrderedDict
