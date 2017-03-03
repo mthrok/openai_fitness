@@ -1,6 +1,5 @@
 """Initialize Neural Network module and load backend"""
 from __future__ import absolute_import
-# pylint: disable=wildcard-import
 from .impl.scope import (  # noqa
     VariableScope, variable_scope, get_variable_scope, name_scope,
 )
