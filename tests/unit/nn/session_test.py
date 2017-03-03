@@ -12,7 +12,7 @@ class SessionTest(fixture.TestCase):
         shape = (3, 3)
         target_value = 10
 
-        variable = nn.get_variable(name=name, shape=shape, dtype=dtype1)
+        variable = nn.make_variable(name=name, shape=shape, dtype=dtype1)
         value = target_value * np.ones(shape, dtype=dtype2)
 
         session = nn.Session()
@@ -42,7 +42,7 @@ class SessionTest(fixture.TestCase):
         w_0 = 6
         with nn.variable_scope(self.get_scope()):
             x = nn.Input(shape=(), name='x')
-            w = nn.get_variable(
+            w = nn.make_variable(
                 name='w', shape=(),
                 initializer=nn.initializer.ConstantInitializer(w_0),
             )
@@ -68,7 +68,7 @@ class SessionTest(fixture.TestCase):
             learning_rate=1.0, name=name, beta1=b1_0, beta2=b2_0)
         with nn.variable_scope(self.get_scope()) as vs:
             x = nn.Input(shape=(), name='x')
-            w = nn.get_variable(shape=(), name='w')
+            w = nn.make_variable(shape=(), name='w')
             update_op = opt.minimize(w * x, w)
 
             vs.reuse_variables()

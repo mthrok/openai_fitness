@@ -10,5 +10,9 @@ Variable = wrapper.Variable
 Tensor = wrapper.Tensor
 Operation = wrapper.Operation
 get_variable = wrapper.get_variable
+make_variable = wrapper.make_variable
 
-__all__ = ['Input', 'Variable', 'Tensor', 'Operation', 'get_variable']
+__all__ = [
+    'Input', 'Variable', 'Tensor', 'Operation',
+    'get_variable', 'make_variable',
+]

@@ -29,25 +29,25 @@ class BatchNormalization(object):
 
         const_init = get_initializer('ConstantInitializer')
         if self.get_parameter_variable('mean') is None:
-            mean = wrapper.get_variable(
+            mean = wrapper.make_variable(
                 name='mean', shape=shape,
                 initializer=const_init(0), trainable=False)
             self.set_parameter_variables(mean=mean)
 
         if self.get_parameter_variable('var') is None:
-            var = wrapper.get_variable(
+            var = wrapper.make_variable(
                 name='var', shape=shape,
                 initializer=const_init(1), trainable=False)
             self.set_parameter_variables(var=var)
 
         if self.get_parameter_variable('scale') is None:
-            scale = wrapper.get_variable(
+            scale = wrapper.make_variable(
                 name='scale', shape=shape, trainable=True,
                 initializer=const_init(self.args['scale']))
             self.set_parameter_variables(scale=scale)
 
         if self.get_parameter_variable('offset') is None:
-            offset = wrapper.get_variable(
+            offset = wrapper.make_variable(
                 name='offset', shape=shape, trainable=True,
                 initializer=const_init(self.args['offset']))
             self.set_parameter_variables(offset=offset)

@@ -18,7 +18,7 @@ BE = luchador.get_nn_backend()
 
 def _get_y_equals_x_squared(scope, x_init):
     with nn.variable_scope(scope):
-        x = nn.get_variable(
+        x = nn.make_variable(
             name='x', shape=(), trainable=True,
             initializer=nn.initializer.ConstantInitializer(x_init))
         y = x * x
@@ -43,7 +43,7 @@ class OptimizerGradientTest(fixture.TestCase):
         """compute_gradients computes gradients for trainable wrt"""
         sgd = nn.optimizer.SGD(learning_rate=0.01)
         with nn.variable_scope(self.get_scope()):
-            xs = [nn.get_variable(
+            xs = [nn.make_variable(
                 name='x_{}'.format(i), shape=(), trainable=True,
             ) for i in range(3)]
             y = xs[0] + xs[1] + xs[2]
@@ -57,7 +57,7 @@ class OptimizerGradientTest(fixture.TestCase):
         """compute_gradients returns None for non-trainable wrt"""
         sgd = nn.optimizer.SGD(learning_rate=0.01)
         with nn.variable_scope(self.get_scope()):
-            xs = [nn.get_variable(
+            xs = [nn.make_variable(
                 name='x_{}'.format(i), shape=(), trainable=bool(i % 2),
             ) for i in range(5)]
             y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
@@ -75,7 +75,7 @@ class OptimizerGradientTest(fixture.TestCase):
         sgd = nn.optimizer.SGD(learning_rate=0.01)
         scope = self.get_scope()
         with nn.variable_scope(scope):
-            xs = [nn.get_variable(
+            xs = [nn.make_variable(
                 name='x_{}'.format(i), shape=(), trainable=True,
             ) for i in range(5)]
             y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
@@ -96,7 +96,8 @@ class OptimizerGradientTest(fixture.TestCase):
         with nn.variable_scope(self.get_scope()):
             initializer = nn.get_initializer(
                 'UniformInitializer')(minval=-3, maxval=3)
-            x = nn.get_variable(name='x', shape=shape, initializer=initializer)
+            x = nn.make_variable(
+                name='x', shape=shape, initializer=initializer)
             y = x * x / 2
             grads_and_vars = [
                 (nn.ops.clip_by_value(grad, max_value=1, min_value=-1), var)

@@ -91,7 +91,7 @@ class OptimizerMixin(object):
         value = var.get_value(borrow=True)
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = wrapper.get_variable(
+        slot_var = wrapper.make_variable(
             name=name, shape=value.shape, dtype=value.dtype,
             initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
@@ -118,7 +118,7 @@ class OptimizerMixin(object):
             Wrapped Variable of the resulting slot variable.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = wrapper.get_variable(
+        slot_var = wrapper.make_variable(
             name=name, shape=[], broadcastable=True,
             initializer=get_initializer('ConstantInitializer')(initial_value))
         self.slot.append(slot_var)

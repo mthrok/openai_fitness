@@ -13,7 +13,10 @@ from ...base import wrapper as base_wrapper
 from ...base import scope as scope_module
 from ...base.getter import get_initializer
 
-__all__ = ['Variable', 'Tensor', 'Input', 'Operation', 'get_variable']
+__all__ = [
+    'Variable', 'Tensor', 'Input', 'Operation',
+    'get_variable', 'make_variable',
+]
 
 
 ###############################################################################
@@ -173,11 +176,17 @@ class Operation(base_wrapper.BaseOperation):
 def make_variable(
         name, shape=None, dtype=None,
         initializer=None, regularizer=None, trainable=True, **kwargs):
-    if regularizer:
-        warnings.warn('`regularizer` is not implemented in Theano backend.')
 
     scope = _get_scope().name
     name_ = '{}/{}'.format(scope, name) if scope else name
+
+    var = base_wrapper.retrieve_variable(name_)
+    if var is not None:
+        raise ValueError(
+            'Variable {} already exists, disallowed. '
+            'Did you mean to set reuse=True in VarScope?'
+            .format(name_)
+        )
 
     if shape is None:
         raise ValueError(
@@ -186,6 +195,9 @@ def make_variable(
 
     if not initializer:
         initializer = get_initializer('NormalInitializer')(dtype=dtype)
+
+    if regularizer:
+        warnings.warn('`regularizer` is not implemented in Theano backend.')
 
     # Scalar variable should not have `broadcastable`
     if not shape and 'broadcastable' in kwargs:
@@ -200,8 +212,8 @@ def make_variable(
 
 
 def get_variable(
-        name, shape=None, dtype=None, initializer=None,
-        regularizer=None, trainable=True, **kwargs):
+        name, shape=None, dtype=None,
+        initializer=None, regularizer=None, trainable=True, **kwargs):
     """Create/Fetch variable in the current scope
 
     regularizer is not supported and has no effect.
@@ -220,12 +232,10 @@ def get_variable(
             )
         return var
     else:  # Create new variable
-        if var is not None:
-            raise ValueError(
-                'Variable {} already exists, disallowed. '
-                'Did you mean to set reuse=True in VarScope?'
-                .format(name_)
-            )
+        raise ValueError(
+            'Reuse flag is OFF. Use `make_variable` to create a Variable.')
+    '''
         return make_variable(
             name=name, shape=shape, dtype=dtype, initializer=initializer,
             regularizer=regularizer, trainable=trainable, **kwargs)
+    '''

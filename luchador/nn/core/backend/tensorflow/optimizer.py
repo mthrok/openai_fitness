@@ -131,7 +131,7 @@ class OptimizerMixin(object):
         """
         name = '{}/{}/{}'.format(
             self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = wrapper.get_variable(
+        slot_var = wrapper.make_variable(
             name=name, shape=var.get_shape(), dtype=var.dtype,
             initializer=tf.constant_initializer(0))
         self.slot.append(slot_var)
@@ -144,7 +144,7 @@ class OptimizerMixin(object):
         Currently only scalar type is supported.
         """
         name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = wrapper.get_variable(
+        slot_var = wrapper.make_variable(
             name=name, shape=[],
             initializer=tf.constant_initializer(initial_value))
         self.slot.append(slot_var)

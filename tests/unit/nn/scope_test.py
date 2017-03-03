@@ -22,7 +22,7 @@ class TestVariableStore(fixture.TestCase):
                 nn.get_variable(var_name)
 
         with nn.variable_scope(scope, reuse=False):
-            variable = nn.get_variable(var_name, shape=[3, 1])
+            variable = nn.make_variable(var_name, shape=[3, 1])
         self.assertTrue(full_name in nn.core.base.wrapper._VARIABLES)
 
         self.assertIs(variable, nn.core.base.wrapper._VARIABLES[full_name])

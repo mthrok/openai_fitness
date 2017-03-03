@@ -41,8 +41,8 @@ class TestConcat(TestCase):
         """Concatenate 2 2D tensors"""
         axis, shape1, shape2 = 1, (2, 5), (2, 3)
         with nn.variable_scope(self.get_scope(), reuse=False):
-            var1 = nn.get_variable(name='name1', shape=shape1)
-            var2 = nn.get_variable(name='name2', shape=shape2)
+            var1 = nn.make_variable(name='name1', shape=shape1)
+            var2 = nn.make_variable(name='name2', shape=shape2)
             conc_var = nn.layer.Concat(axis=axis).build([var1, var2])
 
         session = nn.Session()
@@ -117,9 +117,9 @@ class TestConcat(TestCase):
         """Concatenate 3 2D tensors"""
         axis, shape1, shape2, shape3 = 1, (2, 5), (2, 3), (2, 4)
         with nn.variable_scope(self.get_scope(), reuse=False):
-            var1 = nn.get_variable(name='var1', shape=shape1)
-            var2 = nn.get_variable(name='var2', shape=shape2)
-            var3 = nn.get_variable(name='var3', shape=shape3)
+            var1 = nn.make_variable(name='var1', shape=shape1)
+            var2 = nn.make_variable(name='var2', shape=shape2)
+            var3 = nn.make_variable(name='var3', shape=shape3)
             conc_var = nn.layer.Concat(axis=axis).build([var1, var2, var3])
 
         session = nn.Session()

@@ -8,12 +8,14 @@ import tensorflow as tf
 
 import luchador
 import luchador.util
-from luchador.nn.core.base import (
-    wrapper as base_wrapper,
-    initializer as base_initializer,
-)
+from ...base import wrapper as base_wrapper
+from ...base import scope as scope_module
+from ...base import initializer as base_initializer
 
-__all__ = ['Variable', 'Tensor', 'Input', 'Operation']
+__all__ = [
+    'Variable', 'Tensor', 'Input', 'Operation',
+    'get_variable', 'make_variable',
+]
 
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
@@ -69,8 +71,16 @@ def _get_dtype_str(tensor):
     return tensor.dtype.as_numpy_dtype().dtype.name
 
 
+def _get_scope():
+    return scope_module.get_variable_scope()
+
+
+def _is_reuse():
+    return _get_scope().reuse
+
+
 def _prefix_with_scope(name):
-    scope = tf.get_variable_scope().name
+    scope = _get_scope().name
     return '{}/{}'.format(scope, name) if scope else name
 
 
@@ -220,6 +230,10 @@ def get_variable(
             )
         return var
     else:
+        raise ValueError(
+            'Reuse flag is OFF. Use `make_variable` to create a Variable.')
+    '''
         return make_variable(
             name=name, shape=shape, dtype=dtype, initializer=initializer,
             regularizer=regularizer, trainable=trainable, **kwargs)
+    '''

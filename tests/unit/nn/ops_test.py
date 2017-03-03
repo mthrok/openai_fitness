@@ -14,10 +14,8 @@ _BACKEND = luchador.get_nn_backend()
 
 def _create_variables(shape=(3, 4)):
     init = nn.initializer.ConstantInitializer
-    with nn.variable_scope('source'):
-        src = nn.get_variable('source', shape=shape, initializer=init(value=1))
-    with nn.variable_scope('target'):
-        tgt = nn.get_variable('taget', shape=shape, initializer=init(value=0))
+    src = nn.make_variable('source', shape=shape, initializer=init(value=1))
+    tgt = nn.make_variable('taget', shape=shape, initializer=init(value=0))
     return src, tgt
 
 

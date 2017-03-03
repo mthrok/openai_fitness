@@ -62,7 +62,7 @@ def get_all_costs():
 ###############################################################################
 def create_constant_variable(shape, dtype, value=7, name='constant_varriable'):
     """Create Variable for test"""
-    return nn.get_variable(
+    return nn.make_variable(
         name=name, shape=shape, dtype=dtype,
         initializer=nn.initializer.ConstantInitializer(value)
     )
@@ -71,7 +71,7 @@ def create_constant_variable(shape, dtype, value=7, name='constant_varriable'):
 def create_random_variable(
         shape, dtype, min_val=0, max_val=1, name='random_variable'):
     """Create Variable with uniform randoml values for test"""
-    return nn.get_variable(
+    return nn.make_variable(
         name=name, shape=shape, dtype=dtype,
         initializer=nn.initializer.UniformInitializer(
             minval=min_val, maxval=max_val)

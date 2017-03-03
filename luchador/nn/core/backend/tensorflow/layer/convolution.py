@@ -127,13 +127,13 @@ class _Conv2DMixin(object):
 
     def _build_filter(self, shape, dtype):
         init = _get_filter_init(self.args['initializers'].get('filter'))
-        filter_ = wrapper.get_variable(
+        filter_ = wrapper.make_variable(
             name='filter', shape=shape, dtype=dtype, initializer=init)
         self.set_parameter_variables(filter=filter_)
 
     def _build_bias(self, shape, dtype):
         init = _get_bias_init(self.args['initializers'].get('bias'))
-        bias = wrapper.get_variable(
+        bias = wrapper.make_variable(
             name='bias', shape=shape, dtype=dtype, initializer=init)
         self.set_parameter_variables(bias=bias)
 

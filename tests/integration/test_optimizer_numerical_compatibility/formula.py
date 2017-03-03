@@ -22,7 +22,7 @@ class x2(_Formula):
     """ y = x2 """
     @staticmethod
     def get():
-        x = nn.get_variable(
+        x = nn.make_variable(
             name='x', shape=[],
             initializer=nn.initializer.ConstantInitializer(3))
         y = x * x
@@ -42,7 +42,7 @@ class x6(_Formula):
     """
     @staticmethod
     def get():
-        x = nn.get_variable(
+        x = nn.make_variable(
             name='x', shape=[],
             initializer=nn.initializer.ConstantInitializer(2.0))
         y = (x - 1.5) * (x - 1) * (x - 1) * (x + 1) * (x + 1) * (x + 1.5)

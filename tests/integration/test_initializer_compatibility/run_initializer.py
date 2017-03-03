@@ -53,7 +53,7 @@ def _run_initializer(initializer, shape):
         # [height, width, #in-channel, #out-channel],
         shape = [shape[2], shape[3], shape[1], shape[0]]
 
-    variable = nn.get_variable(
+    variable = nn.make_variable(
         shape=shape, name='input', initializer=initializer)
     session = nn.Session()
     session.initialize()

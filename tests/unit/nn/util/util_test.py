@@ -13,7 +13,7 @@ class UtilTest(fixture.TestCase):
         sgd = nn.optimizer.SGD(learning_rate=1.0)
         with nn.variable_scope(self.get_scope()):
             x = nn.Input(shape=(), name='x')
-            w1 = nn.get_variable(
+            w1 = nn.make_variable(
                 name='w', shape=(),
                 initializer=nn.initializer.ConstantInitializer(w_0),
             )
@@ -25,7 +25,7 @@ class UtilTest(fixture.TestCase):
             self.assertIs(dy1dw1_1, dy1dw1_2)
 
         with nn.variable_scope('{}/2'.format(self.get_scope())):
-            w2 = nn.get_variable(
+            w2 = nn.make_variable(
                 name='w', shape=(),
                 initializer=nn.initializer.ConstantInitializer(w_0),
             )
