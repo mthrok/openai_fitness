@@ -524,7 +524,8 @@ class TestTensorOpsOneHot(fixture.TestCase):
     def _test_one_hot(self, shape, n_classes, out_dtype):
         with nn.variable_scope(self.get_scope()):
             input_ = nn.Input(shape=shape, dtype='int64')
-            tensor = nn.ops.one_hot(input_, n_classes=n_classes, dtype=out_dtype)
+            tensor = nn.ops.one_hot(
+                input_, n_classes=n_classes, dtype=out_dtype)
 
         session = nn.Session()
 
