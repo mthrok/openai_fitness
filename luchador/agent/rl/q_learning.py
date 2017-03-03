@@ -42,7 +42,7 @@ def _build_error(target_q, action_value_0, action):
     delta = (target_q - action_value_0)
     error = nn.ops.minimum(nn.ops.abs(delta), (delta * delta))
     mask = nn.ops.one_hot(action, n_classes=n_actions, dtype=error.dtype)
-    return (mask * error).sum(axis=1)
+    return nn.ops.sum(mask * error, axis=1)
 
 
 def _clip_grads(grads_and_vars, clip_norm):
@@ -151,7 +151,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             shape=(None,), name='sample_weight')
         self._init_optimizer()
         optimize_op = self._build_optimize_op(
-            loss=(error * weight).mean(),
+            loss=nn.ops.mean(error * weight),
             params=model_0.get_parameters_to_train())
 
         self._init_session(initial_parameter)
@@ -189,12 +189,13 @@ class DeepQLearning(luchador.util.StoreMixin, object):
                 reward, min_value=min_val, max_value=max_val)
 
         # Build Target Q
-        post_q = action_value_1.max(axis=1)
+        post_q = nn.ops.max(action_value_1, axis=1)
         discounted_q = post_q * config['discount_rate']
         target_q = reward + (1.0 - terminal) * discounted_q
 
         n_actions = action_value_1.shape[1]
-        target_q = target_q.reshape([-1, 1]).tile([1, n_actions])
+        target_q = nn.ops.tile(
+            nn.ops.reshape(target_q, [-1, 1]), [1, n_actions])
         return target_q, post_q
 
     def _build_optimize_op(self, loss, params):

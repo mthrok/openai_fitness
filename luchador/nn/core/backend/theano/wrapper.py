@@ -9,7 +9,6 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-import luchador.util
 from ...base import wrapper as base_wrapper
 from ...base import scope as scope_module
 from ...base.getter import get_initializer
@@ -28,32 +27,6 @@ def _is_same_shape(shape1, shape2):
         if not dim1 == dim2:
             return False
     return True
-
-
-def _compute_reduced_shape(axis, shape, keep_dims):
-    if not luchador.util.is_iteratable(axis):
-        axis = [axis]
-    if keep_dims:
-        return [
-            (1 if i in axis else dim)
-            for i, dim in enumerate(shape)]
-    return [
-        dim for i, dim in enumerate(shape)
-        if i not in axis]
-
-
-def _compute_tile_shape(shape, pattern):
-    if len(shape) > len(pattern):
-        return _compute_tile_shape(pattern, shape)
-
-    _shape = list(pattern)
-    offset = len(pattern) - len(shape)
-    for i, val in enumerate(shape):
-        if _shape[offset + i] is None:
-            continue
-        if val is not None:
-            _shape[offset + i] *= val
-    return _shape
 
 
 class TensorMixin(object):  # pylint: disable=too-few-public-methods
@@ -108,124 +81,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
     def __rfloordiv__(self, other, name=None):
         _other = self._extract_operand(other)
         return Tensor(tensor=_other//self._tensor, shape=self.shape, name=name)
-
-    def mean(self, axis=None, keep_dims=False, dtype=None, name=None):
-        """Compute mean across the given axis
-
-        Parameters
-        ----------
-        axis : int, list or None
-            The dimensions to compute mean. If None (the default),
-            reduces all dimensions.
-        keep_dims: bool
-            If true, retains reduced dimensions with length 1.
-        name: str
-            A name for the operation.
-
-        Returns
-        -------
-        Tensor
-            The resulting Tensor
-        """
-        _tensor = self.unwrap().mean(
-            axis=axis, keepdims=keep_dims, dtype=dtype)
-        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
-        return Tensor(tensor=_tensor, shape=_shape, name=name)
-
-    def sum(self, axis=None, keep_dims=False, dtype=None, name=None):
-        """Compute sum across the given axis
-
-        Parameters
-        ----------
-        axis : int, list or None
-            The dimensions to compute mean. If None (the default),
-            reduces all dimensions.
-        keep_dims: bool
-            If true, retains reduced dimensions with length 1.
-        name: str
-            A name for the operation.
-
-        Returns
-        -------
-        Tensor
-            The resulting Tensor
-        """
-        _tensor = self.unwrap().sum(axis=axis, keepdims=keep_dims, dtype=dtype)
-        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
-        return Tensor(tensor=_tensor, shape=_shape, name=name)
-
-    def max(self, axis=None, keep_dims=False, name=None):
-        """Compute max across the given axis
-
-        Parameters
-        ----------
-        axis : int, list or None
-            The dimensions to compute max. If None (the default),
-            reduces all dimensions.
-        keep_dims: bool
-            If true, retains reduced dimensions with length 1.
-        name: str
-            A name for the operation.
-
-        Returns
-        -------
-        Tensor
-            The resulting Tensor
-        """
-        _tensor = self.unwrap().max(axis=axis, keepdims=keep_dims)
-        _shape = _compute_reduced_shape(axis, self.shape, keep_dims)
-        return Tensor(tensor=_tensor, shape=_shape, name=name)
-
-    def reshape(self, new_shape, name=None):
-        """Reshape tensor.
-
-        Parameters
-        ----------
-        new_shape : tuple
-            new shape
-
-        name : str
-            Name of operation
-
-        Returns
-        -------
-        Tensor
-            Tensor with new shape
-
-        Notes
-        -----
-        This function is for conveniently invoke underlying reshap function.
-        Shape-checking and inference is not carried out.
-        """
-        _tensor = T.reshape(self.unwrap(), newshape=new_shape)
-        return Tensor(tensor=_tensor, shape=new_shape, name=name)
-
-    def tile(self, pattern, name=None):
-        """Tile tensor.
-
-        Parameters
-        ----------
-        pattern : tuple
-            tile pattern
-
-        name : str
-            Name of operation
-
-        Returns
-        -------
-        Tensor
-            Resulting tensor.
-
-        Notes
-        -----
-        Currently only constant pattern is allowed.
-        """
-        if not luchador.util.is_iteratable(pattern):
-            raise ValueError('`pattern` must be iteratable')
-
-        _shape = _compute_tile_shape(pattern, self.shape)
-        _tensor = T.tile(self.unwrap(), pattern)
-        return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
 def _get_scope():

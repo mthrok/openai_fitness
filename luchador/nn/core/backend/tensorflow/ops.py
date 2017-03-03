@@ -8,11 +8,11 @@ from luchador.nn.core.base import wrapper as base_wrapper
 from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
-    'build_sync_op', 'one_hot', 'maximum', 'minimum',
+    'build_sync_op', 'one_hot',
     'abs', 'exp', 'log', 'sin', 'cos',
+    'mean', 'sum', 'max', 'reshape', 'tile', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
 ]
-
 # pylint: disable=redefined-builtin
 
 
@@ -115,6 +115,121 @@ def cos(var, name=None):
     """Returns exponential of the given variable"""
     _tensor = tf.cos(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def mean(var, axis=None, keep_dims=False, name=None):
+    """Compute mean across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute mean. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_mean(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def sum(var, axis=None, keep_dims=False, name=None):
+    """Compute sum across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute sum. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_sum(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def max(var, axis=None, keep_dims=False, name=None):
+    """Compute max across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute max. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.reduce_max(
+        var.unwrap(), axis=axis, keep_dims=keep_dims, name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def reshape(var, new_shape, name=None):
+    """Reshape tensor.
+
+    Parameters
+    ----------
+    new_shape : tuple
+        new shape
+
+    name : str
+        Name of operation
+
+    Returns
+    -------
+    Tensor
+        Tensor with new shape
+    """
+    _tensor = tf.reshape(var.unwrap(), shape=new_shape)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def tile(var, pattern, name=None):
+    """Tile tensor.
+
+    Parameters
+    ----------
+    pattern : tuple
+        tile pattern
+
+    Notes
+    -----
+    Currently only constant pattern is allowed.
+    """
+    if not luchador.util.is_iteratable(pattern):
+        raise ValueError('`pattern` must be iteratable')
+    pattern = tuple(pattern)
+
+    if len(pattern) > var.n_dim:
+        prepend = (1, ) * (len(pattern) - var.n_dim)
+        tensor = var.reshape(prepend + var.shape).unwrap()
+    else:
+        prepend = (1, ) * (var.n_dim - len(pattern))
+        pattern = prepend + pattern
+        tensor = var.unwrap()
+    return Tensor(tf.tile(tensor, pattern, name), name=name)
 
 
 def maximum(var1, var2, name=None):

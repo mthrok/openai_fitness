@@ -1,4 +1,3 @@
-
 """Module for providing backend-common interface for misc task"""
 from __future__ import absolute_import
 
@@ -6,16 +5,17 @@ from collections import OrderedDict
 
 import theano.tensor as T
 
+import luchador.util
 from luchador.nn.core.base import wrapper as base_wrapper
 from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
-    'build_sync_op', 'one_hot', 'maximum', 'minimum',
+    'build_sync_op', 'one_hot',
     'abs', 'exp', 'log', 'sin', 'cos',
+    'mean', 'sum', 'max', 'reshape', 'tile', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
 ]
-
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,assignment-from-no-return
 
 
 def build_sync_op(source_vars, target_vars, tau=None, name='sync'):
@@ -89,6 +89,32 @@ def one_hot(var, n_classes, dtype=None, name=None):
 
 
 ###############################################################################
+def _compute_reduced_shape(axis, shape, keep_dims):
+    if not luchador.util.is_iteratable(axis):
+        axis = [axis]
+    if keep_dims:
+        return [
+            (1 if i in axis else dim)
+            for i, dim in enumerate(shape)]
+    return [
+        dim for i, dim in enumerate(shape)
+        if i not in axis]
+
+
+def _compute_tile_shape(shape, pattern):
+    if len(shape) > len(pattern):
+        return _compute_tile_shape(pattern, shape)
+
+    _shape = list(pattern)
+    offset = len(pattern) - len(shape)
+    for i, val in enumerate(shape):
+        if _shape[offset + i] is None:
+            continue
+        if val is not None:
+            _shape[offset + i] *= val
+    return _shape
+
+
 def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
@@ -116,6 +142,129 @@ def cos(var, name=None):
     """Returns cos of the given variable"""
     _tensor = T.cos(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def mean(var, axis=None, keep_dims=False, dtype=None, name=None):
+    """Compute mean across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute mean. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = var.unwrap().mean(
+        axis=axis, keepdims=keep_dims, dtype=dtype)
+    _shape = _compute_reduced_shape(axis, var.shape, keep_dims)
+    return Tensor(tensor=_tensor, shape=_shape, name=name)
+
+
+def sum(var, axis=None, keep_dims=False, dtype=None, name=None):
+    """Compute sum across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute mean. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = var.unwrap().sum(axis=axis, keepdims=keep_dims, dtype=dtype)
+    _shape = _compute_reduced_shape(axis, var.shape, keep_dims)
+    return Tensor(tensor=_tensor, shape=_shape, name=name)
+
+
+def max(var, axis=None, keep_dims=False, name=None):
+    """Compute max across the given axis
+
+    Parameters
+    ----------
+    axis : int, list or None
+        The dimensions to compute max. If None (the default),
+        reduces all dimensions.
+    keep_dims: bool
+        If true, retains reduced dimensions with length 1.
+    name: str
+        A name for the operation.
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = var.unwrap().max(axis=axis, keepdims=keep_dims)
+    _shape = _compute_reduced_shape(axis, var.shape, keep_dims)
+    return Tensor(tensor=_tensor, shape=_shape, name=name)
+
+
+def reshape(var, new_shape, name=None):
+    """Reshape tensor.
+
+    Parameters
+    ----------
+    new_shape : tuple
+        new shape
+
+    name : str
+        Name of operation
+
+    Returns
+    -------
+    Tensor
+        Tensor with new shape
+
+    Notes
+    -----
+    This function is for conveniently invoke underlying reshap function.
+    Shape-checking and inference is not carried out.
+    """
+    _tensor = T.reshape(var.unwrap(), newshape=new_shape)
+    return Tensor(tensor=_tensor, shape=new_shape, name=name)
+
+
+def tile(var, pattern, name=None):
+    """Tile tensor.
+
+    Parameters
+    ----------
+    pattern : tuple
+        tile pattern
+
+    name : str
+        Name of operation
+
+    Returns
+    -------
+    Tensor
+        Resulting tensor.
+
+    Notes
+    -----
+    Currently only constant pattern is allowed.
+    """
+    if not luchador.util.is_iteratable(pattern):
+        raise ValueError('`pattern` must be iteratable')
+
+    _shape = _compute_tile_shape(pattern, var.shape)
+    _tensor = T.tile(var.unwrap(), pattern)
+    return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
 def maximum(var1, var2, name=None):
