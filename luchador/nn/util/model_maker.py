@@ -10,17 +10,6 @@ from ..model import Sequential, Container
 _LG = logging.getLogger(__name__)
 
 
-def _get_existing_variable(name):
-    """Search an existing Variable in current scope or global scope"""
-    scope = core.get_variable_scope()
-    with core.variable_scope(scope, reuse=True):
-        try:
-            return core.get_variable('{}/{}'.format(scope.name, name))
-        except ValueError:
-            pass
-        return core.get_variable(name)
-
-
 def make_io_node(config):
     """Make/fetch ``Input``/``Tensor`` instances from configuration.
 
@@ -99,7 +88,8 @@ def make_io_node(config):
     if type_ == 'Tensor':
         ret = core.get_tensor(name=config['name'])
     elif type_ == 'Variable':
-        ret = _get_existing_variable(name=config['name'])
+        # TODO: Add make_variable here?
+        ret = core.get_variable(name=config['name'])
     elif config.get('reuse'):
         ret = core.get_input(config['name'])
     else:
