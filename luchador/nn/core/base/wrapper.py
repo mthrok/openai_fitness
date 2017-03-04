@@ -56,6 +56,8 @@ def register_operation(name, operation):
 
 def retrieve_variable(name):
     """Get variable from global list of variables"""
+    if name not in _VARIABLES:
+        raise ValueError('Variable `{}` does not exist.'.format(name))
     return _VARIABLES.get(name)
 
 

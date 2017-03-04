@@ -174,24 +174,29 @@ class Operation(base_wrapper.BaseOperation):
 
 
 def make_variable(
-        name, shape=None, dtype=None,
+        name, shape, dtype=None,
         initializer=None, regularizer=None, trainable=True, **kwargs):
+    """Create Variable with the given configuration
 
+    Parameters
+    ----------
+    name : str
+        Name of Variable to create or retrieve
+
+    shape : list
+        Used to create new Variable. Ignored when retrieving one
+
+    dtype : str
+        Used to create new Variable. Ignored when retrieving one
+
+    initializer : luchador.nn.Initializer or tf.Initializer
+        Initializer object
+
+    kwargs
+        Other arguments passed to ``theano.shared`` function.
+    """
     scope = _get_scope().name
     name_ = '{}/{}'.format(scope, name) if scope else name
-
-    var = base_wrapper.retrieve_variable(name_)
-    if var is not None:
-        raise ValueError(
-            'Variable {} already exists, disallowed. '
-            'Did you mean to set reuse=True in VarScope?'
-            .format(name_)
-        )
-
-    if shape is None:
-        raise ValueError(
-            'Shape of a new variable ({}) must be fully defined, '
-            'but instead was {}.'.format(name_, shape))
 
     if not initializer:
         initializer = get_initializer('NormalInitializer')(dtype=dtype)
@@ -207,35 +212,16 @@ def make_variable(
         theano.shared(
             value=np.array(initializer.sample(shape), dtype=dtype),
             name=name_, allow_downcast=True, **kwargs
-        ), trainable=trainable, name=name,
+        ), name=name, trainable=trainable,
     )
 
 
-def get_variable(
-        name, shape=None, dtype=None,
-        initializer=None, regularizer=None, trainable=True, **kwargs):
-    """Create/Fetch variable in the current scope
-
-    regularizer is not supported and has no effect.
-    """
-    # 1. Check the current variable scope
-    scope = _get_scope().name
-    name_ = '{}/{}'.format(scope, name) if scope else name
-
-    var = base_wrapper.retrieve_variable(name_)
-    if _is_reuse():  # Search for an existing variable
-        if var is None:
-            raise ValueError(
-                'Variable {} does not exist, disallowed. '
-                'Did you mean to set reuse=None in VarScope?'
-                .format(name_)
-            )
-        return var
-    else:  # Create new variable
-        raise ValueError(
-            'Reuse flag is OFF. Use `make_variable` to create a Variable.')
-    '''
-        return make_variable(
-            name=name, shape=shape, dtype=dtype, initializer=initializer,
-            regularizer=regularizer, trainable=trainable, **kwargs)
-    '''
+def get_variable(name):
+    """Fetch variable by name, from the current scope or global scope"""
+    try:
+        scope = _get_scope().name
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return base_wrapper.retrieve_variable(name_)
+    except ValueError:
+        pass
+    return base_wrapper.retrieve_variable(name)

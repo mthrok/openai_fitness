@@ -176,40 +176,22 @@ class Operation(base_wrapper.BaseOperation):
 
 
 def make_variable(
-        name, shape=None, dtype=None,
+        name, shape, dtype=None,
         initializer=None, regularizer=None, trainable=True, **kwargs):
-    dtype = dtype or luchador.get_nn_dtype()
-    if isinstance(initializer, base_initializer.BaseInitializer):
-        initializer = initializer.unwrap()
-    variable = tf.get_variable(
-        name, shape=shape, dtype=dtype, initializer=initializer,
-        regularizer=regularizer, trainable=trainable, **kwargs)
-    return Variable(variable, trainable=trainable)
-
-
-def get_variable(
-        name, shape=None, dtype=None,
-        initializer=None, regularizer=None, trainable=True, **kwargs):
-    """Create Variable with the given configuration or retrieve existing one
-
-    This function works mostly same as tf.get_variable, except when retrieving
-    existing Variable, you only need name and need not to give shape and dtype.
-
-    Mapping from name to VariableWrapper is internally cached so that you can
-    retrieve variable with only name.
+    """Create Variable with the given configuration
 
     Parameters
     ----------
     name : str
-        Name of Variable to create or retrieve
+        Name of Variable to create.
 
     shape : list
-        Used to create new Variable. Ignored when retrieving one
+        Used to create new Variable.
 
     dtype : str
-        Used to create new Variable. Ignored when retrieving one
+        Used to create new Variable.
 
-    initializer : luchador.nn.Initializer or tf.Initializer
+    initializer : luchador.nn.Initializer
         Initializer object
 
     kwargs
@@ -217,23 +199,25 @@ def get_variable(
         See
         https://www.tensorflow.org/versions/master/api_docs/python/state_ops.html#get_variable
     """
+    dtype = dtype or luchador.get_nn_dtype()
 
-    scope = tf.get_variable_scope()
-    if scope.reuse:
-        name = '{}/{}'.format(scope.name, name) if scope.name else name
-        var = base_wrapper.retrieve_variable(name)
-        if var is None:
-            raise ValueError(
-                'Variable {} does not exist, disallowed. '
-                'Did you mean to set reuse=None in VarScope?'
-                .format(name)
-            )
-        return var
-    else:
-        raise ValueError(
-            'Reuse flag is OFF. Use `make_variable` to create a Variable.')
-    '''
-        return make_variable(
-            name=name, shape=shape, dtype=dtype, initializer=initializer,
-            regularizer=regularizer, trainable=trainable, **kwargs)
-    '''
+    if isinstance(initializer, base_initializer.BaseInitializer):
+        initializer = initializer.unwrap()
+
+    return Variable(
+        tf.get_variable(
+            name, shape=shape, dtype=dtype, initializer=initializer,
+            regularizer=regularizer, trainable=trainable, **kwargs
+        ), name=name, trainable=trainable
+    )
+
+
+def get_variable(name):
+    """Fetch variable by name, from the current scope or global scope"""
+    try:
+        scope = scope_module.get_variable_scope()
+        name_ = '{}/{}'.format(scope.name, name) if scope.name else name
+        return base_wrapper.retrieve_variable(name_)
+    except ValueError:
+        pass
+    return base_wrapper.retrieve_variable(name)

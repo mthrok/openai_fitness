@@ -56,7 +56,8 @@ def get_input(name):
     """
     try:
         scope = core.get_variable_scope().name
-        return base_wrapper.retrieve_input('{}/{}'.format(scope, name))
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return base_wrapper.retrieve_input(name_)
     except ValueError:
         pass
     return base_wrapper.retrieve_input(name)
@@ -76,7 +77,8 @@ def get_tensor(name):
     """
     try:
         scope = core.get_variable_scope().name
-        return base_wrapper.retrieve_tensor('{}/{}'.format(scope, name))
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return base_wrapper.retrieve_tensor(name_)
     except ValueError:
         pass
     return base_wrapper.retrieve_tensor(name)
@@ -134,7 +136,8 @@ def get_operation(name):
     """
     try:
         scope = core.get_variable_scope().name
-        return base_wrapper.retrieve_operation('{}/{}'.format(scope, name))
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return base_wrapper.retrieve_operation(name_)
     except ValueError:
         pass
     return base_wrapper.retrieve_operation(name)
