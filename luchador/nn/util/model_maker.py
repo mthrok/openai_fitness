@@ -10,6 +10,56 @@ from ..model import Sequential, Container
 _LG = logging.getLogger(__name__)
 
 
+###############################################################################
+class _ConfigDict(OrderedDict):
+    pass
+
+
+def _parse_config(config):
+    """Mark valid configurations as ConfigDict class
+
+    so as to differentiate them from ordinal dict"""
+    if isinstance(config, list):
+        return [_parse_config(cfg) for cfg in config]
+    if isinstance(config, dict):
+        _config = _ConfigDict() if 'typename' in config else OrderedDict()
+        for key, value in config.items():
+            _config[key] = _parse_config(value)
+        return _config
+    return config
+
+
+###############################################################################
+def _make_io_node(config):
+    type_ = config.get('typename', 'No `typename` is found.')
+    if type_ not in ['Input', 'Tensor', 'Variable']:
+        raise ValueError('Unexpected Input type: {}'.format(type_))
+
+    if type_ == 'Tensor':
+        ret = core.get_tensor(name=config['name'])
+    elif type_ == 'Variable':
+        ret = core.get_variable(name=config['name'])
+    elif config.get('reuse'):
+        ret = core.get_input(config['name'])
+    else:
+        ret = core.Input(**config['args'])
+    return ret
+
+
+def _make_io_node_recursively(config):
+    if isinstance(config, _ConfigDict):
+        return _make_io_node(config)
+    if isinstance(config, list):
+        return [make_io_node(cfg) for cfg in config]
+    if isinstance(config, dict):
+        ret = OrderedDict()
+        for key, value in config.items():
+            ret[key] = make_io_node(value)
+        return ret
+
+    raise ValueError('Invalid IO config: {}'.format(config))
+
+
 def make_io_node(config):
     """Make/fetch ``Input``/``Tensor`` instances from configuration.
 
@@ -78,25 +128,10 @@ def make_io_node(config):
     -------
     [list of] ``Tensor`` or ``Input``
     """
-    if isinstance(config, list):
-        return [make_io_node(cfg) for cfg in config]
-
-    type_ = config.get('typename', 'No `typename` is found.')
-    if type_ not in ['Input', 'Tensor', 'Variable']:
-        raise ValueError('Unexpected Input type: {}'.format(type_))
-
-    if type_ == 'Tensor':
-        ret = core.get_tensor(name=config['name'])
-    elif type_ == 'Variable':
-        # TODO: Add make_variable here?
-        ret = core.get_variable(name=config['name'])
-    elif config.get('reuse'):
-        ret = core.get_input(config['name'])
-    else:
-        ret = core.Input(**config['args'])
-    return ret
+    return _make_io_node_recursively(_parse_config(config))
 
 
+###############################################################################
 def make_layer(layer_config):
     """Make Layer instance
 
@@ -132,7 +167,8 @@ def make_layer(layer_config):
     return layer
 
 
-def make_sequential_model(layer_configs, input_config=None):
+###############################################################################
+def _make_sequential_model(layer_configs, input_config=None):
     """Make Sequential model instance from model configuration
 
     Parameters
@@ -161,7 +197,7 @@ def make_sequential_model(layer_configs, input_config=None):
     return model
 
 
-def make_container_model(input_config, model_configs, output_config=None):
+def _make_container_model(input_config, model_configs, output_config=None):
     """Make ``Container`` model from model configuration
 
     Parameters
@@ -191,6 +227,29 @@ def make_container_model(input_config, model_configs, output_config=None):
     return model
 
 
+def _make_model(model_config):
+    _type = model_config.get('typename', 'No model type found')
+    if _type == 'Sequential':
+        return _make_sequential_model(**model_config.get('args', {}))
+    if _type == 'Container':
+        return _make_container_model(**model_config.get('args', {}))
+    raise ValueError('Unexpected model type: {}'.format(_type))
+
+
+def _make_model_recursively(model_config):
+    if isinstance(model_config, _ConfigDict):
+        return _make_model(model_config)
+    if isinstance(model_config, list):
+        return [_make_model_recursively(cfg) for cfg in model_config]
+    if isinstance(model_config, dict):
+        ret = OrderedDict()
+        for key, value in model_config.items():
+            ret[key] = _make_model_recursively(value)
+        return ret
+
+    raise ValueError('Invalid model config: {}'.format(model_config))
+
+
 def make_model(model_config):
     """Make model from model configuration
 
@@ -204,13 +263,5 @@ def make_model(model_config):
     [list of] Model
         Resulting model[s]
     """
-    if isinstance(model_config, list):
-        return [make_model(cfg) for cfg in model_config]
-
-    _type = model_config.get('typename', 'No model type found')
-    if _type == 'Sequential':
-        return make_sequential_model(**model_config.get('args', {}))
-    if _type == 'Container':
-        return make_container_model(**model_config.get('args', {}))
-
-    raise ValueError('Unexpected model type: {}'.format(_type))
+    model_config = _parse_config(model_config)
+    return _make_model_recursively(model_config)

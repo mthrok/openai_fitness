@@ -9,6 +9,30 @@ from tests.unit import fixture
 # pylint: disable=invalid-name
 
 
+class MakeIOTest(fixture.TestCase):
+    """Test make_io_node function"""
+    def test_single_node(self):
+        """Can make/fetch single node"""
+        name = 'input_state'
+        shape = (32, 5)
+        with nn.variable_scope(self.get_scope()):
+            input1 = nn.make_io_node({
+                'typename': 'Input',
+                'args': {
+                    'shape': shape,
+                    'name': name,
+                },
+            })
+            input_ = nn.get_input(name=name)
+            input2 = nn.make_io_node({
+                'typename': 'Input',
+                'reuse': True,
+                'name': name,
+            })
+            self.assertIs(input1, input2)
+            self.assertIs(input1, input_)
+
+
 class ModelMakerTest(fixture.TestCase):
     """Test make_model functions"""
     def test_make_layer_with_reuse(self):
