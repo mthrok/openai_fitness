@@ -206,7 +206,7 @@ class TestGetVariable(_ScopeTestCase):
                 'trying to reuse non existent variable.'
             )
 
-    def test_make_variable_raises_when_creating_already_existing_variable(self):
+    def test_make_variable_raises_when_creating_existing_variable(self):
         """make_variable raise when trying to create existent variable"""
         scope = self.get_scope()
         nn.make_variable(scope, shape=[3, 1])
