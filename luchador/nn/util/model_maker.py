@@ -6,7 +6,6 @@ from collections import OrderedDict
 
 from .. import core
 from ..model import Sequential, Container
-from .getter import get_input, get_layer, get_tensor
 
 _LG = logging.getLogger(__name__)
 
@@ -98,11 +97,11 @@ def make_io_node(config):
         raise ValueError('Unexpected Input type: {}'.format(type_))
 
     if type_ == 'Tensor':
-        ret = get_tensor(name=config['name'])
+        ret = core.get_tensor(name=config['name'])
     elif type_ == 'Variable':
         ret = _get_existing_variable(name=config['name'])
     elif config.get('reuse'):
-        ret = get_input(config['name'])
+        ret = core.get_input(config['name'])
     else:
         ret = core.Input(**config['args'])
     return ret
@@ -131,7 +130,8 @@ def make_layer(layer_config):
     if 'typename' not in layer_config:
         raise RuntimeError('Layer `typename` is not given')
 
-    layer = get_layer(layer_config['typename'])(**layer_config.get('args', {}))
+    layer = core.get_layer(
+        layer_config['typename'])(**layer_config.get('args', {}))
 
     if 'parameters' in layer_config:
         parameters = OrderedDict([

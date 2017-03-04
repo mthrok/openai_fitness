@@ -10,7 +10,8 @@ from . import scope as scope_module
 
 __all__ = [
     'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseInput', 'BaseOperation',
-    'as_unwrapped'
+    'as_unwrapped',
+    'get_input', 'get_variable', 'get_tensor', 'get_operation', 'get_grad',
 ]
 
 _LG = logging.getLogger(__name__)
@@ -230,8 +231,19 @@ class BaseOperation(object):
         return self.op
 
 
+###############################################################################
 def get_variable(name):
-    """Fetch variable by name, from the current scope or global scope"""
+    """Get an instance of ``Variable`` from the current or the global scope
+
+    Parameters
+    ----------
+    name : str
+        name of ``Variable`` instance to get
+
+    Returns
+    -------
+    Variable
+    """
     scope = scope_module.get_variable_scope().name
     try:
         name_ = '{}/{}'.format(scope, name) if scope else name
@@ -239,3 +251,104 @@ def get_variable(name):
     except ValueError:
         pass
     return retrieve_variable(name)
+
+
+def get_input(name):
+    """Get an instance of ``Input`` from the current or the global scope
+
+    Parameters
+    ----------
+    name : str
+        name of ``Input`` instance to get
+
+    Returns
+    -------
+    Input
+    """
+    try:
+        scope = scope_module.get_variable_scope().name
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return retrieve_input(name_)
+    except ValueError:
+        pass
+    return retrieve_input(name)
+
+
+def get_tensor(name):
+    """Get an instance of ``Tensor`` from the current or the global scope
+
+    Parameters
+    ----------
+    name : str
+        name of ``Tensor`` instance to get
+
+    Returns
+    -------
+    Tensor
+    """
+    try:
+        scope = scope_module.get_variable_scope().name
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return retrieve_tensor(name_)
+    except ValueError:
+        pass
+    return retrieve_tensor(name)
+
+
+def get_grad(var):
+    """Get gradient ``Tensor`` corresponding to the given ``Variable``
+
+    In optimizers, gradient tensors are registered in global scope,
+    following the naming pattern ``<scope>/<variable_name>_grad``.
+
+    This function automatically build such name from the given ``Variable``
+    and the current scope name.
+
+    To properly fetch the corresponding gradient ``Tensor``, this function
+    must be called in the scope where gradient ``Tensor`` was defined.
+
+    Examples
+    --------
+    >>> from luchador import nn
+    >>> x = nn.get_variable(shape=(), name='x')
+    >>> # Variable x is registered with name 'x'
+    >>> y = x * x
+    >>> sgd = nn.optimizer.SGD(learning_rate=0.1)
+    >>> with nn.variable_scope('optimization'):
+    >>>    sgd.minimize(loss=y, wrt=x)
+    >>>    # dydx is registered with name '/optimization/x_grad'
+    >>>    dydx2 = nn.get_grad_tensor(x)
+    >>>    assert dydx1 is dydx2
+
+    Parameters
+    ----------
+    var : Variable
+        ``Variable`` object of which grad is retrieved.
+
+    Returns
+    -------
+    Tensor
+        ``Tensor`` object which is a gradient of given ``Variable``
+    """
+    return get_tensor('{}_grad'.format(var.name))
+
+
+def get_operation(name):
+    """Get ``Operation`` instance from the current scope or the global scope
+
+    Parameters
+    ----------
+    name : str
+        name of ``Operation`` instance to get
+
+    Returns
+    -------
+    Operation
+    """
+    try:
+        scope = scope_module.get_variable_scope().name
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return retrieve_operation(name_)
+    except ValueError:
+        pass
+    return retrieve_operation(name)

@@ -4,7 +4,8 @@ from .impl.scope import (  # noqa
     VariableScope, variable_scope, get_variable_scope, name_scope,
 )
 from .impl.wrapper import (  # noqa
-    Input, Variable, Tensor, Operation, get_variable, make_variable,
+    Input, Variable, Tensor, Operation, make_variable,
+    get_input, get_variable, get_tensor, get_operation, get_grad
 )
 from .impl.session import Session  # noqa
 from .impl import (  # noqa

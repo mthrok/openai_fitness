@@ -1,7 +1,9 @@
 """Implement wrapper classes"""
 from __future__ import absolute_import
 
-from ..base.wrapper import get_variable
+from ..base.wrapper import (
+    get_input, get_variable, get_tensor, get_operation, get_grad
+)
 from ..backend import wrapper
 
 # pylint: disable=invalid-name
@@ -13,6 +15,6 @@ Operation = wrapper.Operation
 make_variable = wrapper.make_variable
 
 __all__ = [
-    'Input', 'Variable', 'Tensor', 'Operation',
-    'get_variable', 'make_variable',
+    'Input', 'Variable', 'Tensor', 'Operation', 'make_variable',
+    'get_input', 'get_variable', 'get_tensor', 'get_operation', 'get_grad',
 ]
