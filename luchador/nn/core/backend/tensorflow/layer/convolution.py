@@ -9,7 +9,7 @@ import tensorflow as tf
 
 import luchador
 from luchador.nn.core import common
-from luchador.nn.core.base.getter import get_initializer
+from luchador.nn.core.base import get_initializer
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']

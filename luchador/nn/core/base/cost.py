@@ -7,6 +7,7 @@ import logging
 import luchador.util
 from . import scope as scope_module
 
+__all__ = ['BaseCost', 'get_cost']
 _LG = logging.getLogger(__name__)
 
 
@@ -58,3 +59,27 @@ class BaseCost(luchador.util.StoreMixin, object):
     @abc.abstractmethod
     def _build(self, target, prediction):
         pass
+
+
+def get_cost(name):
+    """Get ``Cost`` class by name
+
+    Parameters
+    ----------
+    name : str
+        Type of ``Cost`` to get.
+
+    Returns
+    -------
+    type
+        ``Cost`` type found
+
+    Raises
+    ------
+    ValueError
+        When ``Cost`` class with the given type is not found
+    """
+    for class_ in luchador.util.get_subclasses(BaseCost):
+        if class_.__name__ == name:
+            return class_
+    raise ValueError('Unknown Cost: {}'.format(name))

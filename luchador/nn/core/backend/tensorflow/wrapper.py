@@ -10,7 +10,7 @@ import luchador
 import luchador.util
 from ...base import wrapper as base_wrapper
 from ...base import scope as scope_module
-from ...base import initializer as base_initializer
+from ...base.initializer import BaseInitializer, get_initializer
 
 __all__ = [
     'Variable', 'Tensor', 'Input', 'Operation', 'make_variable',
@@ -200,7 +200,10 @@ def make_variable(
     """
     dtype = dtype or luchador.get_nn_dtype()
 
-    if isinstance(initializer, base_initializer.BaseInitializer):
+    if not initializer:
+        initializer = get_initializer('NormalInitializer')(dtype=dtype)
+
+    if isinstance(initializer, BaseInitializer):
         initializer = initializer.unwrap()
 
     return Variable(

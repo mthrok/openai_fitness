@@ -29,75 +29,49 @@ _INPUTS = OrderedDict()
 _OPERATIONS = OrderedDict()
 
 
-def register_variable(name, var):
-    """Register variable to global list of variables for later resuse"""
+def _register_variable(name, var):
     if name in _VARIABLES:
         raise ValueError('Variable `{}` already exists.'.format(name))
     _VARIABLES[name] = var
 
 
-def register_tensor(name, tensor):
-    """Register tensor to global list of tensors for later resuse"""
+def _register_tensor(name, tensor):
     if name in _TENSORS:
         _LG.warning('Tensor `%s` already exists.', name)
     _TENSORS[name] = tensor
 
 
-def register_input(name, input_):
-    """Register Input to global list of inputs for later resuse"""
+def _register_input(name, input_):
     if name in _INPUTS:
         _LG.warning('Input `%s` already exists.', name)
     _INPUTS[name] = input_
 
 
-def register_operation(name, operation):
-    """Register Operation to global list of operations for later resuse"""
+def _register_operation(name, operation):
     if name in _OPERATIONS:
         _LG.warning('Operation `%s` already exists.', name)
     _OPERATIONS[name] = operation
 
 
-def retrieve_variable(name):
-    """Get variable from global list of variables"""
+def _retrieve_variable(name):
     if name not in _VARIABLES:
         raise ValueError('Variable `{}` does not exist.'.format(name))
     return _VARIABLES.get(name)
 
 
-def retrieve_tensor(name):
-    """Get tensor from global list of tensors
-
-    Parameters
-    ----------
-    name : str
-        Name of Tensor to fetch
-    """
+def _retrieve_tensor(name):
     if name not in _TENSORS:
         raise ValueError('Tensor `{}` does not exist.'.format(name))
     return _TENSORS.get(name)
 
 
-def retrieve_input(name):
-    """Get Input from global list of tensors
-
-    Parameters
-    ----------
-    name : str
-        Name of Input to fetch
-    """
+def _retrieve_input(name):
     if name not in _INPUTS:
         raise ValueError('Input `{}` does not exist.'.format(name))
     return _INPUTS[name]
 
 
-def retrieve_operation(name):
-    """Get Operation from global list of tensors
-
-    Parameters
-    ----------
-    name : str
-        Name of Operation to fetch
-    """
+def _retrieve_operation(name):
     if name not in _OPERATIONS:
         raise ValueError('Operation `{}` does not exist.'.format(name))
     return _OPERATIONS[name]
@@ -173,7 +147,7 @@ class BaseVariable(BaseWrapper):
         super(BaseVariable, self).__init__(
             tensor=tensor, shape=shape, name=name,
             dtype=dtype, trainable=trainable)
-        register_variable(name, self)
+        _register_variable(name, self)
 
 
 class BaseTensor(BaseWrapper):
@@ -206,7 +180,7 @@ class BaseTensor(BaseWrapper):
         To retrieve `tensor2` with `get_tensor` method, you need to call
         tensor2.register().
         """
-        register_tensor(name, self)
+        _register_tensor(name, self)
 
 
 class BaseInput(BaseWrapper):
@@ -214,7 +188,7 @@ class BaseInput(BaseWrapper):
     def __init__(self, tensor, shape, name, dtype):
         super(BaseInput, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
-        register_input(name, self)
+        _register_input(name, self)
 
 
 class BaseOperation(object):
@@ -224,7 +198,7 @@ class BaseOperation(object):
         self.name = name
 
         if name:
-            register_operation(name, self)
+            _register_operation(name, self)
 
     def unwrap(self):
         """Returns the underlying backend-specific operation object"""
@@ -247,10 +221,10 @@ def get_variable(name):
     scope = scope_module.get_variable_scope().name
     try:
         name_ = '{}/{}'.format(scope, name) if scope else name
-        return retrieve_variable(name_)
+        return _retrieve_variable(name_)
     except ValueError:
         pass
-    return retrieve_variable(name)
+    return _retrieve_variable(name)
 
 
 def get_input(name):
@@ -268,10 +242,10 @@ def get_input(name):
     try:
         scope = scope_module.get_variable_scope().name
         name_ = '{}/{}'.format(scope, name) if scope else name
-        return retrieve_input(name_)
+        return _retrieve_input(name_)
     except ValueError:
         pass
-    return retrieve_input(name)
+    return _retrieve_input(name)
 
 
 def get_tensor(name):
@@ -289,10 +263,10 @@ def get_tensor(name):
     try:
         scope = scope_module.get_variable_scope().name
         name_ = '{}/{}'.format(scope, name) if scope else name
-        return retrieve_tensor(name_)
+        return _retrieve_tensor(name_)
     except ValueError:
         pass
-    return retrieve_tensor(name)
+    return _retrieve_tensor(name)
 
 
 def get_grad(var):
@@ -348,7 +322,7 @@ def get_operation(name):
     try:
         scope = scope_module.get_variable_scope().name
         name_ = '{}/{}'.format(scope, name) if scope else name
-        return retrieve_operation(name_)
+        return _retrieve_operation(name_)
     except ValueError:
         pass
-    return retrieve_operation(name)
+    return _retrieve_operation(name)

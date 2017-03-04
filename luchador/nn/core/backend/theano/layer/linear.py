@@ -6,7 +6,7 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base import getter
+from luchador.nn.core.base import get_initializer
 from .. import wrapper
 
 __all__ = ['Dense']
@@ -16,15 +16,13 @@ _LG = logging.getLogger(__name__)
 
 def _get_weight_init(config):
     config = config or {'typename': 'XavierInitializer'}
-    return getter.get_initializer(
-        config['typename'])(**config.get('args', {}))
+    return get_initializer(config['typename'])(**config.get('args', {}))
 
 
 def _get_bias_init(config):
     config = config or {
         'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
-    return getter.get_initializer(
-        config['typename'])(**config.get('args', {}))
+    return get_initializer(config['typename'])(**config.get('args', {}))
 
 
 class Dense(object):

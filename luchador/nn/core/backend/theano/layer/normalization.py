@@ -6,7 +6,7 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base.getter import get_initializer
+from luchador.nn.core.base import get_initializer
 from .. import wrapper
 
 __all__ = ['BatchNormalization']

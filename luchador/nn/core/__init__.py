@@ -1,11 +1,14 @@
 """Initialize Neural Network module and load backend"""
 from __future__ import absolute_import
-from .impl.scope import (  # noqa
+from .base import (  # noqa
     VariableScope, variable_scope, get_variable_scope, name_scope,
+    get_input, get_variable, get_tensor, get_operation, get_grad,
+    get_layer, get_initializer, get_optimizer, get_cost,
 )
+from .backend import ops  # noqa
 from .impl.wrapper import (  # noqa
     Input, Variable, Tensor, Operation, make_variable,
-    get_input, get_variable, get_tensor, get_operation, get_grad
+
 )
 from .impl.session import Session  # noqa
 from .impl import (  # noqa
@@ -14,4 +17,3 @@ from .impl import (  # noqa
     layer,
     cost,
 )
-from .backend import ops  # noqa

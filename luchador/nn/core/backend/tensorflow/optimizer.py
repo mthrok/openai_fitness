@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import tensorflow as tf
 
 import luchador.util
+from luchador.nn.core.base import get_initializer
 from . import wrapper
 
 __all__ = [
@@ -133,7 +134,7 @@ class OptimizerMixin(object):
             self.args['name'], var.name.split(':')[0], slot_name)
         slot_var = wrapper.make_variable(
             name=name, shape=var.get_shape(), dtype=var.dtype,
-            initializer=tf.constant_initializer(0))
+            initializer=get_initializer('ConstantInitializer')(0))
         self.slot.append(slot_var)
         return slot_var.unwrap()
 
@@ -146,7 +147,7 @@ class OptimizerMixin(object):
         name = '{}/{}'.format(self.args['name'], slot_name)
         slot_var = wrapper.make_variable(
             name=name, shape=[],
-            initializer=tf.constant_initializer(initial_value))
+            initializer=get_initializer('ConstantInitializer')(initial_value))
         self.slot.append(slot_var)
         return slot_var.unwrap()
 

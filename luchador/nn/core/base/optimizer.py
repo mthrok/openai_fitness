@@ -6,6 +6,7 @@ import logging
 
 import luchador.util
 
+__all__ = ['BaseOptimizer', 'get_optimizer']
 _LG = logging.getLogger(__name__)
 
 
@@ -208,107 +209,25 @@ class BaseRMSProp(BaseOptimizer):
             momentum=momentum, epsilon=epsilon, name=name, **kwargs)
 
 
-class BaseNeonRMSProp(BaseOptimizer):
-    """Neon style RMSProp
-
-    The update rule is similar to :any:`BaseRMSProp` without moemntum, but
-    epsilon appears twice.
-
-    .. math::
-        rms_t &= \\rho * rms_{t-1} + (1- \\rho) * grad ^2 \\\\
-        lr_t &= \\frac{lr}{\\sqrt{rms_t + \\epsilon} + \\epsilon} \\\\
-        var_t &= var_{t-1} - lr * grad  \\\\
-
-    where :math:`\\rho` is decay ratio
+def get_optimizer(name):
+    """Get ``Optimizer`` class by name
 
     Parameters
     ----------
-    learning_rate : float
-        The learning rate controlling the size of update steps
-    decay : float
-        Decay factor at which rate accumurated RMS decays.
-    epsilon : float
-        Small value added for numerical stability
     name : str
-        Used to create scope which contains parameter variables
-    kwargs
-        Other accepted keyword arguments
-        use_lock
-            [Tensorflow nly] passed to underlying TF native optimizer
+        Type of ``Optimizer`` to get
 
-    References
-    ----------
-    .. [1] Tieleman, T. and Hinton, G. (2012):
-           Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
-           Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
+    Returns
+    -------
+    type
+        ``Optimizer`` type found
+
+    Raises
+    ------
+    ValueError
+        When ``Optimizer`` class with the given type is not found
     """
-    def __init__(
-            self, learning_rate, decay=0.95, epsilon=1e-6,
-            name='NeonRMSProp', **kwargs):
-        super(BaseNeonRMSProp, self).__init__(
-            learning_rate=learning_rate,
-            decay=decay, epsilon=epsilon, name=name, **kwargs)
-
-
-class BaseGravesRMSProp(BaseOptimizer):
-    """RMSProp used in DQN paper [1]_ and described in A.Graves paper [2]_
-
-    # TODO: Add docstring
-    # TODO: Fix citatoin ref
-
-    References
-    ----------
-    .. [1] Mnih, V et. al (2015)
-           Human-level control through deep reinforcement learning
-           https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf
-           https://github.com/kuz/DeepMind-Atari-Deep-Q-Learner/blob/4b9f5a79b03ea0cfc512ed1c11f1b00bc875bc57/dqn/NeuralQLearner.lua#L265
-    .. [2] Graves, A. (2014):
-           Generating Sequences With Recurrent Neural Networks
-           http://arxiv.org/pdf/1308.0850v5.pdf
-    """
-    def __init__(
-            self, learning_rate, decay1=0.95, decay2=0.95, epsilon=1e-2,
-            name='GravesRMSProp', **kwargs):
-        super(BaseGravesRMSProp, self).__init__(
-            learning_rate=learning_rate, decay1=decay1, decay2=decay2,
-            epsilon=epsilon, name=name, **kwargs)
-
-
-class BaseAdam(BaseOptimizer):
-    """Adam optimizer [1]_
-
-    # TODO: Add docstring
-    # TODO: Fix citatoin ref
-
-    References
-    ----------
-    .. [1] Kingma, D. Ba, J 2014
-        Adam: A Method for Stochastic Optimization
-        https://arxiv.org/abs/1412.6980
-    """
-    def __init__(
-            self, learning_rate, beta1=0.9, beta2=0.999,
-            epsilon=1e-08, name='Adam', **kwargs):
-        super(BaseAdam, self).__init__(
-            learning_rate=learning_rate, beta1=beta1, beta2=beta2,
-            epsilon=epsilon, name=name, **kwargs)
-
-
-class BaseAdamax(BaseOptimizer):
-    """Adam optimizer [1]_
-
-    # TODO: Add docstring
-    # TODO: Fix citatoin ref
-
-    References
-    ----------
-    .. [1] Kingma, D. Ba, J 2014
-        Adam: A Method for Stochastic Optimization
-        https://arxiv.org/abs/1412.6980
-    """
-    def __init__(
-            self, learning_rate, beta1=0.9, beta2=0.999,
-            epsilon=1e-8, name='Adamax', **kwargs):
-        super(BaseAdamax, self).__init__(
-            learning_rate=learning_rate, beta1=beta1, beta2=beta2,
-            epsilon=epsilon, name=name, **kwargs)
+    for class_ in luchador.util.get_subclasses(BaseOptimizer):
+        if class_.__name__ == name:
+            return class_
+    raise ValueError('Unknown Optimizer: {}'.format(name))

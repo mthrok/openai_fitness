@@ -11,7 +11,7 @@ from . import scope as scope_module
 
 _LG = logging.getLogger(__name__)
 
-__all__ = ['BaseLayer']
+__all__ = ['BaseLayer', 'get_layer']
 
 
 class BaseLayer(luchador.util.StoreMixin, object):
@@ -150,3 +150,27 @@ class BaseLayer(luchador.util.StoreMixin, object):
         raise NotImplementedError(
             '`_build` method is not implemented for {}'.format(self.__class__)
         )
+
+
+def get_layer(name):
+    """Get ``Layer`` class by name
+
+    Parameters
+    ----------
+    name : str
+        Type of ``Layer`` to get
+
+    Returns
+    -------
+    type
+        ``Layer`` type found
+
+    Raises
+    ------
+    ValueError
+        When ``Layer`` class with the given type is not found
+    """
+    for class_ in luchador.util.get_subclasses(BaseLayer):
+        if class_.__name__ == name:
+            return class_
+    raise ValueError('Unknown Layer: {}'.format(name))

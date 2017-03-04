@@ -7,11 +7,10 @@ import theano
 import theano.tensor as T
 
 import luchador.util
-from ...base.getter import get_initializer
+from luchador.nn.core.base import get_initializer
 from . import wrapper
 
 __all__ = [
-    'OptimizerMixin',
     'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
 ]
 # pylint: disable=invalid-name,too-many-locals,too-few-public-methods,no-member

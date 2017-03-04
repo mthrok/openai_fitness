@@ -9,8 +9,7 @@ import theano.tensor as T
 from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
 from luchador.nn.core import common
-from luchador.nn.core.base.getter import get_initializer
-
+from luchador.nn.core.base.initializer import get_initializer
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
