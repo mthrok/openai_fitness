@@ -14,8 +14,7 @@ from ...base import scope as scope_module
 from ...base.getter import get_initializer
 
 __all__ = [
-    'Variable', 'Tensor', 'Input', 'Operation',
-    'get_variable', 'make_variable',
+    'Variable', 'Tensor', 'Input', 'Operation', 'make_variable',
 ]
 
 
@@ -88,10 +87,6 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
 
 def _get_scope():
     return scope_module.get_variable_scope()
-
-
-def _is_reuse():
-    return _get_scope().reuse
 
 
 def _prefix_with_scope(name):
@@ -214,14 +209,3 @@ def make_variable(
             name=name_, allow_downcast=True, **kwargs
         ), name=name, trainable=trainable,
     )
-
-
-def get_variable(name):
-    """Fetch variable by name, from the current scope or global scope"""
-    try:
-        scope = _get_scope().name
-        name_ = '{}/{}'.format(scope, name) if scope else name
-        return base_wrapper.retrieve_variable(name_)
-    except ValueError:
-        pass
-    return base_wrapper.retrieve_variable(name)

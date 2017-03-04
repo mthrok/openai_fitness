@@ -7,6 +7,7 @@ import tensorflow as tf
 
 import luchador.util
 from ...base import scope
+from ...base.wrapper import get_variable
 from . import wrapper
 
 __all__ = ['Session']
@@ -125,7 +126,7 @@ class Session(object):
             for name, value in dataset.items():
 
                 try:
-                    variable = wrapper.get_variable(name=name)
+                    variable = get_variable(name=name)
                     _LG.info(
                         '  Loading %-24s %10s -> %s %s',
                         value.shape, value.dtype, variable.dtype, name)

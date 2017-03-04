@@ -13,8 +13,7 @@ from ...base import scope as scope_module
 from ...base import initializer as base_initializer
 
 __all__ = [
-    'Variable', 'Tensor', 'Input', 'Operation',
-    'get_variable', 'make_variable',
+    'Variable', 'Tensor', 'Input', 'Operation', 'make_variable',
 ]
 
 
@@ -210,14 +209,3 @@ def make_variable(
             regularizer=regularizer, trainable=trainable, **kwargs
         ), name=name, trainable=trainable
     )
-
-
-def get_variable(name):
-    """Fetch variable by name, from the current scope or global scope"""
-    try:
-        scope = scope_module.get_variable_scope()
-        name_ = '{}/{}'.format(scope.name, name) if scope.name else name
-        return base_wrapper.retrieve_variable(name_)
-    except ValueError:
-        pass
-    return base_wrapper.retrieve_variable(name)

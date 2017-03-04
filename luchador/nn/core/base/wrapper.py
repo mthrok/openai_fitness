@@ -6,6 +6,8 @@ from collections import OrderedDict
 
 import numpy as np
 
+from . import scope as scope_module
+
 __all__ = [
     'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseInput', 'BaseOperation',
     'as_unwrapped'
@@ -226,3 +228,14 @@ class BaseOperation(object):
     def unwrap(self):
         """Returns the underlying backend-specific operation object"""
         return self.op
+
+
+def get_variable(name):
+    """Fetch variable by name, from the current scope or global scope"""
+    scope = scope_module.get_variable_scope().name
+    try:
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return retrieve_variable(name_)
+    except ValueError:
+        pass
+    return retrieve_variable(name)
