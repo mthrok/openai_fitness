@@ -31,18 +31,19 @@ def _parse_config(config):
 
 ###############################################################################
 def _make_io_node(config):
-    type_ = config.get('typename', 'No `typename` is found.')
-    if type_ not in ['Input', 'Tensor', 'Variable']:
-        raise ValueError('Unexpected Input type: {}'.format(type_))
-
+    type_ = config['typename']
     if type_ == 'Tensor':
         ret = core.get_tensor(name=config['name'])
     elif type_ == 'Variable':
+        # TODO: Add make_variable here?
         ret = core.get_variable(name=config['name'])
-    elif config.get('reuse'):
-        ret = core.get_input(config['name'])
+    elif type_ == 'Input':
+        if config.get('reuse'):
+            ret = core.get_input(config['name'])
+        else:
+            ret = core.Input(**config['args'])
     else:
-        ret = core.Input(**config['args'])
+        raise ValueError('Unexpected IO type: {}'.format(type_))
     return ret
 
 
@@ -159,10 +160,7 @@ def make_layer(layer_config):
         layer_config['typename'])(**layer_config.get('args', {}))
 
     if 'parameters' in layer_config:
-        parameters = OrderedDict([
-            (key, make_io_node(config))
-            for key, config in layer_config['parameters'].items()
-        ])
+        parameters = _make_io_node_recursively(layer_config['parameters'])
         layer.set_parameter_variables(**parameters)
     return layer
 
@@ -188,7 +186,7 @@ def _make_sequential_model(layer_configs, input_config=None):
     """
     model = Sequential()
     if input_config:
-        tensor = make_io_node(input_config)
+        tensor = _make_io_node_recursively(input_config)
     for config in layer_configs:
         layer = make_layer(config)
         if input_config:
@@ -217,13 +215,13 @@ def _make_container_model(input_config, model_configs, output_config=None):
         Resulting model
     """
     model = Container()
-    model.input = make_io_node(input_config)
+    model.input = _make_io_node_recursively(input_config)
     for conf in model_configs:
         _LG.info('Building Model: %s', conf.get('name', 'No name defined'))
         model.add_model(conf['name'], make_model(conf))
 
     if output_config:
-        model.output = make_io_node(output_config)
+        model.output = _make_io_node_recursively(output_config)
     return model
 
 
