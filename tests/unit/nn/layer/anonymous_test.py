@@ -159,20 +159,20 @@ class AnonymousRandomSourceTest(TestCase):
     def test_normal_random(self):
         """Anonymous layer can handle RandomSource"""
         shape = (100000,)
-        mean, std, threshold = 3.5, 11, 0.05
+        mean, std, threshold = 3.5, 11, 0.1
         exp = ('x + NormalRandom(mean={}, std={})').format(mean, std)
         input_val = np.zeros(shape)
         output_val = _exe(exp, input_val, self.get_scope())
 
-        mean_diff = abs(np.mean(output_val) - mean) / mean
-        std_diff = abs(np.std(output_val) - std) / std
+        mean_diff = abs(np.mean(output_val) - mean)
+        std_diff = abs(np.std(output_val) - std)
         self.assertLess(mean_diff, threshold)
         self.assertTrue(std_diff, threshold)
 
     def test_uniform_random(self):
         """Anonymous layer can handle RandomSource"""
         shape = (100000,)
-        low, high, threshold = -5, 3, 0.5
+        low, high, threshold = -5, 3, 0.1
         exp = ('x + UniformRandom(low={}, high={})').format(low, high)
         input_val = np.zeros(shape)
         output_val = _exe(exp, input_val, self.get_scope())
