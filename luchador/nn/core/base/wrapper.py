@@ -1,6 +1,7 @@
 """Module to define common interface for Tensor/Operation wrapping"""
 from __future__ import absolute_import
 
+import abc
 import logging
 from collections import OrderedDict
 
@@ -80,7 +81,24 @@ def _retrieve_operation(name):
 
 
 class BaseRandomSource(object):
-    pass
+    """Create Tensor which represents random value"""
+    __metaclass__ = abc.ABCMeta
+
+    def sample(self, shape, dtype):
+        """Sample uniform random value from distribution
+
+        Parameters
+        ----------
+        shape : tuple
+            Shape of sample
+        dtype : str
+            data type of sample
+        """
+        return self._sample(shape=shape, dtype=dtype)
+
+    @abc.abstractmethod
+    def _sample(self, shape, dtype):
+        pass
 
 
 class BaseWrapper(object):
