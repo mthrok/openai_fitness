@@ -5,8 +5,8 @@ import os
 import logging
 
 from luchador.util import load_config
-
 __all__ = ['get_model_config']
+
 _DATA_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'data')
 _LG = logging.getLogger(__name__)
