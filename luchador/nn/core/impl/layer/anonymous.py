@@ -10,9 +10,13 @@ __all__ = ['Anonymous']
 # pylint: disable=abstract-method
 
 
-def _get_safe_function(input_tensor):
+def _get_safe_function(*args, **kwargs):
+    if args and kwargs:
+        raise ValueError(
+            'Anonymouse layer accepsts either positional parameters '
+            'or keyword arguments, not both.')
     maps = {
-        'x': input_tensor,
+        'x': args if args else kwargs,
         'True': True,
         'False': False,
         'NormalRandom': random.NormalRandom,
@@ -28,8 +32,12 @@ class Anonymous(BaseLayer):
     def __init__(self, exp, name='Anonymous'):
         super(Anonymous, self).__init__(name=name, exp=exp)
 
-    def _build(self, input_tensor):
+    def build(self, *args, **kwargs):
+        """Build Anonymous layer
+
+
+        """
         # pylint: disable=eval-used
-        local = _get_safe_function(input_tensor)
+        local = _get_safe_function(*args, **kwargs)
         y = eval(self.args['exp'], {'__builtins__': None}, local)
         return wrapper.Tensor(tensor=y.unwrap(), shape=y.shape, name='output')
