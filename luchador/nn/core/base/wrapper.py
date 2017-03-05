@@ -77,6 +77,8 @@ def _retrieve_operation(name):
         raise ValueError('Operation `{}` does not exist.'.format(name))
     return _OPERATIONS[name]
 ###############################################################################
+
+
 class BaseRandomSource(object):
     pass
 

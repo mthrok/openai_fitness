@@ -9,7 +9,7 @@ from .backend import ops  # noqa
 from .impl.wrapper import (  # noqa
     Input, Variable, Tensor, Operation, make_variable,
 )
-from .impl.random import (
+from .impl.random import (  # noqa
     NormalRandom, UniformRandom,
 )
 from .impl.session import Session  # noqa
