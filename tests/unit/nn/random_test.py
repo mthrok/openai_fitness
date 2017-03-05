@@ -15,22 +15,20 @@ from tests.unit.fixture import TestCase
 class _NoiseTest(TestCase):
     longMessage = True
 
-    def _validate(self, in_var, in_val, mean, std, *out_vars):
+    def _validate(self, in_var, in_val, mean, std, out_var):
         session = nn.Session()
-        for out_var in out_vars:
-            out_val = session.run(
-                outputs=out_var, givens={in_var: in_val})
+        out_val = session.run(outputs=out_var, givens={in_var: in_val})
 
-            self.assertEqual(in_var.shape, out_var.shape)
-            self.assertEqual(in_var.dtype, out_var.dtype)
+        self.assertEqual(in_var.shape, out_var.shape)
+        self.assertEqual(in_var.dtype, out_var.dtype)
 
-            self.assertEqual(in_var.shape, out_val.shape)
-            self.assertEqual(in_var.dtype, out_val.dtype)
+        self.assertEqual(in_var.shape, out_val.shape)
+        self.assertEqual(in_var.dtype, out_val.dtype)
 
-            mean_diff = abs(np.mean(out_val) - mean)
-            std_diff = abs(np.std(out_val) - std)
-            self.assertLess(mean_diff, 0.1)
-            self.assertLess(std_diff, 0.1)
+        mean_diff = abs(np.mean(out_val) - mean)
+        std_diff = abs(np.std(out_val) - std)
+        self.assertLess(mean_diff, 0.3)
+        self.assertLess(std_diff, 0.3)
 
     def _test_add(self, noise, shape, mean, std, scope):
         with nn.variable_scope(scope):
@@ -38,7 +36,8 @@ class _NoiseTest(TestCase):
             out_var_1 = noise + in_var
             out_var_2 = in_var + noise
         in_val = np.zeros(shape=in_var.shape, dtype=in_var.dtype)
-        self._validate(in_var, in_val, mean, std, out_var_1, out_var_2)
+        self._validate(in_var, in_val, mean, std, out_var_1)
+        self._validate(in_var, in_val, mean, std, out_var_2)
 
     def _test_mult(self, noise, shape, mean, std, scope):
         with nn.variable_scope(scope):
@@ -46,7 +45,8 @@ class _NoiseTest(TestCase):
             out_var_1 = noise * in_var
             out_var_2 = in_var * noise
         in_val = np.ones(shape=in_var.shape, dtype=in_var.dtype)
-        self._validate(in_var, in_val, mean, std, out_var_1, out_var_2)
+        self._validate(in_var, in_val, mean, std, out_var_1)
+        self._validate(in_var, in_val, mean, std, out_var_2)
 
     def _test_sub(self, noise, shape, mean, std, scope):
         with nn.variable_scope(scope):
