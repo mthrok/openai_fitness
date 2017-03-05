@@ -8,7 +8,7 @@ __all__ = ['NormalRandom', 'UniformRandom']
 
 
 class NormalRandom(BaseRandomSource):
-    def __init__(self, mean, std, seed=None, name=None):
+    def __init__(self, mean=0.0, std=1.0, seed=None, name=None):
         self.mean = mean
         self.std = std
         self.name = name
@@ -21,7 +21,7 @@ class NormalRandom(BaseRandomSource):
 
 
 class UniformRandom(BaseRandomSource):
-    def __init__(self, low, high, seed=None, name=None):
+    def __init__(self, low=0.0, high=1.0, seed=None, name=None):
         self.low = low
         self.high = high
         self.name = name
