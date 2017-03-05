@@ -12,7 +12,6 @@ from .layer import make_layer
 _LG = logging.getLogger(__name__)
 
 
-
 def _make_sequential_model(layer_configs, input_config=None):
     """Make Sequential model instance from model configuration
 
