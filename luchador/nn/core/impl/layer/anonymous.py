@@ -44,14 +44,18 @@ class Anonymous(BaseLayer):
     def __init__(self, exp, name='Anonymous'):
         super(Anonymous, self).__init__(name=name, exp=exp)
 
-    def build(self, input_tensor=None, *args, **kwargs):
+    def __call__(self, input_tensor, *args, **kwargs):
+        """Convenience method to call `build`"""
+        return self.build(input_tensor, *args, **kwargs)
+
+    def build(self, input_tensor, *args, **kwargs):
         """Build Anonymous layer
 
 
         """
-        return self._build(self, input_tensor=None, *args, **kwargs)
+        return self._build(input_tensor, *args, **kwargs)
 
-    def _build(self, input_tensor=None, *args, **kwargs):
+    def _build(self, input_tensor, *args, **kwargs):
         # pylint: disable=eval-used
         local = _get_safe_function(input_tensor, *args, **kwargs)
         y = eval(self.args['exp'], {'__builtins__': None}, local)
