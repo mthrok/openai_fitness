@@ -53,9 +53,9 @@ class _NoiseTest(TestCase):
             in_var = nn.Input(shape=shape, name='original_input')
             out_var_1 = noise - in_var
             out_var_2 = in_var - noise
-        in_val = np.zeros(shape=in_var.shape, dtype=in_var.dtype)
-        self._validate(in_var, in_val, mean, std, out_var_1)
-        self._validate(in_var, in_val, -mean, std, out_var_2)
+        in_val = 10 * np.ones(shape=in_var.shape, dtype=in_var.dtype)
+        self._validate(in_var, in_val, mean - 10, std, out_var_1)
+        self._validate(in_var, in_val, 10 - mean, std, out_var_2)
 
 
 class NormalRandomTest(_NoiseTest):
