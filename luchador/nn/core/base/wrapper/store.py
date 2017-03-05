@@ -86,12 +86,12 @@ def register(type, name, obj):
 def retrieve(type, name):
     """Retrieve object"""
     if type == 'input':
-        _retrieve_input(name)
+        return _retrieve_input(name)
     elif type == 'variable':
-        _retrieve_variable(name)
+        return _retrieve_variable(name)
     elif type == 'tensor':
-        _retrieve_tensor(name)
+        return _retrieve_tensor(name)
     elif type == 'operation':
-        _retrieve_operation(name)
+        return _retrieve_operation(name)
     else:
         raise ValueError('Unknown type to retrieve {}'.format(type))

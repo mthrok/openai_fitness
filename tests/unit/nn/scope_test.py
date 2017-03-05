@@ -5,27 +5,28 @@ from luchador import nn
 
 from tests.unit import fixture
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,protected-access
+
+_VARIABLES = nn.core.base.wrapper.store._VARIABLES
 
 
 class TestVariableStore(fixture.TestCase):
-    # pylint: disable=protected-access
     """Test Variable/Tensor store mechanism"""
     def test_get_variable_creates_variable(self):
         """get_variable create variable"""
         scope, var_name = self.get_scope(), 'foo'
         full_name = '/'.join([scope, var_name])
 
-        self.assertTrue(full_name not in nn.core.base.wrapper._VARIABLES)
+        self.assertTrue(full_name not in _VARIABLES)
         with nn.variable_scope(scope, reuse=True):
             with self.assertRaises(ValueError):
                 nn.get_variable(var_name)
 
         with nn.variable_scope(scope, reuse=False):
             variable = nn.make_variable(var_name, shape=[3, 1])
-        self.assertTrue(full_name in nn.core.base.wrapper._VARIABLES)
+        self.assertTrue(full_name in _VARIABLES)
 
-        self.assertIs(variable, nn.core.base.wrapper._VARIABLES[full_name])
+        self.assertIs(variable, _VARIABLES[full_name])
         with nn.variable_scope(scope, reuse=True):
             self.assertIs(variable, nn.get_variable(var_name))
 
