@@ -14,23 +14,72 @@ class MakeIOTest(fixture.TestCase):
     def test_single_node(self):
         """Can make/fetch single node"""
         name = 'input_state'
-        shape = (32, 5)
-        with nn.variable_scope(self.get_scope()):
-            input1 = nn.make_io_node({
-                'typename': 'Input',
-                'args': {
-                    'shape': shape,
-                    'name': name,
-                },
-            })
-            input_ = nn.get_input(name=name)
-            input2 = nn.make_io_node({
-                'typename': 'Input',
-                'reuse': True,
+        input_config = {
+            'typename': 'Input',
+            'args': {
+                'shape': (32, 5),
                 'name': name,
-            })
+            },
+        }
+        input_config_reuse = {
+            'typename': 'Input',
+            'reuse': True,
+            'name': name,
+        }
+        with nn.variable_scope(self.get_scope()):
+            input1 = nn.make_io_node(input_config)
+            input2 = nn.make_io_node(input_config_reuse)
+            input_ = nn.get_input(name=name)
             self.assertIs(input1, input2)
             self.assertIs(input1, input_)
+
+    def test_list_nodes(self):
+        """Can make/fetch list of nodes"""
+        names = ['input_state_1', 'input_state_2']
+        config0 = {
+            'typename': 'Input',
+            'args': {
+                'shape': (32, 5),
+                'name': names[0],
+            },
+        }
+        config1 = {
+            'typename': 'Input',
+            'args': {
+                'shape': (32, 5),
+                'name': names[1],
+            },
+        }
+        with nn.variable_scope(self.get_scope()):
+            inputs = nn.make_io_node([config0, config1])
+            input0 = nn.get_input(name=names[0])
+            input1 = nn.get_input(name=names[1])
+            self.assertIs(input0, inputs[0])
+            self.assertIs(input1, inputs[1])
+
+    def test_map_nodes(self):
+        """Can make/fetch dict of nodes"""
+        names = ['input_state_1', 'input_state_2']
+        config0 = {
+            'typename': 'Input',
+            'args': {
+                'shape': (32, 5),
+                'name': names[0],
+            },
+        }
+        config1 = {
+            'typename': 'Input',
+            'args': {
+                'shape': (32, 5),
+                'name': names[1],
+            },
+        }
+        with nn.variable_scope(self.get_scope()):
+            inputs = nn.make_io_node({'config0': config0, 'config1': config1})
+            input0 = nn.get_input(name=names[0])
+            input1 = nn.get_input(name=names[1])
+            self.assertIs(input0, inputs['config0'])
+            self.assertIs(input1, inputs['config1'])
 
 
 class ModelMakerTest(fixture.TestCase):

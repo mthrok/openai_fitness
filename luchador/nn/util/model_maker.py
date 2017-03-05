@@ -125,6 +125,11 @@ def make_io_node(config):
     >>> assert input2 is inputs[0]
     >>> assert input3 is inputs[1]
 
+    >>> inputs = make_io_node({
+    >>>     'input2': input_config2, 'input3': input_config3})
+    >>> assert input2 is inputs['input2']
+    >>> assert input3 is inputs['input3']
+
     Returns
     -------
     [list of] ``Tensor`` or ``Input``
