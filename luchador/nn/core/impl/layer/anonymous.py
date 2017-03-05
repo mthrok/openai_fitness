@@ -3,7 +3,8 @@ from __future__ import division
 from __future__ import absolute_import
 
 from ...base import BaseLayer
-from ...backend import wrapper, random, ops
+from ...backend import wrapper, ops
+from .. import random
 
 __all__ = ['Anonymous']
 # pylint: disable=abstract-method
