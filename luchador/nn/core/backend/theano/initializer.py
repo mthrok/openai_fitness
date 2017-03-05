@@ -13,13 +13,25 @@ from scipy.stats import truncnorm as tnorm
 
 import theano
 
-from .random import get_rng
-
 __all__ = [
     'InitializerMixin',
     'Constant', 'Uniform', 'Normal', 'Xavier', 'Kaiming'
 ]
-# pylint: disable=too-few-public-methods,no-member
+# pylint: disable=too-few-public-methods,no-member,global-statement
+
+
+_RANDOM_STATE = RandomState(seed=None)
+
+
+def set_random_seed(seed):
+    """Set initializer's default random seed value"""
+    # TODO: Expose this function somewhere
+    global _RANDOM_STATE
+    _RANDOM_STATE = RandomState(seed=seed)
+
+
+def _get_rng():
+    return _RANDOM_STATE
 
 
 class InitializerMixin(object):  # pylint: disable=too-few-public-methods
@@ -27,7 +39,7 @@ class InitializerMixin(object):  # pylint: disable=too-few-public-methods
     def _run_backend_specific_init(self):
         if 'seed' in self.args:
             seed = self.args['seed']
-            self._rng = RandomState(seed) if seed else get_rng()
+            self._rng = RandomState(seed) if seed else _get_rng()
 
     def _sample(self, shape):
         dtype = self.args['dtype'] or theano.config.floatX

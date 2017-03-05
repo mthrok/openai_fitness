@@ -36,6 +36,8 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
     def _extract_operand(self, other):
         if isinstance(other, numbers.Number):
             return other
+        if isinstance(other, base_wrapper.BaseRandomSource):
+            return other.sample(shape=self.shape, dtype=self.dtype)
         if _is_same_shape(self.shape, other.shape):
             return other.unwrap()
         if self.size == 1 or other.size == 1:

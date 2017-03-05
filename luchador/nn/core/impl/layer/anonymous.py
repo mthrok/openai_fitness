@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 from ...base import BaseLayer
-from ...backend import wrapper, ops
+from ...backend import wrapper, random, ops
 
 __all__ = ['Anonymous']
 # pylint: disable=abstract-method
@@ -14,6 +14,8 @@ def _get_safe_function(input_tensor):
         'x': input_tensor,
         'True': True,
         'False': False,
+        'NormalRandom': random.NormalRandom,
+        'UniformRandom': random.UniformRandom,
     }
     for key in ops.__all__:
         maps[key] = getattr(ops, key)

@@ -23,6 +23,8 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         """Extract operand for elementwise operation"""
         if isinstance(other, numbers.Number):
             return other
+        if isinstance(other, base_wrapper.BaseRandomSource):
+            return other.sample(shape=self.shape, dtype=self.dtype)
         return other.unwrap()
 
     def __neg__(self, name=None):

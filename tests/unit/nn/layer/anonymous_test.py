@@ -12,22 +12,27 @@ from luchador import nn
 from tests.unit.fixture import TestCase
 
 
-def _test(exp, input_val, output_val, scope):
-    """Run Anonymous layer and check result"""
+def _exe(exp, input_val, scope):
     input_var = nn.Input(shape=input_val.shape, dtype=input_val.dtype)
     with nn.variable_scope(scope):
         layer = nn.layer.Anonymous(exp)
         output_var = layer(input_var)
 
     session = nn.Session()
-    output_val_ = session.run(
+    return session.run(
         outputs=output_var, inputs={input_var: input_val})
 
+
+def _test(exp, input_val, output_val, scope):
+    """Run Anonymous layer and check result"""
+    output_val_ = _exe(exp, input_val, scope)
     np.testing.assert_almost_equal(output_val_, output_val, decimal=4)
 
 
 class AnonymousSingleInputTest(TestCase):
     """Test for Anonyomus class"""
+    longMessage = True
+
     def test_neg(self):
         """Anonymous layer can handle negation"""
         input_val = np.random.rand(3, 4)
@@ -148,3 +153,33 @@ class AnonymousSingleInputTest(TestCase):
         input_val = np.random.rand(3, 4)
         output_val = (input_val * input_val).sum()
         _test('sum(x * x)', input_val, output_val, self.get_scope())
+
+
+class AnonymousRandomSourceTest(TestCase):
+    def test_normal_random(self):
+        """Anonymous layer can handle RandomSource"""
+        shape = (100000,)
+        mean, std, threshold = 3.5, 11, 0.05
+        exp = ('x + NormalRandom(mean={}, std={})').format(mean, std)
+        input_val = np.zeros(shape)
+        output_val = _exe(exp, input_val, self.get_scope())
+
+        mean_diff = abs(np.mean(output_val) - mean) / mean
+        std_diff = abs(np.std(output_val) - std) / std
+        self.assertLess(mean_diff, threshold)
+        self.assertTrue(std_diff, threshold)
+
+    def test_uniform_random(self):
+        """Anonymous layer can handle RandomSource"""
+        shape = (100000,)
+        low, high, threshold = -5, 3, 0.05
+        exp = ('x + UniformRandom(low={}, high={})').format(low, high)
+        input_val = np.zeros(shape)
+        output_val = _exe(exp, input_val, self.get_scope())
+
+        mean = (low + high) / 2
+        std = (high - low) / np.sqrt(12)
+        mean_diff = abs(np.mean(output_val) - mean) / mean
+        std_diff = abs(np.std(output_val) - std) / std
+        self.assertLess(mean_diff, threshold)
+        self.assertTrue(std_diff, threshold)

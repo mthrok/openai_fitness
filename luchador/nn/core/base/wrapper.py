@@ -9,7 +9,8 @@ import numpy as np
 from . import scope as scope_module
 
 __all__ = [
-    'BaseWrapper', 'BaseTensor', 'BaseVariable', 'BaseInput', 'BaseOperation',
+    'BaseRandomSource', 'BaseWrapper', 'BaseTensor', 'BaseVariable',
+    'BaseInput', 'BaseOperation',
     'as_unwrapped',
     'get_input', 'get_variable', 'get_tensor', 'get_operation', 'get_grad',
 ]
@@ -76,6 +77,8 @@ def _retrieve_operation(name):
         raise ValueError('Operation `{}` does not exist.'.format(name))
     return _OPERATIONS[name]
 ###############################################################################
+class BaseRandomSource(object):
+    pass
 
 
 class BaseWrapper(object):
