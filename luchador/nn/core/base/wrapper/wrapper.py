@@ -11,6 +11,13 @@ def _parse_dtype(dtype):
         return dtype
 
 
+def _product(shape):
+    ret = 1
+    for elem in shape:
+        ret *= elem
+    return ret
+
+
 class BaseWrapper(object):
     """Wraps Tensor or Variable object in Theano/Tensorflow
 
@@ -41,7 +48,7 @@ class BaseWrapper(object):
         """Return the number of elements in tensor"""
         if None in self.shape:
             return None
-        return reduce(lambda x, y: x*y, self.shape, 1)
+        return _product(self.shape)
 
     @property
     def n_dim(self):
