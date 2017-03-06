@@ -9,7 +9,12 @@ _LG = logging.getLogger(__name__)
 
 class ConfigDict(OrderedDict):
     """Class for distinguishing ordinal dict and model config"""
-    pass
+    def __repr__(self):
+        args = self.get('args', {})
+        return '{}: {}'.format(
+            self['typename'], {
+                key: value for key, value in args.items()
+            })
 
 
 def parse_config(config):
