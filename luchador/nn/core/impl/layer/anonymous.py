@@ -122,7 +122,6 @@ class Anonymous(BaseLayer):
         >>> y = anon(**x)
         >>> # y represents `input_3` * `input_4`
         """
-        _LG.info('  Appyling %s on %s', self.args['exp'], input_tensor)
         self.input = input_tensor
         with variable_scope(self.args['name']):
             self.output = self._build(input_tensor, *args, **kwargs)
@@ -131,5 +130,6 @@ class Anonymous(BaseLayer):
     def _build(self, input_tensor, *args, **kwargs):
         # pylint: disable=eval-used
         local = _get_safe_function(input_tensor, *args, **kwargs)
+        _LG.info('  Appyling %s on %s', self.args['exp'], local['x'])
         y = eval(self.args['exp'], {'__builtins__': None}, local)
         return wrapper.Tensor(tensor=y.unwrap(), shape=y.shape, name='output')
