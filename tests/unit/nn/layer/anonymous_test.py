@@ -288,12 +288,12 @@ class AnonymousMuptipleInputsTest(TestCase):
     def test_summation(self):
         """Anonymous layer can handle multiple addition"""
         shape, dtype = (3, 4), 'float32'
-        n_inputs = 7
-        exp = ('sum(x)')
+        n_inputs = 3
+        exp = ('x[0] + x[1] + x[2]')
 
         input_vars = [
-            nn.Input(shape=shape, dtype=dtype, name='input1')
-            for _ in range(n_inputs)
+            nn.Input(shape=shape, dtype=dtype, name='input_{}'.format(i))
+            for i in range(n_inputs)
         ]
         input_vals = [
             np.random.rand(3, 4).astype(dtype)
