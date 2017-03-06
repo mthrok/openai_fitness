@@ -238,7 +238,8 @@ class TestOpsMean(fixture.TestCase):
     def _test_mean(self, axis, shape, keep_dims):
         with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.mean(tensor0, axis=axis, keep_dims=keep_dims)
+            tensor1 = nn.ops.reduce_mean(
+                tensor0, axis=axis, keep_dims=keep_dims)
 
         session = nn.Session()
 
@@ -270,7 +271,8 @@ class TestTensorOpsSum(fixture.TestCase):
     def _test_sum(self, axis, shape, keep_dims):
         with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.sum(tensor0, axis=axis, keep_dims=keep_dims)
+            tensor1 = nn.ops.reduce_sum(
+                tensor0, axis=axis, keep_dims=keep_dims)
 
         session = nn.Session()
 
@@ -302,7 +304,8 @@ class TestTensorOpsMax(fixture.TestCase):
     def _test_max(self, axis, shape, keep_dims):
         with nn.variable_scope(self.get_scope()):
             tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.max(tensor0, axis=axis, keep_dims=keep_dims)
+            tensor1 = nn.ops.reduce_max(
+                tensor0, axis=axis, keep_dims=keep_dims)
 
         session = nn.Session()
 

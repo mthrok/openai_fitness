@@ -100,19 +100,21 @@ class AnonymousSingleInputTest(TestCase):
         """Anonymous layer can handle mean"""
         input_val = np.random.rand(3, 4, 5, 6)
         output_val = input_val.mean(axis=1)
-        _test('mean(x, axis=1)', input_val, output_val, self.get_scope())
+        exp = 'reduce_mean(x, axis=1)'
+        _test(exp, input_val, output_val, self.get_scope())
 
     def test_mean_multi(self):
         """Anonymous layer can handle cos"""
         input_val = np.random.rand(3, 4, 5, 6)
         output_val = np.mean(input_val, axis=(1, 2))
-        _test('mean(x, axis=(1, 2))', input_val, output_val, self.get_scope())
+        exp = 'reduce_mean(x, axis=(1, 2))'
+        _test(exp, input_val, output_val, self.get_scope())
 
     def test_mean_all(self):
         """Anonymous layer can handle cos"""
         input_val = np.random.rand(3, 4, 5, 6)
         output_val = np.mean(input_val)
-        _test('mean(x)', input_val, output_val, self.get_scope())
+        _test('reduce_mean(x)', input_val, output_val, self.get_scope())
 
     def test_reshape(self):
         """Anonymous layer can handle reshape"""
@@ -130,13 +132,13 @@ class AnonymousSingleInputTest(TestCase):
         """Anonymous layer can handle max"""
         input_val = np.random.rand(3, 4)
         output_val = input_val.max(axis=1)
-        _test('max(x, axis=1)', input_val, output_val, self.get_scope())
+        _test('reduce_max(x, axis=1)', input_val, output_val, self.get_scope())
 
     def test_sum(self):
         """Anonymous layer can handle sum"""
         input_val = np.random.rand(3, 4)
         output_val = input_val.sum(axis=1)
-        _test('sum(x, axis=1)', input_val, output_val, self.get_scope())
+        _test('reduce_sum(x, axis=1)', input_val, output_val, self.get_scope())
 
     def test_mean_shift(self):
         """Anonymous layer can handle complex arithmetic"""
@@ -144,7 +146,7 @@ class AnonymousSingleInputTest(TestCase):
         mean_ = np.tile(input_val.mean(axis=1, keepdims=True), (1, 4))
         output_val = input_val - mean_
         _test(
-            'x - tile(mean(x, axis=1, keep_dims=True), (1, 4))',
+            'x - tile(reduce_mean(x, axis=1, keep_dims=True), (1, 4))',
             input_val, output_val, self.get_scope()
         )
 
@@ -152,7 +154,7 @@ class AnonymousSingleInputTest(TestCase):
         """Anonymous layer can handle complex arithmetic"""
         input_val = np.random.rand(3, 4)
         output_val = (input_val * input_val).sum()
-        _test('sum(x * x)', input_val, output_val, self.get_scope())
+        _test('reduce_sum(x * x)', input_val, output_val, self.get_scope())
 
 
 class AnonymousInterfaceTest(TestCase):
@@ -270,3 +272,55 @@ class AnonymousMuptipleInputsTest(TestCase):
                 layer(input_vars, **input_kw_vars)
             with self.assertRaises(ValueError):
                 layer(*input_vars, **input_kw_vars)
+
+    def test_summation(self):
+        """Anonymous layer can handle multiple addition"""
+        shape, dtype = (3, 4), 'float32'
+        n_inputs = 7
+        exp = ('sum(x)')
+
+        input_vars = [
+            nn.Input(shape=shape, dtype=dtype, name='input1')
+            for _ in range(n_inputs)
+        ]
+        input_vals = [
+            np.random.rand(3, 4).astype(dtype)
+            for _ in range(n_inputs)
+        ]
+        output_val = sum(input_vals)
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.layer.Anonymous(exp)
+            output_var = layer(*input_vars)
+
+        session = nn.Session()
+        output_val_ = session.run(
+            outputs=output_var,
+            inputs={var: val for var, val in zip(input_vars, input_vals)}
+        )
+        np.testing.assert_almost_equal(output_val, output_val_)
+
+    def test_subtraction(self):
+        """Anonymous layer can handle multiple addition"""
+        shape, dtype = (3, 4), 'float32'
+        n_inputs = 3
+        exp = ('x[0] - x[1] - x[2]')
+
+        input_vars = [
+            nn.Input(shape=shape, dtype=dtype, name='input1')
+            for _ in range(n_inputs)
+        ]
+        input_vals = [
+            np.random.rand(3, 4).astype(dtype)
+            for _ in range(n_inputs)
+        ]
+        output_val = input_vals[0] - input_vals[1] - input_vals[2]
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.layer.Anonymous(exp)
+            output_var = layer(*input_vars)
+
+        session = nn.Session()
+        output_val_ = session.run(
+            outputs=output_var,
+            inputs={var: val for var, val in zip(input_vars, input_vals)}
+        )
+        np.testing.assert_almost_equal(output_val, output_val_)

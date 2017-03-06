@@ -9,36 +9,9 @@ import tensorflow as tf
 import luchador
 from ..wrapper import Tensor
 
-__all__ = ['Add', 'Sub', 'TrueDiv']
+__all__ = ['TrueDiv']
 _LG = logging.getLogger(__name__)
 # pylint:disable=no-member,no-self-use,attribute-defined-outside-init
-
-
-class Add(object):
-    """Implement Add layer in Tensorflow
-
-    See :any: `BaseAdd` for detail.
-    """
-    def _build(self, var_list):
-        if len(var_list) < 2:
-            raise ValueError('var_list must contain at least 2 tensors')
-
-        ret = var_list[0]
-        for var in var_list[1:-1]:
-            ret = ret + var
-        return ret.__add__(var_list[-1], name='output')
-
-
-class Sub(object):
-    """Implement Sub layer in Tensorflow
-
-    See :any: `BaseSub` for detail.
-    """
-    def _build(self, var_list):
-        if len(var_list) != 2:
-            raise ValueError('var_list must be 2 tensors')
-
-        return var_list[0].__sub__(var_list[1], name='output')
 
 
 class TrueDiv(object):

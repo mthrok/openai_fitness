@@ -6,36 +6,9 @@ import theano.tensor as T
 
 from ..wrapper import Tensor
 
-__all__ = ['Add', 'Sub', 'TrueDiv']
+__all__ = ['TrueDiv']
 # pylint: disable=no-member,too-few-public-methods,no-self-use,
 # pylint: disable=attribute-defined-outside-init
-
-
-class Add(object):
-    """Implement Add layer in Theano
-
-    See :any: `BaseAdd` for detail.
-    """
-    def _build(self, var_list):
-        if len(var_list) < 2:
-            raise ValueError('var_list must contain at least 2 tensors')
-
-        ret = var_list[0]
-        for var in var_list[1:-1]:
-            ret = ret + var
-        return ret.__add__(var_list[-1], name='output')
-
-
-class Sub(object):
-    """Implement Sub layer in Theano
-
-    See :any: `BaseSub` for detail.
-    """
-    def _build(self, var_list):
-        if len(var_list) != 2:
-            raise ValueError('var_list must be 2 tensors')
-
-        return var_list[0].__sub__(var_list[1], name='output')
 
 
 class TrueDiv(object):

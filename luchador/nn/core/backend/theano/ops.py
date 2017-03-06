@@ -15,7 +15,8 @@ from .wrapper import Operation, Tensor, Variable
 __all__ = [
     'build_sync_op', 'one_hot',
     'abs', 'exp', 'log', 'sin', 'cos',
-    'mean', 'sum', 'max', 'reshape', 'tile', 'maximum', 'minimum',
+    'reduce_mean', 'reduce_sum', 'reduce_max',
+    'reshape', 'tile', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
 ]
 # pylint: disable=redefined-builtin,assignment-from-no-return
@@ -147,7 +148,7 @@ def cos(var, name=None):
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
-def mean(var, axis=None, keep_dims=False, dtype=None, name=None):
+def reduce_mean(var, axis=None, keep_dims=False, dtype=None, name=None):
     """Compute mean across the given axis
 
     Parameters
@@ -171,7 +172,7 @@ def mean(var, axis=None, keep_dims=False, dtype=None, name=None):
     return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
-def sum(var, axis=None, keep_dims=False, dtype=None, name=None):
+def reduce_sum(var, axis=None, keep_dims=False, dtype=None, name=None):
     """Compute sum across the given axis
 
     Parameters
@@ -194,7 +195,7 @@ def sum(var, axis=None, keep_dims=False, dtype=None, name=None):
     return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
-def max(var, axis=None, keep_dims=False, name=None):
+def reduce_max(var, axis=None, keep_dims=False, name=None):
     """Compute max across the given axis
 
     Parameters

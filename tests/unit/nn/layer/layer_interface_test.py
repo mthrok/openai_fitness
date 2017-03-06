@@ -113,30 +113,6 @@ class LayerInterfaceTest(fixture.TestCase):
             output = layer(input_)
             self.assertIs(output, nn.get_tensor('Concat/output'))
 
-    def test_add(self):
-        """Compnents consisting Add layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            input_ = [
-                nn.Input(shape=(32, 4), name='input'),
-                nn.Input(shape=(32, 4), name='input'),
-            ]
-            layer = nn.get_layer('Add')(name='Add')
-            output = layer(input_)
-            self.assertIs(output, nn.get_tensor('Add/output'))
-
-    def test_sub(self):
-        """Compnents consisting Sub layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            input_ = [
-                nn.Input(shape=(32, 4), name='input'),
-                nn.Input(shape=(32, 4), name='input'),
-            ]
-            layer = nn.get_layer('Sub')(name='Sub')
-            output = layer(input_)
-            self.assertIs(output, nn.get_tensor('Sub/output'))
-
     def test_bn(self):
         """Compnents consisting BatchNormalization layer are retrieved"""
         scope = self.get_scope()
