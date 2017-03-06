@@ -99,9 +99,10 @@ class OptimizerGradientTest(fixture.TestCase):
             x = nn.make_variable(
                 name='x', shape=shape, initializer=initializer)
             y = x * x / 2
+            grads_and_vars = sgd.compute_gradients(nn.ops.reduce_sum(y), wrt=x)
             grads_and_vars = [
                 (nn.ops.clip_by_value(grad, max_value=1, min_value=-1), var)
-                for grad, var in sgd.compute_gradients(nn.ops.reduce_sum(y), wrt=x)
+                for grad, var in grads_and_vars
             ]
             op = sgd.apply_gradients(grads_and_vars)
 
