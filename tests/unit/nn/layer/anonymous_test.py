@@ -43,7 +43,19 @@ class AnonymousSingleInputTest(TestCase):
         """Anonymous layer can handle abs"""
         input_val = np.random.rand(3, 4)
         output_val = abs(input_val)
-        _test('abs(x, name="output")', input_val, output_val, self.get_scope())
+        _test('abs(x)', input_val, output_val, self.get_scope())
+
+    def test_square(self):
+        """Anonymous layer can handle square"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.square(input_val)
+        _test('square(x)', input_val, output_val, self.get_scope())
+
+    def test_sqrt(self):
+        """Anonymous layer can handle sqrt"""
+        input_val = np.random.rand(3, 4)
+        output_val = np.sqrt(input_val)
+        _test('sqrt(x)', input_val, output_val, self.get_scope())
 
     def test_add(self):
         """Anonymous layer can handle addition"""

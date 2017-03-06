@@ -14,7 +14,8 @@ from .wrapper import Operation, Tensor, Variable
 
 __all__ = [
     'build_sync_op', 'one_hot',
-    'abs', 'exp', 'log', 'sin', 'cos',
+    'abs', 'square', 'sqrt',
+    'exp', 'log', 'sin', 'cos',
     'reduce_mean', 'reduce_sum', 'reduce_max',
     'reshape', 'tile', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
@@ -122,6 +123,18 @@ def _compute_tile_shape(shape, pattern):
 def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
+
+
+def square(var, name=None):
+    """Returns square of the given variable"""
+    _tensor = T.sqr(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+def sqrt(var, name=None):
+    """Returns square root of the given variable"""
+    _tensor = T.sqrt(var.unwrap())
+    return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def exp(var, name=None):
