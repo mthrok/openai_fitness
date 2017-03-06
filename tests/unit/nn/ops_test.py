@@ -233,28 +233,37 @@ class TestTensorOpsClipByNorm(fixture.TestCase):
             out_val, clip_norm * in_val / l2_norm, decimal=3)
 
 
-class TestOpsMean(fixture.TestCase):
-    """Test mean ops"""
-    def _test_mean(self, axis, shape, keep_dims):
+class OpsTest(fixture.TestCase):
+    """Test case for reduce_** operations"""
+    def _test(self, op, np_op, axis, shape, keep_dims):
+        """Run reduce_** operation and check the result with NumPy func"""
         with nn.variable_scope(self.get_scope()):
-            tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.reduce_mean(
-                tensor0, axis=axis, keep_dims=keep_dims)
+            # pylint: disable=not-callable
+            in_var = nn.Input(shape=shape)
+            out_var = op(in_var, axis=axis, keep_dims=keep_dims)
 
         session = nn.Session()
-
-        val0, val1 = session.run(
-            outputs=[tensor0, tensor1],
+        in_val = np.random.rand(*shape)
+        out_val = session.run(
+            outputs=out_var,
+            inputs={in_var: in_val}
         )
-        expected = val0.mean(axis=axis, keepdims=keep_dims)
-        np.testing.assert_equal(val1, expected)
+        expected = np_op(in_val, axis=axis, keepdims=keep_dims)
+        self.assertEqual(out_var.shape, out_val.shape)
+        np.testing.assert_almost_equal(out_val, expected, decimal=3)
+
+
+class TestOpsMean(OpsTest):
+    """Test mean ops"""
+    def _test_mean(self, axis, shape, keep_dims):
+        self._test(nn.ops.reduce_mean, np.mean, axis, shape, keep_dims)
 
     def test_mean(self):
         """Test mean with single axis, dropping axis"""
         self._test_mean(0, (3, 5), False)
 
     def test_mean_keep_dim(self):
-        """Test mean with single axis, dropping axis"""
+        """Test mean with single axis, keeping axis"""
         self._test_mean(0, (3, 5), True)
 
     def test_mean_multi(self):
@@ -262,25 +271,22 @@ class TestOpsMean(fixture.TestCase):
         self._test_mean((1, 2), (3, 4, 5, 6), False)
 
     def test_mean_multi_keep_dim(self):
-        """Test mean with multiple axes, dropping axis"""
+        """Test mean with multiple axes, keeping axis"""
         self._test_mean((1, 2), (3, 4, 5, 6), True)
 
+    def test_mean_no_axis(self):
+        """Test mean with axis=Nones, dropping axis"""
+        self._test_mean(None, (3, 4, 5, 6), False)
 
-class TestTensorOpsSum(fixture.TestCase):
+    def test_mean_no_axis_keep_dim(self):
+        """Test mean with axis=Nones, keeping axis"""
+        self._test_mean(None, (3, 4, 5, 6), True)
+
+
+class TestTensorOpsSum(OpsTest):
     """Test wrapper sum method"""
     def _test_sum(self, axis, shape, keep_dims):
-        with nn.variable_scope(self.get_scope()):
-            tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.reduce_sum(
-                tensor0, axis=axis, keep_dims=keep_dims)
-
-        session = nn.Session()
-
-        val0, val1 = session.run(
-            outputs=[tensor0, tensor1],
-        )
-        expected = val0.sum(axis=axis, keepdims=keep_dims)
-        np.testing.assert_equal(val1, expected)
+        self._test(nn.ops.reduce_sum, np.sum, axis, shape, keep_dims)
 
     def test_sum(self):
         """Test sum with single axis, dropping axis"""
@@ -298,22 +304,19 @@ class TestTensorOpsSum(fixture.TestCase):
         """Test sum with multiple axes, dropping axis"""
         self._test_sum((1, 2), (3, 4, 5, 6), True)
 
+    def test_sum_no_axis(self):
+        """Test sum with axis=Nones, dropping axis"""
+        self._test_sum(None, (3, 4, 5, 6), False)
 
-class TestTensorOpsMax(fixture.TestCase):
+    def test_sum_no_axis_keep_dim(self):
+        """Test sum with axis=Nones, keeping axis"""
+        self._test_sum(None, (3, 4, 5, 6), True)
+
+
+class TestTensorOpsMax(OpsTest):
     """Test wrapper max method"""
     def _test_max(self, axis, shape, keep_dims):
-        with nn.variable_scope(self.get_scope()):
-            tensor0 = fixture.create_ones_tensor(shape, dtype='float32')
-            tensor1 = nn.ops.reduce_max(
-                tensor0, axis=axis, keep_dims=keep_dims)
-
-        session = nn.Session()
-
-        val0, val1 = session.run(
-            outputs=[tensor0, tensor1],
-        )
-        expected = val0.max(axis=axis, keepdims=keep_dims)
-        np.testing.assert_equal(val1, expected)
+        self._test(nn.ops.reduce_max, np.max, axis, shape, keep_dims)
 
     def test_max(self):
         """Test max with single axis, dropping axis"""
@@ -330,6 +333,14 @@ class TestTensorOpsMax(fixture.TestCase):
     def test_max_multi_keep_dim(self):
         """Test max with multiple axes, dropping axis"""
         self._test_max((1, 2), (3, 4, 5, 6), True)
+
+    def test_max_no_axis(self):
+        """Test max with axis=Nones, dropping axis"""
+        self._test_max(None, (3, 4, 5, 6), False)
+
+    def test_max_no_axis_keep_dim(self):
+        """Test max with axis=Nones, keeping axis"""
+        self._test_max(None, (3, 4, 5, 6), True)
 
 
 class TestTensorOpsMaximum(fixture.TestCase):

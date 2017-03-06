@@ -95,6 +95,11 @@ def one_hot(var, n_classes, dtype=None, name=None):
 
 ###############################################################################
 def _compute_reduced_shape(axis, shape, keep_dims):
+    if axis is None:
+        if keep_dims:
+            return [1] * len(shape)
+        return []
+
     if not luchador.util.is_iteratable(axis):
         axis = [axis]
     if keep_dims:
