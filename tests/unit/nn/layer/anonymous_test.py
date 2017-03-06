@@ -30,7 +30,7 @@ def _test(exp, input_val, output_val, scope):
 
 
 class AnonymousSingleInputTest(TestCase):
-    """Test for Anonyomus class"""
+    """Test for Anonyomus class with single input"""
     longMessage = True
 
     def test_neg(self):
@@ -155,7 +155,23 @@ class AnonymousSingleInputTest(TestCase):
         _test('sum(x * x)', input_val, output_val, self.get_scope())
 
 
+class AnonymousInterfaceTest(TestCase):
+    """Test for fetching io"""
+    def test_fetch_output(self):
+        """Output of Anonymous layer is fetched"""
+        scope, name = self.get_scope(), 'anon'
+        with nn.variable_scope(scope):
+            layer = nn.layer.Anonymous(exp='x', name=name)
+            output_var = layer(nn.Input(shape=(3, 4)))
+            _tensor = nn.get_tensor('{}/output'.format(name))
+            self.assertIs(output_var, _tensor)
+
+        _tensor = nn.get_tensor('{}/{}/output'.format(scope, name))
+        self.assertIs(output_var, _tensor)
+
+
 class AnonymousRandomSourceTest(TestCase):
+    """Test for Anonyomus class with RandomSource"""
     def test_normal_random(self):
         """Anonymous layer can handle RandomSource"""
         shape = (100000,)
@@ -183,3 +199,74 @@ class AnonymousRandomSourceTest(TestCase):
         std_diff = abs(np.std(output_val) - std)
         self.assertLess(mean_diff, threshold)
         self.assertLess(std_diff, threshold)
+
+
+class AnonymousMuptipleInputsTest(TestCase):
+    """Test for Anonyomus class with multiple inputs"""
+    longMessage = True
+
+    def test_list(self):
+        """Anonymous layer can handle list inputs"""
+        shape, dtype = (3, 4), 'float32'
+
+        exp = ('x[0] + x[1]')
+        input_vars = [
+            nn.Input(shape=shape, dtype=dtype, name='input1'),
+            nn.Input(shape=shape, dtype=dtype, name='input2')
+        ]
+        input_vals = [
+            np.random.rand(3, 4).astype(dtype),
+            np.random.rand(3, 4).astype(dtype),
+        ]
+        output_val = sum(input_vals)
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.layer.Anonymous(exp)
+            output_var = layer(*input_vars)
+
+        session = nn.Session()
+        output_val_ = session.run(
+            outputs=output_var,
+            inputs={
+                input_vars[0]: input_vals[0], input_vars[1]: input_vals[1]
+            }
+        )
+        np.testing.assert_almost_equal(output_val, output_val_)
+
+    def test_dict(self):
+        """Anonymous layer can handle dict inputs"""
+        shape, dtype = (3, 4), 'float32'
+
+        exp = ('x["0"] + x["1"]')
+        input_vars = {
+            '0': nn.Input(shape=shape, dtype=dtype, name='input1'),
+            '1': nn.Input(shape=shape, dtype=dtype, name='input2')
+        }
+        input_vals = {
+            '0': np.random.rand(3, 4).astype(dtype),
+            '1': np.random.rand(3, 4).astype(dtype),
+        }
+        output_val = sum(input_vals.values())
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.layer.Anonymous(exp)
+            output_var = layer(**input_vars)
+
+        session = nn.Session()
+        output_val_ = session.run(
+            outputs=output_var,
+            inputs={
+                input_vars['0']: input_vals['0'],
+                input_vars['1']: input_vals['1']
+            }
+        )
+        np.testing.assert_almost_equal(output_val, output_val_)
+
+    def test_error_in_invalid_inputs(self):
+        """Anonymous raise errors when both *args and **kwargs present"""
+        input_vars = [None, None]
+        input_kw_vars = {'foo': None, 'bar': None}
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.layer.Anonymous('x')
+            with self.assertRaises(ValueError):
+                layer(input_vars, **input_kw_vars)
+            with self.assertRaises(ValueError):
+                layer(*input_vars, **input_kw_vars)
