@@ -8,13 +8,9 @@ import tensorflow as tf
 
 from ..wrapper import Tensor
 
-__all__ = [
-    'ReLU', 'Softplus',
-    'Sigmoid', 'Tanh',
-    'Softmax',
-]
+__all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
 _LG = logging.getLogger(__name__)
-# pylint: disable=no-self-use
+# pylint: disable=no-self-use, no-member
 
 
 class ReLU(object):
@@ -24,6 +20,19 @@ class ReLU(object):
     """
     def _build(self, input_tensor):
         output = tf.nn.relu(input_tensor.unwrap(), 'ouptut')
+        return Tensor(output, name='output')
+
+
+class LeakyReLU(object):
+    """Implement LeakyReLU layer in Tensorflow.
+
+    See :any:`LeakyReLU` for detail.
+    """
+    def _build(self, input_tensor):
+        x = input_tensor.unwrap()
+        f1 = 0.5 * (1 + self.args['leak'])
+        f2 = 0.5 * (1 - self.args['leak'])
+        output = f1 * x + f2 * abs(x)
         return Tensor(output, name='output')
 
 

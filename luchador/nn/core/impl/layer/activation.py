@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from ...base.layer import BaseLayer
 from ...backend import layer
 
-__all__ = ['ReLU', 'Sigmoid', 'Tanh', 'Softmax', 'Softplus']
+__all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
 
 
 class ReLU(layer.ReLU, BaseLayer):
@@ -18,6 +18,18 @@ class ReLU(layer.ReLU, BaseLayer):
     """
     def __init__(self, name='ReLU'):
         super(ReLU, self).__init__(name=name)
+
+
+class LeakyReLU(layer.LeakyReLU, BaseLayer):
+    """Apply rectified linear activation elementwise
+
+    Parameters
+    ----------
+    name : str
+        Used as base scope when building parameters and output
+    """
+    def __init__(self, leak, name='ReLU'):
+        super(LeakyReLU, self).__init__(name=name, leak=leak)
 
 
 class Sigmoid(layer.ReLU, BaseLayer):
