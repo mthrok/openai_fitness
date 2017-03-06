@@ -33,7 +33,6 @@ def _get_safe_function(input_tensor, *args, **kwargs):
             'or keyword arguments, not both.')
     maps = {
         'x': _parse_input_tensors(input_tensor, *args, **kwargs),
-        'sum': sum,
         'True': True,
         'False': False,
         'NormalRandom': random.NormalRandom,
