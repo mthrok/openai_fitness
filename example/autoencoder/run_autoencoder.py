@@ -1,4 +1,5 @@
 """Train Autoencoder on MNIST dataset"""
+from __future__ import division
 from __future__ import print_function
 
 import os
@@ -86,15 +87,23 @@ def _build_optimization(autoencoder, cost):
     return update_op + [minimize_op]
 
 
-def _train(session, autoencoder, cost, updates, images, n_batch=32):
+def _train(session, autoencoder, cost, updates, images, batch_size):
+    n_images = len(images)
+    n_batch = n_images//batch_size
+    train_data = images[:batch_size * n_batch]
+
     print('{:>6s}: {}'.format('Batch', 'Cost'))
-    for i in range(0, 40000, n_batch):
-        cost = session.run(
-            inputs={autoencoder.input: images[i:i+n_batch, ...]},
+    cst = 0
+    for i in range(n_batch):
+        batch = train_data[i*batch_size:(i+1)*batch_size, ...]
+        cost_ = session.run(
+            inputs={autoencoder.input: batch},
             outputs=cost, updates=updates, name='opt',
         )
-        if i % (n_batch * 100) == 0:
-            print('{:>6d}: {:>8.3e}'.format(i, cost.tolist()))
+        cst += cost_.tolist()
+        if i and i % 100 == 0:
+            print('{:>6d}: {:>8.3e}'.format(i, cst / 100))
+            cst = 0
 
 
 def _tile(image):
