@@ -32,10 +32,18 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     record_config : dict
         Configuration for recording
 
-        sort_frequency : int
-            Sort heap buffer every this number of records are put
         stack : int
-            Stack state
+            #states to stack
+        sort_frequency : int
+            Sort heap buffer every this number of records are put.
+            Giving non-positive value will disable this.
+        save_frequency : int
+            Save heap buffer every this number of records are put.
+            This functionality is for inspecting the replay memory, and not
+            meant for deserializing replay memory.
+            Giving non-positive value will disable this.
+        save_dir : str
+            Save directory name.
 
     recorder_config : dict
         Constructor arguments for
@@ -241,6 +249,11 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             _LG.info('Sorting Memory')
             self._recorder.sort()
             _LG.debug('Sorting Complete')
+
+        save_freq = cfg.get('save_frequency', 0)
+        if save_freq > 0 and self._n_obs % save_freq == 0:
+            _LG.info('Saiving Replay Memory')
+            self._recorder.save(cfg['save_dir'])
 
     # -------------------------------------------------------------------------
     # Training

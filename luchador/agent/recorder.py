@@ -389,3 +389,26 @@ class PrioritizedQueue(object):
             i_end_, i_start_ = self._partition(i_start, i_end)
             self._quick_sort(i_start, i_end_)
             self._quick_sort(i_start_, i_end)
+
+    ###########################################################################
+    # Save
+    def save(self, dirname):
+        """Save the current heap buffer to directory
+
+        This is not meant for serialization.
+
+        Parameters
+        ----------
+        dirname : str
+            output directory
+        """
+        import os.path
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
+
+        for id_, record in self.id2record.items():
+            path = os.path.join(dirname, '{}.pkl'.format(id_))
+            with open(path, 'w') as file_:
+                pickle.dump(record, file_)

@@ -11,8 +11,10 @@ alias:
 typename: DQNAgent
 args:
   record_config:
-    sort_frequency: *memory_size
     stack: *stack
+    sort_frequency: *memory_size
+    save_frequency: *memory_size
+    save_dir: *save_dir
 
   recorder_config:
     buffer_size: *memory_size
