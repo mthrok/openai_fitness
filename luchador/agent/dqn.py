@@ -1,6 +1,7 @@
 """Implement Agent part of Deep Q Learning"""
 from __future__ import division
 
+import os.path
 import logging
 
 import numpy as np
@@ -253,7 +254,13 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         save_freq = cfg.get('save_frequency', 0)
         if save_freq > 0 and self._n_obs % save_freq == 0:
             _LG.info('Saiving Replay Memory')
-            self._recorder.save(cfg['save_dir'])
+            self._save_record()
+
+    def _save_record(self):
+        save_dir = self.args['record_config']['save_dir']
+        for id_, record in self._recorder.id2record.items():
+            path = os.path.join(save_dir, str(id_))
+            np.savez_compressed(path, **record)
 
     # -------------------------------------------------------------------------
     # Training
