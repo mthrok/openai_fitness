@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Run environment and save the state in HDF5"""
 from __future__ import print_function
 from __future__ import absolute_import

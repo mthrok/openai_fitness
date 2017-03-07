@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Create sample batch HDF5 data from MNIST dataset"""
 from __future__ import absolute_import
 

@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 import argparse
 
-from hdf5 import modify, visualize
+from util import modify, visualize
 
 
 def _add_inspect_command(subparsers):

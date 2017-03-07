@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Create HDF5 batch data using NumPy NDArray"""
 import h5py
 
