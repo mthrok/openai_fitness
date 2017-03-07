@@ -160,23 +160,24 @@ $ python
 Network architecture can be described using a set of layer configurations, and we use YAML for easy reading and writing.
 
 ```yaml
-model_type: Sequential
-layer_configs:
-  - scope: layer1
-    typename: Conv2D
-    args:
-      n_filters: 32
-      filter_width: 8
-      filter_height: 8
-      strides: 4
-      padding: valid
-  - scope: layer2
-    typename: ReLU
-    args: {}
-  - scope: layer3
-    typename: Dense
-    args:
-      n_nodes: 3
+typename: Sequential
+args:
+  layer_configs:
+    - typename: Conv2D
+      args:
+        n_filters: 32
+        filter_width: 8
+        filter_height: 8
+        strides: 4
+        padding: valid
+	name: layer1
+    - typename: ReLU
+      args:
+	name: layer2
+    - typename: Dense
+      args:
+        n_nodes: 3
+	name: layer3
 ```
 
 You can feed this configuration to `luchador.nn.util.make_model` then the function will return the coresponding network architecture.
@@ -184,23 +185,24 @@ You can feed this configuration to `luchador.nn.util.make_model` then the functi
 But having static parameters is sometimes inconvenient. For example, although the 5 layers of DQN are fixed, the output size (which corresponds to `n_nodes` in above) can vary from the environment to run. To accomodate this needs, we have `luchador.nn.util.get_model_config` which will substitute parameters at load-time using Python's format notation. Let's modify the above configuration file to parameterize `n_nodes` and call this file `model.yml`
 
 ```yaml
-model_type: Sequential
-layer_configs:
-  - scope: layer1
-    typename: Conv2D
-    args:
-      n_filters: 32
-      filter_width: 8
-      filter_height: 8
-      strides: 4
-      padding: valid
-  - scope: layer2
-    typename: ReLU
-    args: {{}}
-  - scope: layer3
-    typename: Dense
-    args:
-      n_nodes: {n_actions}
+typename: Sequential
+args:
+  layer_configs:
+    - typename: Conv2D
+      args:
+        n_filters: 32
+        filter_width: 8
+        filter_height: 8
+        strides: 4
+        padding: valid
+	name: layer1
+    - typename: ReLU
+      args:
+        name: layer2
+    - typename: Dense
+      args:
+        n_nodes: {n_actions}
+	name: layer3
 ```
 
 When you load this file with `luchador.nn.util.make_model('model.yml', n_actions=5)`, 5 is substituted at `{n_actions}`. Notice that `ReLU`'s `args` parameter became `{{}}` from `{}` so that it Python's `format` function will replace it to `{}`.
