@@ -30,8 +30,8 @@ class LeakyReLU(object):
     """
     def _build(self, input_tensor):
         x = input_tensor.unwrap()
-        f1 = 0.5 * (1 + self.args['leak'])
-        f2 = 0.5 * (1 - self.args['leak'])
+        f1 = 0.5 * (1 + self.args['alpha'])
+        f2 = 0.5 * (1 - self.args['alpha'])
         output = f1 * x + f2 * abs(x)
         return Tensor(output, name='output')
 

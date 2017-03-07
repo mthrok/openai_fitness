@@ -25,14 +25,17 @@ class LeakyReLU(layer.LeakyReLU, BaseLayer):
 
     Parameters
     ----------
+    alpha : float
+        Slope for negative region.
+
     name : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, leak, name='ReLU'):
-        super(LeakyReLU, self).__init__(name=name, leak=leak)
+    def __init__(self, alpha, name='LeakyReLU'):
+        super(LeakyReLU, self).__init__(name=name, alpha=alpha)
 
 
-class Sigmoid(layer.ReLU, BaseLayer):
+class Sigmoid(layer.Sigmoid, BaseLayer):
     """Apply sigmoid activation elementwise
 
     Parameters
@@ -44,7 +47,7 @@ class Sigmoid(layer.ReLU, BaseLayer):
         super(Sigmoid, self).__init__(name=name)
 
 
-class Tanh(layer.ReLU, BaseLayer):
+class Tanh(layer.Tanh, BaseLayer):
     """Apply tanh activation elementwise
 
     Parameters

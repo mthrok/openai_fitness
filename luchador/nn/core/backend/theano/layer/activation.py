@@ -6,7 +6,7 @@ import theano.tensor as T
 
 from ..wrapper import Tensor
 
-__all__ = ['ReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
+__all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
 # pylint: disable=too-few-public-methods, no-self-use, no-member
 
 
@@ -28,7 +28,7 @@ class LeakyReLU(object):
     See :any:`LeakyReLU` for detail.
     """
     def _build(self, input_tensor):
-        alpha = self.args['leak']
+        alpha = self.args['alpha']
         input_shape = input_tensor.shape
         output_tensor = T.nnet.relu(input_tensor.unwrap(), alpha=alpha)
         return Tensor(output_tensor, shape=input_shape, name='output')
