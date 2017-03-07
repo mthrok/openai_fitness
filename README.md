@@ -170,14 +170,14 @@ args:
         filter_height: 8
         strides: 4
         padding: valid
-	name: layer1
+        name: layer1
     - typename: ReLU
       args:
-	name: layer2
+        name: layer2
     - typename: Dense
       args:
         n_nodes: 3
-	name: layer3
+        name: layer3
 ```
 
 You can feed this configuration to `luchador.nn.util.make_model` then the function will return the coresponding network architecture.
@@ -195,14 +195,14 @@ args:
         filter_height: 8
         strides: 4
         padding: valid
-	name: layer1
+        name: layer1
     - typename: ReLU
       args:
         name: layer2
     - typename: Dense
       args:
         n_nodes: {n_actions}
-	name: layer3
+        name: layer3
 ```
 
 When you load this file with `luchador.nn.util.make_model('model.yml', n_actions=5)`, 5 is substituted at `{n_actions}`. Notice that `ReLU`'s `args` parameter became `{{}}` from `{}` so that it Python's `format` function will replace it to `{}`.
