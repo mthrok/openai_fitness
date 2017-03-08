@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 from collections import OrderedDict
 
+import numpy as np
 import theano.tensor as T
 
 import luchador.util
@@ -236,6 +237,19 @@ def reduce_max(var, axis=None, keep_dims=False, name=None):
     return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
+def _infere_new_shape(original_shape, new_shape):
+    if None in original_shape:
+        return new_shape
+
+    if -1 in new_shape:
+        orig_size = np.prod(original_shape)
+        known_size = np.abs(np.prod(new_shape))
+        replace = orig_size // known_size
+        return tuple(replace if s < 0 else s for s in new_shape)
+
+    return new_shape
+
+
 def reshape(var, new_shape, name=None):
     """Reshape tensor.
 
@@ -258,6 +272,7 @@ def reshape(var, new_shape, name=None):
     Shape-checking and inference is not carried out.
     """
     _tensor = T.reshape(var.unwrap(), newshape=new_shape)
+    new_shape = _infere_new_shape(var.shape, new_shape)
     return Tensor(tensor=_tensor, shape=new_shape, name=name)
 
 

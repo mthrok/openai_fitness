@@ -456,22 +456,23 @@ class TestTensorOpsReshape(fixture.TestCase):
             self, in_shape, out_shape, dtype='float32', in_val=None):
         """Test rehsape"""
         with nn.variable_scope(self.get_scope()):
-            input_ = nn.Input(shape=in_shape, dtype=dtype)
-            tensor = nn.ops.reshape(input_, out_shape)
+            in_var = nn.Input(shape=in_shape, dtype=dtype)
+            out_var = nn.ops.reshape(in_var, out_shape)
 
         session = nn.Session()
 
         if in_val is None:
             in_val = np.random.random(in_shape).astype(dtype)
         out_val = session.run(
-            outputs=tensor,
+            outputs=out_var,
             givens={
-                input_: in_val,
+                in_var: in_val,
             },
         )
-        self.assertEqual(out_val.dtype, dtype)
         expected = in_val.reshape(out_shape)
         np.testing.assert_equal(out_val, expected)
+        if None not in in_shape:
+            self.assertEqual(out_val.shape, out_var.shape)
 
     def test_reshape(self):
         """Test rehsape"""
