@@ -1,6 +1,5 @@
 """Train Autoencoder on MNIST dataset"""
 from __future__ import division
-from __future__ import print_function
 
 import os
 import gzip
@@ -16,6 +15,8 @@ import numpy as np
 
 import luchador
 import luchador.nn as nn
+
+_LG = logging.getLogger('luchador')
 
 
 def _parase_command_line_args():
@@ -88,7 +89,7 @@ def _train(session, autoencoder, updates, images, batch_size):
     n_batch = n_images//batch_size
     train_data = images[:batch_size * n_batch]
 
-    print('{:>6s}: {}'.format('Batch', 'Cost'))
+    _LG.info('%6s: %s', 'Batch', 'Cost')
     cst = 0
     for i in range(n_batch):
         batch = train_data[i*batch_size:(i+1)*batch_size, ...]
@@ -99,7 +100,7 @@ def _train(session, autoencoder, updates, images, batch_size):
         )
         cst += cost_.tolist()
         if i and i % 100 == 0:
-            print('{:>6d}: {:>8.3e}'.format(i, cst / 100))
+            _LG.info('%6d: %8.3f', i, cst / 100)
             cst = 0
 
 
@@ -122,7 +123,7 @@ def _plot(original, recon):
     axis = fig.add_subplot(1, 2, 2)
     axis.imshow(_tile(recon), cmap='gray')
     axis.set_title('Reconstructed Images')
-    print('Plot ready')
+    _LG.info('Plot ready')
     plt.show()
 
 
