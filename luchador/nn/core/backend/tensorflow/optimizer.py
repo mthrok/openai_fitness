@@ -117,12 +117,16 @@ class OptimizerMixin(object):
 
     def _register_slot(self, grads_and_vars):
         """Store TF-native optimizer slots to luchador Optimizer slots"""
-        for _, var in grads_and_vars:
+        for _, var_ in grads_and_vars:
+            var_name = var_.op.name
             for slot_name in self.optimizer.get_slot_names():
-                slot = self.optimizer.get_slot(var, slot_name)
-                name = '{}/{}/{}'.format(
-                    self.args['name'], var.op.name, slot_name)
-                self.slot.append(wrapper.Variable(slot, name=name))
+                name = '/'.join([self.args['name'], var_name, slot_name])
+                tf_var = self.optimizer.get_slot(var_, slot_name)
+                var = wrapper.Variable(tf_var, name=name)
+
+                name = '/'.join([var_name, slot_name])
+                self._create_parameter_slot(
+                    name=name, val=var, train=False, serialize=True)
 
     def _create_slot_var(self, var, slot_name):
         """Create slot variable for the given Variable
@@ -130,26 +134,29 @@ class OptimizerMixin(object):
         Typical usage is to create variables to hold moving average
         of the given Variable
         """
-        name = '{}/{}/{}'.format(
-            self.args['name'], var.name.split(':')[0], slot_name)
+        var_name = var.name.split(':')[0]
+        name_ = '/'.join([self.args['name'], var_name, slot_name])
         slot_var = wrapper.make_variable(
-            name=name, shape=var.get_shape(), dtype=var.dtype,
+            name=name_, shape=var.get_shape(), dtype=var.dtype,
             initializer=get_initializer('ConstantInitializer')(0))
-        self.slot.append(slot_var)
+
+        name_ = '/'.join([var_name, slot_name])
+        self._create_parameter_slot(
+            name=name_, val=slot_var, train=False, serialize=True)
         return slot_var.unwrap()
 
-    def _create_slot(self, initial_value, slot_name):
+    def _create_slot(self, initial_value, name):
         """Create slot variable independant to gradients and parameters
 
         Example use is beta parameter in Adamax optimizer.
         Currently only scalar type is supported.
         """
-        name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = wrapper.make_variable(
-            name=name, shape=[],
-            initializer=get_initializer('ConstantInitializer')(initial_value))
-        self.slot.append(slot_var)
-        return slot_var.unwrap()
+        name_ = '/'.join([self.args['name'], name])
+        ini = get_initializer('ConstantInitializer')(initial_value)
+        var = wrapper.make_variable(name=name_, shape=[], initializer=ini)
+        self._create_parameter_slot(
+            name=name, val=var, train=False, serialize=True)
+        return var.unwrap()
 
 
 class SGD(OptimizerMixin):
@@ -253,12 +260,11 @@ class Adam(OptimizerMixin):
     def _apply_gradients(self, grads_and_vars, **kwargs):
         # pylint: disable=protected-access
         ret = super(Adam, self)._apply_gradients(grads_and_vars, **kwargs)
-        name1 = '{}/{}'.format(self.args['name'], 'beta1_power')
-        name2 = '{}/{}'.format(self.args['name'], 'beta2_power')
-        self.slot.extend([
-            wrapper.Variable(self.optimizer._beta1_power, name=name1),
-            wrapper.Variable(self.optimizer._beta2_power, name=name2),
-        ])
+        for name in ['beta1_power', 'beta2_power']:
+            tf_var = getattr(self.optimizer, '_{}'.format(name))
+            name_ = '{}/{}'.format(self.args['name'], name)
+            var = wrapper.Variable(tf_var, name=name_)
+            self._create_parameter_slot(name, var, train=False, serialize=True)
         return ret
 
 

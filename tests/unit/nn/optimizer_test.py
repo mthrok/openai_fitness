@@ -25,18 +25,6 @@ def _get_y_equals_x_squared(scope, x_init):
     return x, y
 
 
-def _get_slot_var(optimizer, slot_name, var_name=None):
-    opt_name = optimizer.args['name']
-    names = ['{}/{}'.format(opt_name, slot_name)]
-    if var_name:
-        names.append('{}/{}/{}'.format(opt_name, var_name, slot_name))
-
-    for v in optimizer.get_parameter_variables():
-        if v.name in names:
-            return v
-    raise ValueError('No slot was found')
-
-
 class OptimizerGradientTest(fixture.TestCase):
     """Test gradient computation interface IO"""
     def test_compute_gradients_with_trainables(self):
@@ -132,10 +120,10 @@ class AdamTest(fixture.TestCase):
             scope=self.get_scope(), x_init=x_init_val)
 
         minimize_op = adam.minimize(loss=y_tensor, wrt=x_tensor)
-        beta1_pow_tensor = _get_slot_var(adam, 'beta1_power')
-        beta2_pow_tensor = _get_slot_var(adam, 'beta2_power')
-        m_tensor = _get_slot_var(adam, 'm', var_name=x_tensor.name)
-        v_tensor = _get_slot_var(adam, 'v', var_name=x_tensor.name)
+        beta1_pow_tensor = adam.get_parameter_variable('beta1_power')
+        beta2_pow_tensor = adam.get_parameter_variable('beta2_power')
+        m_tensor = adam.get_parameter_variable('{}/m'.format(x_tensor.name))
+        v_tensor = adam.get_parameter_variable('{}/v'.format(x_tensor.name))
 
         session = nn.Session()
         session.initialize()
@@ -208,9 +196,9 @@ class AdamaxTest(fixture.TestCase):
             scope=self.get_scope(), x_init=x_init_val)
 
         minimize_op = adamax.minimize(loss=y_tensor, wrt=x_tensor)
-        beta1_pow_tensor = _get_slot_var(adamax, 'beta1_power')
-        m_tensor = _get_slot_var(adamax, 'm', var_name=x_tensor.name)
-        u_tensor = _get_slot_var(adamax, 'u', var_name=x_tensor.name)
+        beta1_pow_tensor = adamax.get_parameter_variable('beta1_power')
+        m_tensor = adamax.get_parameter_variable('{}/m'.format(x_tensor.name))
+        u_tensor = adamax.get_parameter_variable('{}/u'.format(x_tensor.name))
 
         session = nn.Session()
         session.initialize()

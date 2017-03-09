@@ -5,6 +5,7 @@ import abc
 import logging
 
 import luchador.util
+from .node import Node
 
 __all__ = ['BaseOptimizer', 'get_optimizer']
 _LG = logging.getLogger(__name__)
@@ -25,14 +26,13 @@ def _log_wrt(wrt):
         _LG.info('    %20s', var)
 
 
-class BaseOptimizer(luchador.util.StoreMixin, object):
+class BaseOptimizer(luchador.util.StoreMixin, Node):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
         super(BaseOptimizer, self).__init__()
         self._store_args(**kwargs)
-        self.slot = []
 
         # Backend-specific initialization is run here
         self._run_backend_specific_init()
@@ -126,16 +126,6 @@ class BaseOptimizer(luchador.util.StoreMixin, object):
     @abc.abstractmethod
     def _apply_gradients(self, grads_and_vars, **kwargs):
         pass
-
-    def get_parameter_variables(self):
-        """Get the list of parameter variables used by optimizers
-
-        Returns
-        -------
-        OrderedDict
-            Keys are the names of parameter variables and value are Tensors
-        """
-        return self.slot
 
 
 def get_optimizer(name):

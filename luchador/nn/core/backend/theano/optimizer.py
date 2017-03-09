@@ -68,7 +68,7 @@ class OptimizerMixin(object):
             ret.append((tensor, var))
         return ret
 
-    def _create_slot_var(self, var, slot_name):
+    def _create_slot_var(self, var, name):
         """Create slot variable for the given Variable
 
         Typical usage is to create variables to hold moving average
@@ -76,10 +76,10 @@ class OptimizerMixin(object):
 
         Parameters
         ----------
-        var : theno.SharedVariable
+        var : theano.SharedVariable
             Variable of which size and dtype are used to create slot.
 
-        slot_name : str
+        name : str
             The name of slot.
 
         Returns
@@ -88,16 +88,19 @@ class OptimizerMixin(object):
             Wrapped Variable of the resulting slot variable.
         """
         value = var.get_value(borrow=True)
-        name = '{}/{}/{}'.format(
-            self.args['name'], var.name.split(':')[0], slot_name)
-        slot_var = wrapper.make_variable(
-            name=name, shape=value.shape, dtype=value.dtype,
+        var_name = var.name.split(':')[0]
+
+        name_ = '{}/{}/{}'.format(self.args['name'], var_name, name)
+        var = wrapper.make_variable(
+            name=name_, shape=value.shape, dtype=value.dtype,
             initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
-        self.slot.append(slot_var)
-        return slot_var
 
-    def _create_slot(self, initial_value, slot_name):
+        name_ = '{}/{}'.format(var_name, name)
+        self._create_parameter_slot(name_, var, train=False, serialize=True)
+        return var
+
+    def _create_slot(self, initial_value, name):
         """Create slot variable independant to gradients and parameters
 
         Example use is beta parameters in Adam and Adamax optimizer.
@@ -108,7 +111,7 @@ class OptimizerMixin(object):
         initial_value : number
             Initial value of the resulting slot
 
-        slot_name : str
+        name : str
             The name of slot.
 
         Returns
@@ -116,12 +119,13 @@ class OptimizerMixin(object):
         Variable
             Wrapped Variable of the resulting slot variable.
         """
-        name = '{}/{}'.format(self.args['name'], slot_name)
-        slot_var = wrapper.make_variable(
-            name=name, shape=[], broadcastable=True,
+        name_ = '{}/{}'.format(self.args['name'], name)
+        var = wrapper.make_variable(
+            name=name_, shape=[], broadcastable=True,
             initializer=get_initializer('ConstantInitializer')(initial_value))
-        self.slot.append(slot_var)
-        return slot_var
+
+        self._create_parameter_slot(name, var, train=False, serialize=True)
+        return var
 
 
 class SGD(OptimizerMixin):
