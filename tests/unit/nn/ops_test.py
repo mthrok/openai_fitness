@@ -486,11 +486,12 @@ class TestTensorOpsMinimum(_TestElementwise):
     def _test_minimum(self, shape0, shape1):
         self._test_elementwise(shape0, shape1, nn.ops.minimum, np.minimum)
 
-    def test_max_same_shape_same_dtype(self):
-        """Test minimum with same shape and dtype"""
-        shape = (3, 4)
-        value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
-        self._test_minimum(value0, value1)
+    def test_same_shape(self):
+        """Test minimum with the same shape"""
+        shape = (3, 5)
+        self._test_minimum(shape, shape)
+        shape = (None, 3, 5)
+        self._test_minimum(shape, shape)
 
     def test_same_dim_broadcast(self):
         """Test minimum with the same dimension"""
