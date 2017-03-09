@@ -6,6 +6,7 @@ from .scope import (
 )
 from .node import Node, get_node
 from .wrapper import (
+    BaseWrapper,
     BaseInput, get_input,
     BaseVariable, get_variable,
     BaseTensor, get_tensor, get_grad,
@@ -20,6 +21,7 @@ from .initializer import BaseInitializer, get_initializer
 __all__ = [
     'VariableScope', 'variable_scope', 'get_variable_scope', 'name_scope',
     'Node', 'get_node',
+    'BaseWrapper',
     'BaseInput', 'get_input',
     'BaseVariable', 'get_variable',
     'BaseTensor', 'get_tensor', 'get_grad',
