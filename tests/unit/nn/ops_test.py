@@ -346,7 +346,7 @@ class TestTensorOpsMax(OpsTest):
 class TestMultiply(fixture.TestCase):
     """Test mutiply operation"""
     def _verify_shape(self, expected, found):
-        for i in range(len(expected)):
+        for i, _ in enumerate(expected):
             if found[i] is None:
                 continue
             self.assertEqual(found[i], expected[i])
