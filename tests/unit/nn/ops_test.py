@@ -343,20 +343,19 @@ class TestTensorOpsMax(OpsTest):
         self._test_max(None, (3, 4, 5, 6), True)
 
 
-class TestMultiply(fixture.TestCase):
-    """Test mutiply operation"""
+class _TestElementwise(fixture.TestCase):
     def _verify_shape(self, expected, found):
         for i, _ in enumerate(expected):
             if found[i] is None:
                 continue
             self.assertEqual(found[i], expected[i])
 
-    def _test_multiply(self, shape0, shape1):
+    def _test_elementwise(self, shape0, shape1, op, np_op):
         with nn.variable_scope(self.get_scope()):
             in_var0 = nn.Input(shape=shape0, name='0')
             in_var1 = nn.Input(shape=shape1, name='1')
-            out_var0 = nn.ops.multiply(in_var0, in_var1)
-            out_var1 = nn.ops.multiply(in_var0, in_var1)
+            out_var0 = op(in_var0, in_var1)
+            out_var1 = op(in_var0, in_var1)
         session = nn.Session()
 
         shape0 = [32 if s is None else s for s in shape0]
@@ -368,11 +367,17 @@ class TestMultiply(fixture.TestCase):
             outputs=[out_var0, out_var1],
             inputs={in_var0: in_val0, in_var1: in_val1}
         )
-        np.testing.assert_almost_equal(out_val0, in_val0 * in_val1)
-        np.testing.assert_almost_equal(out_val1, in_val1 * in_val0)
 
+        np.testing.assert_almost_equal(out_val0, np_op(in_val0, in_val1))
+        np.testing.assert_almost_equal(out_val1, np_op(in_val1, in_val0))
         self._verify_shape(out_val0.shape, out_var0.shape)
         self._verify_shape(out_val1.shape, out_var1.shape)
+
+
+class TestMultiply(_TestElementwise):
+    """Test mutiply operation"""
+    def _test_multiply(self, shape0, shape1):
+        self._test_elementwise(shape0, shape1, nn.ops.multiply, np.multiply)
 
     def test_same_shape(self):
         """Test multiply with the same shape"""
@@ -407,36 +412,10 @@ class TestMultiply(fixture.TestCase):
             self._test_multiply((3, 4, 5), (6, ))
 
 
-class TestAdd(fixture.TestCase):
+class TestAdd(_TestElementwise):
     """Test mutiply operation"""
-    def _verify_shape(self, expected, found):
-        for i, _ in enumerate(expected):
-            if found[i] is None:
-                continue
-            self.assertEqual(found[i], expected[i])
-
     def _test_add(self, shape0, shape1):
-        with nn.variable_scope(self.get_scope()):
-            in_var0 = nn.Input(shape=shape0, name='0')
-            in_var1 = nn.Input(shape=shape1, name='1')
-            out_var0 = nn.ops.add(in_var0, in_var1)
-            out_var1 = nn.ops.add(in_var0, in_var1)
-        session = nn.Session()
-
-        shape0 = [32 if s is None else s for s in shape0]
-        shape1 = [32 if s is None else s for s in shape1]
-
-        in_val0 = np.random.uniform(size=shape0)
-        in_val1 = np.random.uniform(size=shape1)
-        out_val0, out_val1 = session.run(
-            outputs=[out_var0, out_var1],
-            inputs={in_var0: in_val0, in_var1: in_val1}
-        )
-        np.testing.assert_almost_equal(out_val0, in_val0 + in_val1)
-        np.testing.assert_almost_equal(out_val1, in_val1 + in_val0)
-
-        self._verify_shape(out_val0.shape, out_var0.shape)
-        self._verify_shape(out_val1.shape, out_var1.shape)
+        self._test_elementwise(shape0, shape1, nn.ops.add, np.add)
 
     def test_same_shape(self):
         """Test add with the same shape"""
@@ -471,57 +450,41 @@ class TestAdd(fixture.TestCase):
             self._test_add((3, 4, 5), (6, ))
 
 
-class TestTensorOpsMaximum(fixture.TestCase):
+class TestTensorOpsMaximum(_TestElementwise):
     """Test wrapper maximum method"""
-    def _test_maximum(self, value0, value1):
-        with nn.variable_scope(self.get_scope()):
-            input0 = nn.Input(
-                shape=value0.shape, dtype=value0.dtype, name='0')
-            input1 = nn.Input(
-                shape=value1.shape, dtype=value1.dtype, name='1')
-            output0 = nn.ops.maximum(input0, input1)
-            output1 = nn.ops.maximum(input1, input0)
-        session = nn.Session()
+    def _test_maximum(self, shape0, shape1):
+        self._test_elementwise(shape0, shape1, nn.ops.maximum, np.maximum)
 
-        val0, val1 = session.run(
-            outputs=[output0, output1],
-            inputs={input0: value0, input1: value1},
-        )
+    def test_same_dim_broadcast(self):
+        """Test maximum with the same dimension"""
+        self._test_maximum((3, 4, 5), (3, 1, 5))
+        self._test_maximum((3, 1, 5), (3, 4, 5))
+        self._test_maximum((3, 4, 5), (1, 4, 1))
+        self._test_maximum((1, 4, 1), (3, 4, 5))
+        self._test_maximum((1, 4, 5), (3, 1, 5))
+        self._test_maximum((3, 4, 5), (3, 1, 1))
+        self._test_maximum((None, 4, 8, 8), (32, 1, 8, 8))
 
-        np.testing.assert_almost_equal(val0, np.maximum(value0, value1))
-        np.testing.assert_almost_equal(val1, np.maximum(value1, value0))
+        with self.assertRaises(ValueError):
+            self._test_maximum((1, 4, 5), (3, 2, 5))
 
-    def test_max_same_shape_same_dtype(self):
-        """Test maximum with same shape and dtype"""
-        shape = (3, 4)
-        value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
-        self._test_maximum(value0, value1)
+    def test_diff_dim_broadcast(self):
+        """Test maximum with the different dimension"""
+        self._test_maximum((3, 4, 5), (4, 5))
+        self._test_maximum((4, 5), (3, 4, 5))
+        self._test_maximum((3, 4, 5), (5,))
+        self._test_maximum((5,), (3, 4, 5))
+        self._test_maximum((3, 4, 5), (1,))
+        self._test_maximum((1,), (3, 4, 5))
 
-    def test_max_different_shape(self):
-        """Test maximum with same dtype"""
-        value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
-        self._test_maximum(value0, value1)
+        with self.assertRaises(ValueError):
+            self._test_maximum((3, 4, 5), (6, ))
 
 
-class TestTensorOpsMinimum(fixture.TestCase):
+class TestTensorOpsMinimum(_TestElementwise):
     """Test wrapper minimum method"""
-    def _test_minimum(self, value0, value1):
-        with nn.variable_scope(self.get_scope()):
-            input0 = nn.Input(
-                shape=value0.shape, dtype=value0.dtype, name='0')
-            input1 = nn.Input(
-                shape=value1.shape, dtype=value1.dtype, name='1')
-            output0 = nn.ops.minimum(input0, input1)
-            output1 = nn.ops.minimum(input1, input0)
-        session = nn.Session()
-
-        val0, val1 = session.run(
-            outputs=[output0, output1],
-            inputs={input0: value0, input1: value1},
-        )
-
-        np.testing.assert_almost_equal(val0, np.minimum(value0, value1))
-        np.testing.assert_almost_equal(val1, np.minimum(value1, value0))
+    def _test_minimum(self, shape0, shape1):
+        self._test_elementwise(shape0, shape1, nn.ops.minimum, np.minimum)
 
     def test_max_same_shape_same_dtype(self):
         """Test minimum with same shape and dtype"""
@@ -529,12 +492,30 @@ class TestTensorOpsMinimum(fixture.TestCase):
         value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
         self._test_minimum(value0, value1)
 
-    @unittest.skipUnless(
-        _BACKEND == 'tensorflow', 'Only supported in Tensorflow')
-    def test_max_different_shape(self):
-        """Test minimum with same dtype"""
-        value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
-        self._test_minimum(value0, value1)
+    def test_same_dim_broadcast(self):
+        """Test minimum with the same dimension"""
+        self._test_minimum((3, 4, 5), (3, 1, 5))
+        self._test_minimum((3, 1, 5), (3, 4, 5))
+        self._test_minimum((3, 4, 5), (1, 4, 1))
+        self._test_minimum((1, 4, 1), (3, 4, 5))
+        self._test_minimum((1, 4, 5), (3, 1, 5))
+        self._test_minimum((3, 4, 5), (3, 1, 1))
+        self._test_minimum((None, 4, 8, 8), (32, 1, 8, 8))
+
+        with self.assertRaises(ValueError):
+            self._test_minimum((1, 4, 5), (3, 2, 5))
+
+    def test_diff_dim_broadcast(self):
+        """Test minimum with the different dimension"""
+        self._test_minimum((3, 4, 5), (4, 5))
+        self._test_minimum((4, 5), (3, 4, 5))
+        self._test_minimum((3, 4, 5), (5,))
+        self._test_minimum((5,), (3, 4, 5))
+        self._test_minimum((3, 4, 5), (1,))
+        self._test_minimum((1,), (3, 4, 5))
+
+        with self.assertRaises(ValueError):
+            self._test_minimum((3, 4, 5), (6, ))
 
 
 class TestTensorOpsOneHot(fixture.TestCase):
