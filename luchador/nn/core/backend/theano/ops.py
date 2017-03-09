@@ -18,7 +18,7 @@ __all__ = [
     'abs', 'square', 'sqrt',
     'exp', 'log', 'sin', 'cos',
     'reduce_mean', 'reduce_sum', 'reduce_max',
-    'reshape', 'tile', 'maximum', 'minimum',
+    'reshape', 'tile', 'add', 'multiply', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
 ]
 # pylint: disable=redefined-builtin,assignment-from-no-return
@@ -358,6 +358,32 @@ def _compute_shape(shape1, shape2):
         else:
             raise ValueError('Incompatible shape')
     return tuple(shape)
+
+
+def add(var1, var2, name=None):
+    """Elementwise addition with broadcast support
+
+    Parameters
+    ----------
+    va1, va2 : Tensor
+        Tensors to add.
+
+    name : str
+        Name of new Tensor
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
+    var1_ = var1.unwrap().dimshuffle(pat1)
+    var2_ = var2.unwrap().dimshuffle(pat2)
+    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
+    var1_ = T.addbroadcast(var1_, *pat1)
+    var2_ = T.addbroadcast(var2_, *pat2)
+    shape = _compute_shape(var1.shape, var2.shape)
+    return Tensor(tensor=var1_+var2_, shape=shape, name=name)
 
 
 def multiply(var1, var2, name=None):

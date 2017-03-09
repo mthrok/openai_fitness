@@ -407,6 +407,70 @@ class TestMultiply(fixture.TestCase):
             self._test_multiply((3, 4, 5), (6, ))
 
 
+class TestAdd(fixture.TestCase):
+    """Test mutiply operation"""
+    def _verify_shape(self, expected, found):
+        for i, _ in enumerate(expected):
+            if found[i] is None:
+                continue
+            self.assertEqual(found[i], expected[i])
+
+    def _test_add(self, shape0, shape1):
+        with nn.variable_scope(self.get_scope()):
+            in_var0 = nn.Input(shape=shape0, name='0')
+            in_var1 = nn.Input(shape=shape1, name='1')
+            out_var0 = nn.ops.add(in_var0, in_var1)
+            out_var1 = nn.ops.add(in_var0, in_var1)
+        session = nn.Session()
+
+        shape0 = [32 if s is None else s for s in shape0]
+        shape1 = [32 if s is None else s for s in shape1]
+
+        in_val0 = np.random.uniform(size=shape0)
+        in_val1 = np.random.uniform(size=shape1)
+        out_val0, out_val1 = session.run(
+            outputs=[out_var0, out_var1],
+            inputs={in_var0: in_val0, in_var1: in_val1}
+        )
+        np.testing.assert_almost_equal(out_val0, in_val0 + in_val1)
+        np.testing.assert_almost_equal(out_val1, in_val1 + in_val0)
+
+        self._verify_shape(out_val0.shape, out_var0.shape)
+        self._verify_shape(out_val1.shape, out_var1.shape)
+
+    def test_same_shape(self):
+        """Test add with the same shape"""
+        shape = (3, 5)
+        self._test_add(shape, shape)
+        shape = (None, 3, 5)
+        self._test_add(shape, shape)
+
+    def test_same_dim_broadcast(self):
+        """Test add with the same dimension"""
+        self._test_add((3, 4, 5), (3, 1, 5))
+        self._test_add((3, 1, 5), (3, 4, 5))
+        self._test_add((3, 4, 5), (1, 4, 1))
+        self._test_add((1, 4, 1), (3, 4, 5))
+        self._test_add((1, 4, 5), (3, 1, 5))
+        self._test_add((3, 4, 5), (3, 1, 1))
+        self._test_add((None, 4, 8, 8), (32, 1, 8, 8))
+
+        with self.assertRaises(ValueError):
+            self._test_add((1, 4, 5), (3, 2, 5))
+
+    def test_diff_dim_broadcast(self):
+        """Test add with the different dimension"""
+        self._test_add((3, 4, 5), (4, 5))
+        self._test_add((4, 5), (3, 4, 5))
+        self._test_add((3, 4, 5), (5,))
+        self._test_add((5,), (3, 4, 5))
+        self._test_add((3, 4, 5), (1,))
+        self._test_add((1,), (3, 4, 5))
+
+        with self.assertRaises(ValueError):
+            self._test_add((3, 4, 5), (6, ))
+
+
 class TestTensorOpsMaximum(fixture.TestCase):
     """Test wrapper maximum method"""
     def _test_maximum(self, value0, value1):
