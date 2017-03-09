@@ -345,11 +345,18 @@ class TestTensorOpsMax(OpsTest):
 
 class TestMultiply(fixture.TestCase):
     """Test mutiply operation"""
+    def _verify_shape(self, expected, found):
+        for i in range(len(expected)):
+            if found[i] is None:
+                continue
+            self.assertEqual(found[i], expected[i])
+
     def _test_multiply(self, shape0, shape1):
         with nn.variable_scope(self.get_scope()):
             in_var0 = nn.Input(shape=shape0, name='0')
             in_var1 = nn.Input(shape=shape1, name='1')
-            out_var = nn.ops.multiply(in_var0, in_var1)
+            out_var0 = nn.ops.multiply(in_var0, in_var1)
+            out_var1 = nn.ops.multiply(in_var0, in_var1)
         session = nn.Session()
 
         shape0 = [32 if s is None else s for s in shape0]
@@ -357,16 +364,15 @@ class TestMultiply(fixture.TestCase):
 
         in_val0 = np.random.uniform(size=shape0)
         in_val1 = np.random.uniform(size=shape1)
-        out_val = session.run(
-            outputs=out_var,
+        out_val0, out_val1 = session.run(
+            outputs=[out_var0, out_var1],
             inputs={in_var0: in_val0, in_var1: in_val1}
         )
-        np.testing.assert_almost_equal(out_val, in_val0 * in_val1)
+        np.testing.assert_almost_equal(out_val0, in_val0 * in_val1)
+        np.testing.assert_almost_equal(out_val1, in_val1 * in_val0)
 
-        for i, sha in enumerate(out_val.shape):
-            if out_var.shape[i] is None:
-                continue
-            self.assertEqual(sha, out_var.shape[i])
+        self._verify_shape(out_val0.shape, out_var0.shape)
+        self._verify_shape(out_val1.shape, out_var1.shape)
 
     def test_same_shape(self):
         """Test multiply with the same shape"""
@@ -427,8 +433,6 @@ class TestTensorOpsMaximum(fixture.TestCase):
         value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
         self._test_maximum(value0, value1)
 
-    @unittest.skipUnless(
-        _BACKEND == 'tensorflow', 'Only supported in Tensorflow')
     def test_max_different_shape(self):
         """Test maximum with same dtype"""
         value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
