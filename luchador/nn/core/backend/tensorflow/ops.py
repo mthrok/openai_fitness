@@ -15,7 +15,8 @@ __all__ = [
     'abs', 'square', 'sqrt',
     'exp', 'log', 'sin', 'cos',
     'reduce_mean', 'reduce_sum', 'reduce_max',
-    'reshape', 'tile', 'maximum', 'minimum',
+    'reshape', 'tile',
+    'add', 'multiply', 'maximum', 'minimum',
     'clip_by_value', 'clip_by_norm',
 ]
 # pylint: disable=redefined-builtin
@@ -249,13 +250,53 @@ def tile(var, pattern, name=None):
     return Tensor(tf.tile(tensor, pattern, name), name=name)
 
 
+def add(var1, var2, name=None):
+    """Elementwise addition with broadcast support
+
+    Parameters
+    ----------
+    va1, va2 : Tensor
+        Tensors to multiply.
+
+    name : str
+        Name of new Tensor
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.add(var1.unwrap(), var2.unwrap(), name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
+def multiply(var1, var2, name=None):
+    """Elementwise multiplication with broadcast support
+
+    Parameters
+    ----------
+    va1, va2 : Tensor
+        Tensors to multiply.
+
+    name : str
+        Name of new Tensor
+
+    Returns
+    -------
+    Tensor
+        The resulting Tensor
+    """
+    _tensor = tf.multiply(var1.unwrap(), var2.unwrap(), name=name)
+    return Tensor(tensor=_tensor, name=name)
+
+
 def maximum(var1, var2, name=None):
     """Compute elementwise max against other tensor
 
     Parameters
     ----------
-    other : Tensor
-        Tensor to compare. In Tensorflow backend, the shape of other
+    var1, var2 : Tensor
+        Tensors to compare. In Tensorflow backend, the shape of other
         Tensor can be different as long as it is broadcastable.
 
     name : str
@@ -275,8 +316,8 @@ def minimum(var1, var2, name=None):
 
     Parameters
     ----------
-    other : Tensor
-        Tensor to compare. In Tensorflow backend, the shape of other
+    va1, var2 : Tensor
+        Tensors to compare. In Tensorflow backend, the shape of other
         Tensor can be different as long as it is broadcastable.
 
     name : str
