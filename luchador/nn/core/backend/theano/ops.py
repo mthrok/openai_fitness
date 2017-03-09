@@ -95,37 +95,6 @@ def one_hot(var, n_classes, dtype=None, name=None):
 
 
 ###############################################################################
-def _compute_reduced_shape(axis, shape, keep_dims):
-    if axis is None:
-        if keep_dims:
-            return [1] * len(shape)
-        return []
-
-    if not luchador.util.is_iteratable(axis):
-        axis = [axis]
-    if keep_dims:
-        return [
-            (1 if i in axis else dim)
-            for i, dim in enumerate(shape)]
-    return [
-        dim for i, dim in enumerate(shape)
-        if i not in axis]
-
-
-def _compute_tile_shape(shape, pattern):
-    if len(shape) > len(pattern):
-        return _compute_tile_shape(pattern, shape)
-
-    _shape = list(pattern)
-    offset = len(pattern) - len(shape)
-    for i, val in enumerate(shape):
-        if _shape[offset + i] is None:
-            continue
-        if val is not None:
-            _shape[offset + i] *= val
-    return _shape
-
-
 def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
@@ -165,6 +134,24 @@ def cos(var, name=None):
     """Returns cos of the given variable"""
     _tensor = T.cos(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
+
+
+###############################################################################
+def _compute_reduced_shape(axis, shape, keep_dims):
+    if axis is None:
+        if keep_dims:
+            return [1] * len(shape)
+        return []
+
+    if not luchador.util.is_iteratable(axis):
+        axis = [axis]
+    if keep_dims:
+        return [
+            (1 if i in axis else dim)
+            for i, dim in enumerate(shape)]
+    return [
+        dim for i, dim in enumerate(shape)
+        if i not in axis]
 
 
 def reduce_mean(var, axis=None, keep_dims=False, dtype=None, name=None):
@@ -237,6 +224,7 @@ def reduce_max(var, axis=None, keep_dims=False, name=None):
     return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
+###############################################################################
 def _infere_new_shape(original_shape, new_shape):
     if None in original_shape:
         return new_shape
@@ -276,6 +264,21 @@ def reshape(var, new_shape, name=None):
     return Tensor(tensor=_tensor, shape=new_shape, name=name)
 
 
+###############################################################################
+def _compute_tile_shape(shape, pattern):
+    if len(shape) > len(pattern):
+        return _compute_tile_shape(pattern, shape)
+
+    _shape = list(pattern)
+    offset = len(pattern) - len(shape)
+    for i, val in enumerate(shape):
+        if _shape[offset + i] is None:
+            continue
+        if val is not None:
+            _shape[offset + i] *= val
+    return _shape
+
+
 def tile(var, pattern, name=None):
     """Tile tensor.
 
@@ -304,6 +307,7 @@ def tile(var, pattern, name=None):
     return Tensor(tensor=_tensor, shape=_shape, name=name)
 
 
+###############################################################################
 def _compute_shuffle_pattern(shape1, shape2):
     dim1, dim2 = len(shape1), len(shape2)
     if dim1 < dim2:
@@ -428,9 +432,15 @@ def maximum(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    # TODO: Add Broadcasting
-    _tensor = T.maximum(var1.unwrap(), var2.unwrap())
-    return Tensor(tensor=_tensor, shape=var1.shape, name=name)
+    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
+    var1_ = var1.unwrap().dimshuffle(pat1)
+    var2_ = var2.unwrap().dimshuffle(pat2)
+    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
+    var1_ = T.addbroadcast(var1_, *pat1)
+    var2_ = T.addbroadcast(var2_, *pat2)
+    shape = _compute_shape(var1.shape, var2.shape)
+    _tensor = T.maximum(var1_, var2_)
+    return Tensor(tensor=_tensor, shape=shape, name=name)
 
 
 def minimum(var1, var2, name=None):
@@ -450,9 +460,15 @@ def minimum(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    # TODO: Add Broadcasting
-    _tensor = T.minimum(var1.unwrap(), var2.unwrap())
-    return Tensor(tensor=_tensor, shape=var1.shape, name=name)
+    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
+    var1_ = var1.unwrap().dimshuffle(pat1)
+    var2_ = var2.unwrap().dimshuffle(pat2)
+    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
+    var1_ = T.addbroadcast(var1_, *pat1)
+    var2_ = T.addbroadcast(var2_, *pat2)
+    shape = _compute_shape(var1.shape, var2.shape)
+    _tensor = T.minimum(var1_, var2_)
+    return Tensor(tensor=_tensor, shape=shape, name=name)
 
 
 ###############################################################################

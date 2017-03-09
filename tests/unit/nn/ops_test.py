@@ -497,7 +497,6 @@ class TestTensorOpsMaximum(fixture.TestCase):
         value0, value1 = np.random.randn(*shape), np.random.randn(*shape)
         self._test_maximum(value0, value1)
 
-    @unittest.expectedFailure
     def test_max_different_shape(self):
         """Test maximum with same dtype"""
         value0, value1 = np.random.randn(3, 4), np.random.randn(1, 4)
