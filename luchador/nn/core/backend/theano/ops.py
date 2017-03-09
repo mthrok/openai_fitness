@@ -315,11 +315,8 @@ def _compute_shuffle_pattern(shape1, shape2):
     pat2 = ['x' for _ in range(diff)]
     for i1 in range(diff, dim1):
         i2 = i1 - diff
-        if shape1[i1] == shape2[i2] or shape1[i1] == 1 or shape2[i2] == 1:
-            pat1.append(i1)
-            pat2.append(i2)
-        else:
-            raise ValueError('Incompatible shapes')
+        pat1.append(i1)
+        pat2.append(i2)
     return pat1, pat2
 
 
@@ -340,8 +337,6 @@ def _compute_broadcast_pattern(shape1, shape2):
             pat1.append(i1)
         elif shape2[i2] == 1:
             pat2.append(i1)
-        else:
-            raise ValueError('Incompatible shapes')
     return pat1, pat2
 
 
@@ -356,12 +351,12 @@ def _compute_shape(shape1, shape2):
         i2 = i1 - diff
         if shape1[i1] == shape2[i2]:
             shape.append(shape1[i1])
-        elif shape1[i1] == 1:
+        elif shape1[i1] == 1 or shape2[i2] is None:
             shape.append(shape2[i2])
-        elif shape2[i2] == 1:
+        elif shape2[i2] == 1 or shape1[i1] is None:
             shape.append(shape1[i1])
         else:
-            raise ValueError('Incompatible shapes')
+            raise ValueError('Incompatible shape')
     return tuple(shape)
 
 
