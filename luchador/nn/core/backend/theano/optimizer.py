@@ -90,15 +90,15 @@ class OptimizerMixin(object):
         value = var.get_value(borrow=True)
         var_name = var.name.split(':')[0]
 
-        name_ = '{}/{}/{}'.format(self.args['name'], var_name, name)
+        name_ = '/'.join([self.args['name'], var_name, name])
         var = wrapper.make_variable(
             name=name_, shape=value.shape, dtype=value.dtype,
             initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
 
-        name_ = '{}/{}'.format(var_name, name)
+        name_ = '/'.join([var_name, name])
         self._create_parameter_slot(name_, var, train=False, serialize=True)
-        return var
+        return var.unwrap()
 
     def _create_slot(self, initial_value, name):
         """Create slot variable independant to gradients and parameters
@@ -125,7 +125,7 @@ class OptimizerMixin(object):
             initializer=get_initializer('ConstantInitializer')(initial_value))
 
         self._create_parameter_slot(name, var, train=False, serialize=True)
-        return var
+        return var.unwrap()
 
 
 class SGD(OptimizerMixin):
@@ -151,8 +151,8 @@ class RMSProp(OptimizerMixin):
 
         updates = OrderedDict()
         for grad, var in grads_and_vars:
-            mom = self._create_slot_var(var, 'momentum').unwrap()
-            rms = self._create_slot_var(var, 'rms').unwrap()
+            mom = self._create_slot_var(var, 'momentum')
+            rms = self._create_slot_var(var, 'rms')
 
             new_rms = rms + (1.0 - decay) * (T.square(grad) - rms)
             new_mom = mom * momentum + lr * grad / (T.sqrt(new_rms + ep))
@@ -175,7 +175,7 @@ class NeonRMSProp(OptimizerMixin):
 
         updates = OrderedDict()
         for grad, var in grads_and_vars:
-            rms = self._create_slot_var(var, 'rms').unwrap()
+            rms = self._create_slot_var(var, 'rms')
 
             new_rms = rms + (1.0 - decay) * (T.square(grad) - rms)
             new_var = var - lr * grad / (T.sqrt(new_rms + ep) + ep)
@@ -196,8 +196,8 @@ class GravesRMSProp(OptimizerMixin):
 
         updates = OrderedDict()
         for grad, var in grads_and_vars:
-            mean_g1 = self._create_slot_var(var, 'grad_mean').unwrap()
-            mean_g2 = self._create_slot_var(var, 'grad_squared_mean').unwrap()
+            mean_g1 = self._create_slot_var(var, 'grad_mean')
+            mean_g2 = self._create_slot_var(var, 'grad_squared_mean')
 
             new_mean_g1 = d1 * mean_g1 + (1.0 - d1) * grad
             new_mean_g2 = d2 * mean_g2 + (1.0 - d2) * T.square(grad)
@@ -223,14 +223,14 @@ class Adam(OptimizerMixin):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 
-        b1_pow = self._create_slot(b1, 'beta1_power').unwrap()
-        b2_pow = self._create_slot(b2, 'beta2_power').unwrap()
+        b1_pow = self._create_slot(b1, 'beta1_power')
+        b2_pow = self._create_slot(b2, 'beta2_power')
         alpha = lr * T.sqrt(1.0 - b2_pow) / (1.0 - b1_pow)
 
         updates = OrderedDict()
         for grad, var in grads_and_vars:
-            m = self._create_slot_var(var, 'm').unwrap()
-            v = self._create_slot_var(var, 'v').unwrap()
+            m = self._create_slot_var(var, 'm')
+            v = self._create_slot_var(var, 'v')
 
             new_m = m + (1.0 - b1) * (grad - m)
             new_v = v + (1.0 - b2) * (T.square(grad) - v)
@@ -254,13 +254,13 @@ class Adamax(OptimizerMixin):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep, lr = self.args['epsilon'], self.args['learning_rate']
 
-        b1_pow = self._create_slot(b1, 'beta1_power').unwrap()
+        b1_pow = self._create_slot(b1, 'beta1_power')
         alpha = lr / (1.0 - b1_pow)
 
         updates = OrderedDict()
         for grad, var in grads_and_vars:
-            m = self._create_slot_var(var, 'm').unwrap()
-            u = self._create_slot_var(var, 'u').unwrap()
+            m = self._create_slot_var(var, 'm')
+            u = self._create_slot_var(var, 'u')
 
             new_m = m + (1.0 - b1) * (grad - m)
             new_u = T.maximum(b2 * u, abs(grad))

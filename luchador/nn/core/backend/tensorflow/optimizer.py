@@ -117,14 +117,13 @@ class OptimizerMixin(object):
 
     def _register_slot(self, grads_and_vars):
         """Store TF-native optimizer slots to luchador Optimizer slots"""
-        for _, var_ in grads_and_vars:
-            var_name = var_.op.name
-            for slot_name in self.optimizer.get_slot_names():
-                name = '/'.join([self.args['name'], var_name, slot_name])
+        for slot_name in self.optimizer.get_slot_names():
+            for _, var_ in grads_and_vars:
+                name = '/'.join([self.args['name'], var_.op.name, slot_name])
                 tf_var = self.optimizer.get_slot(var_, slot_name)
                 var = wrapper.Variable(tf_var, name=name)
 
-                name = '/'.join([var_name, slot_name])
+                name = '/'.join([var_.op.name, slot_name])
                 self._create_parameter_slot(
                     name=name, val=var, train=False, serialize=True)
 
