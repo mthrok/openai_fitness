@@ -97,9 +97,11 @@ class Conv2D(layer.Conv2D, BaseLayer):
             initializers=initializers or {}, with_bias=with_bias,
             name=name, **kwargs)
 
-        self._create_parameter_slot('filter', train=True, serialize=True)
+        self._create_parameter_slot(
+            'filter', val=None, train=True, serialize=True)
         if with_bias:
-            self._create_parameter_slot('bias', train=True, serialize=True)
+            self._create_parameter_slot(
+                'bias', val=None, train=True, serialize=True)
 
 
 class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
@@ -295,10 +297,12 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
             output_shape=output_shape, output_shape_format=output_shape_format,
             name=name, **kwargs)
 
-        self._create_parameter_slot('filter', train=True, serialize=True)
+        self._create_parameter_slot(
+            'filter', val=None, train=True, serialize=True)
         if with_bias:
-            self._create_parameter_slot('bias', train=True, serialize=True)
+            self._create_parameter_slot(
+                'bias', val=None, train=True, serialize=True)
         self._create_parameter_slot(
-            'original_input', train=False, serialize=False)
+            'original_input', val=None, train=False, serialize=False)
         self._create_parameter_slot(
-            'original_filter', train=False, serialize=False)
+            'original_filter', val=None, train=False, serialize=False)

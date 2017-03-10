@@ -41,6 +41,8 @@ class BatchNormalization(layer.BatchNormalization, BaseLayer):
 
         self._axes = self._pattern = None
         for key in ['mean', 'var']:
-            self._create_parameter_slot(key, train=False, serialize=True)
+            self._create_parameter_slot(
+                key, val=None, train=False, serialize=True)
         for key in ['scale', 'offset']:
-            self._create_parameter_slot(key, train=True, serialize=True)
+            self._create_parameter_slot(
+                key, val=None, train=True, serialize=True)

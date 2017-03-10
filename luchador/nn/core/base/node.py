@@ -28,8 +28,9 @@ class Node(object):  # pylint: disable=too-few-public-methods
 
     ###########################################################################
     # Getter/Setter for learnable parameters
-    def _create_parameter_slot(self, name, train=True, serialize=True):
-        self._parameter_variables[name] = None
+    def _create_parameter_slot(
+            self, name, val=None, train=True, serialize=True):
+        self._parameter_variables[name] = val
         if train:
             self._parameters_to_train.append(name)
         if serialize:

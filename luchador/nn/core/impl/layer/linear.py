@@ -43,6 +43,8 @@ class Dense(layer.Dense, BaseLayer):
             n_nodes=n_nodes, initializers=initializers or {},
             with_bias=with_bias, name=name)
 
-        self._create_parameter_slot('weight', train=True, serialize=True)
+        self._create_parameter_slot(
+            'weight', val=None, train=True, serialize=True)
         if with_bias:
-            self._create_parameter_slot('bias', train=True, serialize=True)
+            self._create_parameter_slot(
+                'bias', val=None, train=True, serialize=True)
