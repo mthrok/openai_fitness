@@ -12,8 +12,8 @@ class Container(BaseModel):
     Using this class and build utility functions make it easy to build
     multi-branching-merging network.
     """
-    def __init__(self):
-        super(Container, self).__init__()
+    def __init__(self, name=None):
+        super(Container, self).__init__(name=name)
         self.models = OrderedDict()
         self.input = None
         self.output = None

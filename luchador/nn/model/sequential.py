@@ -74,8 +74,8 @@ class Sequential(Graph):
      {'name': 'layer4/output', 'shape': (32, 256)},
      {'name': 'layer5/output', 'shape': (32, 10)}]
     """
-    def __init__(self):
-        super(Sequential, self).__init__()
+    def __init__(self, name=None):
+        super(Sequential, self).__init__(name=name)
 
     @property
     def layers(self):
