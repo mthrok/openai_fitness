@@ -77,7 +77,7 @@ def _build_model(model_file, input_shape):
 
 def _build_optimization(autoencoder):
     cost = autoencoder.output['error']
-    optimizer = nn.get_optimizer('Adam')(learning_rate=0.01)
+    optimizer = nn.fetch_optimizer('Adam')(learning_rate=0.01)
     wrt = autoencoder.get_parameters_to_train()
     minimize_op = optimizer.minimize(loss=cost, wrt=wrt)
     update_op = autoencoder.get_update_operations()
