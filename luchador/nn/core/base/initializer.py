@@ -6,7 +6,7 @@ import logging
 
 import luchador.util
 
-__all__ = ['BaseInitializer', 'get_initializer']
+__all__ = ['BaseInitializer', 'fetch_initializer']
 _LG = logging.getLogger(__name__)
 
 
@@ -49,7 +49,7 @@ class BaseInitializer(luchador.util.StoreMixin, object):
         pass
 
 
-def get_initializer(name):
+def fetch_initializer(name):
     """Get ``Initializer`` class by name
 
     Parameters
@@ -67,7 +67,7 @@ def get_initializer(name):
     ValueError
         When ``Initializer`` class with the given type is not found
     """
-    for class_ in luchador.util.get_subclasses(BaseInitializer):
+    for class_ in luchador.util.fetch_subclasses(BaseInitializer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Initializer: {}'.format(name))

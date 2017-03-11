@@ -2,8 +2,8 @@
 from __future__ import absolute_import
 from .base import (  # noqa
     VariableScope, variable_scope, get_variable_scope, name_scope,
-    get_node, get_input, get_variable, get_tensor, get_operation, get_grad,
-    get_layer, get_initializer, get_optimizer, get_cost,
+    fetch_node, fetch_layer, fetch_initializer, fetch_optimizer, fetch_cost,
+    get_input, get_variable, get_tensor, get_operation, get_grad,
 )
 from .backend import ops  # noqa
 from .impl.wrapper import (  # noqa

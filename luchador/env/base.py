@@ -5,7 +5,7 @@ import abc
 import importlib
 from collections import namedtuple
 
-import luchador.util
+from luchador.util import fetch_subclasses
 
 _Outcome = namedtuple('_Outcome', ('reward', 'state', 'terminal', 'info'))
 
@@ -102,7 +102,7 @@ def get_env(typename):
             _ENVIRONMENT_MODULE_MAPPING[typename])
         importlib.import_module(module)
 
-    for class_ in luchador.util.get_subclasses(BaseEnvironment):
+    for class_ in fetch_subclasses(BaseEnvironment):
         if class_.__name__ == typename:
             return class_
 

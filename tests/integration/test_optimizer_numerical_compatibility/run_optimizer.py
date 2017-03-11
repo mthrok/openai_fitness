@@ -6,10 +6,7 @@ import csv
 import logging
 
 from luchador.util import load_config
-from luchador.nn import (
-    Session,
-    get_optimizer,
-)
+from luchador import nn
 import formula
 
 _LG = logging.getLogger('luchador')
@@ -50,7 +47,7 @@ def _get_formula(name):
 
 def _optimize(optimizer, loss, wrt, n_ite):
     minimize_op = optimizer.minimize(loss=loss, wrt=wrt)
-    sess = Session()
+    sess = nn.Session()
     sess.initialize()
     result = []
     for _ in range(n_ite+1):
@@ -65,7 +62,7 @@ def _optimize(optimizer, loss, wrt, n_ite):
 
 def _load_optimizer(filepath):
     cfg = load_config(filepath)
-    return get_optimizer(cfg['typename'])(**cfg.get('args', {}))
+    return nn.fetch_optimizer(cfg['typename'])(**cfg.get('args', {}))
 
 
 def _save_result(filepath, result):

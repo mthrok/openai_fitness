@@ -24,7 +24,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = '{}/{}'.format(self.get_scope(), layer_name)
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=input_shape, name='input')
-            layer = nn.get_layer(layer_name)(name=layer_name)
+            layer = nn.fetch_layer(layer_name)(name=layer_name)
             output = layer(input_)
 
         with nn.variable_scope(vs, reuse=True):
@@ -37,7 +37,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 5), name='input')
-            layer = nn.get_layer('Dense')(
+            layer = nn.fetch_layer('Dense')(
                 n_nodes=4, with_bias=True, name='Dense')
             output = layer(input_)
             weight = layer.get_parameter_variable('weight')
@@ -54,7 +54,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('Conv2D')(
+            layer = nn.fetch_layer('Conv2D')(
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True, name='Conv2D')
             output = layer(input_)
@@ -72,11 +72,11 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('Conv2D')(
+            layer = nn.fetch_layer('Conv2D')(
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True, name='Conv2D')
             output = layer(input_)
-            layer = nn.get_layer('Conv2DTranspose')(
+            layer = nn.fetch_layer('Conv2DTranspose')(
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True, output_shape=input_.shape,
                 name='Conv2DT')
@@ -95,7 +95,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope):
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.get_layer('TrueDiv')(denom=1.0, name='TrueDiv')
+            layer = nn.fetch_layer('TrueDiv')(denom=1.0, name='TrueDiv')
             output = layer(input_)
 
             self.assertIs(output, nn.get_tensor('TrueDiv/output'))
@@ -109,7 +109,7 @@ class LayerInterfaceTest(fixture.TestCase):
                 nn.Input(shape=(32, 4), name='input'),
                 nn.Input(shape=(32, 5), name='input'),
             ]
-            layer = nn.get_layer('Concat')(axis=1, name='Concat')
+            layer = nn.fetch_layer('Concat')(axis=1, name='Concat')
             output = layer(input_)
             self.assertIs(output, nn.get_tensor('Concat/output'))
 
@@ -118,7 +118,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=(32, 4), name='input')
-            layer = nn.get_layer('BatchNormalization')(name='BN')
+            layer = nn.fetch_layer('BatchNormalization')(name='BN')
             output = layer(input_)
             mean = layer.get_parameter_variable('mean')
             var = layer.get_parameter_variable('var')

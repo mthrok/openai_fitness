@@ -3,9 +3,9 @@ from __future__ import absolute_import
 
 from collections import OrderedDict
 
-import luchador.util
+from luchador.util import fetch_subclasses
 
-__all__ = ['Node', 'get_node']
+__all__ = ['Node', 'fetch_node']
 
 
 class Node(object):  # pylint: disable=too-few-public-methods
@@ -115,7 +115,7 @@ class Node(object):  # pylint: disable=too-few-public-methods
         return self._update_operations
 
 
-def get_node(name):
+def fetch_node(name):
     """Get ``Node`` class by name
 
     Parameters
@@ -133,7 +133,7 @@ def get_node(name):
     ValueError
         When ``Node`` class with the given type is not found
     """
-    for class_ in luchador.util.get_subclasses(Node):
+    for class_ in fetch_subclasses(Node):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Node: {}'.format(name))

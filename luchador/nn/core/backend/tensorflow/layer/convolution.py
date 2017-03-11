@@ -9,7 +9,7 @@ import tensorflow as tf
 
 import luchador
 from luchador.nn.core import common
-from luchador.nn.core.base import get_initializer
+from luchador.nn.core.base import fetch_initializer
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
@@ -98,7 +98,7 @@ def _get_strides(strides, data_format):
 def _get_filter_init(config):
     """Make filter initializer. Default to Xavier"""
     config = config or {'typename': 'XavierInitializer'}
-    return get_initializer(
+    return fetch_initializer(
         config['typename'])(**config.get('args', {}))
 
 
@@ -106,7 +106,7 @@ def _get_bias_init(config):
     """Make bias initializer. Default to Constant (0.1)"""
     config = config or {
         'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
-    return get_initializer(
+    return fetch_initializer(
         config['typename'])(**config.get('args', {}))
 
 

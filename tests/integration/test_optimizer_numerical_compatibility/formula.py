@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import abc
 
-from luchador.util import get_subclasses
+from luchador.util import fetch_subclasses
 from luchador import nn
 
 # pylint: disable=invalid-name
@@ -54,7 +54,12 @@ class x6(_Formula):
 
 def print_formulae():
     """List up avaialable formulae"""
-    print(' '.join([formula.__name__ for formula in get_subclasses(_Formula)]))
+    print(
+        ' '.join([
+            formula.__name__
+            for formula in fetch_subclasses(_Formula)
+        ])
+    )
 
 
 if __name__ == '__main__':

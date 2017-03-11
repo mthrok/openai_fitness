@@ -8,7 +8,7 @@ import luchador.util
 from .node import Node
 from .scope import variable_scope
 
-__all__ = ['BaseCost', 'get_cost']
+__all__ = ['BaseCost', 'fetch_cost']
 _LG = logging.getLogger(__name__)
 
 
@@ -60,7 +60,7 @@ class BaseCost(luchador.util.StoreMixin, Node):
         )
 
 
-def get_cost(name):
+def fetch_cost(name):
     """Get ``Cost`` class by name
 
     Parameters
@@ -78,7 +78,7 @@ def get_cost(name):
     ValueError
         When ``Cost`` class with the given type is not found
     """
-    for class_ in luchador.util.get_subclasses(BaseCost):
+    for class_ in luchador.util.fetch_subclasses(BaseCost):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Cost: {}'.format(name))

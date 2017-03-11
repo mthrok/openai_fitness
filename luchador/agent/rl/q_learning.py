@@ -210,7 +210,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
     ###########################################################################
     def _init_optimizer(self):
         cfg = self.args['optimizer_config']
-        self.optimizer = nn.get_optimizer(cfg['typename'])(**cfg['args'])
+        self.optimizer = nn.fetch_optimizer(cfg['typename'])(**cfg['args'])
 
     def _init_session(self, initial_parameter=None):
         self.session = nn.Session()

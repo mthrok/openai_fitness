@@ -6,7 +6,7 @@ import logging
 
 import theano.tensor as T
 
-from luchador.nn.core.base import get_initializer
+from luchador.nn.core.base import fetch_initializer
 from .. import wrapper
 
 __all__ = ['BatchNormalization']
@@ -30,8 +30,7 @@ class BatchNormalization(object):
         _LG.debug('     Axes: %s', self._axes)
         _LG.debug('  Pattern: %s', self._pattern)
 
-        const_init = get_initializer('ConstantInitializer')
-
+        const_init = fetch_initializer('ConstantInitializer')
         if self._parameter_variables['mean'] is None:
             mean = wrapper.make_variable(
                 name='mean', shape=shape, trainable=False,

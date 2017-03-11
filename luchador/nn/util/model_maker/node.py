@@ -55,7 +55,7 @@ def make_node(config):
     if 'typename' not in config:
         raise RuntimeError('Node `typename` is not given')
 
-    node = core.get_node(config['typename'])(**config.get('args', {}))
+    node = core.fetch_node(config['typename'])(**config.get('args', {}))
 
     if 'parameters' in config:
         parameters = make_io_node(config['parameters'])

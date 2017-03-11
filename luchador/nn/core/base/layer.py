@@ -9,7 +9,7 @@ import luchador.util
 from .scope import variable_scope
 from .node import Node
 
-__all__ = ['BaseLayer', 'get_layer']
+__all__ = ['BaseLayer', 'fetch_layer']
 _LG = logging.getLogger(__name__)
 
 
@@ -55,7 +55,7 @@ class BaseLayer(luchador.util.StoreMixin, Node):
         )
 
 
-def get_layer(name):
+def fetch_layer(name):
     """Get ``Layer`` class by name
 
     Parameters
@@ -73,7 +73,7 @@ def get_layer(name):
     ValueError
         When ``Layer`` class with the given type is not found
     """
-    for class_ in luchador.util.get_subclasses(BaseLayer):
+    for class_ in luchador.util.fetch_subclasses(BaseLayer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Layer: {}'.format(name))

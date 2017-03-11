@@ -33,7 +33,7 @@ def _parse_command_line_args():
 
 
 def _create_initializer(typename, args):
-    return nn.get_initializer(typename)(**args)
+    return nn.fetch_initializer(typename)(**args)
 
 
 def _transpose_needed(initializer, shape):

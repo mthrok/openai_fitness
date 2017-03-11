@@ -9,7 +9,7 @@ import theano.tensor as T
 from theano.tensor.nnet.abstract_conv import get_conv_output_shape
 
 from luchador.nn.core import common
-from luchador.nn.core.base.initializer import get_initializer
+from luchador.nn.core.base.initializer import fetch_initializer
 from .. import wrapper
 
 __all__ = ['Conv2D', 'Conv2DTranspose']
@@ -109,14 +109,14 @@ def _get_subsample(strides):
 def _get_filter_init(config):
     """Make filter initializer. Default to Xavier"""
     config = config or {'typename': 'XavierInitializer'}
-    return get_initializer(config['typename'])(**config.get('args', {}))
+    return fetch_initializer(config['typename'])(**config.get('args', {}))
 
 
 def _get_bias_init(config):
     """Make bias initializer. Default to Constant (0.1)"""
     config = config or {
         'typename': 'ConstantInitializer', 'args': {'value': 0.1}}
-    return get_initializer(config['typename'])(**config.get('args', {}))
+    return fetch_initializer(config['typename'])(**config.get('args', {}))
 
 
 class _Conv2DMixin(object):

@@ -32,7 +32,7 @@ def make_layer(layer_config):
     if 'typename' not in layer_config:
         raise RuntimeError('Layer `typename` is not given')
 
-    layer = core.get_layer(
+    layer = core.fetch_layer(
         layer_config['typename'])(**layer_config.get('args', {}))
 
     if 'parameters' in layer_config:

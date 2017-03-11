@@ -8,7 +8,7 @@ import luchador.util
 from .scope import variable_scope
 from .node import Node
 
-__all__ = ['BaseOptimizer', 'get_optimizer']
+__all__ = ['BaseOptimizer', 'fetch_optimizer']
 _LG = logging.getLogger(__name__)
 
 
@@ -89,7 +89,7 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
         pass
 
 
-def get_optimizer(name):
+def fetch_optimizer(name):
     """Get ``Optimizer`` class by name
 
     Parameters
@@ -107,7 +107,7 @@ def get_optimizer(name):
     ValueError
         When ``Optimizer`` class with the given type is not found
     """
-    for class_ in luchador.util.get_subclasses(BaseOptimizer):
+    for class_ in luchador.util.fetch_subclasses(BaseOptimizer):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown Optimizer: {}'.format(name))

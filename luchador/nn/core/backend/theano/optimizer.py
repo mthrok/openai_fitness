@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import theano.tensor as T
 
-from luchador.nn.core.base import get_initializer
+from luchador.nn.core.base import fetch_initializer
 from .wrapper import Operation, make_variable
 from .ops import compute_gradient
 
@@ -49,7 +49,7 @@ class OptimizerMixin(object):
         name = '/'.join([var_name, name])
         var = make_variable(
             name=name, shape=value.shape, dtype=value.dtype,
-            initializer=get_initializer('ConstantInitializer')(0),
+            initializer=fetch_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
         self._create_parameter_slot(name, var, train=False, serialize=True)
         return var.unwrap()
@@ -73,10 +73,9 @@ class OptimizerMixin(object):
         Variable
             Wrapped Variable of the resulting slot variable.
         """
+        init = fetch_initializer('ConstantInitializer')(initial_value)
         var = make_variable(
-            name=name, shape=[], broadcastable=True,
-            initializer=get_initializer('ConstantInitializer')(initial_value))
-
+            name=name, shape=[], broadcastable=True, initializer=init)
         self._create_parameter_slot(name, var, train=False, serialize=True)
         return var.unwrap()
 

@@ -1,9 +1,9 @@
 """Define base network model structure and fetch method"""
 from __future__ import absolute_import
 
-from luchador.util import get_subclasses
+from luchador.util import fetch_subclasses
 
-__all__ = ['BaseModel', 'get_model']
+__all__ = ['BaseModel', 'fetch_model']
 
 
 class BaseModel(object):  # pylint: disable=too-few-public-methods
@@ -14,7 +14,7 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
         self.output = None
 
 
-def get_model(name):
+def fetch_model(name):
     """Get ``Model`` class by name
 
     Parameters
@@ -32,7 +32,7 @@ def get_model(name):
     ValueError
         When ``Model`` class with the given name is not found
     """
-    for class_ in get_subclasses(BaseModel):
+    for class_ in fetch_subclasses(BaseModel):
         if class_.__name__ == name:
             return class_
     raise ValueError('Unknown model: {}'.format(name))

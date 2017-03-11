@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from luchador.nn.core.base import get_initializer
+from luchador.nn.core.base import fetch_initializer
 from .wrapper import Variable, Operation, make_variable
 from .ops import compute_gradient
 
@@ -97,7 +97,7 @@ class OptimizerMixin(object):
         name = '/'.join([var_name, slot_name])
         slot_var = make_variable(
             name=name, shape=var.get_shape(), dtype=var.dtype,
-            initializer=get_initializer('ConstantInitializer')(0))
+            initializer=fetch_initializer('ConstantInitializer')(0))
         self._create_parameter_slot(
             name=name, val=slot_var, train=False, serialize=True)
         return slot_var.unwrap()
@@ -108,8 +108,8 @@ class OptimizerMixin(object):
         Example use is beta parameter in Adamax optimizer.
         Currently only scalar type is supported.
         """
-        ini = get_initializer('ConstantInitializer')(initial_value)
-        var = make_variable(name=name, shape=[], initializer=ini)
+        init = fetch_initializer('ConstantInitializer')(initial_value)
+        var = make_variable(name=name, shape=[], initializer=init)
         self._create_parameter_slot(
             name=name, val=var, train=False, serialize=True)
         return var.unwrap()

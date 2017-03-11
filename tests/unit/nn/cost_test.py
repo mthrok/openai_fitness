@@ -21,7 +21,7 @@ class CostUtilTest(unittest.TestCase):
     def test_get_cost(self):
         """get_cost returns correct cost class"""
         for name, expected in get_all_costs().items():
-            found = nn.get_cost(name)
+            found = nn.fetch_cost(name)
             self.assertEqual(
                 expected, found,
                 'get_cost returned wrong cost Class. '

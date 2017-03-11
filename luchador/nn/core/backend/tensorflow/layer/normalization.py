@@ -7,7 +7,7 @@ import logging
 import tensorflow as tf
 
 import luchador
-from luchador.nn.core.base import get_initializer
+from luchador.nn.core.base import fetch_initializer
 from .. import wrapper
 
 __all__ = ['BatchNormalization']
@@ -27,7 +27,7 @@ class BatchNormalization(object):
         self._axes = tuple(i for i in range(dim) if not i == channel)
         shape = tuple(input_shape[i] for i in range(dim) if i == channel)
 
-        const_init = get_initializer('ConstantInitializer')
+        const_init = fetch_initializer('ConstantInitializer')
         if self.get_parameter_variable('mean') is None:
             mean = wrapper.make_variable(
                 name='mean', shape=shape,
