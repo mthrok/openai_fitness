@@ -210,8 +210,7 @@ class Adam(OptimizerMixin):
         ret = super(Adam, self)._apply_gradients(grads_and_vars, **kwargs)
         for name in ['beta1_power', 'beta2_power']:
             tf_var = getattr(self.optimizer, '_{}'.format(name))
-            name_ = '{}/{}'.format(self.args['name'], name)
-            var = Variable(tf_var, name=name_)
+            var = Variable(tf_var, name=name)
             self._create_parameter_slot(name, var, train=False, serialize=True)
         return ret
 

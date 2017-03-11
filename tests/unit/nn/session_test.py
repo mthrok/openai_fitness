@@ -66,12 +66,11 @@ class SessionTest(fixture.TestCase):
         name, b1_0, b2_0 = 'Adam', 0.5, 0.4
         opt = nn.optimizer.Adam(
             learning_rate=1.0, name=name, beta1=b1_0, beta2=b2_0)
-        with nn.variable_scope(self.get_scope()) as vs:
+        with nn.variable_scope(self.get_scope()):
             x = nn.Input(shape=(), name='x')
             w = nn.make_variable(shape=(), name='w')
             update_op = opt.minimize(w * x, w)
 
-            vs.reuse_variables()
             dw = nn.get_tensor('{}_grad'.format(w.name))
             b1 = nn.get_variable('{}/beta1_power'.format(name))
             b2 = nn.get_variable('{}/beta2_power'.format(name))
