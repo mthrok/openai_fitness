@@ -46,6 +46,7 @@ noise: &noise
     input_config:
       typename: Model
       name: encoder
+      type: output
     layer_configs:
       - typename: Anonymous
         args:
@@ -59,6 +60,7 @@ decoder: &decoder
     input_config:
       typename: Model
       name: noise
+      type: output
     layer_configs:
       - typename: Conv2DTranspose
         args:
@@ -126,6 +128,7 @@ error: &error
           prediction:
             typename: Model
             name: decoder
+            type: output
     output_config:
       typename: Tensor
       name: reconstruction_error/output
@@ -141,9 +144,11 @@ args:
     reconstruction:
       typename: Model
       name: decoder
+      type: output
     error:
       typename: Model
       name: error
+      type: output
   model_configs: &model_configs
     - << : *autoencoder
       name: autoencoder

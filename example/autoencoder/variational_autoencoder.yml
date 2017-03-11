@@ -177,6 +177,7 @@ autoencoder: &autoencoder
     output_config:
       typename: Model
       name: decoder
+      type: output
     model_configs:
       - << : *encoder
         name: encoder
@@ -207,6 +208,7 @@ error: &error
           prediction:
             typename: Model
             name: decoder
+            type: output
       #--------------------
       # Latent variable error
       #--------------------
@@ -247,9 +249,11 @@ args:
     reconstruction:
       typename: Model
       name: decoder
+      type: output
     error:
       typename: Model
       name: error
+      type: output
   model_configs: &model_configs
     - << : *autoencoder
       name: autoencoder

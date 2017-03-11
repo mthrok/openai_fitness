@@ -23,7 +23,14 @@ def _make_io_node(config):
         else:
             ret = core.Input(**config['args'])
     elif type_ == 'Model':
-        ret = get_model(config['name']).output
+        model = get_model(config['name'])
+        fetch = config['type']
+        if fetch == 'output':
+            ret = model.output
+        elif fetch == 'input':
+            ret = model.input
+        elif fetch == 'parameter':
+            ret = model.get_parameters_to_train()
     else:
         raise ValueError('Unexpected IO type: {}'.format(type_))
     return ret
