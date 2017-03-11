@@ -13,7 +13,8 @@ from .layer import make_layer
 _LG = logging.getLogger(__name__)
 
 
-def _make_sequential_model(layer_configs, input_config=None):
+def _make_sequential_model(
+        layer_configs, input_config=None, name=None):
     """Make Sequential model instance from model configuration
 
     Parameters
@@ -31,7 +32,7 @@ def _make_sequential_model(layer_configs, input_config=None):
     Model
         Resulting model
     """
-    model = Sequential()
+    model = Sequential(name=name)
     if input_config:
         tensor = make_io_node(input_config)
     for config in layer_configs:
@@ -42,8 +43,9 @@ def _make_sequential_model(layer_configs, input_config=None):
     return model
 
 
-def _make_graph_model(node_configs, input_config=None, output_config=None):
-    model = Graph()
+def _make_graph_model(
+        node_configs, input_config=None, output_config=None, name=None):
+    model = Graph(name=name)
 
     if input_config:
         model.input = make_io_node(input_config)
@@ -57,7 +59,8 @@ def _make_graph_model(node_configs, input_config=None, output_config=None):
     return model
 
 
-def _make_container_model(input_config, model_configs, output_config=None):
+def _make_container_model(
+        input_config, model_configs, output_config=None, name=None):
     """Make ``Container`` model from model configuration
 
     Parameters
@@ -76,7 +79,7 @@ def _make_container_model(input_config, model_configs, output_config=None):
     Model
         Resulting model
     """
-    model = Container()
+    model = Container(name=name)
     model.input = make_io_node(input_config)
     for conf in model_configs:
         _LG.info('Building Model: %s', conf.get('name', 'No name defined'))

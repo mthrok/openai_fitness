@@ -1,6 +1,7 @@
 encoder: &encoder
   typename: Sequential
   args:
+    name: encoder
     input_config:
       typename: Input
       reuse: True
@@ -43,6 +44,7 @@ encoder: &encoder
 variation: &variation
   typename: Graph
   args:
+    name: variation
     node_configs:
       #====================
       - typename: Conv2D
@@ -122,6 +124,7 @@ variation: &variation
 decoder: &decoder
   typename: Sequential
   args:
+    name: decoder
     input_config:
       typename: Tensor
       name: layer10/BN/output
@@ -166,13 +169,14 @@ decoder: &decoder
 autoencoder: &autoencoder
   typename: Container
   args:
+    name: autoencoder
     input_config:
       typename: Input
       name: input_image
       reuse: True
     output_config:
-      typename: Tensor
-      name: layer13/ReLU/output
+      typename: Model
+      name: decoder
     model_configs:
       - << : *encoder
         name: encoder
@@ -184,6 +188,10 @@ autoencoder: &autoencoder
 error: &error
   typename: Graph
   args:
+    name: error
+    output_config:
+      typename: Tensor
+      name: error/output
     node_configs:
       #--------------------
       # Reconstruction Error
@@ -197,8 +205,8 @@ error: &error
             reuse: True
             name: input_image
           prediction:
-            typename: Tensor
-            name: layer13/ReLU/output
+            typename: Model
+            name: decoder
       #--------------------
       # Latent variable error
       #--------------------
@@ -237,11 +245,11 @@ args:
       shape: {input_shape}
   output_config:
     reconstruction:
-      typename: Tensor
-      name: layer13/ReLU/output
+      typename: Model
+      name: decoder
     error:
-      typename: Tensor
-      name: error/output
+      typename: Model
+      name: error
   model_configs: &model_configs
     - << : *autoencoder
       name: autoencoder
