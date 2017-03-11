@@ -46,14 +46,12 @@ class OptimizerMixin(object):
         value = var.get_value(borrow=True)
         var_name = var.name.split(':')[0]
 
-        name_ = '/'.join([self.args['name'], var_name, name])
+        name = '/'.join([var_name, name])
         var = make_variable(
-            name=name_, shape=value.shape, dtype=value.dtype,
+            name=name, shape=value.shape, dtype=value.dtype,
             initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
-
-        name_ = '/'.join([var_name, name])
-        self._create_parameter_slot(name_, var, train=False, serialize=True)
+        self._create_parameter_slot(name, var, train=False, serialize=True)
         return var.unwrap()
 
     def _create_slot(self, initial_value, name):
@@ -75,9 +73,8 @@ class OptimizerMixin(object):
         Variable
             Wrapped Variable of the resulting slot variable.
         """
-        name_ = '{}/{}'.format(self.args['name'], name)
         var = make_variable(
-            name=name_, shape=[], broadcastable=True,
+            name=name, shape=[], broadcastable=True,
             initializer=get_initializer('ConstantInitializer')(initial_value))
 
         self._create_parameter_slot(name, var, train=False, serialize=True)

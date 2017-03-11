@@ -81,11 +81,9 @@ class OptimizerMixin(object):
         """Store TF-native optimizer slots to luchador Optimizer slots"""
         for slot_name in self.optimizer.get_slot_names():
             for _, var_ in grads_and_vars:
-                name = '/'.join([self.args['name'], var_.op.name, slot_name])
                 tf_var = self.optimizer.get_slot(var_, slot_name)
-                var = Variable(tf_var, name=name)
-
                 name = '/'.join([var_.op.name, slot_name])
+                var = Variable(tf_var, name=name)
                 self._create_parameter_slot(
                     name=name, val=var, train=False, serialize=True)
 
@@ -96,14 +94,12 @@ class OptimizerMixin(object):
         of the given Variable
         """
         var_name = var.name.split(':')[0]
-        name_ = '/'.join([self.args['name'], var_name, slot_name])
+        name = '/'.join([var_name, slot_name])
         slot_var = make_variable(
-            name=name_, shape=var.get_shape(), dtype=var.dtype,
+            name=name, shape=var.get_shape(), dtype=var.dtype,
             initializer=get_initializer('ConstantInitializer')(0))
-
-        name_ = '/'.join([var_name, slot_name])
         self._create_parameter_slot(
-            name=name_, val=slot_var, train=False, serialize=True)
+            name=name, val=slot_var, train=False, serialize=True)
         return slot_var.unwrap()
 
     def _create_slot(self, initial_value, name):
@@ -112,9 +108,8 @@ class OptimizerMixin(object):
         Example use is beta parameter in Adamax optimizer.
         Currently only scalar type is supported.
         """
-        name_ = '/'.join([self.args['name'], name])
         ini = get_initializer('ConstantInitializer')(initial_value)
-        var = make_variable(name=name_, shape=[], initializer=ini)
+        var = make_variable(name=name, shape=[], initializer=ini)
         self._create_parameter_slot(
             name=name, val=var, train=False, serialize=True)
         return var.unwrap()
@@ -151,11 +146,7 @@ class NeonRMSProp(OptimizerMixin):
 
     See :any:`BaseNeonRMSProp` for detail.
     """
-    def _apply_gradients(self, grads_and_vars, **kwargs):
-        with tf.name_scope(self.args['name']):
-            return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
-
-    def _apply_gradients_in_scope(self, grads_and_vars, **_):
+    def _apply_gradients(self, grads_and_vars, **_):
         decay, ep = self.args['decay'], self.args['epsilon']
 
         updates, new_grads_and_vars = [], []
@@ -177,11 +168,7 @@ class GravesRMSProp(OptimizerMixin):
 
     See :any:`BaseGravesRMSProp` for detail.
     """
-    def _apply_gradients(self, grads_and_vars, **kwargs):
-        with tf.name_scope(self.args['name']):
-            return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
-
-    def _apply_gradients_in_scope(self, grads_and_vars, **_):
+    def _apply_gradients(self, grads_and_vars, **_):
         d1, d2 = self.args['decay1'], self.args['decay2']
         ep = self.args['epsilon']
 
@@ -234,11 +221,7 @@ class Adamax(OptimizerMixin):
 
     See :any:`BaseAdamax` for detail.
     """
-    def _apply_gradients(self, grads_and_vars, **kwargs):
-        with tf.name_scope(self.args['name']):
-            return self._apply_gradients_in_scope(grads_and_vars, **kwargs)
-
-    def _apply_gradients_in_scope(self, grads_and_vars, **_):
+    def _apply_gradients(self, grads_and_vars, **_):
         b1, b2 = self.args['beta1'], self.args['beta2']
         ep = self.args['epsilon']
 

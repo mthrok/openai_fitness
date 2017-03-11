@@ -5,6 +5,7 @@ import abc
 import logging
 
 import luchador.util
+from .scope import variable_scope
 from .node import Node
 
 __all__ = ['BaseOptimizer', 'get_optimizer']
@@ -80,7 +81,8 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
             (grad.unwrap(), var.unwrap())
             for grad, var in grads_and_vars if grad is not None]
         grads_and_vars = _remove_dup(grads_and_vars)
-        return self._apply_gradients(grads_and_vars, **kwargs)
+        with variable_scope(self.args['name']):
+            return self._apply_gradients(grads_and_vars, **kwargs)
 
     @abc.abstractmethod
     def _apply_gradients(self, grads_and_vars, **kwargs):

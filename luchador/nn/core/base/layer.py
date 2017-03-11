@@ -6,7 +6,7 @@ import abc
 import logging
 
 import luchador.util
-from . import scope as scope_module
+from .scope import variable_scope
 from .node import Node
 
 __all__ = ['BaseLayer', 'get_layer']
@@ -43,7 +43,7 @@ class BaseLayer(luchador.util.StoreMixin, Node):
             '  Building layer %s on %s', type(self).__name__, input_tensor)
 
         self.input = input_tensor
-        with scope_module.variable_scope(self.args['name']):
+        with variable_scope(self.args['name']):
             self.output = self._build(input_tensor)
             return self.output
 
