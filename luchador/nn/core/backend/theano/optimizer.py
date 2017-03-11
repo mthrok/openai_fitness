@@ -3,12 +3,11 @@ from __future__ import absolute_import
 
 from collections import OrderedDict
 
-import theano
 import theano.tensor as T
 
-import luchador.util
 from luchador.nn.core.base import get_initializer
-from . import wrapper
+from .wrapper import Operation, make_variable
+from .ops import compute_gradient
 
 __all__ = [
     'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
@@ -22,51 +21,8 @@ class OptimizerMixin(object):
         pass
 
     def _minimize(self, loss, wrt, **kwargs):
-        grads_and_vars = self.compute_gradients(loss, wrt, **kwargs)
+        grads_and_vars = compute_gradient(loss, wrt, **kwargs)
         return self.apply_gradients(grads_and_vars)
-
-    @staticmethod
-    def _compute_gradients(loss, wrt, **kwargs):
-        """Compute gradient
-
-        Parameters
-        ----------
-        loss : Tensor
-            loss to be minimized
-
-        wrt : Variable or list of Variables
-            Term for which loss Tensor is differentiated.
-
-        kwargs
-            Other arguments passed to ``theano.gradient.grad``
-
-        Returns
-        -------
-        list
-            List of (gradient, variable) pairs
-        """
-        wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
-        wrt_ = [v.unwrap() for v in wrt if v.trainable]
-
-        if not wrt_:
-            raise ValueError('No variables to optimize.')
-
-        # So as to match the behavior to that of Tensorflow, we return None
-        # for disconnected inputs
-        grads = theano.grad(
-            loss.unwrap(), wrt_, disconnected_inputs='warn',
-            return_disconnected='None', **kwargs)
-        ret, i = [], 0
-        for var in wrt:
-            tensor = None
-            if var.trainable:
-                grad = grads[i]
-                i += 1
-                if grad is not None:
-                    name_ = '{}_grad'.format(var.name)
-                    tensor = wrapper.Tensor(grad, shape=var.shape, name=name_)
-            ret.append((tensor, var))
-        return ret
 
     def _create_slot_var(self, var, name):
         """Create slot variable for the given Variable
@@ -91,7 +47,7 @@ class OptimizerMixin(object):
         var_name = var.name.split(':')[0]
 
         name_ = '/'.join([self.args['name'], var_name, name])
-        var = wrapper.make_variable(
+        var = make_variable(
             name=name_, shape=value.shape, dtype=value.dtype,
             initializer=get_initializer('ConstantInitializer')(0),
             broadcastable=var.broadcastable)
@@ -120,7 +76,7 @@ class OptimizerMixin(object):
             Wrapped Variable of the resulting slot variable.
         """
         name_ = '{}/{}'.format(self.args['name'], name)
-        var = wrapper.make_variable(
+        var = make_variable(
             name=name_, shape=[], broadcastable=True,
             initializer=get_initializer('ConstantInitializer')(initial_value))
 
@@ -137,7 +93,7 @@ class SGD(OptimizerMixin):
         updates = OrderedDict()
         for grad, var in grads_and_vars:
             updates[var] = var - self.args['learning_rate'] * grad
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)
 
 
 class RMSProp(OptimizerMixin):
@@ -161,7 +117,7 @@ class RMSProp(OptimizerMixin):
             updates[rms] = new_rms
             updates[mom] = new_mom
             updates[var] = new_var
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)
 
 
 class NeonRMSProp(OptimizerMixin):
@@ -182,7 +138,7 @@ class NeonRMSProp(OptimizerMixin):
 
             updates[rms] = new_rms
             updates[var] = new_var
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)
 
 
 class GravesRMSProp(OptimizerMixin):
@@ -211,7 +167,7 @@ class GravesRMSProp(OptimizerMixin):
             updates[mean_g1] = new_mean_g1
             updates[mean_g2] = new_mean_g2
             updates[var] = new_var
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)
 
 
 class Adam(OptimizerMixin):
@@ -242,7 +198,7 @@ class Adam(OptimizerMixin):
 
         updates[b1_pow] = b1_pow * b1
         updates[b2_pow] = b2_pow * b2
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)
 
 
 class Adamax(OptimizerMixin):
@@ -271,4 +227,4 @@ class Adamax(OptimizerMixin):
             updates[var] = new_var
 
         updates[b1_pow] = b1_pow * b1
-        return wrapper.Operation(op=updates)
+        return Operation(op=updates)

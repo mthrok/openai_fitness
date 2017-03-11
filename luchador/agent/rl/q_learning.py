@@ -199,8 +199,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         return target_q, post_q
 
     def _build_optimize_op(self, loss, params):
-        grads_and_vars = self.optimizer.compute_gradients(
-            loss=loss, wrt=params)
+        grads_and_vars = nn.ops.compute_gradient(loss=loss, wrt=params)
         # Remove untrainable variables
         grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
         if self.args.get('clip_grads'):

@@ -68,6 +68,56 @@ class TestOpsSync(unittest.TestCase):
             tgt_val = found
 
 
+class TestComputeGradiens(fixture.TestCase):
+    """Test gradient computation"""
+    def test_compute_gradients(self):
+        """compute_gradients returns None for non-trainable wrt"""
+        with nn.variable_scope(self.get_scope()):
+            xs = [nn.make_variable(
+                name='x_{}'.format(i), shape=(), trainable=bool(i % 2),
+            ) for i in range(5)]
+            y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
+            grads_and_vars = nn.ops.compute_gradient(loss=y, wrt=xs)
+        self.assertEqual(len(xs), len(grads_and_vars))
+        for i, (grad, var) in enumerate(grads_and_vars):
+            self.assertIs(xs[i], var)
+            if i % 2:
+                self.assertIsNotNone(grad)
+            else:
+                self.assertIsNone(grad)
+
+    def test_compute_gradients_with_trainables(self):
+        """compute_gradients computes gradients for trainable wrt"""
+        with nn.variable_scope(self.get_scope()):
+            xs = [nn.make_variable(
+                name='x_{}'.format(i), shape=(), trainable=True,
+            ) for i in range(3)]
+            y = xs[0] + xs[1] + xs[2]
+            grads_and_vars = nn.ops.compute_gradient(loss=y, wrt=xs)
+        self.assertEqual(len(xs), len(grads_and_vars))
+        for i, (grad, var) in enumerate(grads_and_vars):
+            self.assertIs(xs[i], var)
+            self.assertIsNotNone(grad)
+
+    def test_get_gradients(self):
+        """gradients can be retrieved with get_tensor"""
+        scope = self.get_scope()
+        with nn.variable_scope(scope):
+            xs = [nn.make_variable(
+                name='x_{}'.format(i), shape=(), trainable=True,
+            ) for i in range(5)]
+            y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
+            grads_and_vars = nn.ops.compute_gradient(loss=y, wrt=xs)
+
+            for i in range(5):
+                grad = nn.get_tensor('{}_grad'.format(xs[i].name))
+                self.assertIs(grads_and_vars[i][0], grad)
+
+        for i in range(5):
+            grad = nn.get_tensor('{}/{}_grad'.format(scope, xs[i].name))
+            self.assertIs(grads_and_vars[i][0], grad)
+
+
 class TestTensorOpsClipByValue(fixture.TestCase):
     """Test clipping wrapper by value"""
     def test_clip_number_by_value(self):

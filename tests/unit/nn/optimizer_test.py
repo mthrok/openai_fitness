@@ -27,56 +27,6 @@ def _get_y_equals_x_squared(scope, x_init):
 
 class OptimizerGradientTest(fixture.TestCase):
     """Test gradient computation interface IO"""
-    def test_compute_gradients_with_trainables(self):
-        """compute_gradients computes gradients for trainable wrt"""
-        sgd = nn.optimizer.SGD(learning_rate=0.01)
-        with nn.variable_scope(self.get_scope()):
-            xs = [nn.make_variable(
-                name='x_{}'.format(i), shape=(), trainable=True,
-            ) for i in range(3)]
-            y = xs[0] + xs[1] + xs[2]
-            grads_and_vars = sgd.compute_gradients(y, wrt=xs)
-        self.assertEqual(len(xs), len(grads_and_vars))
-        for i, (grad, var) in enumerate(grads_and_vars):
-            self.assertIs(xs[i], var)
-            self.assertIsNotNone(grad)
-
-    def test_compute_gradients(self):
-        """compute_gradients returns None for non-trainable wrt"""
-        sgd = nn.optimizer.SGD(learning_rate=0.01)
-        with nn.variable_scope(self.get_scope()):
-            xs = [nn.make_variable(
-                name='x_{}'.format(i), shape=(), trainable=bool(i % 2),
-            ) for i in range(5)]
-            y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
-            grads_and_vars = sgd.compute_gradients(y, wrt=xs)
-        self.assertEqual(len(xs), len(grads_and_vars))
-        for i, (grad, var) in enumerate(grads_and_vars):
-            self.assertIs(xs[i], var)
-            if i % 2:
-                self.assertIsNotNone(grad)
-            else:
-                self.assertIsNone(grad)
-
-    def test_get_gradients(self):
-        """gradients can be retrieved with get_tensor"""
-        sgd = nn.optimizer.SGD(learning_rate=0.01)
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            xs = [nn.make_variable(
-                name='x_{}'.format(i), shape=(), trainable=True,
-            ) for i in range(5)]
-            y = xs[0] + xs[1] + xs[2] + xs[3] + xs[4]
-            grads_and_vars = sgd.compute_gradients(y, wrt=xs)
-
-            for i in range(5):
-                grad = nn.get_tensor('{}_grad'.format(xs[i].name))
-                self.assertIs(grads_and_vars[i][0], grad)
-
-        for i in range(5):
-            grad = nn.get_tensor('{}/{}_grad'.format(scope, xs[i].name))
-            self.assertIs(grads_and_vars[i][0], grad)
-
     def test_clip_gradients(self):
         """Gradients are clipped"""
         sgd = nn.optimizer.SGD(learning_rate=1.0)
@@ -86,11 +36,10 @@ class OptimizerGradientTest(fixture.TestCase):
                 'UniformInitializer')(minval=-3, maxval=3)
             x = nn.make_variable(
                 name='x', shape=shape, initializer=initializer)
-            y = x * x / 2
-            grads_and_vars = sgd.compute_gradients(nn.ops.reduce_sum(y), wrt=x)
+            y = nn.ops.reduce_sum(x * x / 2)
             grads_and_vars = [
                 (nn.ops.clip_by_value(grad, max_value=1, min_value=-1), var)
-                for grad, var in grads_and_vars
+                for grad, var in nn.ops.compute_gradient(loss=y, wrt=x)
             ]
             op = sgd.apply_gradients(grads_and_vars)
 

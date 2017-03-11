@@ -19,13 +19,6 @@ def _remove_dup(grads_and_vars):
     return [x for x in grads_and_vars if not (x[1] in seen or seen_add(x[1]))]
 
 
-def _log_wrt(wrt):
-    if not luchador.util.is_iteratable(wrt):
-        wrt = [wrt]
-    for var in wrt:
-        _LG.info('    %20s', var)
-
-
 class BaseOptimizer(luchador.util.StoreMixin, Node):
     """Define common interface of Optimizer"""
     __metaclass__ = abc.ABCMeta
@@ -68,40 +61,6 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
 
     @abc.abstractmethod
     def _minimize(self, loss, wrt, **kwargs):
-        pass
-
-    def compute_gradients(self, loss, wrt, **kwargs):
-        """Compute gradient of loss with respect to wrt.
-
-        This method works in similar way as Tensorflow Optimizers'
-        compute_gradient method.
-
-        Parameters
-        ----------
-        loss : Tensor
-            Tensor holding loss value to be minimized
-
-        wrt : [list of] Tensors
-            Variables with which gradients of loss are computed. Variables
-            marked as not trainable are ignored.
-
-        kwargs
-            [Tensorflow only] Other arguments passed to compute_gradients of
-            underlying Tenasorflow native Optimizer.
-
-        Returns
-        -------
-        list of Tensor pairs
-            Gradient and corresponding variable pairs. Each tensor is
-            not wrapped with Luchador's Variable but bare TensorVariable
-            native to backend.
-        """
-        _LG.info('Computing gradient for %s', loss)
-        _log_wrt(wrt)
-        return self._compute_gradients(loss, wrt, **kwargs)
-
-    @abc.abstractmethod
-    def _compute_gradients(self, loss, wrt, **kwargs):
         pass
 
     def apply_gradients(self, grads_and_vars, **kwargs):

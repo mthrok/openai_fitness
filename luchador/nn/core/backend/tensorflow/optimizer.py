@@ -3,9 +3,10 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-import luchador.util
 from luchador.nn.core.base import get_initializer
-from . import wrapper
+from .wrapper import Variable, Operation, make_variable
+from .ops import compute_gradient
+
 
 __all__ = [
     'SGD', 'RMSProp', 'NeonRMSProp', 'GravesRMSProp', 'Adam', 'Adamax'
@@ -19,7 +20,7 @@ def _parse_kwargs(kwargs):
         ('gate_gradients', 1),
         ('aggregation_method', None),
         ('colocate_gradients_with_ops', False),
-        ('grad_loss', None)
+        ('grad_ys', None)
     ]
     keys_and_defaults2 = [
         ('global_step', None),
@@ -49,47 +50,8 @@ class OptimizerMixin(object):
 
     def _minimize(self, loss, wrt=None, **kwargs):
         kws1, kws2 = _parse_kwargs(kwargs)
-        grads_and_vars = self.compute_gradients(loss, wrt=wrt, **kws1)
+        grads_and_vars = compute_gradient(loss, wrt=wrt, **kws1)
         return self.apply_gradients(grads_and_vars, **kws2)
-
-    def _compute_gradients(self, loss, wrt, **kwargs):
-        """Compute gradient
-
-        Parameters
-        ----------
-        loss : Tensor
-            loss to be minimized
-
-        wrt : Variable or list of Variables
-            Term for which loss Tensor is differentiated.
-
-        kwargs
-            Other arguments passed to ``tf.gradients``
-
-        Returns
-        -------
-        list
-            List of (gradient, variable) pairs
-        """
-        wrt = wrt if luchador.util.is_iteratable(wrt) else [wrt]
-        var_list = [v.unwrap() for v in wrt if v.trainable]
-
-        if not var_list:
-            raise ValueError('No variables to optimize.')
-
-        grads_and_vars = self.optimizer.compute_gradients(
-            loss=loss.unwrap(), var_list=var_list, **kwargs)
-        ret, i = [], 0
-        for var in wrt:
-            tensor = None
-            if var.trainable:
-                grad = grads_and_vars[i][0]
-                i += 1
-                if grad is not None:
-                    name_ = '{}_grad'.format(var.name)
-                    tensor = wrapper.Tensor(grad, name=name_)
-            ret.append((tensor, var))
-        return ret
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
         """Apply grads_and_vars to optimizer to create minimization Operation
@@ -113,7 +75,7 @@ class OptimizerMixin(object):
         """
         minimize_op = self.optimizer.apply_gradients(grads_and_vars, **kwargs)
         self._register_slot(grads_and_vars)
-        return wrapper.Operation(minimize_op)
+        return Operation(minimize_op)
 
     def _register_slot(self, grads_and_vars):
         """Store TF-native optimizer slots to luchador Optimizer slots"""
@@ -121,7 +83,7 @@ class OptimizerMixin(object):
             for _, var_ in grads_and_vars:
                 name = '/'.join([self.args['name'], var_.op.name, slot_name])
                 tf_var = self.optimizer.get_slot(var_, slot_name)
-                var = wrapper.Variable(tf_var, name=name)
+                var = Variable(tf_var, name=name)
 
                 name = '/'.join([var_.op.name, slot_name])
                 self._create_parameter_slot(
@@ -135,7 +97,7 @@ class OptimizerMixin(object):
         """
         var_name = var.name.split(':')[0]
         name_ = '/'.join([self.args['name'], var_name, slot_name])
-        slot_var = wrapper.make_variable(
+        slot_var = make_variable(
             name=name_, shape=var.get_shape(), dtype=var.dtype,
             initializer=get_initializer('ConstantInitializer')(0))
 
@@ -152,7 +114,7 @@ class OptimizerMixin(object):
         """
         name_ = '/'.join([self.args['name'], name])
         ini = get_initializer('ConstantInitializer')(initial_value)
-        var = wrapper.make_variable(name=name_, shape=[], initializer=ini)
+        var = make_variable(name=name_, shape=[], initializer=ini)
         self._create_parameter_slot(
             name=name, val=var, train=False, serialize=True)
         return var.unwrap()
@@ -207,7 +169,7 @@ class NeonRMSProp(OptimizerMixin):
             new_grads_and_vars.append((new_grad, var))
 
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return wrapper.Operation(tf.group(*updates))
+        return Operation(tf.group(*updates))
 
 
 class GravesRMSProp(OptimizerMixin):
@@ -239,7 +201,7 @@ class GravesRMSProp(OptimizerMixin):
             new_grads_and_vars.append((new_grad, var))
 
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return wrapper.Operation(tf.group(*updates))
+        return Operation(tf.group(*updates))
 
 
 class Adam(OptimizerMixin):
@@ -262,7 +224,7 @@ class Adam(OptimizerMixin):
         for name in ['beta1_power', 'beta2_power']:
             tf_var = getattr(self.optimizer, '_{}'.format(name))
             name_ = '{}/{}'.format(self.args['name'], name)
-            var = wrapper.Variable(tf_var, name=name_)
+            var = Variable(tf_var, name=name_)
             self._create_parameter_slot(name, var, train=False, serialize=True)
         return ret
 
@@ -298,4 +260,4 @@ class Adamax(OptimizerMixin):
 
         updates.append(beta1_power.assign(beta1_power * b1))
         updates.append(self.optimizer.apply_gradients(new_grads_and_vars))
-        return wrapper.Operation(tf.group(*updates))
+        return Operation(tf.group(*updates))
