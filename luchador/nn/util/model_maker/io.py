@@ -24,7 +24,7 @@ def _make_io_node(config):
             ret = core.Input(**config['args'])
     elif type_ == 'Model':
         model = get_model(config['name'])
-        fetch = config['type']
+        fetch = config['fetch']
         if fetch == 'output':
             ret = model.output
         elif fetch == 'input':
