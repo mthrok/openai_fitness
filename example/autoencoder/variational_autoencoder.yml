@@ -238,6 +238,25 @@ error: &error
             typename: Tensor
             name: latent_error/output
 
+optimization: &optimization
+  typename: Graph
+  args:
+    name: optimization
+    node_configs:
+      - typename: Adam
+        args:
+          name: Adam
+          learning_rate: 0.01
+        input:
+          loss:
+            typename: Model
+            name: error
+            fetch: output
+          wrt:
+            typename: Model
+            name: autoencoder
+            fetch: parameter
+
 typename: Container
 args:
   input_config:
@@ -259,3 +278,5 @@ args:
       name: autoencoder
     - << : *error
       name: error
+    - << : *optimization
+      name: optimization
