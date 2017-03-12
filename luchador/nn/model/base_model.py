@@ -65,5 +65,5 @@ def get_model(name):
     Model
     """
     if name not in _MODELS:
-        raise ValueError('Modl `{}` does not exist.'.format(name))
+        raise ValueError('Model `{}` does not exist.'.format(name))
     return _MODELS[name]
