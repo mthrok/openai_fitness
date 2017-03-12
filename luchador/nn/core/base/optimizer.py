@@ -77,16 +77,23 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
         Operation
             Operation which updates parameter variables
         """
+        self.input = grads_and_vars
         grads_and_vars = [
             (grad.unwrap(), var.unwrap())
             for grad, var in grads_and_vars if grad is not None]
         grads_and_vars = _remove_dup(grads_and_vars)
         with variable_scope(self.args['name']):
-            return self._apply_gradients(grads_and_vars, **kwargs)
+            update = self._apply_gradients(grads_and_vars, **kwargs)
+            self._update_operations.append(update)
+            return update
 
     @abc.abstractmethod
     def _apply_gradients(self, grads_and_vars, **kwargs):
         pass
+
+    def __call__(self, grads_and_vars, **kwargs):
+        """Convenient function to call ``apply_gradients``"""
+        return self.apply_gradients(grads_and_vars, **kwargs)
 
 
 def fetch_optimizer(name):
