@@ -61,11 +61,12 @@ def make_node(config):
         parameters = make_io_node(config['parameters'])
         node.set_parameter_variables(**parameters)
 
-    input_ = make_io_node(config['input'])
-    if isinstance(input_, list):
-        node(*input_)
-    elif isinstance(input_, dict):
-        node(**input_)
-    else:
-        node(input_)
+    if 'input' in config:
+        input_ = make_io_node(config['input'])
+        if isinstance(input_, list):
+            node(*input_)
+        elif isinstance(input_, dict):
+            node(**input_)
+        else:
+            node(input_)
     return node

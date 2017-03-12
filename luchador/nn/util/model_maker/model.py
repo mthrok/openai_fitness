@@ -8,7 +8,6 @@ from ...model import Sequential, Graph, Container
 from .common import ConfigDict, parse_config
 from .io import make_io_node
 from .node import make_node
-from .layer import make_layer
 
 _LG = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ def _make_sequential_model(
     if input_config:
         tensor = make_io_node(input_config)
     for config in layer_configs:
-        layer = make_layer(config)
+        layer = make_node(config)
         if input_config:
             tensor = layer(tensor)
         model.add_layer(layer)

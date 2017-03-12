@@ -110,7 +110,7 @@ class ModelMakerTest(fixture.TestCase):
             tensor = nn.Input(shape=shape)
             out1 = layer1(tensor)
 
-        layer2 = nn.make_layer(layer_config)
+        layer2 = nn.make_node(layer_config)
         out2 = layer2(tensor)
 
         for key in ['weight', 'bias']:
@@ -157,7 +157,7 @@ class ModelMakerTest(fixture.TestCase):
                 tensor = nn.Input(shape=shape)
                 out1 = layer1(tensor)
 
-            layer2 = nn.make_layer(layer_config)
+            layer2 = nn.make_node(layer_config)
             out2 = layer2(tensor)
 
         for key in ['weight', 'bias']:
