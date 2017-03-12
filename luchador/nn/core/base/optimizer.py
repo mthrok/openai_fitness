@@ -91,9 +91,9 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
     def _apply_gradients(self, grads_and_vars, **kwargs):
         pass
 
-    def __call__(self, grads_and_vars, **kwargs):
-        """Convenient function to call ``apply_gradients``"""
-        return self.apply_gradients(grads_and_vars, **kwargs)
+    def __call__(self, loss, wrt, **kwargs):
+        """Convenient function to call ``minimize``"""
+        return self.minimize(loss, wrt, **kwargs)
 
 
 def fetch_optimizer(name):
