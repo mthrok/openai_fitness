@@ -1,0 +1,138 @@
+classifier: &classifier
+  typename: Sequential
+  args:
+    name: classifier
+    input_config:
+      typename: Input
+      reuse: True
+      name: input_image
+    layer_configs:
+      - typename: Conv2D
+        args: &conv2d_1
+          n_filters: 32
+          filter_width: 5
+          filter_height: 5
+          strides: 2
+          padding: same
+          name: layer1/conv2D
+      - typename: LeakyReLU
+        args:
+          name: layer1/ReLU
+          alpha: 0.2
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer2/BN
+      #====================
+      - typename: Conv2D
+        args: &conv2d_2
+          n_filters: 64
+          filter_width: 5
+          filter_height: 5
+          strides: 2
+          padding: same
+          name: layer3/conv2D
+      - typename: LeakyReLU
+        args:
+          name: layer3/ReLU
+          alpha: 0.2
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer4/BN
+      #====================
+      - typename: Conv2D
+        args:
+          << : *conv2d_2
+          name: layer5/conv2D
+      - typename: LeakyReLU
+        args:
+          name: layer5/ReLU
+          alpha: 0.2
+      #====================
+      - typename: BatchNormalization
+        args:
+          name: layer6/BN
+      #===================
+      - typename: Flatten
+        args:
+          name: layer7/Flatten
+      #===================
+      - typename: Dense
+        args:
+          name: layer8/Dense
+          n_nodes: 10
+          
+error: &error
+  typename: Graph
+  args:
+    name: error
+    node_configs:
+      - typename: Anonymous
+        args:
+          name: label
+          exp: one_hot(x, {n_classes})
+        input:
+          typename: Input
+          reuse: True
+          name: label
+      - typename: SoftmaxCrossEntropy
+        args:
+          name: error
+        input:
+          target:
+            typename: Tensor
+            name: label/output
+          prediction:
+            typename: Model
+            name: classifier
+            fetch: output
+    output_config:
+      typename: Tensor
+      name: error/output
+
+optimization: &optimization
+  typename: Graph
+  args:
+    name: optimization
+    node_configs:
+      - typename: Adam
+        args:
+          name: Adam
+          learning_rate: 0.01
+        input:
+          loss:
+            typename: Model
+            name: error
+            fetch: output
+          wrt:
+            typename: Model
+            name: classifier
+            fetch: parameter
+
+typename: Container
+args:
+  input_config:
+    data:
+      typename: Input
+      args:
+        name: input_image
+        shape: {input_shape}
+    label:
+      typename: Input
+      args:
+        name: label
+        shape: [{batch_size}]
+        dtype: uint64
+  output_config:
+    error:
+      typename: Model
+      name: error
+      fetch: output
+  model_configs:
+    - << : *classifier
+      name: classifier
+    - << : *error
+      name: error
+    - << : *optimization
+      name: optimization
