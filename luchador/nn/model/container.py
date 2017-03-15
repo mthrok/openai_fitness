@@ -85,5 +85,13 @@ class Container(BaseModel):
         return ret
 
     ###########################################################################
+    def __getitem__(self, key):
+        """Get an underlying model with name"""
+        return self.models[key]
+
+    def __setitem__(self, key, model):
+        """Set model"""
+        self.add_model(key, model)
+
     def __repr__(self):
         return repr({self.__class__.__name__: self.models})
