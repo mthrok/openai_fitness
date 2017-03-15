@@ -123,7 +123,7 @@ args:
       args:
         name: label
         shape: [{batch_size}]
-        dtype: uint64
+        dtype: int64
   output_config:
     error:
       typename: Model

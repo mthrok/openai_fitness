@@ -7,8 +7,6 @@ import pickle
 import logging
 import argparse
 
-import numpy as np
-
 # import theano
 # theano.config.optimizer = 'None'
 # theano.config.exception_verbosity = 'high'
@@ -81,7 +79,8 @@ def _initialize_logger(debug):
 
 def _build_model(model_file, input_shape, batch_size):
     model_def = nn.get_model_config(
-        model_file, input_shape=input_shape, batch_size=batch_size, n_classes=10)
+        model_file, input_shape=input_shape,
+        batch_size=batch_size, n_classes=10)
     return nn.make_model(model_def)
 
 
@@ -112,6 +111,29 @@ def _train(session, classifier, dataset, batch_size):
             cst = 0
 
 
+def _test(session, classifier, dataset, batch_size):
+    data, label = dataset['data'], dataset['label']
+    n_images = len(data)
+    n_batch = n_images//batch_size
+    data = data[:batch_size * n_batch]
+    label = label[:batch_size * n_batch]
+
+    cst = 0
+    for i in range(n_batch):
+        data_batch = data[i*batch_size:(i+1)*batch_size, ...]
+        label_batch = label[i*batch_size:(i+1)*batch_size, ...]
+        cost_ = session.run(
+            inputs={
+                classifier.input['data']: data_batch,
+                classifier.input['label']: label_batch,
+            },
+            outputs=classifier.output['error'],
+            name='test',
+        )
+        cst += cost_.tolist() / n_batch
+    _LG.info('Test Error %s', cst)
+
+
 def _main():
     args = _parase_command_line_args()
     _initialize_logger(args.debug)
@@ -135,6 +157,7 @@ def _main():
 
     try:
         _train(session, classifier, dataset['train'], batch_size)
+        _test(session, classifier, dataset['test'], batch_size)
     except KeyboardInterrupt:
         pass
 

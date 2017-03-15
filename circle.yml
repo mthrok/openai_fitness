@@ -68,6 +68,15 @@ stages:
       - type: shell
         name: AE Tensorflow
         command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_autoencoder.sh
+      - type: shell
+        name: MNIST classification Theano 32 bit
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_mnist.sh
+      - type: shell
+        name: MNIST classification Theano 64 bit
+        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_mnist.sh
+      - type: shell
+        name: MNIST classification Tensorflow
+        command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_mnist.sh
       # Style check
       - type: shell
         name: Style Check
