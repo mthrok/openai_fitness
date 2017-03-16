@@ -25,6 +25,46 @@ def _transpose(state):
     return state.transpose((0, 2, 3, 1))
 
 
+def _initialize_summary_writer(config, model):
+    writer = nn.SummaryWriter(**config)
+
+    sess = nn.get_session()
+    if sess.graph:
+        writer.add_graph(sess.graph)
+
+    params = model.get_parameters_to_serialize()
+    outputs = model.get_output_tensors()
+    writer.register(
+        'histogram', tag='params',
+        names=['/'.join(v.name.split('/')[1:]) for v in params])
+    writer.register(
+        'histogram', tag='outputs',
+        names=['/'.join(v.name.split('/')[1:]) for v in outputs])
+    writer.register(
+        'histogram', tag='training',
+        names=['Training/Error', 'Training/Reward', 'Training/Steps']
+    )
+    writer.register_stats(['Error', 'Reward', 'Steps'])
+    writer.register('scalar', ['Trainings'])
+    return writer
+
+
+def _gen_model_def(config, n_actions):
+    fmt, w = luchador.get_nn_conv_format(), config['input_width']
+    h, c = config['input_height'], config['input_channel']
+    model = config['model_file']
+    shape = [None, h, w, c] if fmt == 'NHWC' else [None, c, h, w]
+    return nn.get_model_config(model, n_actions=n_actions, input_shape=shape)
+
+
+def _get_q_network(config):
+    if config['typename'] == 'DeepQLearning':
+        dqn = DeepQLearning
+    elif config['typename'] == 'DoubleDeepQLearning':
+        dqn = DoubleDeepQLearning
+    return dqn(**config['args'])
+
+
 class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     """Implement Agent part of DQN [1]_:
 
@@ -145,59 +185,20 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
         self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
-        self._init_saver()
-        self._init_summary_writer()
+        self._saver = nn.Saver(**self.args['saver_config'])
+        self._summary_writer = _initialize_summary_writer(
+            config=self.args['summary_writer_config'],
+            model=self._ql.models['model_0'],
+        )
         self._summarize_layer_params()
 
-    def _gen_model_def(self, n_actions):
-        cfg = self.args['model_config']
-        fmt = luchador.get_nn_conv_format()
-        w, h, c = cfg['input_width'], cfg['input_height'], cfg['input_channel']
-        shape = [None, h, w, c] if fmt == 'NHWC' else [None, c, h, w]
-        return nn.get_model_config(
-            cfg['model_file'], n_actions=n_actions, input_shape=shape)
-
     def _init_network(self, n_actions):
-        cfg = self.args['q_network_config']
-        if cfg['typename'] == 'DeepQLearning':
-            dqn = DeepQLearning
-        elif cfg['typename'] == 'DoubleDeepQLearning':
-            dqn = DoubleDeepQLearning
-        self._ql = dqn(**cfg['args'])
-        model_def = self._gen_model_def(n_actions)
+        model_def = _gen_model_def(self.args['model_config'], n_actions)
         initial_parameter = self.args['model_config']['initial_parameter']
         _LG.info('\n%s', luchador.util.pprint_dict(model_def))
+        self._ql = _get_q_network(config=self.args['q_network_config'])
         self._ql.build(model_def, initial_parameter)
         self._ql.sync_network()
-
-    def _init_saver(self):
-        config = self.args['saver_config']
-        self._saver = nn.Saver(**config)
-
-    def _init_summary_writer(self):
-        """Initialize SummaryWriter and create set of summary operations"""
-        config = self.args['summary_writer_config']
-        self._summary_writer = nn.SummaryWriter(**config)
-
-        sess = nn.get_session()
-        if sess.graph:
-            self._summary_writer.add_graph(sess.graph)
-
-        model_0 = self._ql.models['model_0']
-        params = model_0.get_parameters_to_serialize()
-        outputs = model_0.get_output_tensors()
-        self._summary_writer.register(
-            'histogram', tag='params',
-            names=['/'.join(v.name.split('/')[1:]) for v in params])
-        self._summary_writer.register(
-            'histogram', tag='outputs',
-            names=['/'.join(v.name.split('/')[1:]) for v in outputs])
-        self._summary_writer.register(
-            'histogram', tag='training',
-            names=['Training/Error', 'Training/Reward', 'Training/Steps']
-        )
-        self._summary_writer.register_stats(['Error', 'Reward', 'Steps'])
-        self._summary_writer.register('scalar', ['Trainings'])
 
     ###########################################################################
     # Methods for `reset`

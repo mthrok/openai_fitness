@@ -69,6 +69,15 @@ def _clip_grads(grads_and_vars, clip_norm):
     return ret
 
 
+def _build_optimize_op(optimizer, loss, params, clip_grads):
+    grads_and_vars = nn.ops.compute_gradient(loss=loss, wrt=params)
+    # Remove untrainable variables
+    grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
+    if clip_grads:
+        grads_and_vars = _clip_grads(grads_and_vars, **clip_grads)
+    return optimizer.apply_gradients(grads_and_vars)
+
+
 class DeepQLearning(luchador.util.StoreMixin, object):
     """Implement Neural Network part of DQN [1]_:
 
@@ -150,9 +159,11 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         weight = nn.Input(
             shape=(None,), name='sample_weight')
         self._init_optimizer()
-        optimize_op = self._build_optimize_op(
+        optimize_op = _build_optimize_op(
+            optimizer=self.optimizer,
             loss=nn.ops.reduce_mean(error * weight),
-            params=model_0.get_parameters_to_train())
+            params=model_0.get_parameters_to_train(),
+            clip_grads=self.args.get('clip_grads'))
 
         self._init_session(initial_parameter)
 
@@ -197,15 +208,6 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         target_q = nn.ops.tile(
             nn.ops.reshape(target_q, [-1, 1]), [1, n_actions])
         return target_q, post_q
-
-    def _build_optimize_op(self, loss, params):
-        grads_and_vars = nn.ops.compute_gradient(loss=loss, wrt=params)
-        # Remove untrainable variables
-        grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
-        if self.args.get('clip_grads'):
-            grads_and_vars = _clip_grads(
-                grads_and_vars, **self.args['clip_grads'])
-        return self.optimizer.apply_gradients(grads_and_vars)
 
     ###########################################################################
     def _init_optimizer(self):
