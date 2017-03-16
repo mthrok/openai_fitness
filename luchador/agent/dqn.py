@@ -179,8 +179,9 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         config = self.args['summary_writer_config']
         self._summary_writer = nn.SummaryWriter(**config)
 
-        if self._ql.session.graph:
-            self._summary_writer.add_graph(self._ql.session.graph)
+        sess = nn.get_session()
+        if sess.graph:
+            self._summary_writer.add_graph(sess.graph)
 
         model_0 = self._ql.models['model_0']
         params = model_0.get_parameters_to_serialize()

@@ -213,7 +213,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         self.optimizer = nn.fetch_optimizer(cfg['typename'])(**cfg['args'])
 
     def _init_session(self, initial_parameter=None):
-        self.session = nn.Session()
+        self.session = nn.get_session()
         if initial_parameter:
             _LG.info('Loading parameters from %s', initial_parameter)
             self.session.load_from_file(initial_parameter)

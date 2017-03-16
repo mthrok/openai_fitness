@@ -4,6 +4,10 @@ from __future__ import absolute_import
 from ..base.session import BaseSession
 from ..backend import session
 
+__all__ = ['Session', 'get_session']
+
+_SESSIONS = {}
+
 
 class Session(session.Session, BaseSession):
     """Implement Tensorflow-like Session class which executes computation"""
@@ -74,3 +78,12 @@ class Session(session.Session, BaseSession):
             be skipped.
         """
         self._load_dataset(dataset=dataset, cast=cast, strict=strict)
+###############################################################################
+
+
+def get_session(key='default'):
+    """Get session"""
+    return _SESSIONS[key]
+
+
+_SESSIONS['default'] = Session()

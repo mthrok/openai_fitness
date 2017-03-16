@@ -12,7 +12,7 @@ from .impl.wrapper import (  # noqa
 from .impl.random import (  # noqa
     NormalRandom, UniformRandom,
 )
-from .impl.session import Session  # noqa
+from .impl.session import Session, get_session  # noqa
 from .impl import (  # noqa
     initializer,
     optimizer,
