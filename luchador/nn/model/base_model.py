@@ -25,7 +25,8 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
         self.input = None
         self.output = None
 
-        _register(name, self)
+        if name:
+            _register(name, self)
 
 
 def fetch_model(name):
