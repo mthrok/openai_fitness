@@ -1,5 +1,4 @@
 """Atari Environment based on Arcade Learning Environment"""
-
 from __future__ import absolute_import
 
 import sys
@@ -10,7 +9,7 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
-from luchador.util import pprint_dict
+from luchador.util import StoreMixin, pprint_dict
 from ..base import BaseEnvironment, Outcome
 
 _LG = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _ROM_DIR = os.path.join(_DIR, 'rom')
 
 
-class ALEEnvironment(BaseEnvironment):
+class ALEEnvironment(StoreMixin, BaseEnvironment):
     """Atari Environment"""
 
     @staticmethod
@@ -53,57 +52,61 @@ class ALEEnvironment(BaseEnvironment):
     ):
         """Initialize ALE Environment with the given parmeters
 
-        Args:
-          rom (str): ROM name. Use `get_roms` for the list of available ROMs.
+        Parameters
+        ----------
+        rom : str
+            ROM name. Use `get_roms` for the list of available ROMs.
 
-          mode (str): When `train`, a loss of life is considered as terminal
-                      condition. When `test`, a loss of life is not considered
-                      as terminal condition.
+        mode : str
+            When `train`, a loss of life is considered as terminal condition.
+            When `test`, a loss of life is not considered as terminal condition.
 
-          width (int or None): Output screen width.
-                               If None the original width is used.
+        width, height : int or None
+            Output screen size. If None the original size is used.
 
-          height (int or None): Output screen height.
-                                If None the original height is used.
+        grayscale : bool
+            If True, output screen is gray scale and has no color channel.
+            i.e. output shape == (h, w). Otherwise output screen has color
+            channel with shape (h, w, 3)
 
-          grayscale (bool):
-              If True, output screen is gray scale and has no color channel.
-              i.e. output shape == (h, w). Otherwise output screen has color
-              channel with shape (h, w, 3)
+        repeat_action : int
+            When calling `step` method, action is repeated for this numebr of
+            times, internally, unless a terminal condition is met.
 
-          repeat_action (int):
-              When calling `step` method, action is repeated for this numebr
-              of times, internally, unless a terminal condition is met.
+        minimal_action_set : bool
+            When True, `n_actions` property reports actions only meaningfull to
+            the loaded ROM. Otherwise all the 18 actions are dounted.
 
-          minimal_action_set (bool):
-              When True, `n_actions` property reports actions only meaningfull
-              to the loaded ROM. Otherwise all the 18 actions are dounted.
+        random_seed : int
+            ALE's random seed
 
-          random_seed (int): ALE's random seed
+        random_start : int or None
+            When given,  at the beginning of each episode at most this number
+            of frames are played with action == 0. This technique is used to
+            acquire more diverse states of environment.
 
-          random_start (int or None): When given, at most this number of frames
-              are played with action == 0. This technique is often used to
-              prevent environment from transitting deterministically, but
-              in case of ALE, as reset command does not reset system state
-              we may not need to do this. (TODO: Check.)
+        buffer_frames : int
+            The number of latest frame to preprocess.
 
-          buffer_frames (int): The number of latest frame to preprocess.
+        preprocess_mode : str
+            Either `max` or `average`. When obtaining observation, pixel-wise
+            maximum or average over buffered frames are taken before resizing
 
-          preprocess_mode (str): Either `max` or `average`. When obtaining
-                                 observation, pixel-wise maximum or average
-                                 over buffered frames are taken before resizing
+        display_screen : bool
+            Display sceen when True.
 
-          display_screen (bool): Display sceen when True.
+        play_sound : bool
+            Play sound
 
-          play_sound (bool): Play sound
+        record_screen_path : str
+            Passed to ALE. Save the original screens into the path.
 
-          record_screen_path (str): Passed to ALE. Save the original screens
-              into the path.
-              Note: that this is different from the observation returned by
-              `step` method.
+            Note
+                that this is different from the observation returned by
+                `step` method.
 
-          record_screen_filename (str): Passed to ALE. Save sound to a file.
-
+        record_screen_filename : str
+            Passed to ALE. Save sound to a file.
         """
         if mode not in ['test', 'train']:
             raise ValueError('`mode` must be either `test` or `train`')
@@ -133,37 +136,29 @@ class ALEEnvironment(BaseEnvironment):
             pygame.init()
 
         # ALE
-        self.rom_path = rom_path
-        self.random_seed = random_seed
-        self.random_start = random_start
-        self.display_screen = display_screen
-        self.play_sound = play_sound
-        self.record_screen_path = record_screen_path
-        self.record_sound_filename = record_sound_filename
-        self.minimal_action_set = minimal_action_set
-
-        self._init_ale()
-
-        # Buffer
-        self.grayscale = grayscale
-        self.buffer_frames = buffer_frames
-        self.preprocess_mode = preprocess_mode
-
+        self._store_args(
+            rom_path=rom_path,
+            random_seed=random_seed,
+            random_start=random_start,
+            display_screen=display_screen,
+            play_sound=play_sound,
+            record_screen_path=record_screen_path,
+            record_sound_filename=record_sound_filename,
+            minimal_action_set=minimal_action_set,
+            grayscale=grayscale,
+            buffer_frames=buffer_frames,
+            preprocess_mode=preprocess_mode,
+            width=width,
+            height=height,
+            mode=mode,
+            repeat_action=repeat_action,
+        )
         self._buffer_index = None
-        self._init_buffer()
-
-        # Resize method
-        self.width = width
-        self.height = height
-
-        self._init_resize()
-
-        # Test/Train mode
-        self.mode = mode
         self.life_lost = False
 
-        self.repeat_action = repeat_action
-        self.random_start = random_start
+        self._init_ale()
+        self._init_buffer()
+        self._init_resize()
 
     def _init_ale(self):
         ale = ALEInterface()
@@ -243,31 +238,11 @@ class ALEEnvironment(BaseEnvironment):
             self.resize = (h, w) if self.grayscale else (h, w, 3)
 
     ###########################################################################
-    def _get_dict(self):
-        return {self.__class__.__name__: {
-            'rom': self.rom_path,
-            'mode': self.mode,
-            'resize': self.resize,
-            'grayscale': self.grayscale,
-            'buffer_frames': self.buffer_frames,
-            'preprocess_mode': self.preprocess_mode,
-            'random_seed': self._ale.getInt('random_seed'),
-            'random_start': self.random_start,
-            'n_actions': self.n_actions,
-            'repeat_action': self.repeat_action,
-            'minmal_action_set': self.minimal_action_set,
-            'record_screen_path': self._ale.getString('record_screen_path'),
-            'display_screen': self._ale.getBool('display_screen'),
-            'sound': self._ale.getBool('sound'),
-            'record_sound_filename':
-            self._ale.getString('record_sound_filename'),
-        }}
-
     def __repr__(self):
-        return str(self._get_dict())
+        return str(self.args)
 
     def __str__(self):
-        return pprint_dict(self._get_dict())
+        return pprint_dict(self.args)
 
     ###########################################################################
     @property
