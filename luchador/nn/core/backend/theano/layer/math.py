@@ -17,11 +17,11 @@ class TrueDiv(object):
     See :any:`BaseTrueDiv` for detail.
     """
     def _instantiate_denominator(self, dtype):
-        self.denom = T.constant(
+        self._denom = T.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
     def _build(self, input_tensor):
-        if self.denom is None:
+        if self._denom is None:
             self._instantiate_denominator(input_tensor.dtype)
-        output = input_tensor.unwrap() / self.denom
+        output = input_tensor.unwrap() / self._denom
         return Tensor(output, shape=input_tensor.shape, name='output')

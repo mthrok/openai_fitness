@@ -20,7 +20,7 @@ class TrueDiv(object):
     See :any:`BaseTrueDiv` for detail.
     """
     def _instantiate_denominator(self, dtype):
-        self.denom = tf.constant(
+        self._denom = tf.constant(
             self.args['denom'], dtype=dtype, name='denominator')
 
     def _build(self, input_tensor):
@@ -30,8 +30,8 @@ class TrueDiv(object):
             dtype = luchador.get_nn_dtype()
             tensor = tf.cast(tensor, dtype)
 
-        if self.denom is None:
+        if self._denom is None:
             self._instantiate_denominator(dtype)
 
-        output = tf.truediv(tensor, self.denom, 'ouptut')
+        output = tf.truediv(tensor, self._denom, 'ouptut')
         return Tensor(output, name='output')

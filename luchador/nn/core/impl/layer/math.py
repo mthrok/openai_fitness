@@ -22,4 +22,4 @@ class TrueDiv(layer.TrueDiv, BaseLayer):
     """
     def __init__(self, denom, name='TrueDiv'):
         super(TrueDiv, self).__init__(denom=denom, name=name)
-        self.denom = None
+        self._denom = None
