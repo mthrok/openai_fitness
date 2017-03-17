@@ -46,6 +46,8 @@ class StoreMixin(object):
         """Store the given arguments to ``args`` attribute after validation"""
         self._validate_args(**args)
         self.args = args
+        for key, value in args.items():
+            setattr(self, key, value)
 
     def _validate_args(self, **args):
         """Validate the given arguments
