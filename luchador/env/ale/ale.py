@@ -12,17 +12,14 @@ from ale_python_interface import ALEInterface
 from luchador.util import StoreMixin, pprint_dict
 from ..base import BaseEnvironment, Outcome
 
-_LG = logging.getLogger(__name__)
-
 __all__ = ['ALEEnvironment']
-
+_LG = logging.getLogger(__name__)
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _ROM_DIR = os.path.join(_DIR, 'rom')
 
 
 class ALEEnvironment(StoreMixin, BaseEnvironment):
     """Atari Environment"""
-
     @staticmethod
     def get_roms():
         """Get the list of ROMs available
@@ -32,6 +29,29 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         """
         return [rom for rom in os.listdir(_ROM_DIR)
                 if rom.endswith('.bin')]
+
+    def _validate_args(
+            self, mode, preprocess_mode,
+            repeat_action, random_start, rom, **_):
+        if mode not in ['test', 'train']:
+            raise ValueError('`mode` must be either `test` or `train`')
+
+        if preprocess_mode not in ['max', 'average']:
+            raise ValueError(
+                '`preprocess_mode` must be either `max` or `average`')
+
+        if repeat_action < 1:
+            raise ValueError(
+                '`repeat_action` must be integer greater than 0')
+
+        if random_start and random_start < 1:
+            raise ValueError(
+                '`random_start` must be `None` or integer greater than 0'
+            )
+
+        rom_path = os.path.join(_ROM_DIR, rom)
+        if not os.path.isfile(rom_path):
+            raise ValueError('ROM ({}) not found.'.format(rom))
 
     def __init__(
             self, rom,
@@ -59,7 +79,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
         mode : str
             When `train`, a loss of life is considered as terminal condition.
-            When `test`, a loss of life is not considered as terminal condition.
+            When `test`, a loss of life is not considered as terminal
+            condition.
 
         width, height : int or None
             Output screen size. If None the original size is used.
@@ -108,36 +129,12 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         record_screen_filename : str
             Passed to ALE. Save sound to a file.
         """
-        if mode not in ['test', 'train']:
-            raise ValueError('`mode` must be either `test` or `train`')
-
-        if preprocess_mode not in ['max', 'average']:
-            raise ValueError(
-                '`preprocess_mode` must be either `max` or `average`')
-
-        if repeat_action < 1:
-            raise ValueError(
-                '`repeat_action` must be integer greater than 0')
-
-        if random_start and random_start < 1:
-            raise ValueError(
-                '`random_start` must be `None` or integer greater than 0'
-            )
-
         if not rom.endswith('.bin'):
             rom += '.bin'
 
-        rom_path = os.path.join(_ROM_DIR, rom)
-        if not os.path.isfile(rom_path):
-            raise ValueError('ROM ({}) not found.'.format(rom))
-
-        if display_screen and sys.platform == 'darwin':
-            import pygame
-            pygame.init()
-
         # ALE
         self._store_args(
-            rom_path=rom_path,
+            rom=rom,
             random_seed=random_seed,
             random_start=random_start,
             display_screen=display_screen,
@@ -153,6 +150,10 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             mode=mode,
             repeat_action=repeat_action,
         )
+        if display_screen and sys.platform == 'darwin':
+            import pygame
+            pygame.init()
+
         self._buffer_index = None
         self.life_lost = False
 
@@ -162,9 +163,9 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _init_ale(self):
         ale = ALEInterface()
-        ale.setBool('sound', self.play_sound)
-        ale.setBool('display_screen', self.display_screen)
-        ale.setInt('random_seed', self.random_seed)
+        ale.setBool('sound', self.args['play_sound'])
+        ale.setBool('display_screen', self.args['display_screen'])
+        ale.setInt('random_seed', self.args['random_seed'])
 
         # Frame skip is implemented separately
         ale.setInt('frame_skip', 1)
@@ -178,47 +179,49 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         # This action repeating is agent's concern
         # so we do not implement an equivalent in our wrapper.
 
-        if self.record_screen_path:
-            _LG.info('Recording screens: %s', self.record_screen_path)
-            if not os.path.exists(self.record_screen_path):
-                os.makedirs(self.record_screen_path)
-            ale.setString('record_screen_dir', self.record_screen_path)
+        if self.args['record_screen_path']:
+            _LG.info('Recording screens: %s', self.args['record_screen_path'])
+            if not os.path.exists(self.args['record_screen_path']):
+                os.makedirs(self.args['record_screen_path'])
+            ale.setString('record_screen_dir', self.args['record_screen_path'])
 
-        if self.record_sound_filename:
-            _LG.info('Recording sound: %s', self.record_sound_filename)
-            record_sound_dir = os.path.dirname(self.record_sound_filename)
+        if self.args['record_sound_filename']:
+            _LG.info('Recording sound: %s', self.args['record_sound_filename'])
+            record_sound_dir = os.path.dirname(
+                self.args['record_sound_filename'])
             if not os.path.exists(record_sound_dir):
                 os.makedirs(record_sound_dir)
             ale.setBool('sound', True)
-            ale.setString('record_sound_filename', self.record_sound_filename)
+            ale.setString(
+                'record_sound_filename', self.args['record_sound_filename'])
 
-        ale.loadROM(self.rom_path)
+        ale.loadROM(os.path.join(_ROM_DIR, self.args['rom']))
 
         self._ale = ale
         self._actions = (
-            ale.getMinimalActionSet() if self.minimal_action_set else
+            ale.getMinimalActionSet() if self.args['minimal_action_set'] else
             ale.getLegalActionSet()
         )
 
     def _init_buffer(self):
         orig_width, orig_height = self._ale.getScreenDims()
-        channel = 1 if self.grayscale else 3
-        n_frames = self.buffer_frames
+        channel = 1 if self.args['grayscale'] else 3
+        n_frames = self.args['buffer_frames']
 
         buffer_shape = (
-            (n_frames, orig_height, orig_width) if self.grayscale else
+            (n_frames, orig_height, orig_width) if self.args['grayscale'] else
             (n_frames, orig_height, orig_width, channel)
         )
         self._frame_buffer = np.zeros(buffer_shape, dtype=np.uint8)
         self._buffer_index = 0
 
         self._get_raw_screen = (
-            self._ale.getScreenGrayscale if self.grayscale else
+            self._ale.getScreenGrayscale if self.args['grayscale'] else
             self._ale.getScreenRGB
         )
 
         self._get_screen = (
-            self._get_max_buffer if self.preprocess_mode == 'max' else
+            self._get_max_buffer if self.args['preprocess_mode'] == 'max' else
             self._get_average_buffer
         )
 
@@ -230,12 +233,12 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _init_resize(self):
         orig_width, orig_height = self._ale.getScreenDims()
-        h = self.height or orig_height
-        w = self.width or orig_width
+        h = self.args['height'] or orig_height
+        w = self.args['width'] or orig_width
         if h == orig_height and w == orig_width:
             self.resize = None
         else:
-            self.resize = (h, w) if self.grayscale else (h, w, 3)
+            self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
 
     ###########################################################################
     def __repr__(self):
@@ -267,12 +270,12 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         """
         reward = 0
         if (
-                self.mode == 'test' or
+                self.args['mode'] == 'test' or
                 not self.life_lost or  # `reset` called in a middle of episode
                 self._ale.game_over()  # all lives are lost
         ):
             self._ale.reset_game()
-            rand = self.random_start
+            rand = self.args['random_start']
             repeat = 1 + (np.random.randint(rand) if rand else 0)
             for _ in range(repeat):
                 reward += self._step(0)
@@ -293,7 +296,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
         self.life_lost = False
         initial_lives = self._ale.lives()
-        for _ in range(self.repeat_action):
+        for _ in range(self.args['repeat_action']):
             reward += self._step(action)
 
             if not self._ale.lives() == initial_lives:
@@ -314,7 +317,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         reward = self._ale.act(action)
         buffer_ = self._frame_buffer[self._buffer_index]
         self._get_raw_screen(screen_data=buffer_)
-        self._buffer_index = (self._buffer_index + 1) % self.buffer_frames
+        self._buffer_index = (
+            (self._buffer_index + 1) % self.args['buffer_frames'])
         return reward
 
     def _get_state(self):
@@ -324,6 +328,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         return screen
 
     def _is_terminal(self):
-        if self.mode == 'train':
+        if self.args['mode'] == 'train':
             return self._ale.game_over() or self.life_lost
         return self._ale.game_over()
