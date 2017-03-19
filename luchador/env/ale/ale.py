@@ -92,7 +92,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
         repeat_action : int
             When calling `step` method, action is repeated for this numebr of
-            times, internally, unless a terminal condition is met.
+            times internally, unless a terminal condition is met.
 
         minimal_action_set : bool
             When True, `n_actions` property reports actions only meaningfull to
@@ -132,7 +132,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         if not rom.endswith('.bin'):
             rom += '.bin'
 
-        # ALE
         self._store_args(
             rom=rom,
             random_seed=random_seed,
@@ -260,6 +259,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             'episode_frame_number': self._ale.getEpisodeFrameNumber(),
         }
 
+    def _random_play(self):
+        rand = self.args['random_start']
+        repeat = 1 + (np.random.randint(rand) if rand else 0)
+        return sum(self._step(0) for _ in range(repeat))
+
     def reset(self):
         """Reset game
 
@@ -275,10 +279,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
                 self._ale.game_over()  # all lives are lost
         ):
             self._ale.reset_game()
-            rand = self.args['random_start']
-            repeat = 1 + (np.random.randint(rand) if rand else 0)
-            for _ in range(repeat):
-                reward += self._step(0)
+            reward += self._random_play()
 
         self.life_lost = False
         return Outcome(
