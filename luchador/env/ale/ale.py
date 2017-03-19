@@ -119,6 +119,23 @@ def _make_ale(
     return ale
 
 
+class Stack(object):
+    """Stack multiple observation"""
+    def __init__(self, n_stacks):
+        self.n_stacks = n_stacks
+        self._buffer = None
+
+    def reset(self, initial_frame):
+        self._buffer = [initial_frame] * self.n_stacks
+
+    def add(self, frame):
+        self._buffer.append(frame)
+        self._buffer = self._buffer[-self.n_stacks:]
+
+    def get(self):
+        return self._buffer
+
+
 class ALEEnvironment(StoreMixin, BaseEnvironment):
     """Atari Environment"""
     @staticmethod
@@ -159,6 +176,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             mode='train',
             width=160,
             height=210,
+            stack=4,
             grayscale=True,
             repeat_action=4,
             buffer_frames=2,
@@ -185,6 +203,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
         width, height : int
             Output screen size.
+
+        stack : int or None
+            If given, stack the environment state observation. The output
+            shape of ``step`` is 4D, where the first dimension is the stack.
+            If None, no stacking is performed.
 
         grayscale : bool
             If True, output screen is gray scale and has no color channel.
@@ -234,7 +257,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             rom += '.bin'
 
         self._store_args(
-            rom=rom, mode=mode, width=width, height=height,
+            rom=rom, mode=mode, width=width, height=height, stack=stack,
             grayscale=grayscale, repeat_action=repeat_action,
             buffer_frames=buffer_frames, preprocess_mode=preprocess_mode,
             minimal_action_set=minimal_action_set, random_seed=random_seed,
@@ -268,6 +291,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             channel=1 if self.args['grayscale'] else 3,
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
+        self._stack = Stack(n_stacks=stack) if stack else None
         self._init_resize()
 
     def _init_raw_buffer(self):
@@ -327,6 +351,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             self._ale.reset_game()
             self._preprocessor.reset(self._get_resized_frame())
             reward += self._random_play()
+            if self._stack:
+                self._stack.reset(self._get_state())
 
         self.life_lost = False
         return Outcome(
@@ -354,6 +380,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             if terminal:
                 break
 
+        if self._stack:
+            self._stack.reset(self._get_state())
         return Outcome(
             reward=reward,
             state=self._get_state(),
