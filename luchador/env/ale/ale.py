@@ -133,22 +133,14 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             rom += '.bin'
 
         self._store_args(
-            rom=rom,
-            random_seed=random_seed,
-            random_start=random_start,
-            display_screen=display_screen,
-            play_sound=play_sound,
-            record_screen_path=record_screen_path,
-            record_sound_filename=record_sound_filename,
-            minimal_action_set=minimal_action_set,
-            grayscale=grayscale,
-            buffer_frames=buffer_frames,
-            preprocess_mode=preprocess_mode,
-            width=width,
-            height=height,
-            mode=mode,
-            repeat_action=repeat_action,
-        )
+            rom=rom, mode=mode, width=width, height=height,
+            grayscale=grayscale, repeat_action=repeat_action,
+            buffer_frames=buffer_frames, preprocess_mode=preprocess_mode,
+            minimal_action_set=minimal_action_set, random_seed=random_seed,
+            random_start=random_start, display_screen=display_screen,
+            play_sound=play_sound, record_screen_path=record_screen_path,
+            record_sound_filename=record_sound_filename)
+
         if display_screen and sys.platform == 'darwin':
             import pygame
             pygame.init()
