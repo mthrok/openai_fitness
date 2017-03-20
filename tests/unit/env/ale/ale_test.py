@@ -298,6 +298,60 @@ class ALEEnvironmentTest(unittest.TestCase):
                 self.assertEqual(frame - last_frame, repeat_action)
                 last_frame = frame
 
+    def test_buffer_frame_rgb(self):
+        """_frame_buffer contains the last raw frames given as buffer_frames"""
+        buffer_frames = 4
+        ale = ALE(
+            rom='breakout',
+            mode='train',
+            repeat_action=1,
+            buffer_frames=buffer_frames,
+            grayscale=False,
+        )
+
+        ale.reset()
+        frame = ale._get_raw_screen()
+        buffer_ = ale._preprocessor._buffer
+        self.assertTrue((frame == buffer_[0]).all())
+
+        for i in range(1, buffer_frames):
+            ale.step(1)
+            frame = ale._get_raw_screen()
+            self.assertTrue((frame == buffer_[i]).all())
+
+        for _ in range(10):
+            for i in range(buffer_frames):
+                ale.step(1)
+                frame = ale._get_raw_screen()
+                self.assertTrue((frame == buffer_[i]).all())
+
+    def test_buffer_frame_grayscale(self):
+        """_frame_buffer contains the last raw frames given as buffer_frames"""
+        buffer_frames = 4
+        ale = ALE(
+            rom='breakout',
+            mode='train',
+            repeat_action=1,
+            buffer_frames=buffer_frames,
+            grayscale=True,
+        )
+
+        ale.reset()
+        frame = ale._get_raw_screen()
+        buffer_ = ale._preprocessor._buffer
+        for i in range(1, buffer_frames):
+            ale.step(1)
+            frame = ale._get_raw_screen()
+            frame = frame[:, :, 0]
+            self.assertTrue((frame == buffer_[i]).all())
+
+        for _ in range(10):
+            for i in range(buffer_frames):
+                ale.step(1)
+                frame = ale._get_raw_screen()
+                frame = frame[:, :, 0]
+                self.assertTrue((frame == buffer_[i]).all())
+
     def test_random_start(self):
         """Episode starts from frame number in range of [1, `random_start`]"""
         random_start = 30
