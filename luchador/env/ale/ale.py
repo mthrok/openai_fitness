@@ -318,11 +318,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         reward = self._ale.act(action)
         self._get_raw_screen(screen_data=self._raw_buffer)
 
-        buffer_ = self._frame_buffer[self._buffer_index]
-        if self.resize:
-            buffer_ = imresize(self._raw_buffer, self.resize)
-        else:
-            buffer_ = self._raw_buffer
+        self._frame_buffer[self._buffer_index] = (
+            imresize(self._raw_buffer, self.resize)
+            if self.resize else
+            self._raw_buffer
+        )
         self._buffer_index = (
             (self._buffer_index + 1) % self.args['buffer_frames'])
         return reward
