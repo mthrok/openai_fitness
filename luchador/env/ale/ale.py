@@ -81,6 +81,46 @@ class Preprocessor(object):
         return self._func(self._buffer, axis=0)
 
 
+def _make_ale(
+        rom, play_sound, display_screen, random_seed,
+        record_screen_path=None, record_sound_filename=None, **_):
+    ale = ALEInterface()
+    ale.setBool('sound', play_sound)
+    ale.setBool('display_screen', display_screen)
+    ale.setInt('random_seed', random_seed)
+
+    # Frame skip is implemented separately
+    ale.setInt('frame_skip', 1)
+    ale.setBool('color_averaging', False)
+    ale.setFloat('repeat_action_probability', 0.0)
+    # Somehow this repeat_action_probability has unexpected effect on game.
+    # The larger this value is, the more frames games take to restart.
+    # And when 1.0 games completely hang
+    # We are setting the default value of 0.0 here, expecting that
+    # it has no effect as frame_skip == 1
+    # This action repeating is agent's concern
+    # so we do not implement an equivalent in our wrapper.
+
+    if record_screen_path:
+        _LG.info('Recording screens: %s', record_screen_path)
+        if not os.path.exists(record_screen_path):
+            os.makedirs(record_screen_path)
+        ale.setString('record_screen_dir', record_screen_path)
+
+    if record_sound_filename:
+        _LG.info('Recording sound: %s', record_sound_filename)
+        record_sound_dir = os.path.dirname(
+            record_sound_filename)
+        if not os.path.exists(record_sound_dir):
+            os.makedirs(record_sound_dir)
+        ale.setBool('sound', True)
+        ale.setString(
+            'record_sound_filename', record_sound_filename)
+
+    ale.loadROM(os.path.join(_ROM_DIR, rom))
+    return ale
+
+
 class ALEEnvironment(StoreMixin, BaseEnvironment):
     """Atari Environment"""
     @staticmethod
@@ -211,10 +251,16 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self.resize = None
         self.life_lost = False
 
-        self._init_ale()
+        self._ale = _make_ale(**self.args)
+        self._actions = (
+            self._ale.getMinimalActionSet()
+            if self.args['minimal_action_set'] else
+            self._ale.getLegalActionSet()
+        )
 
         self._get_raw_screen = (
-            self._ale.getScreenGrayscale if self.args['grayscale'] else
+            self._ale.getScreenGrayscale
+            if self.args['grayscale'] else
             self._ale.getScreenRGB
         )
 
@@ -225,48 +271,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
         self._init_resize()
-
-    def _init_ale(self):
-        ale = ALEInterface()
-        ale.setBool('sound', self.args['play_sound'])
-        ale.setBool('display_screen', self.args['display_screen'])
-        ale.setInt('random_seed', self.args['random_seed'])
-
-        # Frame skip is implemented separately
-        ale.setInt('frame_skip', 1)
-        ale.setBool('color_averaging', False)
-        ale.setFloat('repeat_action_probability', 0.0)
-        # Somehow this repeat_action_probability has unexpected effect on game.
-        # The larger this value is, the more frames games take to restart.
-        # And when 1.0 games completely hang
-        # We are setting the default value of 0.0 here, expecting that
-        # it has no effect as frame_skip == 1
-        # This action repeating is agent's concern
-        # so we do not implement an equivalent in our wrapper.
-
-        if self.args['record_screen_path']:
-            _LG.info('Recording screens: %s', self.args['record_screen_path'])
-            if not os.path.exists(self.args['record_screen_path']):
-                os.makedirs(self.args['record_screen_path'])
-            ale.setString('record_screen_dir', self.args['record_screen_path'])
-
-        if self.args['record_sound_filename']:
-            _LG.info('Recording sound: %s', self.args['record_sound_filename'])
-            record_sound_dir = os.path.dirname(
-                self.args['record_sound_filename'])
-            if not os.path.exists(record_sound_dir):
-                os.makedirs(record_sound_dir)
-            ale.setBool('sound', True)
-            ale.setString(
-                'record_sound_filename', self.args['record_sound_filename'])
-
-        ale.loadROM(os.path.join(_ROM_DIR, self.args['rom']))
-
-        self._ale = ale
-        self._actions = (
-            ale.getMinimalActionSet() if self.args['minimal_action_set'] else
-            ale.getLegalActionSet()
-        )
 
     def _init_raw_buffer(self):
         w, h = self._ale.getScreenDims()
