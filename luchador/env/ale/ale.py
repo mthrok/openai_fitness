@@ -219,7 +219,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         )
 
         self._init_raw_buffer()
-        self._init_preprocessing_buffer()
+        self._preprocessor = Preprocessor(
+            frame_shape=(self.args['height'], self.args['width']),
+            channel=None if self.args['grayscale'] else 3,
+            buffer_size=self.args['buffer_frames'],
+            mode=self.args['preprocess_mode'])
         self._init_resize()
 
     def _init_ale(self):
@@ -265,21 +269,9 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         )
 
     def _init_raw_buffer(self):
-        channel = 1 if self.args['grayscale'] else 3
-        orig_width, orig_height = self._ale.getScreenDims()
-        raw_buffer_shape = (
-            (orig_height, orig_width) if self.args['grayscale'] else
-            (orig_height, orig_width, channel)
-        )
-        self._raw_buffer = np.zeros(raw_buffer_shape, dtype=np.uint8)
-
-    def _init_preprocessing_buffer(self):
-        channel = None if self.args['grayscale'] else 3
-        height, width = self.args['height'], self.args['width']
-        self._preprocessor = Preprocessor(
-            frame_shape=(height, width), channel=channel,
-            buffer_size=self.args['buffer_frames'],
-            mode=self.args['preprocess_mode'])
+        w, h = self._ale.getScreenDims()
+        shape = (h, w) if self.args['grayscale'] else (h, w, 3)
+        self._raw_buffer = np.zeros(shape, dtype=np.uint8)
 
     def _init_resize(self):
         orig_width, orig_height = self._ale.getScreenDims()
