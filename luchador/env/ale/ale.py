@@ -18,6 +18,69 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _ROM_DIR = os.path.join(_DIR, 'rom')
 
 
+class Preprocessor(object):
+    """Store the latest frames and take max/mean over them
+
+    Parameters
+    ----------
+    frame_shape : list of two int
+        Order is (height, width)
+
+    channel : int
+        1 or 3
+
+    buffer_size : int
+        The number of frames to process. Default: 2.
+
+    mode : int
+        `max` or `mean`
+    """
+    def __init__(self, frame_shape, channel, buffer_size=2, mode='max'):
+        self.frame_shape = list(frame_shape)
+        self.buffer_size = buffer_size
+        self.channel = channel
+        self.mode = mode
+
+        buffer_shape = [buffer_size] + self.frame_shape
+        if channel:
+            buffer_shape += [channel]
+        self._buffer = np.zeros(buffer_shape, dtype=np.uint8)
+        self._func = np.max if mode == 'max' else np.mean
+        self._index = 0
+
+    def reset(self, initial_frame):
+        """Reset buffer with new frame
+
+        Parameters
+        ----------
+        initial_frame : NumPy Array
+            The initial observation obtained from resetting env
+        """
+        for _ in range(self.buffer_size):
+            self.append(initial_frame)
+
+    def append(self, frame):
+        """Update buffer with new frame
+
+        Parameters
+        ----------
+        frame : NumPy Array
+            The observation obtained by taking a step in env
+        """
+        self._buffer[self._index] = frame
+        self._index = (self._index + 1) % self.buffer_size
+
+    def get(self):
+        """Return preprocessed frame
+
+        Returns
+        -------
+        NumPy Array
+            Preprocessed frame
+        """
+        return self._func(self._buffer, axis=0)
+
+
 class ALEEnvironment(StoreMixin, BaseEnvironment):
     """Atari Environment"""
     @staticmethod
@@ -146,7 +209,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             pygame.init()
 
         self.resize = None
-        self._buffer_index = None
         self.life_lost = False
 
         self._init_ale()
@@ -154,11 +216,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self._get_raw_screen = (
             self._ale.getScreenGrayscale if self.args['grayscale'] else
             self._ale.getScreenRGB
-        )
-
-        self._get_screen = (
-            self._get_max_buffer if self.args['preprocess_mode'] == 'max' else
-            self._get_average_buffer
         )
 
         self._init_raw_buffer()
@@ -217,21 +274,12 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self._raw_buffer = np.zeros(raw_buffer_shape, dtype=np.uint8)
 
     def _init_preprocessing_buffer(self):
-        channel = 1 if self.args['grayscale'] else 3
+        channel = None if self.args['grayscale'] else 3
         height, width = self.args['height'], self.args['width']
-        n_frames = self.args['buffer_frames']
-        buffer_shape = (
-            (n_frames, height, width) if self.args['grayscale'] else
-            (n_frames, height, width, channel)
-        )
-        self._frame_buffer = np.zeros(buffer_shape, dtype=np.uint8)
-        self._buffer_index = 0
-
-    def _get_max_buffer(self):
-        return np.max(self._frame_buffer, axis=0)
-
-    def _get_average_buffer(self):
-        return np.mean(self._frame_buffer, axis=0)
+        self._preprocessor = Preprocessor(
+            frame_shape=(height, width), channel=channel,
+            buffer_size=self.args['buffer_frames'],
+            mode=self.args['preprocess_mode'])
 
     def _init_resize(self):
         orig_width, orig_height = self._ale.getScreenDims()
@@ -317,18 +365,14 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     def _step(self, action):
         reward = self._ale.act(action)
         self._get_raw_screen(screen_data=self._raw_buffer)
-
-        self._frame_buffer[self._buffer_index] = (
-            imresize(self._raw_buffer, self.resize)
-            if self.resize else
-            self._raw_buffer
-        )
-        self._buffer_index = (
-            (self._buffer_index + 1) % self.args['buffer_frames'])
+        if self.resize:
+            self._preprocessor.append(imresize(self._raw_buffer, self.resize))
+        else:
+            self._preprocessor.append(self._raw_buffer)
         return reward
 
     def _get_state(self):
-        return self._get_screen()
+        return self._preprocessor.get()
 
     def _is_terminal(self):
         if self.args['mode'] == 'train':
