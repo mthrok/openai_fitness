@@ -196,13 +196,21 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _init_buffer(self):
         orig_width, orig_height = self._ale.getScreenDims()
+        height = self.args['height'] or orig_height
+        width = self.args['width'] or orig_width
+
         channel = 1 if self.args['grayscale'] else 3
         n_frames = self.args['buffer_frames']
 
         buffer_shape = (
-            (n_frames, orig_height, orig_width) if self.args['grayscale'] else
-            (n_frames, orig_height, orig_width, channel)
+            (n_frames, height, width) if self.args['grayscale'] else
+            (n_frames, height, width, channel)
         )
+        raw_buffer_shape = (
+            (orig_height, orig_width) if self.args['grayscale'] else
+            (orig_height, orig_width, channel)
+        )
+        self._raw_buffer = np.zeros(raw_buffer_shape, dtype=np.uint8)
         self._frame_buffer = np.zeros(buffer_shape, dtype=np.uint8)
         self._buffer_index = 0
 
@@ -308,17 +316,19 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _step(self, action):
         reward = self._ale.act(action)
+        self._get_raw_screen(screen_data=self._raw_buffer)
+
         buffer_ = self._frame_buffer[self._buffer_index]
-        self._get_raw_screen(screen_data=buffer_)
+        if self.resize:
+            buffer_ = imresize(self._raw_buffer, self.resize)
+        else:
+            buffer_ = self._raw_buffer
         self._buffer_index = (
             (self._buffer_index + 1) % self.args['buffer_frames'])
         return reward
 
     def _get_state(self):
-        screen = self._get_screen()
-        if self.resize:
-            return imresize(screen, self.resize)
-        return screen
+        return self._get_screen()
 
     def _is_terminal(self):
         if self.args['mode'] == 'train':
