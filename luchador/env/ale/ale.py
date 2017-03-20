@@ -9,7 +9,7 @@ import numpy as np
 from scipy.misc import imresize
 from ale_python_interface import ALEInterface
 
-from luchador.util import StoreMixin, pprint_dict
+from luchador.util import StoreMixin
 from ..base import BaseEnvironment, Outcome
 
 __all__ = ['ALEEnvironment']
@@ -282,13 +282,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         h, w = self.args['height'], self.args['width']
         if not (h == orig_height and w == orig_width):
             self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
-
-    ###########################################################################
-    def __repr__(self):
-        return str(self.args)
-
-    def __str__(self):
-        return pprint_dict(self.args)
 
     ###########################################################################
     @property
