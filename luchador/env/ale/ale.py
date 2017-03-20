@@ -56,8 +56,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     def __init__(
             self, rom,
             mode='train',
-            width=None,
-            height=None,
+            width=160,
+            height=210,
             grayscale=True,
             repeat_action=4,
             buffer_frames=2,
@@ -82,8 +82,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             When `test`, a loss of life is not considered as terminal
             condition.
 
-        width, height : int or None
-            Output screen size. If None the original size is used.
+        width, height : int
+            Output screen size.
 
         grayscale : bool
             If True, output screen is gray scale and has no color channel.
@@ -145,11 +145,24 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             import pygame
             pygame.init()
 
+        self.resize = None
         self._buffer_index = None
         self.life_lost = False
 
         self._init_ale()
-        self._init_buffer()
+
+        self._get_raw_screen = (
+            self._ale.getScreenGrayscale if self.args['grayscale'] else
+            self._ale.getScreenRGB
+        )
+
+        self._get_screen = (
+            self._get_max_buffer if self.args['preprocess_mode'] == 'max' else
+            self._get_average_buffer
+        )
+
+        self._init_raw_buffer()
+        self._init_preprocessing_buffer()
         self._init_resize()
 
     def _init_ale(self):
@@ -194,35 +207,25 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             ale.getLegalActionSet()
         )
 
-    def _init_buffer(self):
-        orig_width, orig_height = self._ale.getScreenDims()
-        height = self.args['height'] or orig_height
-        width = self.args['width'] or orig_width
-
+    def _init_raw_buffer(self):
         channel = 1 if self.args['grayscale'] else 3
-        n_frames = self.args['buffer_frames']
-
-        buffer_shape = (
-            (n_frames, height, width) if self.args['grayscale'] else
-            (n_frames, height, width, channel)
-        )
+        orig_width, orig_height = self._ale.getScreenDims()
         raw_buffer_shape = (
             (orig_height, orig_width) if self.args['grayscale'] else
             (orig_height, orig_width, channel)
         )
         self._raw_buffer = np.zeros(raw_buffer_shape, dtype=np.uint8)
+
+    def _init_preprocessing_buffer(self):
+        channel = 1 if self.args['grayscale'] else 3
+        height, width = self.args['height'], self.args['width']
+        n_frames = self.args['buffer_frames']
+        buffer_shape = (
+            (n_frames, height, width) if self.args['grayscale'] else
+            (n_frames, height, width, channel)
+        )
         self._frame_buffer = np.zeros(buffer_shape, dtype=np.uint8)
         self._buffer_index = 0
-
-        self._get_raw_screen = (
-            self._ale.getScreenGrayscale if self.args['grayscale'] else
-            self._ale.getScreenRGB
-        )
-
-        self._get_screen = (
-            self._get_max_buffer if self.args['preprocess_mode'] == 'max' else
-            self._get_average_buffer
-        )
 
     def _get_max_buffer(self):
         return np.max(self._frame_buffer, axis=0)
@@ -232,11 +235,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _init_resize(self):
         orig_width, orig_height = self._ale.getScreenDims()
-        h = self.args['height'] or orig_height
-        w = self.args['width'] or orig_width
-        if h == orig_height and w == orig_width:
-            self.resize = None
-        else:
+        h, w = self.args['height'], self.args['width']
+        if not (h == orig_height and w == orig_width):
             self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
 
     ###########################################################################

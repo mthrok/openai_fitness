@@ -22,8 +22,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale = ALE(
             rom='breakout',
             mode='test',
-            width=None,
-            height=None,
             grayscale=True,
             repeat_action=1,
             random_start=None,
@@ -50,8 +48,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale = ALE(
             rom='breakout',
             mode='train',
-            width=None,
-            height=None,
             grayscale=True,
             repeat_action=1,
             random_start=None,
@@ -78,8 +74,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         """Observation width and height equal to the original screen size"""
         ale = ALE(
             rom='breakout',
-            width=None,
-            height=None,
             grayscale=True,
         )
 
@@ -97,8 +91,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         """Observation width and height equal to the original screen size"""
         ale = ALE(
             rom='breakout',
-            width=None,
-            height=None,
             grayscale=False,
         )
 
@@ -119,7 +111,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale = ALE(
             rom='breakout',
             width=width,
-            height=None,
             grayscale=True,
         )
 
@@ -138,7 +129,6 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale = ALE(
             rom='breakout',
-            width=None,
             height=height,
             grayscale=True,
         )
@@ -179,7 +169,6 @@ class ALEEnvironmentTest(unittest.TestCase):
         ale = ALE(
             rom='breakout',
             width=width,
-            height=None,
             grayscale=False,
         )
 
@@ -198,7 +187,6 @@ class ALEEnvironmentTest(unittest.TestCase):
 
         ale = ALE(
             rom='breakout',
-            width=None,
             height=height,
             grayscale=False,
         )
