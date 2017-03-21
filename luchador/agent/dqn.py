@@ -203,7 +203,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
     ###########################################################################
     # Methods for `reset`
     def reset(self, initial_observation):
-        self._stack_buffer = [initial_observation]
+        self._stack_buffer = [initial_observation[0]]
         self._previous_stack = None
         self._ready = False
 
@@ -232,7 +232,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
     def _record(self, action, reward, state1, terminal):
         """Stack states and push them to recorder, then sort memory"""
-        self._stack_buffer.append(state1)
+        self._stack_buffer.append(state1[0])
 
         cfg = self.args['record_config']
         if len(self._stack_buffer) == cfg['stack'] + 1:
