@@ -81,20 +81,23 @@ class Preprocessor(object):
         return self._func(self._buffer, axis=0)
 
 
-class FrameStack(object):
+class StateStack(object):
     """Stack multiple states"""
     def __init__(self, n_stacks):
         self.n_stacks = n_stacks
         self._buffer = None
 
-    def reset(self, initial_frame):
-        self._buffer = [initial_frame] * self.n_stacks
+    def reset(self, initial_state):
+        """Reset stack buffer by filling it with initial state"""
+        self._buffer = [initial_state] * self.n_stacks
 
-    def append(self, frame):
-        self._buffer.append(frame)
+    def append(self, state):
+        """Append new state and discard old state"""
+        self._buffer.append(state)
         self._buffer = self._buffer[-self.n_stacks:]
 
     def get(self):
+        """Get the current stack"""
         return self._buffer
 
 
@@ -253,7 +256,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             channel=None if self.args['grayscale'] else 3,
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
-        self._stack = FrameStack(n_stacks=stack)
+        self._stack = StateStack(n_stacks=stack)
         self._init_resize()
 
     def _init_raw_buffer(self):
