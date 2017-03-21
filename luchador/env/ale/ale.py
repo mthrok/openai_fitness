@@ -18,17 +18,52 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 _ROM_DIR = os.path.join(_DIR, 'rom')
 
 
-class Preprocessor(object):
+class StateStack(object):
+    """Stack multiple states
+
+    Parameters
+    ----------
+    stack_size : int
+        The number of states to stack. Default: 4.
+    """
+    def __init__(self, stack_size=4):
+        self.stack_size = stack_size
+        self._buffer = None
+
+    def reset(self, initial_state):
+        """Reset stack buffer by filling it with initial state
+
+        Parameters
+        ----------
+        initial_state : state object
+        """
+        self._buffer = [initial_state] * self.stack_size
+
+    def append(self, state):
+        """Append new state and discard old state
+
+        Parameters
+        ----------
+        initial_state : state object
+        """
+        self._buffer.append(state)
+        self._buffer = self._buffer[-self.stack_size:]
+
+    def get(self):
+        """Get the current stack
+
+        Returns
+        -------
+        list of states
+        """
+        return self._buffer
+
+
+class Preprocessor(StateStack):
     """Store the latest frames and take max/mean over them
 
     Parameters
     ----------
-    frame_shape : list of two int
-        Order is (height, width)
-
-    channel : int
-        1 or 3
-
     buffer_size : int
         The number of frames to process. Default: 2.
 
@@ -36,32 +71,8 @@ class Preprocessor(object):
         `max` or `mean`
     """
     def __init__(self, buffer_size=2, mode='max'):
-        self.buffer_size = buffer_size
-        self.mode = mode
-
-        self._buffer = None
+        super(Preprocessor, self).__init__(stack_size=buffer_size)
         self._func = np.max if mode == 'max' else np.mean
-
-    def reset(self, initial_frame):
-        """Reset buffer with new frame
-
-        Parameters
-        ----------
-        initial_frame : NumPy Array
-            The initial observation obtained from resetting env
-        """
-        self._buffer = [initial_frame] * self.buffer_size
-
-    def append(self, frame):
-        """Update buffer with new frame
-
-        Parameters
-        ----------
-        frame : NumPy Array
-            The observation obtained by taking a step in env
-        """
-        self._buffer.append(frame)
-        self._buffer = self._buffer[-self.buffer_size:]
 
     def get(self):
         """Return preprocessed frame
@@ -72,26 +83,6 @@ class Preprocessor(object):
             Preprocessed frame
         """
         return self._func(self._buffer, axis=0)
-
-
-class StateStack(object):
-    """Stack multiple states"""
-    def __init__(self, n_stacks):
-        self.n_stacks = n_stacks
-        self._buffer = None
-
-    def reset(self, initial_state):
-        """Reset stack buffer by filling it with initial state"""
-        self._buffer = [initial_state] * self.n_stacks
-
-    def append(self, state):
-        """Append new state and discard old state"""
-        self._buffer.append(state)
-        self._buffer = self._buffer[-self.n_stacks:]
-
-    def get(self):
-        """Get the current stack"""
-        return self._buffer
 
 
 def _make_ale(
@@ -233,33 +224,20 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self._ale = _make_ale(**self.args)
         self._actions = (
             self._ale.getMinimalActionSet()
-            if self.args['minimal_action_set'] else
+            if minimal_action_set else
             self._ale.getLegalActionSet()
         )
-
         self._get_raw_screen = (
             self._ale.getScreenGrayscale
-            if self.args['grayscale'] else
+            if grayscale else
             self._ale.getScreenRGB
         )
 
         self._init_raw_buffer()
-        self._preprocessor = Preprocessor(
-            buffer_size=self.args['buffer_frames'],
-            mode=self.args['preprocess_mode'])
-        self._stack = StateStack(n_stacks=stack)
         self._init_resize()
-
-    def _init_raw_buffer(self):
-        w, h = self._ale.getScreenDims()
-        shape = (h, w) if self.args['grayscale'] else (h, w, 3)
-        self._raw_buffer = np.zeros(shape, dtype=np.uint8)
-
-    def _init_resize(self):
-        orig_width, orig_height = self._ale.getScreenDims()
-        h, w = self.args['height'], self.args['width']
-        if not (h == orig_height and w == orig_width):
-            self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
+        self._processor = Preprocessor(
+            buffer_size=buffer_frames, mode=preprocess_mode)
+        self._stack = StateStack(stack_size=stack)
 
     def _validate_args(
             self, mode, preprocess_mode,
@@ -284,6 +262,20 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         if not os.path.isfile(rom_path):
             raise ValueError('ROM ({}) not found.'.format(rom))
 
+    def _init_raw_buffer(self):
+        """Initialize buffer for fetching raw env state from ALE"""
+        w, h = self._ale.getScreenDims()
+        shape = (h, w) if self.args['grayscale'] else (h, w, 3)
+        self._raw_buffer = np.zeros(shape, dtype=np.uint8)
+
+    def _init_resize(self):
+        """Initialize resize method"""
+        orig_width, orig_height = self._ale.getScreenDims()
+        h, w = self.args['height'], self.args['width']
+        if not (h == orig_height and w == orig_width):
+            self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
+
+    ###########################################################################
     @staticmethod
     def get_roms():
         """Get the list of ROMs available
@@ -300,17 +292,16 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         return len(self._actions)
 
     ###########################################################################
+    # Helper methods common to `reset` and `step`
     def _get_resized_frame(self):
-        """Fetch the current frame and resize then convert to CHW format"""
+        """Fetch the current frame and resize"""
         self._get_raw_screen(screen_data=self._raw_buffer)
         if self.resize:
             return imresize(self._raw_buffer, self.resize)
         return self._raw_buffer
 
-    def _random_play(self):
-        rand = self.args['random_start']
-        repeat = 1 + (np.random.randint(rand) if rand else 0)
-        return sum(self._step(0) for _ in range(repeat))
+    def _get_state(self):
+        return np.array(self._stack.get())
 
     def _get_info(self):
         return {
@@ -318,6 +309,17 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             'total_frame_number': self._ale.getFrameNumber(),
             'episode_frame_number': self._ale.getEpisodeFrameNumber(),
         }
+
+    def _is_terminal(self):
+        if self.args['mode'] == 'train':
+            return self._ale.game_over() or self.life_lost
+        return self._ale.game_over()
+
+    ###########################################################################
+    def _random_play(self):
+        rand = self.args['random_start']
+        repeat = 1 + (np.random.randint(rand) if rand else 0)
+        return sum(self._step(0) for _ in range(repeat))
 
     def reset(self):
         """Reset game
@@ -334,8 +336,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
                 self._ale.game_over()  # all lives are lost
         ):
             self._ale.reset_game()
-            self._preprocessor.reset(self._get_resized_frame())
-            self._stack.reset(self._preprocessor.get())
+            self._processor.reset(self._get_resized_frame())
+            self._stack.reset(self._processor.get())
             reward += self._random_play()
 
         self.life_lost = False
@@ -373,14 +375,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _step(self, action):
         reward = self._ale.act(action)
-        self._preprocessor.append(self._get_resized_frame())
-        self._stack.append(self._preprocessor.get())
+        self._processor.append(self._get_resized_frame())
+        self._stack.append(self._processor.get())
         return reward
-
-    def _get_state(self):
-        return np.array(self._stack.get())
-
-    def _is_terminal(self):
-        if self.args['mode'] == 'train':
-            return self._ale.game_over() or self.life_lost
-        return self._ale.game_over()
