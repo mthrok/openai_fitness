@@ -2,7 +2,96 @@ from __future__ import absolute_import
 
 import unittest
 
+import numpy as np
+
 from luchador.env.ale import ALEEnvironment as ALE
+
+
+class ALEEnvShapeTest(unittest.TestCase):
+    longMessage = True
+
+    def _test(self, width=160, height=210, grayscale=True):
+        ale = ALE(
+            rom='breakout',
+            width=width, height=height,
+            grayscale=grayscale,
+        )
+
+        ale.reset()
+        outcome = ale.step(1)
+        channel = 1 if grayscale else 3
+        self.assertEqual(outcome.state.shape, (channel, height, width))
+
+    def test_no_resize(self):
+        """State shape equals to the original screen size"""
+        self._test(grayscale=True)
+
+    def test_resize_width(self):
+        """State shape equals to the given size"""
+        self._test(width=84, grayscale=True)
+
+    def test_resize_height(self):
+        """State shape equals to the given size"""
+        self._test(height=84, grayscale=True)
+
+    def test_resize_width_height(self):
+        """State shape equals to the given size"""
+        self._test(height=84, width=84, grayscale=True)
+
+    def test_no_resize_color(self):
+        """State shape equals to the original screen size"""
+        self._test(grayscale=False)
+
+    def test_resize_width_color(self):
+        """State shape equals to the given size"""
+        self._test(width=84, grayscale=False)
+
+    def test_resize_height_color(self):
+        """State shape equals to the given size"""
+        self._test(height=84, grayscale=False)
+
+    def test_resize_width_height_color(self):
+        """State shape equals to the given size"""
+        self._test(height=84, width=84, grayscale=False)
+
+
+def _test_buffer(grayscale):
+    # pylint: disable=protected-access
+    buffer_frames = 4
+    ale = ALE(
+        rom='breakout',
+        mode='train',
+        repeat_action=1,
+        buffer_frames=buffer_frames,
+        grayscale=grayscale,
+    )
+    buffer_ = ale._preprocessor._buffer
+
+    ale.reset()
+    frame = ale._get_raw_screen().transpose((2, 0, 1))
+    np.testing.assert_equal(frame, buffer_[0])
+
+    for i in range(1, buffer_frames):
+        ale.step(1)
+        frame = ale._get_raw_screen().transpose((2, 0, 1))
+        np.testing.assert_equal(frame, buffer_[i])
+
+    for _ in range(10):
+        for i in range(buffer_frames):
+            ale.step(1)
+            frame = ale._get_raw_screen().transpose((2, 0, 1))
+            np.testing.assert_equal(frame, buffer_[i])
+
+
+class PreprocessorTest(unittest.TestCase):
+    # pylint: disable=no-self-use
+    def test_buffer_frame(self):
+        """The latest frame is correctly passed to preprocessor buffer"""
+        _test_buffer(grayscale=True)
+
+    def test_buffer_frame_color(self):
+        """The latest frame is correctly passed to preprocessor buffer"""
+        _test_buffer(grayscale=False)
 
 
 class ALEEnvironmentTest(unittest.TestCase):
@@ -70,212 +159,6 @@ class ALEEnvironmentTest(unittest.TestCase):
                 'A life loss must be considered as terminal in `train` mode'
             )
 
-    def test_no_resize_grayscale(self):
-        """Observation width and height equal to the original screen size"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=True,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (210, 160)
-        found = outcome.state.shape
-        self.assertEqual(
-            expected, found,
-            'Observation shape must equal to the original screen size, '
-            'when `width` and `height` are `None`.'
-        )
-
-    def test_no_resize_rgb(self):
-        """Observation width and height equal to the original screen size"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=False,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (210, 160)
-        found = outcome.state.shape[:2]
-        self.assertEqual(
-            expected, found,
-            'Observation shape must equal to the original screen size, '
-            'when `width` and `height` are `None`.'
-        )
-
-    def test_resize_width_grayscale(self):
-        """Observation size equals to the given size"""
-        width = 84
-
-        ale = ALE(
-            rom='breakout',
-            width=width,
-            grayscale=True,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (210, width)
-        found = outcome.state.shape
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when width is given.'
-        )
-
-    def test_resize_height_grayscale(self):
-        """Observation size equals to the given size"""
-        height = 84
-
-        ale = ALE(
-            rom='breakout',
-            height=height,
-            grayscale=True,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (height, 160)
-        found = outcome.state.shape
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when height is given.'
-        )
-
-    def test_resize_width_and_height_grayscale(self):
-        """Observation size equals to the given size"""
-        width, height = 84, 84
-
-        ale = ALE(
-            rom='breakout',
-            width=width,
-            height=height,
-            grayscale=True,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (height, width)
-        found = outcome.state.shape
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when both width and height are given.'
-        )
-
-    def test_resize_width_rgb(self):
-        """Observation size equals to the given size"""
-        width = 84
-
-        ale = ALE(
-            rom='breakout',
-            width=width,
-            grayscale=False,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (210, width)
-        found = outcome.state.shape[:2]
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when width is given.'
-        )
-
-    def test_resize_height_rgb(self):
-        """Observation size equals to the given size"""
-        height = 84
-
-        ale = ALE(
-            rom='breakout',
-            height=height,
-            grayscale=False,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (height, 160)
-        found = outcome.state.shape[:2]
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when height is given.'
-        )
-
-    def test_resize_width_and_height_rgb(self):
-        """Observation size equals to the given size"""
-        width, height = 84, 84
-
-        ale = ALE(
-            rom='breakout',
-            width=width,
-            height=height,
-            grayscale=False,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        expected = (height, width)
-        found = outcome.state.shape[:2]
-        self.assertEqual(
-            expected, found,
-            'Observation must be resized when both width and height is given.'
-        )
-
-    def test_rgb_observation_color_channel_without_resize(self):
-        """Observation has color channel when grayscale=False"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=False,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        observation = outcome.state
-        self.assertTrue(len(observation.shape) == 3,
-                        'Color channel is missing')
-        self.assertTrue(observation.shape[2] == 3,
-                        'Incorrect number of color channels')
-
-    def test_rgb_observation_color_channel_with_resize(self):
-        """Observation has color channel when grayscale=False"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=False,
-            width=84, height=84,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        observation = outcome.state
-        self.assertTrue(len(observation.shape) == 3,
-                        'Color channel is missing')
-        self.assertTrue(observation.shape[2] == 3,
-                        'Incorrect number of color channels')
-
-    def test_grayscale_observation_color_channel_without_resize(self):
-        """Observation has color channel when grayscale=True"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=True,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        observation = outcome.state
-        self.assertTrue(len(observation.shape) == 2)
-
-    def test_grayscale_observation_color_channel_with_resize(self):
-        """Observation has color channel when grayscale=True"""
-        ale = ALE(
-            rom='breakout',
-            grayscale=True,
-            width=84, height=84,
-        )
-
-        ale.reset()
-        outcome = ale.step(1)
-        observation = outcome.state
-        self.assertTrue(len(observation.shape) == 2)
-
     def test_repeat_action(self):
         """`step` advances the number of frames given as `repeat_action`"""
         for repeat_action in [1, 4]:
@@ -298,59 +181,6 @@ class ALEEnvironmentTest(unittest.TestCase):
                 self.assertEqual(frame - last_frame, repeat_action)
                 last_frame = frame
 
-    def test_buffer_frame_rgb(self):
-        """_frame_buffer contains the last raw frames given as buffer_frames"""
-        buffer_frames = 4
-        ale = ALE(
-            rom='breakout',
-            mode='train',
-            repeat_action=1,
-            buffer_frames=buffer_frames,
-            grayscale=False,
-        )
-
-        ale.reset()
-        frame = ale._get_raw_screen()
-        buffer_ = ale._preprocessor._buffer
-        self.assertTrue((frame == buffer_[0]).all())
-
-        for i in range(1, buffer_frames):
-            ale.step(1)
-            frame = ale._get_raw_screen()
-            self.assertTrue((frame == buffer_[i]).all())
-
-        for _ in range(10):
-            for i in range(buffer_frames):
-                ale.step(1)
-                frame = ale._get_raw_screen()
-                self.assertTrue((frame == buffer_[i]).all())
-
-    def test_buffer_frame_grayscale(self):
-        """_frame_buffer contains the last raw frames given as buffer_frames"""
-        buffer_frames = 4
-        ale = ALE(
-            rom='breakout',
-            mode='train',
-            repeat_action=1,
-            buffer_frames=buffer_frames,
-            grayscale=True,
-        )
-
-        ale.reset()
-        frame = ale._get_raw_screen()
-        buffer_ = ale._preprocessor._buffer
-        for i in range(1, buffer_frames):
-            ale.step(1)
-            frame = ale._get_raw_screen()
-            frame = frame[:, :, 0]
-            self.assertTrue((frame == buffer_[i]).all())
-
-        for _ in range(10):
-            for i in range(buffer_frames):
-                ale.step(1)
-                frame = ale._get_raw_screen()
-                frame = frame[:, :, 0]
-                self.assertTrue((frame == buffer_[i]).all())
 
     def test_random_start(self):
         """Episode starts from frame number in range of [1, `random_start`]"""
