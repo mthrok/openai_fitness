@@ -79,6 +79,23 @@ class Preprocessor(object):
         return self._func(self._buffer, axis=0)
 
 
+class FrameStack(object):
+    """Stack multiple states"""
+    def __init__(self, n_stacks):
+        self.n_stacks = n_stacks
+        self._buffer = None
+
+    def reset(self, initial_frame):
+        self._buffer = [initial_frame] * self.n_stacks
+
+    def append(self, frame):
+        self._buffer.append(frame)
+        self._buffer = self._buffer[-self.n_stacks:]
+
+    def get(self):
+        return self._buffer
+
+
 def _make_ale(
         rom, play_sound, display_screen, random_seed,
         record_screen_path=None, record_sound_filename=None, **_):
@@ -117,23 +134,6 @@ def _make_ale(
 
     ale.loadROM(os.path.join(_ROM_DIR, rom))
     return ale
-
-
-class FrameStack(object):
-    """Stack multiple observation"""
-    def __init__(self, n_stacks):
-        self.n_stacks = n_stacks
-        self._buffer = None
-
-    def reset(self, initial_frame):
-        self._buffer = [initial_frame] * self.n_stacks
-
-    def add(self, frame):
-        self._buffer.append(frame)
-        self._buffer = self._buffer[-self.n_stacks:]
-
-    def get(self):
-        return self._buffer
 
 
 class ALEEnvironment(StoreMixin, BaseEnvironment):
@@ -343,9 +343,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         ):
             self._ale.reset_game()
             self._preprocessor.reset(self._get_resized_frame())
+            self._stack.reset(self._preprocessor.get())
             reward += self._random_play()
-            if self._stack:
-                self._stack.reset(self._get_state())
 
         self.life_lost = False
         return Outcome(
@@ -373,8 +372,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             if terminal:
                 break
 
-        if self._stack:
-            self._stack.reset(self._get_state())
         return Outcome(
             reward=reward,
             state=self._get_state(),
@@ -385,10 +382,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     def _step(self, action):
         reward = self._ale.act(action)
         self._preprocessor.append(self._get_resized_frame())
+        self._stack.append(self._preprocessor.get())
         return reward
 
     def _get_state(self):
-        return self._preprocessor.get()
+        return np.array(self._stack.get())
 
     def _is_terminal(self):
         if self.args['mode'] == 'train':
