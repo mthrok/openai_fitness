@@ -321,6 +321,13 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         repeat = 1 + (np.random.randint(rand) if rand else 0)
         return sum(self._step(0) for _ in range(repeat))
 
+    def _reset(self):
+        """Actually reset game"""
+        self._ale.reset_game()
+        self._processor.reset(self._get_resized_frame())
+        self._stack.reset(self._processor.get())
+        return self._random_play()
+
     def reset(self):
         """Reset game
 
@@ -329,16 +336,13 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         then only life loss flag is reset so that the next game starts from
         the current state. Otherwise, the game is simply initialized.
         """
-        reward = 0
         if (
-                self.args['mode'] == 'test' or
-                not self.life_lost or  # `reset` called in a middle of episode
-                self._ale.game_over()  # all lives are lost
+                self.args['mode'] == 'train' and
+                self.life_lost and not self._ale.game_over()
         ):
-            self._ale.reset_game()
-            self._processor.reset(self._get_resized_frame())
-            self._stack.reset(self._processor.get())
-            reward += self._random_play()
+            reward = 0
+        else:
+            reward = self._reset()
 
         self.life_lost = False
         return Outcome(

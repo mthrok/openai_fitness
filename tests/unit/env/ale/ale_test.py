@@ -60,18 +60,18 @@ def _test_buffer(grayscale):
     )
     ale.reset()
     frame = ale._get_raw_screen().squeeze()
-    np.testing.assert_equal(frame, ale._preprocessor._buffer[0])
+    np.testing.assert_equal(frame, ale._processor._buffer[0])
 
     for i in range(1, buffer_frames):
         ale.step(1)
         frame = ale._get_raw_screen().squeeze()
-        np.testing.assert_equal(frame, ale._preprocessor._buffer[i])
+        np.testing.assert_equal(frame, ale._processor._buffer[i])
 
     for _ in range(10):
         for i in range(buffer_frames):
             ale.step(1)
             frame = ale._get_raw_screen().squeeze()
-            np.testing.assert_equal(frame, ale._preprocessor._buffer[i])
+            np.testing.assert_equal(frame, ale._processor._buffer[i])
 
 
 class PreprocessorTest(unittest.TestCase):
