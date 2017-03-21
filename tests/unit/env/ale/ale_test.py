@@ -60,8 +60,10 @@ def _test_buffer(grayscale):
     )
     ale.reset()
     frame = ale._get_raw_screen().squeeze()
-    np.testing.assert_equal(frame, ale._processor._buffer[0])
+    for i in range(buffer_frames):
+        np.testing.assert_equal(frame, ale._processor._buffer[i])
 
+    # TODO: Fix this
     for i in range(1, buffer_frames):
         ale.step(1)
         frame = ale._get_raw_screen().squeeze()

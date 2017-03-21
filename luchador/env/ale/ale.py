@@ -233,7 +233,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             self._ale.getScreenRGB
         )
 
-        self._init_raw_buffer()
+        self._raw_buffer_shape = (
+            (210, 160) if self.args['grayscale'] else (210, 160, 3))
         self._init_resize()
         self._processor = Preprocessor(
             buffer_size=buffer_frames, mode=preprocess_mode)
@@ -262,12 +263,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         if not os.path.isfile(rom_path):
             raise ValueError('ROM ({}) not found.'.format(rom))
 
-    def _init_raw_buffer(self):
-        """Initialize buffer for fetching raw env state from ALE"""
-        w, h = self._ale.getScreenDims()
-        shape = (h, w) if self.args['grayscale'] else (h, w, 3)
-        self._raw_buffer = np.zeros(shape, dtype=np.uint8)
-
     def _init_resize(self):
         """Initialize resize method"""
         orig_width, orig_height = self._ale.getScreenDims()
@@ -295,10 +290,11 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     # Helper methods common to `reset` and `step`
     def _get_resized_frame(self):
         """Fetch the current frame and resize"""
-        self._get_raw_screen(screen_data=self._raw_buffer)
+        buffer_ = np.zeros(shape=self._raw_buffer_shape, dtype=np.uint8)
+        self._get_raw_screen(screen_data=buffer_)
         if self.resize:
-            return imresize(self._raw_buffer, self.resize)
-        return self._raw_buffer
+            return imresize(buffer_, self.resize)
+        return buffer_
 
     def _get_state(self):
         return np.array(self._stack.get())
