@@ -287,17 +287,28 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         return len(self._actions)
 
     ###########################################################################
+    def _get_resized_frame(self):
+        """Fetch the current frame and resize then convert to CHW format"""
+        self._get_raw_screen(screen_data=self._raw_buffer)
+        if self.resize:
+            screen = imresize(self._raw_buffer, self.resize)
+        else:
+            screen = self._raw_buffer
+        if self.args['grayscale']:
+            return screen[None, ...]
+        return screen.transpose((2, 0, 1))
+
+    def _random_play(self):
+        rand = self.args['random_start']
+        repeat = 1 + (np.random.randint(rand) if rand else 0)
+        return sum(self._step(0) for _ in range(repeat))
+
     def _get_info(self):
         return {
             'lives': self._ale.lives(),
             'total_frame_number': self._ale.getFrameNumber(),
             'episode_frame_number': self._ale.getEpisodeFrameNumber(),
         }
-
-    def _random_play(self):
-        rand = self.args['random_start']
-        repeat = 1 + (np.random.randint(rand) if rand else 0)
-        return sum(self._step(0) for _ in range(repeat))
 
     def reset(self):
         """Reset game
@@ -314,6 +325,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
                 self._ale.game_over()  # all lives are lost
         ):
             self._ale.reset_game()
+            self._preprocessor.reset(self._get_resized_frame())
             reward += self._random_play()
 
         self.life_lost = False
@@ -351,16 +363,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
     def _step(self, action):
         reward = self._ale.act(action)
-        self._get_raw_screen(screen_data=self._raw_buffer)
-        if self.resize:
-            screen = imresize(self._raw_buffer, self.resize)
-        else:
-            screen = self._raw_buffer
-        if self.args['grayscale']:
-            screen = screen[None, ...]
-        else:
-            screen = screen.transpose((2, 0, 1))
-        self._preprocessor.append(screen)
+        self._preprocessor.append(self._get_resized_frame())
         return reward
 
     def _get_state(self):
