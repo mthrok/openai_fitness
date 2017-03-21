@@ -10,49 +10,41 @@ from luchador.env.ale import ALEEnvironment as ALE
 class ALEEnvShapeTest(unittest.TestCase):
     longMessage = True
 
-    def _test(self, width=160, height=210, grayscale=True):
+    def _test(self, width=160, height=210, stack=4, grayscale=True):
         ale = ALE(
             rom='breakout',
-            width=width, height=height,
+            stack=stack, width=width, height=height,
             grayscale=grayscale,
         )
 
         ale.reset()
         outcome = ale.step(1)
         channel = 1 if grayscale else 3
-        self.assertEqual(outcome.state.shape, (channel, height, width))
+        self.assertEqual(outcome.state.shape, (stack, channel, height, width))
 
     def test_no_resize(self):
         """State shape equals to the original screen size"""
-        self._test(grayscale=True)
+        for gs in [True, False]:
+            self._test(grayscale=gs)
+            self._test(grayscale=gs, stack=1)
 
     def test_resize_width(self):
         """State shape equals to the given size"""
-        self._test(width=84, grayscale=True)
+        for gs in [True, False]:
+            self._test(width=84, grayscale=gs)
+            self._test(width=84, grayscale=gs, stack=1)
 
     def test_resize_height(self):
         """State shape equals to the given size"""
-        self._test(height=84, grayscale=True)
+        for gs in [True, False]:
+            self._test(height=84, grayscale=gs)
+            self._test(height=84, grayscale=gs, stack=1)
 
     def test_resize_width_height(self):
         """State shape equals to the given size"""
-        self._test(height=84, width=84, grayscale=True)
-
-    def test_no_resize_color(self):
-        """State shape equals to the original screen size"""
-        self._test(grayscale=False)
-
-    def test_resize_width_color(self):
-        """State shape equals to the given size"""
-        self._test(width=84, grayscale=False)
-
-    def test_resize_height_color(self):
-        """State shape equals to the given size"""
-        self._test(height=84, grayscale=False)
-
-    def test_resize_width_height_color(self):
-        """State shape equals to the given size"""
-        self._test(height=84, width=84, grayscale=False)
+        for gs in [True, False]:
+            self._test(height=84, width=84, grayscale=gs)
+            self._test(height=84, width=84, grayscale=gs, stack=1)
 
 
 def _test_buffer(grayscale):
