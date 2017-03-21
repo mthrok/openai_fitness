@@ -331,15 +331,12 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     def reset(self):
         """Reset game
 
-        In test mode, the game is simply initialized. In train mode, if the
-        game is in terminal state due to a life loss but not yet game over,
-        then only life loss flag is reset so that the next game starts from
-        the current state. Otherwise, the game is simply initialized.
+        In ``train`` mode, a loss of life is considered to be terminal state.
+        If this method is called at such state, then only life_lost flag is
+        reset so that the next episode can start from the next frame.
         """
-        if (
-                self.args['mode'] == 'train' and
-                self.life_lost and not self._ale.game_over()
-        ):
+        mode = self.args['mode']
+        if (mode == 'train' and self.life_lost and not self._ale.game_over()):
             reward = 0
         else:
             reward = self._reset()
