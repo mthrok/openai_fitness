@@ -35,18 +35,12 @@ class Preprocessor(object):
     mode : int
         `max` or `mean`
     """
-    def __init__(self, frame_shape, channel, buffer_size=2, mode='max'):
-        self.frame_shape = list(frame_shape)
+    def __init__(self, buffer_size=2, mode='max'):
         self.buffer_size = buffer_size
-        self.channel = channel
         self.mode = mode
 
-        buffer_shape = [buffer_size] + self.frame_shape
-        if channel:
-            buffer_shape += [channel]
-        self._buffer = np.zeros(buffer_shape, dtype=np.uint8)
+        self._buffer = None
         self._func = np.max if mode == 'max' else np.mean
-        self._index = 0
 
     def reset(self, initial_frame):
         """Reset buffer with new frame
@@ -56,8 +50,7 @@ class Preprocessor(object):
         initial_frame : NumPy Array
             The initial observation obtained from resetting env
         """
-        for _ in range(self.buffer_size):
-            self.append(initial_frame)
+        self._buffer = [initial_frame] * self.buffer_size
 
     def append(self, frame):
         """Update buffer with new frame
@@ -67,8 +60,8 @@ class Preprocessor(object):
         frame : NumPy Array
             The observation obtained by taking a step in env
         """
-        self._buffer[self._index] = frame
-        self._index = (self._index + 1) % self.buffer_size
+        self._buffer.append(frame)
+        self._buffer = self._buffer[-self.buffer_size:]
 
     def get(self):
         """Return preprocessed frame
@@ -252,8 +245,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
 
         self._init_raw_buffer()
         self._preprocessor = Preprocessor(
-            frame_shape=(self.args['height'], self.args['width']),
-            channel=None if self.args['grayscale'] else 3,
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
         self._stack = StateStack(n_stacks=stack)
