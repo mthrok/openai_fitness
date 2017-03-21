@@ -119,7 +119,7 @@ def _make_ale(
     return ale
 
 
-class Stack(object):
+class FrameStack(object):
     """Stack multiple observation"""
     def __init__(self, n_stacks):
         self.n_stacks = n_stacks
@@ -137,40 +137,64 @@ class Stack(object):
 
 
 class ALEEnvironment(StoreMixin, BaseEnvironment):
-    """Atari Environment"""
-    @staticmethod
-    def get_roms():
-        """Get the list of ROMs available
+    """Atari Environment
 
-        Returns:
-          list of srting: Names of available ROMs
-        """
-        return [rom for rom in os.listdir(_ROM_DIR)
-                if rom.endswith('.bin')]
+    Parameters
+    ----------
+    rom : str
+        ROM name. Use `get_roms` for the list of available ROMs.
 
-    def _validate_args(
-            self, mode, preprocess_mode,
-            repeat_action, random_start, rom, **_):
-        if mode not in ['test', 'train']:
-            raise ValueError('`mode` must be either `test` or `train`')
+    mode : str
+        When `train`, a loss of life is considered as terminal condition.
+        When `test`, a loss of life is not considered as terminal condition.
 
-        if preprocess_mode not in ['max', 'average']:
-            raise ValueError(
-                '`preprocess_mode` must be either `max` or `average`')
+    width, height : int
+        Output screen size.
 
-        if repeat_action < 1:
-            raise ValueError(
-                '`repeat_action` must be integer greater than 0')
+    stack : int
+        Stack the environment state. The output shape of ``step`` is 4D, where
+        the first dimension is the stack.
 
-        if random_start and random_start < 1:
-            raise ValueError(
-                '`random_start` must be `None` or integer greater than 0'
-            )
+    grayscale : bool
+        If True, output screen is gray scale and has no color channel. i.e.
+        output shape == (h, w). Otherwise output screen has color channel with
+        shape (h, w, 3)
 
-        rom_path = os.path.join(_ROM_DIR, rom)
-        if not os.path.isfile(rom_path):
-            raise ValueError('ROM ({}) not found.'.format(rom))
+    repeat_action : int
+        When calling `step` method, action is repeated for this numebr of times
+        internally, unless a terminal condition is met.
 
+    minimal_action_set : bool
+        When True, `n_actions` property reports actions only meaningfull to the
+        loaded ROM. Otherwise all the 18 actions are dounted.
+
+    random_seed : int
+        ALE's random seed
+
+    random_start : int or None
+        When given,  at the beginning of each episode at most this number of
+        frames are played with action == 0. This technique is used to acquire
+        more diverse states of environment.
+
+    buffer_frames : int
+        The number of latest frame to preprocess.
+
+    preprocess_mode : str
+        Either `max` or `average`. When obtaining observation, pixel-wise
+        maximum or average over buffered frames are taken before resizing
+
+    display_screen : bool
+        Display sceen when True.
+
+    play_sound : bool
+        Play sound
+
+    record_screen_path : str
+        Passed to ALE. Save the raw screens into the path.
+
+    record_screen_filename : str
+        Passed to ALE. Save sound to a file.
+    """
     def __init__(
             self, rom,
             mode='train',
@@ -189,70 +213,6 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             record_screen_path=None,
             record_sound_filename=None,
     ):
-        """Initialize ALE Environment with the given parmeters
-
-        Parameters
-        ----------
-        rom : str
-            ROM name. Use `get_roms` for the list of available ROMs.
-
-        mode : str
-            When `train`, a loss of life is considered as terminal condition.
-            When `test`, a loss of life is not considered as terminal
-            condition.
-
-        width, height : int
-            Output screen size.
-
-        stack : int or None
-            If given, stack the environment state observation. The output
-            shape of ``step`` is 4D, where the first dimension is the stack.
-            If None, no stacking is performed.
-
-        grayscale : bool
-            If True, output screen is gray scale and has no color channel.
-            i.e. output shape == (h, w). Otherwise output screen has color
-            channel with shape (h, w, 3)
-
-        repeat_action : int
-            When calling `step` method, action is repeated for this numebr of
-            times internally, unless a terminal condition is met.
-
-        minimal_action_set : bool
-            When True, `n_actions` property reports actions only meaningfull to
-            the loaded ROM. Otherwise all the 18 actions are dounted.
-
-        random_seed : int
-            ALE's random seed
-
-        random_start : int or None
-            When given,  at the beginning of each episode at most this number
-            of frames are played with action == 0. This technique is used to
-            acquire more diverse states of environment.
-
-        buffer_frames : int
-            The number of latest frame to preprocess.
-
-        preprocess_mode : str
-            Either `max` or `average`. When obtaining observation, pixel-wise
-            maximum or average over buffered frames are taken before resizing
-
-        display_screen : bool
-            Display sceen when True.
-
-        play_sound : bool
-            Play sound
-
-        record_screen_path : str
-            Passed to ALE. Save the original screens into the path.
-
-            Note
-                that this is different from the observation returned by
-                `step` method.
-
-        record_screen_filename : str
-            Passed to ALE. Save sound to a file.
-        """
         if not rom.endswith('.bin'):
             rom += '.bin'
 
@@ -291,7 +251,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             channel=1 if self.args['grayscale'] else 3,
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
-        self._stack = Stack(n_stacks=stack) if stack else None
+        self._stack = FrameStack(n_stacks=stack)
         self._init_resize()
 
     def _init_raw_buffer(self):
@@ -304,6 +264,39 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         h, w = self.args['height'], self.args['width']
         if not (h == orig_height and w == orig_width):
             self.resize = (h, w) if self.args['grayscale'] else (h, w, 3)
+
+    def _validate_args(
+            self, mode, preprocess_mode,
+            repeat_action, random_start, rom, **_):
+        if mode not in ['test', 'train']:
+            raise ValueError('`mode` must be either `test` or `train`')
+
+        if preprocess_mode not in ['max', 'average']:
+            raise ValueError(
+                '`preprocess_mode` must be either `max` or `average`')
+
+        if repeat_action < 1:
+            raise ValueError(
+                '`repeat_action` must be integer greater than 0')
+
+        if random_start and random_start < 1:
+            raise ValueError(
+                '`random_start` must be `None` or integer greater than 0'
+            )
+
+        rom_path = os.path.join(_ROM_DIR, rom)
+        if not os.path.isfile(rom_path):
+            raise ValueError('ROM ({}) not found.'.format(rom))
+
+    @staticmethod
+    def get_roms():
+        """Get the list of ROMs available
+
+        Returns:
+          list of srting: Names of available ROMs
+        """
+        return [rom for rom in os.listdir(_ROM_DIR)
+                if rom.endswith('.bin')]
 
     ###########################################################################
     @property
