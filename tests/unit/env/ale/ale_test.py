@@ -19,8 +19,9 @@ class ALEEnvShapeTest(unittest.TestCase):
 
         ale.reset()
         outcome = ale.step(1)
-        channel = 1 if grayscale else 3
-        self.assertEqual(outcome.state.shape, (stack, channel, height, width))
+        expected = (
+            (stack, height, width) if grayscale else (stack, height, width, 3))
+        self.assertEqual(outcome.state.shape, expected)
 
     def test_no_resize(self):
         """State shape equals to the original screen size"""
@@ -60,18 +61,18 @@ def _test_buffer(grayscale):
     buffer_ = ale._preprocessor._buffer
 
     ale.reset()
-    frame = ale._get_raw_screen().transpose((2, 0, 1))
+    frame = ale._get_raw_screen().squeeze()
     np.testing.assert_equal(frame, buffer_[0])
 
     for i in range(1, buffer_frames):
         ale.step(1)
-        frame = ale._get_raw_screen().transpose((2, 0, 1))
+        frame = ale._get_raw_screen().squeeze()
         np.testing.assert_equal(frame, buffer_[i])
 
     for _ in range(10):
         for i in range(buffer_frames):
             ale.step(1)
-            frame = ale._get_raw_screen().transpose((2, 0, 1))
+            frame = ale._get_raw_screen().squeeze()
             np.testing.assert_equal(frame, buffer_[i])
 
 

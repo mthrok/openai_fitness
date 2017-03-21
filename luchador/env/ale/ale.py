@@ -41,7 +41,9 @@ class Preprocessor(object):
         self.channel = channel
         self.mode = mode
 
-        buffer_shape = [buffer_size, channel] + self.frame_shape
+        buffer_shape = [buffer_size] + self.frame_shape
+        if channel:
+            buffer_shape += [channel]
         self._buffer = np.zeros(buffer_shape, dtype=np.uint8)
         self._func = np.max if mode == 'max' else np.mean
         self._index = 0
@@ -248,7 +250,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self._init_raw_buffer()
         self._preprocessor = Preprocessor(
             frame_shape=(self.args['height'], self.args['width']),
-            channel=1 if self.args['grayscale'] else 3,
+            channel=None if self.args['grayscale'] else 3,
             buffer_size=self.args['buffer_frames'],
             mode=self.args['preprocess_mode'])
         self._stack = FrameStack(n_stacks=stack)
@@ -308,12 +310,8 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         """Fetch the current frame and resize then convert to CHW format"""
         self._get_raw_screen(screen_data=self._raw_buffer)
         if self.resize:
-            screen = imresize(self._raw_buffer, self.resize)
-        else:
-            screen = self._raw_buffer
-        if self.args['grayscale']:
-            return screen[None, ...]
-        return screen.transpose((2, 0, 1))
+            return imresize(self._raw_buffer, self.resize)
+        return self._raw_buffer
 
     def _random_play(self):
         rand = self.args['random_start']
