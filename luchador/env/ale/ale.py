@@ -322,7 +322,9 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         self._ale.reset_game()
         self._processor.reset(self._get_resized_frame())
         self._stack.reset(self._processor.get())
-        return self._random_play()
+        rewards = self._random_play()
+        self._stack.append(self._processor.get())
+        return rewards
 
     def reset(self):
         """Reset game
@@ -332,7 +334,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
         reset so that the next episode can start from the next frame.
         """
         mode = self.args['mode']
-        if (mode == 'train' and self.life_lost and not self._ale.game_over()):
+        if mode == 'train' and self.life_lost and not self._ale.game_over():
             reward = 0
         else:
             reward = self._reset()
@@ -363,6 +365,7 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
             if terminal:
                 break
 
+        self._stack.append(self._processor.get())
         return Outcome(
             reward=reward,
             state=self._get_state(),
@@ -373,5 +376,4 @@ class ALEEnvironment(StoreMixin, BaseEnvironment):
     def _step(self, action):
         reward = self._ale.act(action)
         self._processor.append(self._get_resized_frame())
-        self._stack.append(self._processor.get())
         return reward
