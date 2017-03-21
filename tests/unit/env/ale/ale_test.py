@@ -181,7 +181,6 @@ class ALEEnvironmentTest(unittest.TestCase):
                 self.assertEqual(frame - last_frame, repeat_action)
                 last_frame = frame
 
-
     def test_random_start(self):
         """Episode starts from frame number in range of [1, `random_start`]"""
         random_start = 30
