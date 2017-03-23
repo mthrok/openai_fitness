@@ -155,13 +155,13 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             action_0 = nn.Input(
                 shape=(None,), dtype='int32', name='action_0')
             error = _build_error(target_q, action_value_0, action_0)
+            weight = nn.Input(
+                shape=(None,), name='sample_weight')
+            loss = nn.ops.reduce_mean(error * weight)
 
-        weight = nn.Input(
-            shape=(None,), name='sample_weight')
         self._init_optimizer()
         optimize_op = _build_optimize_op(
-            optimizer=self.optimizer,
-            loss=nn.ops.reduce_mean(error * weight),
+            optimizer=self.optimizer, loss=loss,
             params=model_0.get_parameters_to_train(),
             clip_grads=self.args.get('clip_grads'))
 
