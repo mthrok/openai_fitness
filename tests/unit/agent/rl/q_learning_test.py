@@ -44,7 +44,7 @@ def _make_dqn(
         model_def = util.get_model_config(
             'vanilla_dqn', input_shape=input_shape, n_actions=n_actions,
         )
-    dqn.build(model_def, initial_parameter=None)
+    dqn.build(model_def)
     return dqn
 
 
