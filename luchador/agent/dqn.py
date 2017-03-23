@@ -195,7 +195,8 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         initial_parameter = self.args['model_config']['initial_parameter']
         _LG.info('\n%s', luchador.util.pprint_dict(model_def))
         self._ql = _get_q_network(config=self.args['q_network_config'])
-        self._ql.build(model_def, initial_parameter)
+        self._ql.build(model_def)
+        self._ql.initialize(initial_parameter)
         self._ql.sync_network()
 
     ###########################################################################

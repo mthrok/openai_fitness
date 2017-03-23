@@ -64,7 +64,7 @@ def _gen_model_def(model_file):
         model_file, n_actions=N_ACTIONS, input_shape=SHAPE)
 
 
-def _build_network(model_filepath, optimizer_filepath, initial_parameter):
+def _build_network(model_filepath, optimizer_filepath, parameter_filepath):
     _LG.info('Building Q networks')
     dql = DeepQLearning(
         q_learning_config={
@@ -75,7 +75,8 @@ def _build_network(model_filepath, optimizer_filepath, initial_parameter):
         optimizer_config=load_config(optimizer_filepath),
     )
     model_def = _gen_model_def(model_filepath)
-    dql.build(model_def, initial_parameter)
+    dql.build(model_def)
+    dql.initialize(parameter_filepath)
     _LG.info('Syncing models')
     dql.sync_network()
     return dql
@@ -111,7 +112,7 @@ def _main():
     dql = _build_network(
         model_filepath=args.model,
         optimizer_filepath=args.optimizer,
-        initial_parameter=args.input,
+        parameter_filepath=args.input,
     )
 
     _run(dql)

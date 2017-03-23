@@ -132,7 +132,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             if 'clip_norm' not in clip_grads:
                 raise ValueError('`clip_norm` must be given in `clip_grads`')
 
-    def build(self, model_def, initial_parameter):
+    def build(self, model_def):
         """Build computation graph (error and sync ops) for Q learning
 
         Parameters
@@ -165,8 +165,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             params=model_0.get_parameters_to_train(),
             clip_grads=self.args.get('clip_grads'))
 
-        self._init_session(initial_parameter)
-
+        self.session = nn.get_session()
         self.models = {
             'model_0': model_0,
             'model_1': model_1,
@@ -214,11 +213,19 @@ class DeepQLearning(luchador.util.StoreMixin, object):
         cfg = self.args['optimizer_config']
         self.optimizer = nn.fetch_optimizer(cfg['typename'])(**cfg['args'])
 
-    def _init_session(self, initial_parameter=None):
-        self.session = nn.get_session()
-        if initial_parameter:
-            _LG.info('Loading parameters from %s', initial_parameter)
-            self.session.load_from_file(initial_parameter)
+    def initialize(self, initial_parameter_file=None):
+        """Initialize network parameters
+
+        Parameters
+        ----------
+        initial_parameter : str or None
+            If given, network parameters are loaded from the given file path.
+            Otherwise, parameters are initialized following their initializer
+            configuration.
+        """
+        if initial_parameter_file:
+            _LG.info('Loading parameters from %s', initial_parameter_file)
+            self.session.load_from_file(initial_parameter_file)
         else:
             self.session.initialize()
 
