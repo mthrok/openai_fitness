@@ -1,7 +1,7 @@
 version: 2
 executorType: docker
 containerInfo:
-  - image: mthrok/luchador-base:20170215_tf1
+  - image: mthrok/luchador-base:20170323
     env:
       - COUNT_INTEGRATION_COVERAGE=true
 stages:
