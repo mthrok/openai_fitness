@@ -5,8 +5,9 @@ import logging
 from collections import OrderedDict
 
 from luchador.util import fetch_subclasses
+from ..core import get_variable_scope
 
-__all__ = ['BaseModel', 'fetch_model']
+__all__ = ['BaseModel', 'fetch_model', 'get_model']
 _LG = logging.getLogger(__name__)
 _MODELS = OrderedDict()
 
@@ -21,6 +22,8 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
     """Base Model class"""
     def __init__(self, name=None):
         super(BaseModel, self).__init__()
+        scope = get_variable_scope().name
+        name = '{}/{}'.format(scope, name)
         self.name = name
         self.input = None
         self.output = None
@@ -65,6 +68,10 @@ def get_model(name):
     -------
     Model
     """
-    if name not in _MODELS:
-        raise ValueError('Model `{}` does not exist.'.format(name))
+    try:
+        scope = get_variable_scope().name
+        name_ = '{}/{}'.format(scope, name) if scope else name
+        return _MODELS[name_]
+    except ValueError:
+        pass
     return _MODELS[name]

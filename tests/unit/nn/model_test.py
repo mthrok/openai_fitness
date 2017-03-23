@@ -137,3 +137,23 @@ class TestContainer(fixture.TestCase):
             container.get_update_operations(),
             model.get_update_operations(),
         )
+
+
+class ModelRetrievalTest(fixture.TestCase):
+    """Test Model fetch mechanism"""
+    def test_retrieval(self):
+        """Model is correctly retrieved"""
+        scope1 = '{}/foo'.format(self.get_scope())
+        scope2 = '{}/bar'.format(self.get_scope())
+
+        name = 'baz'
+        with nn.variable_scope(scope1):
+            model1 = nn.model.Graph(name=name)
+            self.assertIs(nn.get_model(name), model1)
+
+        with nn.variable_scope(scope2):
+            model2 = nn.model.Graph(name=name)
+            self.assertIs(nn.get_model(name), model2)
+
+        self.assertIs(nn.get_model('{}/{}'.format(scope1, name)), model1)
+        self.assertIs(nn.get_model('{}/{}'.format(scope2, name)), model2)
