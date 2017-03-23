@@ -51,7 +51,7 @@ def make_node(config):
             typename: Tensor
             name: layer8/ReLU/output
     """
-    _LG.info('  Constructing Node: %s', config)
+    _LG.info('  Constructing: %s', config)
     if 'typename' not in config:
         raise RuntimeError('Node `typename` is not given')
 
