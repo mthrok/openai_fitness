@@ -45,6 +45,7 @@ def _make_dqn(
             'vanilla_dqn', input_shape=input_shape, n_actions=n_actions,
         )
     dqn.build(model_def)
+    dqn.initialize()
     return dqn
 
 
