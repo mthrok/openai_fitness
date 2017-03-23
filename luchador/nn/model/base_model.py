@@ -23,7 +23,8 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
     def __init__(self, name=None):
         super(BaseModel, self).__init__()
         scope = get_variable_scope().name
-        name = '{}/{}'.format(scope, name)
+        if scope:
+            name = '{}/{}'.format(scope, name)
         self.name = name
         self.input = None
         self.output = None
@@ -72,6 +73,6 @@ def get_model(name):
         scope = get_variable_scope().name
         name_ = '{}/{}'.format(scope, name) if scope else name
         return _MODELS[name_]
-    except ValueError:
+    except KeyError:
         pass
     return _MODELS[name]
