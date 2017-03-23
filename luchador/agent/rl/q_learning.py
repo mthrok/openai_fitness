@@ -151,7 +151,7 @@ class DeepQLearning(luchador.util.StoreMixin, object):
             target_q, post_q = self._build_target_q_value(
                 action_value_1, reward, terminal)
 
-        with nn.variable_scope('error'):
+        with nn.variable_scope('q_error'):
             action_0 = nn.Input(
                 shape=(None,), dtype='int32', name='action_0')
             error = _build_error(target_q, action_value_0, action_0)
