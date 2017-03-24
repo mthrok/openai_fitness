@@ -15,9 +15,11 @@ args:
       args:
         learn: True
         name: layer3/BatchNormalization
-    - typename: ReLU
+    - typename: LeakyReLU
       args:
         name: layer3/ReLU
+        train: True
+        alpha: 0.1
     - typename: Flatten
       args:
         name: layer4/flatten
@@ -30,9 +32,10 @@ args:
       args:
         learn: True
         name: layer5/BatchNormalization
-    - typename: ReLU
+    - typename: LeakyReLU
       args:
         name: layer5/ReLU
+        alpha: 0.1
     - typename: Dense
       args:
         n_nodes: {n_actions}
