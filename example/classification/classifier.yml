@@ -19,6 +19,7 @@ classifier: &classifier
         args:
           name: layer1/ReLU
           alpha: 0.2
+          train: True
       #====================
       - typename: BatchNormalization
         args:
@@ -36,6 +37,7 @@ classifier: &classifier
         args:
           name: layer3/ReLU
           alpha: 0.2
+          train: True
       #====================
       - typename: BatchNormalization
         args:
@@ -49,6 +51,7 @@ classifier: &classifier
         args:
           name: layer5/ReLU
           alpha: 0.2
+          train: True
       #====================
       - typename: BatchNormalization
         args:
