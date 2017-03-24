@@ -6,7 +6,7 @@ import logging
 
 import tensorflow as tf
 
-from lucahdor.nn.core.base import fetch_initializer
+from luchador.nn.core.base import fetch_initializer
 from ..wrapper import Tensor, make_variable
 
 __all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
@@ -32,15 +32,14 @@ class LeakyReLU(object):
     def _get_alpha(self):
         _alpha = self.args['alpha']
         initializer = fetch_initializer('ConstantInitializer')(value=_alpha)
-        return make_variable(name='alpha', shape=[], initializer=initializer)
+        alpha = make_variable(name='alpha', shape=[], initializer=initializer)
+        self._create_parameter_slot(
+            'alpha', val=alpha, train=True, serialize=True)
+        return alpha.unwrap()
 
     def _build(self, input_tensor):
         x = input_tensor.unwrap()
-        alpha = self._get_alpha()
-        if self.args['train']:
-            self._create_parameter_slot(
-                'alpha', val=alpha, train=True, serialize=True)
-
+        alpha = self._get_alpha() if self.args['train'] else self.args['alpha']
         f1 = 0.5 * (1 + alpha)
         f2 = 0.5 * (1 - alpha)
         output = f1 * x + f2 * abs(x)

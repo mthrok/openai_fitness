@@ -38,7 +38,7 @@ class ReLUTest(TestCase):
 
 class LeakyReLUTest(TestCase):
     """Test LeakyReLU activation"""
-    def test_relu(self):
+    def test_lrelu(self):
         """Test LeakyReLU output """
         alpha, shape = 0.1, (3, 4)
         with nn.variable_scope(self.get_scope()):
@@ -56,6 +56,30 @@ class LeakyReLUTest(TestCase):
         )
         self.assertEqual(out_var.shape, out_val.shape)
         np.testing.assert_almost_equal(out_val, expected)
+
+    def test_lrelu_parameter(self):
+        """Parameter retrieval failes when train=False"""
+        scope, name, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
+        with nn.variable_scope(scope):
+            in_var = nn.Input(shape=shape)
+            layer = nn.layer.LeakyReLU(alpha=alpha, train=False, name=name)
+            layer(in_var)
+
+        with self.assertRaises(KeyError):
+            layer.get_parameter_variable('alpha')
+
+    def test_plrelu_parameter(self):
+        """Parameter retrieval succeeds when train=True"""
+        scope, name, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
+        with nn.variable_scope(scope):
+            in_var = nn.Input(shape=shape)
+            layer = nn.layer.LeakyReLU(alpha=alpha, train=True, name=name)
+            layer(in_var)
+
+        self.assertIs(
+            layer.get_parameter_variable('alpha'),
+            nn.get_variable('{}/{}/alpha'.format(scope, name))
+        )
 
 
 class SoftplusTest(TestCase):
