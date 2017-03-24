@@ -4,7 +4,8 @@ from __future__ import absolute_import
 
 import theano.tensor as T
 
-from ..wrapper import Tensor
+from luchador.nn.core.base import fetch_initializer
+from ..wrapper import Tensor, make_variable
 
 __all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
 # pylint: disable=too-few-public-methods, no-self-use, no-member
@@ -27,8 +28,16 @@ class LeakyReLU(object):
 
     See :any:`LeakyReLU` for detail.
     """
+    def _get_alpha(self):
+        _alpha = self.args['alpha']
+        initializer = fetch_initializer('ConstantInitializer')(value=_alpha)
+        return make_variable(name='alpha', shape=[], initializer=initializer)
+
     def _build(self, input_tensor):
-        alpha = self.args['alpha']
+        alpha = self._get_alpha()
+        if self.args['train']:
+            self._create_parameter_slot(
+                'alpha', val=alpha, train=True, serialize=True)
         input_shape = input_tensor.shape
         output_tensor = T.nnet.relu(input_tensor.unwrap(), alpha=alpha)
         return Tensor(output_tensor, shape=input_shape, name='output')

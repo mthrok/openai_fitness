@@ -26,13 +26,16 @@ class LeakyReLU(layer.LeakyReLU, BaseLayer):
     Parameters
     ----------
     alpha : float
-        Slope for negative region.
+        Initial value of slope for negative region.
+
+    train : bool
+        When True, ``alpha`` variable becomes trainable variable.
 
     name : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, alpha, name='LeakyReLU'):
-        super(LeakyReLU, self).__init__(name=name, alpha=alpha)
+    def __init__(self, alpha, train=False, name='LeakyReLU'):
+        super(LeakyReLU, self).__init__(name=name, train=train, alpha=alpha)
 
 
 class Sigmoid(layer.Sigmoid, BaseLayer):

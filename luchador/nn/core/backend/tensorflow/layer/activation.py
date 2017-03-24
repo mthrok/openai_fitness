@@ -6,7 +6,8 @@ import logging
 
 import tensorflow as tf
 
-from ..wrapper import Tensor
+from lucahdor.nn.core.base import fetch_initializer
+from ..wrapper import Tensor, make_variable
 
 __all__ = ['ReLU', 'LeakyReLU', 'Softplus', 'Sigmoid', 'Tanh', 'Softmax']
 _LG = logging.getLogger(__name__)
@@ -28,10 +29,20 @@ class LeakyReLU(object):
 
     See :any:`LeakyReLU` for detail.
     """
+    def _get_alpha(self):
+        _alpha = self.args['alpha']
+        initializer = fetch_initializer('ConstantInitializer')(value=_alpha)
+        return make_variable(name='alpha', shape=[], initializer=initializer)
+
     def _build(self, input_tensor):
         x = input_tensor.unwrap()
-        f1 = 0.5 * (1 + self.args['alpha'])
-        f2 = 0.5 * (1 - self.args['alpha'])
+        alpha = self._get_alpha()
+        if self.args['train']:
+            self._create_parameter_slot(
+                'alpha', val=alpha, train=True, serialize=True)
+
+        f1 = 0.5 * (1 + alpha)
+        f2 = 0.5 * (1 - alpha)
         output = f1 * x + f2 * abs(x)
         return Tensor(output, name='output')
 
