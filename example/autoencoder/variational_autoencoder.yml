@@ -191,8 +191,12 @@ error: &error
   args:
     name: error
     output_config:
-      typename: Tensor
-      name: error/output
+      - typename: Tensor
+        name: error/output
+      - typename: Tensor
+        name: reconstruction_error/output
+      - typename: Tensor
+        name: latent_error/output
     node_configs:
       #--------------------
       # Reconstruction Error
@@ -215,7 +219,7 @@ error: &error
       - typename: Anonymous
         args:
           scope: latent_error
-          exp: 0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3])  
+          exp: reduce_mean(0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3]))
         input_config:
           mean:
             typename: Tensor
@@ -228,7 +232,7 @@ error: &error
       #--------------------
       - typename: Anonymous
         args:
-          exp: reduce_mean(x['recon'] + x['latent'])
+          exp: x['recon'] + x['latent']
           scope: error
         input_config:
           recon:
@@ -249,9 +253,8 @@ optimization: &optimization
           learning_rate: 0.01
         input_config:
           loss:
-            typename: Model
-            name: error
-            fetch: output
+            typename: Tensor
+            name: error/output
           wrt:
             typename: Model
             name: autoencoder
