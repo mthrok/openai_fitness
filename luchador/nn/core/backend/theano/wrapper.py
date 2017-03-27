@@ -86,6 +86,25 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _other = self._extract_operand(other)
         return Tensor(tensor=_other//self._tensor, shape=self.shape, name=name)
 
+    def transpose(self, axes=None, name=None):
+        """Reorder axes
+
+        Parameters
+        ----------
+        axes : list of ints
+            By default, reverse the dimensions, otherwise permute the axes
+            according to the values given.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        axes = axes or tuple(i for i in range(self.n_dim - 1, -1, -1))
+        _shape = tuple(self.shape[i] for i in axes)
+        _tensor = self._tensor.transpose(axes)
+        return Tensor(tensor=_tensor, shape=_shape, name=name)
+
 
 def _get_scope():
     return scope_module.get_variable_scope()

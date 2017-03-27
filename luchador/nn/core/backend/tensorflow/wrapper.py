@@ -67,6 +67,23 @@ class TensorMixin(object):  # pylint: disable=too-few-public-methods
         _other = self._extract_operand(other)
         return Tensor(tensor=_other//self._tensor, name=name)
 
+    def transpose(self, axes=None, name=None):
+        """Reorder axes
+
+        Parameters
+        ----------
+        axes : list of ints
+            By default, reverse the dimensions, otherwise permute the axes
+            according to the values given.
+
+        Returns
+        -------
+        Tensor
+            The resulting Tensor
+        """
+        _tensor = tf.transpose(self._tensor, perm=axes, name=name)
+        return Tensor(tensor=_tensor, name=name)
+
 
 def _get_dtype_str(tensor):
     return tensor.dtype.as_numpy_dtype().dtype.name

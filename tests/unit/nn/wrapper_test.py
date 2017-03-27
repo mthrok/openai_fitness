@@ -1,12 +1,46 @@
 """Test wapper module"""
 from __future__ import absolute_import
 
+from itertools import permutations
+
 import numpy as np
 
 from luchador import nn
 from tests.unit import fixture
 
 # pylint: disable=invalid-name
+
+
+class TestTensorTranspose(fixture.TestCase):
+    """Test TensorWrapper transpose function"""
+    def _test_transpose_tensor(self, shape, axes):
+        with nn.variable_scope(self.get_scope()):
+            in_var = nn.Input(shape=shape)
+            out_var = in_var.transpose(axes=axes)
+
+        in_val = np.random.random(size=shape)
+        session = nn.Session()
+        out_val = session.run(
+            outputs=out_var,
+            inputs={in_var: in_val},
+        )
+        np.testing.assert_almost_equal(
+            np.transpose(in_val, axes=axes), out_val)
+
+    def test_transpose_tensor(self):
+        """Transpose reverse Tensor shape when axes is not given"""
+        shape_ = (3, 4, 5, 6)
+        for i in range(1, len(shape_)+1):
+            self._test_transpose_tensor(shape_[:i], axes=None)
+
+    def test_transpose_tensor_axes(self):
+        """Transpose reorder Tensor shape when axes is given"""
+        shape_ = (3, 4, 5, 6)
+        for l in range(1, len(shape_)+1):
+            shape = shape_[:l]
+            pattern = [i for i in range(l)]
+            for axes in permutations(pattern):
+                self._test_transpose_tensor(shape=shape, axes=axes)
 
 
 class TestTensorOpsMult(fixture.TestCase):
