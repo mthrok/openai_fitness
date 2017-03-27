@@ -6,6 +6,7 @@ import theano.tensor as T
 from ..wrapper import Tensor
 
 __all__ = ['add', 'multiply', 'maximum', 'minimum']
+# pylint: disable=assignment-from-no-return
 
 
 def _compute_shuffle_pattern(shape1, shape2):
@@ -64,6 +65,18 @@ def _compute_shape(shape1, shape2):
     return tuple(shape)
 
 
+def _make_compatible(var1, var2):
+    """Align dimensions and broadcast pattern of the input variables"""
+    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
+    var1_ = var1.unwrap().dimshuffle(pat1)
+    var2_ = var2.unwrap().dimshuffle(pat2)
+    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
+    var1_ = T.addbroadcast(var1_, *pat1)
+    var2_ = T.addbroadcast(var2_, *pat2)
+    shape = _compute_shape(var1.shape, var2.shape)
+    return var1_, var2_, shape
+
+
 def add(var1, var2, name=None):
     """Elementwise addition with broadcast support
 
@@ -80,13 +93,7 @@ def add(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
-    var1_ = var1.unwrap().dimshuffle(pat1)
-    var2_ = var2.unwrap().dimshuffle(pat2)
-    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
-    var1_ = T.addbroadcast(var1_, *pat1)
-    var2_ = T.addbroadcast(var2_, *pat2)
-    shape = _compute_shape(var1.shape, var2.shape)
+    var1_, var2_, shape = _make_compatible(var1, var2)
     return Tensor(tensor=var1_+var2_, shape=shape, name=name)
 
 
@@ -106,13 +113,7 @@ def multiply(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
-    var1_ = var1.unwrap().dimshuffle(pat1)
-    var2_ = var2.unwrap().dimshuffle(pat2)
-    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
-    var1_ = T.addbroadcast(var1_, *pat1)
-    var2_ = T.addbroadcast(var2_, *pat2)
-    shape = _compute_shape(var1.shape, var2.shape)
+    var1_, var2_, shape = _make_compatible(var1, var2)
     return Tensor(tensor=var1_*var2_, shape=shape, name=name)
 
 
@@ -132,13 +133,7 @@ def maximum(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
-    var1_ = var1.unwrap().dimshuffle(pat1)
-    var2_ = var2.unwrap().dimshuffle(pat2)
-    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
-    var1_ = T.addbroadcast(var1_, *pat1)
-    var2_ = T.addbroadcast(var2_, *pat2)
-    shape = _compute_shape(var1.shape, var2.shape)
+    var1_, var2_, shape = _make_compatible(var1, var2)
     _tensor = T.maximum(var1_, var2_)
     return Tensor(tensor=_tensor, shape=shape, name=name)
 
@@ -160,12 +155,6 @@ def minimum(var1, var2, name=None):
     Tensor
         The resulting Tensor
     """
-    pat1, pat2 = _compute_shuffle_pattern(var1.shape, var2.shape)
-    var1_ = var1.unwrap().dimshuffle(pat1)
-    var2_ = var2.unwrap().dimshuffle(pat2)
-    pat1, pat2 = _compute_broadcast_pattern(var1.shape, var2.shape)
-    var1_ = T.addbroadcast(var1_, *pat1)
-    var2_ = T.addbroadcast(var2_, *pat2)
-    shape = _compute_shape(var1.shape, var2.shape)
+    var1_, var2_, shape = _make_compatible(var1, var2)
     _tensor = T.minimum(var1_, var2_)
     return Tensor(tensor=_tensor, shape=shape, name=name)
