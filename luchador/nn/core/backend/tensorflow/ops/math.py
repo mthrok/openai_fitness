@@ -1,4 +1,4 @@
-"""Define math ops"""
+"""Define math ops which work on single tensor"""
 from __future__ import absolute_import
 
 import tensorflow as tf
@@ -13,6 +13,8 @@ __all__ = [
 # pylint: disable=redefined-builtin
 
 
+###############################################################################
+# Elementwise
 def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
@@ -54,6 +56,8 @@ def cos(var, name=None):
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
+###############################################################################
+# Reduction operations
 def reduce_mean(var, axis=None, keep_dims=False, name=None):
     """Compute mean across the given axis
 

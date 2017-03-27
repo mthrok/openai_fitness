@@ -1,4 +1,4 @@
-"""Define math ops"""
+"""Define math ops which work on single tensor"""
 from __future__ import absolute_import
 
 import theano.tensor as T
@@ -14,6 +14,8 @@ __all__ = [
 # pylint: disable=redefined-builtin,assignment-from-no-return
 
 
+###############################################################################
+# Elementwise
 def abs(var, name=None):
     """Element-wise absolute value"""
     return var.__abs__(name=name)
@@ -56,6 +58,7 @@ def cos(var, name=None):
 
 
 ###############################################################################
+# Reduction operations
 def _compute_reduced_shape(axis, shape, keep_dims):
     if axis is None:
         if keep_dims:
