@@ -1,6 +1,5 @@
+"""Unit test for luchador.nn.ops module"""
 from __future__ import absolute_import
-
-import unittest
 
 import numpy as np
 
@@ -12,62 +11,8 @@ _BACKEND = luchador.get_nn_backend()
 # pylint: disable=invalid-name
 
 
-def _create_variables(shape=(3, 4)):
-    init = nn.initializer.ConstantInitializer
-    src = nn.make_variable('source', shape=shape, initializer=init(value=1))
-    tgt = nn.make_variable('taget', shape=shape, initializer=init(value=0))
-    return src, tgt
-
-
-class TestOpsSync(unittest.TestCase):
-    """Test ops.build_sync_op function"""
-    def test_sync_without_tau(self):
-        """sync op copies values from source variables to target variables"""
-        with nn.variable_scope(self.id().replace('.', '/')):
-            source_var, target_var = _create_variables()
-            sync_op = nn.ops.build_sync_op(
-                [source_var], [target_var], tau=None)
-
-        session = nn.Session()
-        session.initialize()
-
-        src_val, tgt_val = session.run([source_var, target_var])
-        self.assertTrue((src_val == 1).all())
-        self.assertTrue((tgt_val == 0).all())
-
-        session.run(updates=sync_op)
-
-        src_val, tgt_val = session.run([source_var, target_var])
-        self.assertTrue((src_val == 1).all())
-        self.assertTrue((tgt_val == src_val).all())
-
-    def test_sync_with_tau(self):
-        """sync op copies weighted sum of source and target variables"""
-        tau = 0.1
-        with nn.variable_scope(self.id().replace('.', '/')):
-            source_var, target_var = _create_variables()
-            sync_op = nn.ops.build_sync_op(
-                [source_var], [target_var], tau=tau)
-
-        session = nn.Session()
-        session.initialize()
-
-        src_val, tgt_val = session.run([source_var, target_var])
-        self.assertTrue((src_val == 1).all())
-        self.assertTrue((tgt_val == 0).all())
-
-        for _ in range(10):
-            expected = tau * src_val + (1 - tau) * tgt_val
-            session.run(updates=sync_op)
-            src_val, found = session.run([source_var, target_var])
-            self.assertTrue((src_val == 1).all())
-            self.assertTrue(
-                np.square(expected - found).sum() < 1e-10,
-                '\nExpected: \n{}\nFound: \n{}'.format(expected, found)
-            )
-            tgt_val = found
-
-
+###############################################################################
+# Test gradients
 class TestComputeGradiens(fixture.TestCase):
     """Test gradient computation"""
     def test_compute_gradients(self):
@@ -118,6 +63,8 @@ class TestComputeGradiens(fixture.TestCase):
             self.assertIs(grads_and_vars[i][0], grad)
 
 
+###############################################################################
+# Test clipping
 class TestTensorOpsClipByValue(fixture.TestCase):
     """Test clipping wrapper by value"""
     def test_clip_number_by_value(self):
@@ -283,7 +230,9 @@ class TestTensorOpsClipByNorm(fixture.TestCase):
             out_val, clip_norm * in_val / l2_norm, decimal=3)
 
 
-class OpsTest(fixture.TestCase):
+###############################################################################
+# Test reduction operations
+class _ReductionTest(fixture.TestCase):
     """Test case for reduce_** operations"""
     def _test(self, op, np_op, axis, shape, keep_dims):
         """Run reduce_** operation and check the result with NumPy func"""
@@ -303,7 +252,7 @@ class OpsTest(fixture.TestCase):
         np.testing.assert_almost_equal(out_val, expected, decimal=3)
 
 
-class TestOpsMean(OpsTest):
+class TestReduceMean(_ReductionTest):
     """Test mean ops"""
     def _test_mean(self, axis, shape, keep_dims):
         self._test(nn.ops.reduce_mean, np.mean, axis, shape, keep_dims)
@@ -333,7 +282,7 @@ class TestOpsMean(OpsTest):
         self._test_mean(None, (3, 4, 5, 6), True)
 
 
-class TestTensorOpsSum(OpsTest):
+class TestReduceSum(_ReductionTest):
     """Test wrapper sum method"""
     def _test_sum(self, axis, shape, keep_dims):
         self._test(nn.ops.reduce_sum, np.sum, axis, shape, keep_dims)
@@ -363,7 +312,7 @@ class TestTensorOpsSum(OpsTest):
         self._test_sum(None, (3, 4, 5, 6), True)
 
 
-class TestTensorOpsMax(OpsTest):
+class TestReduceMax(_ReductionTest):
     """Test wrapper max method"""
     def _test_max(self, axis, shape, keep_dims):
         self._test(nn.ops.reduce_max, np.max, axis, shape, keep_dims)
@@ -393,7 +342,9 @@ class TestTensorOpsMax(OpsTest):
         self._test_max(None, (3, 4, 5, 6), True)
 
 
-class _TestElementwise(fixture.TestCase):
+###############################################################################
+# Test elementwise operations over multiple operands
+class _MultiElementwiseTest(fixture.TestCase):
     def _verify_shape(self, expected, found):
         for i, _ in enumerate(expected):
             if found[i] is None:
@@ -424,7 +375,7 @@ class _TestElementwise(fixture.TestCase):
         self._verify_shape(out_val1.shape, out_var1.shape)
 
 
-class TestMultiply(_TestElementwise):
+class TestElementwiseMultiply(_MultiElementwiseTest):
     """Test mutiply operation"""
     def _test_multiply(self, shape0, shape1):
         self._test_elementwise(shape0, shape1, nn.ops.multiply, np.multiply)
@@ -462,7 +413,7 @@ class TestMultiply(_TestElementwise):
             self._test_multiply((3, 4, 5), (6, ))
 
 
-class TestAdd(_TestElementwise):
+class TestElementwiseAdd(_MultiElementwiseTest):
     """Test mutiply operation"""
     def _test_add(self, shape0, shape1):
         self._test_elementwise(shape0, shape1, nn.ops.add, np.add)
@@ -500,7 +451,7 @@ class TestAdd(_TestElementwise):
             self._test_add((3, 4, 5), (6, ))
 
 
-class TestTensorOpsMaximum(_TestElementwise):
+class TestElementwiseMaximum(_MultiElementwiseTest):
     """Test wrapper maximum method"""
     def _test_maximum(self, shape0, shape1):
         self._test_elementwise(shape0, shape1, nn.ops.maximum, np.maximum)
@@ -531,7 +482,7 @@ class TestTensorOpsMaximum(_TestElementwise):
             self._test_maximum((3, 4, 5), (6, ))
 
 
-class TestTensorOpsMinimum(_TestElementwise):
+class TestElementwiseMinimum(_MultiElementwiseTest):
     """Test wrapper minimum method"""
     def _test_minimum(self, shape0, shape1):
         self._test_elementwise(shape0, shape1, nn.ops.minimum, np.minimum)
@@ -567,6 +518,64 @@ class TestTensorOpsMinimum(_TestElementwise):
 
         with self.assertRaises(ValueError):
             self._test_minimum((3, 4, 5), (6, ))
+
+
+###############################################################################
+# Test Misc
+def _create_variables(shape=(3, 4)):
+    init = nn.initializer.ConstantInitializer
+    src = nn.make_variable('source', shape=shape, initializer=init(value=1))
+    tgt = nn.make_variable('taget', shape=shape, initializer=init(value=0))
+    return src, tgt
+
+
+class TestOpsSync(fixture.TestCase):
+    """Test ops.build_sync_op function"""
+    def test_sync_without_tau(self):
+        """sync op copies values from source variables to target variables"""
+        with nn.variable_scope(self.get_scope()):
+            source_var, target_var = _create_variables()
+            sync_op = nn.ops.build_sync_op(
+                [source_var], [target_var], tau=None)
+
+        session = nn.Session()
+        session.initialize()
+
+        src_val, tgt_val = session.run([source_var, target_var])
+        self.assertTrue((src_val == 1).all())
+        self.assertTrue((tgt_val == 0).all())
+
+        session.run(updates=sync_op)
+
+        src_val, tgt_val = session.run([source_var, target_var])
+        self.assertTrue((src_val == 1).all())
+        self.assertTrue((tgt_val == src_val).all())
+
+    def test_sync_with_tau(self):
+        """sync op copies weighted sum of source and target variables"""
+        tau = 0.1
+        with nn.variable_scope(self.get_scope()):
+            source_var, target_var = _create_variables()
+            sync_op = nn.ops.build_sync_op(
+                [source_var], [target_var], tau=tau)
+
+        session = nn.Session()
+        session.initialize()
+
+        src_val, tgt_val = session.run([source_var, target_var])
+        self.assertTrue((src_val == 1).all())
+        self.assertTrue((tgt_val == 0).all())
+
+        for _ in range(10):
+            expected = tau * src_val + (1 - tau) * tgt_val
+            session.run(updates=sync_op)
+            src_val, found = session.run([source_var, target_var])
+            self.assertTrue((src_val == 1).all())
+            self.assertTrue(
+                np.square(expected - found).sum() < 1e-10,
+                '\nExpected: \n{}\nFound: \n{}'.format(expected, found)
+            )
+            tgt_val = found
 
 
 class TestTensorOpsOneHot(fixture.TestCase):
@@ -608,6 +617,8 @@ class TestTensorOpsOneHot(fixture.TestCase):
         self._test_one_hot(shape=[10], n_classes=4, out_dtype='float64')
 
 
+###############################################################################
+# Test Transform
 class TestTensorOpsReshape(fixture.TestCase):
     """Test wrapper reshape method"""
     def _test_reshape(
