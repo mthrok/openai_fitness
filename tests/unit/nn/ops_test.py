@@ -344,6 +344,56 @@ class TestReduceMax(_ReductionTest):
 
 ###############################################################################
 # Test elementwise operations over multiple operands
+class TestDot(fixture.TestCase):
+    def _verify_shape(self, expected, found):
+        for i, _ in enumerate(expected):
+            if found[i] is None:
+                continue
+            self.assertEqual(found[i], expected[i])
+
+    def _test_dot(self, shape0, shape1):
+        with nn.variable_scope(self.get_scope()):
+            in_var0 = nn.Input(shape=shape0)
+            in_var1 = nn.Input(shape=shape1)
+            out_var = nn.ops.dot(in_var0, in_var1)
+
+        in_val0 = np.random.random(size=shape0)
+        in_val1 = np.random.random(size=shape1)
+
+        session = nn.Session()
+
+        out_val = session.run(
+            outputs=out_var,
+            inputs={in_var0: in_val0, in_var1: in_val1},
+        )
+        np_val = np.dot(in_val0, in_val1)
+        np.testing.assert_almost_equal(out_val, np_val, decimal=3)
+        self._verify_shape(out_val.shape, out_var.shape)
+
+    def test_dot_vector(self):
+        """Test dot on vector"""
+        self._test_dot((1, 4), (4, 1))
+        self._test_dot((4, 1), (1, 4))
+
+    def test_dot_2D(self):
+        """Test dot 2D"""
+        self._test_dot((3, 4), (4, 5))
+
+    def test_dot_3D(self):
+        """Test dot 3D"""
+        self._test_dot((3, 4, 6), (5, 6, 7))
+        self._test_dot((3, 4, 5), (5, 6))
+        self._test_dot((3, 5), (4, 5, 6))
+
+    def test_dot_4D(self):
+        """Test dot 4D"""
+        self._test_dot((3, 4, 5, 8), (6, 7, 8, 9))
+        self._test_dot((3, 4, 5, 7), (6, 7, 8))
+        self._test_dot((3, 4, 7), (5, 6, 7, 8))
+
+
+###############################################################################
+# Test elementwise operations over multiple operands
 class _MultiElementwiseTest(fixture.TestCase):
     def _verify_shape(self, expected, found):
         for i, _ in enumerate(expected):
