@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import tensorflow as tf
-from ..wrapper import Tensor
+from ...wrapper import Tensor
 
 __all__ = ['add', 'multiply', 'maximum', 'minimum']
 
