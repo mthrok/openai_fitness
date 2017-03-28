@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import theano.tensor as T
 
-from ..wrapper import Tensor
+from ...wrapper import Tensor
 
 __all__ = ['add', 'multiply', 'maximum', 'minimum']
 # pylint: disable=assignment-from-no-return

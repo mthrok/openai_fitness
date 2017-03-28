@@ -1,64 +1,12 @@
-"""Define math ops which work on single tensor"""
+"""Define reduction math ops"""
 from __future__ import absolute_import
 
-import theano.tensor as T
-
 import luchador.util
-from ..wrapper import Tensor
+from ...wrapper import Tensor
 
-__all__ = [
-    'abs', 'square', 'sqrt',
-    'exp', 'log', 'sin', 'cos',
-    'reduce_mean', 'reduce_sum', 'reduce_max',
-]
-# pylint: disable=redefined-builtin,assignment-from-no-return
+__all__ = ['reduce_mean', 'reduce_sum', 'reduce_max']
 
 
-###############################################################################
-# Elementwise
-def abs(var, name=None):
-    """Element-wise absolute value"""
-    return var.__abs__(name=name)
-
-
-def square(var, name=None):
-    """Returns square of the given variable"""
-    _tensor = T.sqr(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-def sqrt(var, name=None):
-    """Returns square root of the given variable"""
-    _tensor = T.sqrt(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-def exp(var, name=None):
-    """Returns exponential of the given variable"""
-    _tensor = T.exp(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-def log(var, name=None):
-    """Returns exponential of the given variable"""
-    _tensor = T.log(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-def sin(var, name=None):
-    """Returns sin of the given variable"""
-    _tensor = T.sin(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-def cos(var, name=None):
-    """Returns cos of the given variable"""
-    _tensor = T.cos(var.unwrap())
-    return Tensor(tensor=_tensor, shape=var.shape, name=name)
-
-
-###############################################################################
-# Reduction operations
 def _compute_reduced_shape(axis, shape, keep_dims):
     if axis is None:
         if keep_dims:
