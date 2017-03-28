@@ -219,7 +219,7 @@ error: &error
       - typename: Anonymous
         args:
           scope: latent_error
-          exp: reduce_mean(0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3]))
+          exp: reduce_mean(reduce_sum((square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1) * 0.5, [1, 2, 3]))
         input_config:
           mean:
             typename: Tensor
