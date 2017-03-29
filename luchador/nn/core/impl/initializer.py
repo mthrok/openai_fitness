@@ -27,7 +27,7 @@ class UniformInitializer(initializer.Uniform, BaseInitializer):
 
     Parameters
     ----------
-    minval, maxval : float
+    min_value, max_value : float
         Minimum/maximum value of sampling distribution
 
     seed : int or None
@@ -36,9 +36,11 @@ class UniformInitializer(initializer.Uniform, BaseInitializer):
     dtype : str or None
         Data type to sample. If None, default dtype is used.
     """
-    def __init__(self, minval=0.0, maxval=1.0, seed=None, dtype=None):
+    def __init__(self, min_value=0.0, max_value=1.0, seed=None, dtype=None):
+        if max_value < min_value:
+            raise ValueError('`max_value` must be larger than `min_value`')
         super(UniformInitializer, self).__init__(
-            minval=minval, maxval=maxval, seed=seed, dtype=dtype)
+            min_value=min_value, max_value=max_value, seed=seed, dtype=dtype)
 
 
 class NormalInitializer(initializer.Normal, BaseInitializer):

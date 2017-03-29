@@ -48,7 +48,7 @@ class Uniform(InitializerMixin):
     """
     def _run_backend_specific_init(self):
         self._initializer = tf.random_uniform_initializer(
-            minval=self.args['minval'], maxval=self.args['maxval'],
+            minval=self.args['min_value'], maxval=self.args['max_value'],
             seed=self.args['seed'], dtype=self._get_dtype())
 
 

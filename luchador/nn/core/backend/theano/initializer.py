@@ -65,7 +65,7 @@ class Uniform(InitializerMixin):
     See :any:`UniformInitializer` for detail.
     """
     def _sample_values(self, shape):
-        low, high = self.args['minval'], self.args['maxval']
+        low, high = self.args['min_value'], self.args['max_value']
         return self._rng.uniform(low=low, high=high, size=shape)
 
 

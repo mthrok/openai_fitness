@@ -69,12 +69,12 @@ def create_constant_variable(shape, dtype, value=7, name='constant_varriable'):
 
 
 def create_random_variable(
-        shape, dtype, min_val=0, max_val=1, name='random_variable'):
+        shape, dtype, min_value=0, max_value=1, name='random_variable'):
     """Create Variable with uniform randoml values for test"""
     return nn.make_variable(
         name=name, shape=shape, dtype=dtype,
         initializer=nn.initializer.UniformInitializer(
-            minval=min_val, maxval=max_val)
+            min_value=min_value, max_value=max_value)
     )
 
 
