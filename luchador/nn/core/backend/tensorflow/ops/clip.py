@@ -22,6 +22,8 @@ def clip_by_value(tensor, max_value, min_value, name=None):
     Tensor
         The resulting Tensor
     """
+    if max_value < min_value:
+        raise ValueError('`max_value` must be larger than `min_value`')
     if isinstance(max_value, BaseWrapper):
         max_value = max_value.unwrap()
     if isinstance(min_value, BaseWrapper):
