@@ -1,4 +1,5 @@
 """Test nn.cost module"""
+from __future__ import division
 from __future__ import absolute_import
 
 import numpy as np
@@ -27,7 +28,8 @@ class CostUtilTest(TestCase):
 class _CostTest(TestCase):
     longMessage = True
 
-    def _test_cost(self, cost, target, prediction, expected, elementwise):
+    def _test_cost(
+            self, cost, target, prediction, expected, elementwise, decimal=5):
         with nn.variable_scope(self.get_scope()):
             target_var = nn.Input(shape=target.shape)
             pred_var = nn.Input(shape=prediction.shape)
@@ -45,7 +47,7 @@ class _CostTest(TestCase):
         if not elementwise:
             expected = np.sum(np.mean(expected, axis=0))
 
-        np.testing.assert_almost_equal(out_val, expected, decimal=5)
+        np.testing.assert_almost_equal(out_val, expected, decimal=decimal)
         self.assertEqual(out_val.shape, out_var.shape)
 
 
@@ -118,3 +120,29 @@ class SoftmaxCrossEntropyTest(_CostTest):
     def test_sce_scalar(self):
         """SoftmaxCrossEntropy output value is correct"""
         self._test_sce(elementwise=False)
+
+
+def _kld(mean, stddev, clip_max=1e10, clip_min=1e-10):
+    stddev2 = np.square(stddev)
+    clipped = np.clip(stddev2, a_max=clip_max, a_min=clip_min)
+    return (np.square(mean) + stddev2 - np.log(clipped) - 1) / 2
+
+
+class NormalKLDivergenceTest(_CostTest):
+    """Test NormalKMDivergence class"""
+
+    def _test_kld(self, elementwise, clip_max=1e5, clip_min=1e-10):
+        shape = (32, 3, 5)
+        mean = np.random.randn(*shape)
+        stddev = np.random.randn(*shape)
+        expected = _kld(mean, stddev, clip_max=clip_max, clip_min=clip_min)
+        cost = luchador.nn.cost.NormalKLDivergence(elementwise=elementwise)
+        self._test_cost(cost, mean, stddev, expected, elementwise)
+
+    def test_kld_element_wise(self):
+        """NormalKLDivergence output value is correct"""
+        self._test_kld(elementwise=True)
+
+    def test_kld_scalar(self):
+        """NormalKLDivergence output value is correct"""
+        self._test_kld(elementwise=False)
