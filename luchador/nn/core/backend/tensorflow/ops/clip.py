@@ -9,6 +9,10 @@ from ..wrapper import Tensor
 __all__ = ['clip_by_value', 'clip_by_norm']
 
 
+def _is_wrapper(obj):
+    return isinstance(obj, BaseWrapper)
+
+
 def clip_by_value(tensor, max_value, min_value, name=None):
     """Clip value elementwise
 
@@ -22,11 +26,12 @@ def clip_by_value(tensor, max_value, min_value, name=None):
     Tensor
         The resulting Tensor
     """
-    if max_value < min_value:
-        raise ValueError('`max_value` must be larger than `min_value`')
-    if isinstance(max_value, BaseWrapper):
+    if not _is_wrapper(max_value) and not _is_wrapper(min_value):
+        if max_value < min_value:
+            raise ValueError('`max_value` must be larger than `min_value`')
+    if _is_wrapper(max_value):
         max_value = max_value.unwrap()
-    if isinstance(min_value, BaseWrapper):
+    if _is_wrapper(min_value):
         min_value = min_value.unwrap()
     _tensor = tf.clip_by_value(
         tensor.unwrap(), clip_value_min=min_value,
@@ -58,7 +63,7 @@ def clip_by_norm(tensor, clip_norm, axes=None, name=None):
     Tensor
         The resulting Tensor
     """
-    if isinstance(clip_norm, BaseWrapper):
+    if _is_wrapper(clip_norm):
         clip_norm = clip_norm.unwrap()
 
     _tensor = tf.clip_by_norm(
