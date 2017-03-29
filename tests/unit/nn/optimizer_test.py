@@ -33,7 +33,7 @@ class OptimizerGradientTest(fixture.TestCase):
         shape = (32, 1)
         with nn.variable_scope(self.get_scope()):
             initializer = nn.fetch_initializer(
-                'UniformInitializer')(minval=-3, maxval=3)
+                'UniformInitializer')(min_value=-3, max_value=3)
             x = nn.make_variable(
                 name='x', shape=shape, initializer=initializer)
             y = nn.ops.reduce_sum(x * x / 2)
