@@ -39,6 +39,7 @@ def make_node(config):
     between already-defined Input instance and Tensor.
 
     .. code-block:: yaml
+
         typename: SSE
         args:
           name: reconstruction_error

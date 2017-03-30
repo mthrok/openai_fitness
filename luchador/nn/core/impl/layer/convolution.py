@@ -221,10 +221,6 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
                 typename: Input
                 reuse: True
                 name: input
-            original_input:
-                typename: Input
-                reuse: True
-                name: input
 
     Parameters
     ----------
