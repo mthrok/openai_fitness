@@ -35,37 +35,41 @@ class EpisodeRunner(object):
 
     def run_episode(self, max_steps=None):
         """Run one episode"""
+        steps, rewards = 0, 0
+        t_start = time.time()
+
         outcome = self._reset()
         state0 = outcome.state
+        steps += 1
+        rewards += outcome.reward
 
-        episode_steps, episode_rewards = 0, 0
-        t_start = time.time()
         for _ in range(max_steps or self.max_steps):
             action = self.agent.act()
+
             outcome = self.env.step(action)
-
             state1 = outcome.state
-            reward = outcome.reward
-            terminal = outcome.terminal
+            steps += 1
+            rewards += outcome.reward
+
             self.agent.learn(
-                state0, action, reward, state1, terminal, outcome.info)
+                state0, action, outcome.reward, state1,
+                outcome.terminal, outcome.info)
 
-            state0 = state1
-            episode_steps += 1
-            episode_rewards += reward
-
-            if terminal:
+            if outcome.terminal:
                 break
+            state0 = state1
+
         t_elapsed = time.time() - t_start
+
+        self.time += t_elapsed
+        self.steps += steps
+        self.rewards += rewards
 
         stats = {
             'episode': self.episode,
-            'rewards': episode_rewards,
-            'steps': episode_steps,
+            'rewards': rewards,
+            'steps': steps,
             'time': t_elapsed,
         }
         self._perform_post_episode_task(stats)
-        self.time += t_elapsed
-        self.steps += episode_steps
-        self.rewards += episode_rewards
         return stats
