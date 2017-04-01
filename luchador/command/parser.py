@@ -42,6 +42,8 @@ def _add_exercise_subcommand_parser(subparsers):
         '--steps', type=int, default=10000,
         help='Set max steps for each episode.')
     parser.add_argument(
+        '--save-dir', help='Save environment transition.')
+    parser.add_argument(
         '--sources', nargs='+', default=[],
         help='Source files that contain custom Agent/Env etc')
     parser.add_argument(

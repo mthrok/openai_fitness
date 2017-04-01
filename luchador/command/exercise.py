@@ -13,9 +13,9 @@ _LG = logging.getLogger(__name__)
 
 
 ###############################################################################
-def _main(env, agent, episodes, steps, report_every=1000):
+def _main(env, agent, episodes, steps, report_every=1000, save_dir=None):
     agent.init(env)
-    runner = EpisodeRunner(env, agent, max_steps=steps)
+    runner = EpisodeRunner(env, agent, max_steps=steps, save_dir=save_dir)
 
     _LG.info('Running %s episodes', episodes)
     n_ep, time_, steps_, rewards_ = 0, 0, 0, 0.0
@@ -87,8 +87,8 @@ def entry_point(args):
 
     try:
         _main(
-            env, agent, episodes=args.episodes,
-            steps=args.steps, report_every=args.report)
+            env, agent, episodes=args.episodes, steps=args.steps,
+            report_every=args.report, save_dir=args.save_dir)
     finally:
         if env.__class__.__name__ == 'RemoteEnv' and args.kill:
             _LG.info('Killing environment server')
