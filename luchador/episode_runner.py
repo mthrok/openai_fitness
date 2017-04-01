@@ -23,7 +23,7 @@ class _Counter(object):
         self.episode += 1
 
     def update(self, steps, rewards, time_):
-        """Increase episode count"""
+        """Update total numbers"""
         self.time += time_
         self.steps += steps
         self.rewards += rewards
@@ -62,7 +62,9 @@ class EpisodeRunner(object):
 
     def _perform_post_episode_task(self, stats):
         """Perform post episode task"""
-        self._counter.update(stats['rewards'], stats['steps'], stats['time'])
+        self._counter.update(
+            rewards=stats['rewards'], steps=stats['steps'],
+            time_=stats['time'])
         self.agent.perform_post_episode_task(stats)
 
     def run_episode(self, max_steps=None):
