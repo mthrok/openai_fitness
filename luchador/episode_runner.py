@@ -10,6 +10,25 @@ _LG = logging.getLogger(__name__)
 __all__ = ['EpisodeRunner']
 
 
+class _Counter(object):
+    """Helper class for tracking count"""
+    def __init__(self):
+        self.episode = 0
+        self.time = 0
+        self.steps = 0
+        self.rewards = 0
+
+    def reset(self):
+        """Increase episode count"""
+        self.episode += 1
+
+    def update(self, steps, rewards, time_):
+        """Increase episode count"""
+        self.time += time_
+        self.steps += steps
+        self.rewards += rewards
+
+
 class EpisodeRunner(object):
     """Class for runnig episode"""
     def __init__(self, env, agent, max_steps=10000):
@@ -17,20 +36,33 @@ class EpisodeRunner(object):
         self.agent = agent
         self.max_steps = max_steps
 
-        self.episode = 0
-        self.time = 0
-        self.steps = 0
-        self.rewards = 0
+        self._counter = _Counter()
+
+    @property
+    def episode(self):
+        """Get the current episode number"""
+        return self._counter.episode
+
+    @property
+    def steps(self):
+        """Get the number of total steps taken"""
+        return self._counter.steps
+
+    @property
+    def time(self):
+        """Get the total time spent on running episodes in second"""
+        return self._counter.time
 
     def _reset(self):
         """Reset environment and agent"""
-        self.episode += 1
+        self._counter.reset()
         outcome = self.env.reset()
         self.agent.reset(outcome.state)
         return outcome
 
     def _perform_post_episode_task(self, stats):
         """Perform post episode task"""
+        self._counter.update(stats['rewards'], stats['steps'], stats['time'])
         self.agent.perform_post_episode_task(stats)
 
     def run_episode(self, max_steps=None):
@@ -59,17 +91,11 @@ class EpisodeRunner(object):
                 break
             state0 = state1
 
-        t_elapsed = time.time() - t_start
-
-        self.time += t_elapsed
-        self.steps += steps
-        self.rewards += rewards
-
         stats = {
             'episode': self.episode,
             'rewards': rewards,
             'steps': steps,
-            'time': t_elapsed,
+            'time': time.time() - t_start,
         }
         self._perform_post_episode_task(stats)
         return stats
