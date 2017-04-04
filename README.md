@@ -10,7 +10,7 @@ In Reinforcement Learning, we need to set a lot of parameters for environment be
 Luchador's design principle is easy configuration and customization. If the library does not meet your requirement, you can add the missing component and you only need to update the necessary configuration part to use it. For example, you can reuse an agent implementation while adding new neural network module, or you can add new agent while using an existing network architecture. Let's see this by following examples. 
 
 ### 1. Running Predefined Agent and Env
-For the installation instruction, please refere to [Installation](## Installation). Once you installed Luchador, you have command called `luchador`. `luchador` is a simple script which invokes single agent episode runner, similar to the following snipet.
+For the installation instruction, please refer to [Installation](## Installation). Once you installed Luchador, you have command called `luchador`. `luchador` is a simple script which invokes single agent episode runner, similar to the following snipet.
 
 ```python
 from luchador.env import get_env
@@ -96,7 +96,7 @@ class MyRandomAgent(BaseAgent):
         return np.random.randint(self.n_actions)
 ```
 
-Then, check that `luchador.agent.get_agent` function can find this calss by name.
+Then, check that `luchador.agent.get_agent` function can find this class by name.
 
 ```bash
 $ python
@@ -182,7 +182,7 @@ args:
 
 You can feed this configuration to `luchador.nn.util.make_model` then the function will return the coresponding network architecture.
 
-But having static parameters is sometimes inconvenient. For example, although the 5 layers of DQN are fixed, the output size (which corresponds to `n_nodes` in above) can vary from the environment to run. To accomodate this needs, we have `luchador.nn.util.get_model_config` which will substitute parameters at load-time using Python's format notation. Let's modify the above configuration file to parameterize `n_nodes` and call this file `model.yml`
+But having static parameters is sometimes inconvenient. For example, although the 5 layers of DQN are fixed, the output size (which corresponds to `n_nodes` in above) can vary from the environment to run. To accommodate this needs, we have `luchador.nn.util.get_model_config` which will substitute parameters at load-time using Python's format notation. Let's modify the above configuration file to parameterize `n_nodes` and call this file `model.yml`
 
 ```yaml
 typename: Sequential
@@ -244,7 +244,7 @@ At the time of importing `luchador.nn` module, luchador checks environmental var
 LUCHADOR_NN_BACKEND=theano luchador
 ```
 
-When running Tensorflow backend, you can additionally configure default `dtype` and convolution data format  with `LUCHADOR_NN_DTYPE` and `LUCHADOR_NN_CONV_FORMAT`. These values are only effective in Tensorflow backend. To configure Theano, make `.theanorc` file in hme directory and follow the instruction found at Theano documentation..
+When running Tensorflow backend, you can additionally configure default `dtype` and convolution data format  with `LUCHADOR_NN_DTYPE` and `LUCHADOR_NN_CONV_FORMAT`. These values are only effective in Tensorflow backend. To configure Theano, make `.theanorc` file in home directory and follow the instruction found at Theano documentation..
 
 ```bash
 LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 luchador 
@@ -269,7 +269,7 @@ See [project list](https://github.com/mthrok/luchador/projects) for the list of 
 
 ## RL Tutorials
 
-There are tutorials for funcamental concepts of Reinforcement Learning.
+There are tutorials for fundamental concepts of Reinforcement Learning.
 See [tutorial](tutorial) for the detail.
 
 
