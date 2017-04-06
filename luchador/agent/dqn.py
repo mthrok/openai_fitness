@@ -25,27 +25,11 @@ def _transpose(state):
     return state.transpose((0, 2, 3, 1))
 
 
-def _initialize_summary_writer(config, model):
+def _initialize_summary_writer(config):
     writer = nn.SummaryWriter(**config)
-
     sess = nn.get_session()
     if sess.graph:
         writer.add_graph(sess.graph)
-
-    params = model.get_parameters_to_serialize()
-    outputs = model.get_output_tensors()
-    writer.register(
-        'histogram', tag='params',
-        names=['/'.join(v.name.split('/')[1:]) for v in params])
-    writer.register(
-        'histogram', tag='outputs',
-        names=['/'.join(v.name.split('/')[1:]) for v in outputs])
-    writer.register(
-        'histogram', tag='training',
-        names=['Training/Error', 'Training/Reward', 'Training/Steps']
-    )
-    writer.register_stats(['Error', 'Reward', 'Steps'])
-    writer.register('scalar', ['Trainings'])
     return writer
 
 
@@ -186,7 +170,6 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         self._saver = nn.Saver(**self.args['saver_config'])
         self._summary_writer = _initialize_summary_writer(
             config=self.args['summary_writer_config'],
-            model=self._ql.models['model_0'],
         )
         self._summarize_layer_params()
 
@@ -324,6 +307,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         """Summarize layer parameter statistic"""
         dataset = self._ql.get_parameters_to_summarize()
         self._summary_writer.summarize(
+            summary_type='histogram',
             global_step=self._n_train, dataset=dataset)
 
     def _summarize_layer_outputs(self):
@@ -333,6 +317,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
             samples['state0'] = _transpose(samples['state0'])
         dataset = self._ql.get_layer_outputs(samples['state0'])
         self._summary_writer.summarize(
+            summary_type='histogram',
             global_step=self._n_train, dataset=dataset)
 
     def _summarize_history(self):
@@ -342,10 +327,16 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         rewards = self._summary_values['rewards']
         episode = self._summary_values['episode']
         self._summary_writer.summarize(
-            global_step=self._n_train, tag='training',
-            dataset=[errors, rewards, steps],
+            summary_type='histogram',
+            global_step=self._n_train,
+            dataset={
+                'Training/Error': errors,
+                'Training/Reward': rewards,
+                'Training/Steps': steps,
+            }
         )
         self._summary_writer.summarize(
+            summary_type='scalar',
             global_step=episode, dataset={'Trainings': self._n_train}
         )
         if rewards:
