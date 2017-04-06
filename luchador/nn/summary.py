@@ -16,15 +16,9 @@ __all__ = ['SummaryWriter']
 SummaryOperation = collections.namedtuple('SummaryOperation', ('pf', 'op'))
 
 
-def _create_summary_op(type_, name):
-    summary_funcs = {
-        'scalar': tf.summary.scalar,
-        'image': tf.summary.image,
-        'audio': lambda name, pf: tf.summary.audio(name, pf, sample_rate=144),
-        'histogram': tf.summary.histogram,
-    }
+def _create_summary_op(type_, name, **kwargs):
     pf = tf.placeholder('float32')
-    op = summary_funcs[type_](name, pf)
+    op = getattr(tf.summary, type_)(name, pf, **kwargs)
     return SummaryOperation(pf, op)
 
 
@@ -38,8 +32,7 @@ class SummaryWriter(object):
     """
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.summary_ops = {}
-        self.tags = {}
+        self.summary_ops = collections.defaultdict(dict)
 
         self.writer = tf.summary.FileWriter(self.output_dir)
         self.graph = tf.Graph()
@@ -51,35 +44,49 @@ class SummaryWriter(object):
         """Add graph summary. Affective only in tensorflow backend"""
         self.writer.add_graph(graph, global_step=global_step)
 
-    def register(self, summary_type, names):
-        """Create set of summary operation"""
+    def _get_summary_op(self, summary_type, name, **kwargs):
+        """Fetch or create summary operation and placeholder"""
+        if name in self.summary_ops[summary_type]:
+            return self.summary_ops[summary_type][name]
+
         with self.graph.as_default():
             with self.graph.device('/cpu:0'):
-                self._register(summary_type, names)
+                op = _create_summary_op(summary_type, name, **kwargs)
+                self.summary_ops[summary_type][name] = op
+        return op
 
-    def _register(self, summary_type, names):
-        for name in names:
-            self.summary_ops[name] = _create_summary_op(summary_type, name)
-
-    def summarize(self, global_step, dataset):
+    def summarize(self, summary_type, global_step, dataset, **kwargs):
         """Summarize the dataset
 
         Parameters
         ----------
-        global_step : int
-            Global step used as surffix for output file name
+        summary_type : str
+            Type of summary to create. ``scalar``, ``histogram``, ``image``
+            and ``audio`` are supported.
 
-        dataset : (dict or list of values)
-            When tag is not given this must be a dictionary mapping name of
-            registered summary operation to summary value.
-            When tag is given, summary operations registered with the tag are
-            pulled, so only values are needed so dataset must be a list of
-            values in the same order as the operations registered.
+        global_step : int
+            Global step value to record with the summary.
+
+        dataset : dict
+            key : str
+                Summary name
+            value : NumPy NDArray
+                Value to summarize. The shape of each array must be in
+                accordance with summary type.
+
+        **kwargs
+            Other keyward argument fed to summary operation function.
+            For ``image`` summary, ``max_outputs`` is accepted.
+            For ``audio`` summary, ``sample_rate`` must be given and
+            ``max_outputs`` is optional.
+
+            See tf.summary.image or tf.summary.audio for the detail.
         """
         ops, feed_dict = [], {}
         for name, value in dataset.items():
-            ops.append(self.summary_ops[name].op)
-            feed_dict[self.summary_ops[name].pf] = value
+            summary_op = self._get_summary_op(summary_type, name, **kwargs)
+            ops.append(summary_op.op)
+            feed_dict[summary_op.pf] = value
 
         summaries = self.session.run(ops, feed_dict=feed_dict)
         for summary in summaries:
@@ -87,31 +94,24 @@ class SummaryWriter(object):
         self.writer.flush()
 
     ###########################################################################
-    # Convenient functions
-    def register_stats(self, names):
-        """For each name, create ``name/[Average, Min, Max]`` summary ops"""
-        all_names = ['{}/{}'.format(name, stats) for name in names
-                     for stats in ['Average', 'Min', 'Max']]
-        self.register('scalar', all_names)
-
     def summarize_stats(self, global_step, dataset):
-        """Summarize statistics of dataset
+        """Summarize max/min/average of the given dataset
 
         Parameters
         ----------
         global_step : int
             Global step used as surffix for output file name
 
-        dataset (dict):
+        dataset : dict
             Key : str
                 Names used in :any:`register_stats`
             Value : list of floats, or NumPy Array
                 Values to summarize stats
         """
+        _dataset = {}
         for name, values in dataset.items():
-            _dataset = {
-                '{}/Average'.format(name): np.mean(values),
-                '{}/Min'.format(name): np.min(values),
-                '{}/Max'.format(name): np.max(values)
-            }
-            self.summarize(global_step, _dataset)
+            _dataset['{}/Average'.format(name)] = np.mean(values)
+            _dataset['{}/Min'.format(name)] = np.min(values)
+            _dataset['{}/Max'.format(name)] = np.max(values)
+        self.summarize(
+            summary_type='scalar', global_step=global_step, dataset=_dataset)
