@@ -51,20 +51,17 @@ class SummaryWriter(object):
         """Add graph summary. Affective only in tensorflow backend"""
         self.writer.add_graph(graph, global_step=global_step)
 
-    def register(self, summary_type, names, tag=None):
+    def register(self, summary_type, names):
         """Create set of summary operation"""
         with self.graph.as_default():
             with self.graph.device('/cpu:0'):
-                self._register(summary_type, names, tag=tag)
+                self._register(summary_type, names)
 
-    def _register(self, summary_type, names, tag):
+    def _register(self, summary_type, names):
         for name in names:
             self.summary_ops[name] = _create_summary_op(summary_type, name)
 
-        if tag:
-            self.tags[tag] = names
-
-    def summarize(self, global_step, dataset, tag=None):
+    def summarize(self, global_step, dataset):
         """Summarize the dataset
 
         Parameters
@@ -78,13 +75,8 @@ class SummaryWriter(object):
             When tag is given, summary operations registered with the tag are
             pulled, so only values are needed so dataset must be a list of
             values in the same order as the operations registered.
-
-        tag : str
-            See above
         """
         ops, feed_dict = [], {}
-        if tag:
-            dataset = {name: val for name, val in zip(self.tags[tag], dataset)}
         for name, value in dataset.items():
             ops.append(self.summary_ops[name].op)
             feed_dict[self.summary_ops[name].pf] = value
@@ -100,7 +92,7 @@ class SummaryWriter(object):
         """For each name, create ``name/[Average, Min, Max]`` summary ops"""
         all_names = ['{}/{}'.format(name, stats) for name in names
                      for stats in ['Average', 'Min', 'Max']]
-        self.register('scalar', all_names, tag=None)
+        self.register('scalar', all_names)
 
     def summarize_stats(self, global_step, dataset):
         """Summarize statistics of dataset
@@ -122,5 +114,4 @@ class SummaryWriter(object):
                 '{}/Min'.format(name): np.min(values),
                 '{}/Max'.format(name): np.max(values)
             }
-            self.summarize(global_step, _dataset, tag=None)
-    ###########################################################################
+            self.summarize(global_step, _dataset)
