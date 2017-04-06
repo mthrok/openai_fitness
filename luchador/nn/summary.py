@@ -20,7 +20,7 @@ def _create_summary_op(type_, name):
     summary_funcs = {
         'scalar': tf.summary.scalar,
         'image': tf.summary.image,
-        'audio': tf.summary.audio,
+        'audio': lambda name, pf: tf.summary.audio(name, pf, sample_rate=144),
         'histogram': tf.summary.histogram,
     }
     pf = tf.placeholder('float32')
