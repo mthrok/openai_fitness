@@ -14,8 +14,8 @@ _CONV = luchador.get_nn_conv_format()
 
 
 def _make_dqn(
-        discount_rate=0.9, min_reward=-1, max_reward=1, scale_reward=1.0,
-        input_shape=None, n_actions=5, model_def=None):
+        discount_rate=0.9, min_reward=-1, max_reward=1,
+        scale_reward=1.0, input_shape=None, n_actions=5, model_def=None):
     """Make DQN module for test
 
     If model_def is given, that model definition is used, otherwise,
@@ -44,8 +44,9 @@ def _make_dqn(
         model_def = util.get_model_config(
             'vanilla_dqn', input_shape=input_shape, n_actions=n_actions,
         )
-    dqn.build(model_def)
-    dqn.initialize()
+    session = nn.Session()
+    dqn.build(model_def, session)
+    session.initialize()
     return dqn
 
 
@@ -89,8 +90,8 @@ class DQNTest(fixture.TestCase):
 
         with nn.variable_scope(self.get_scope()):
             dqn = _make_dqn(
-                discount_rate=discount, n_actions=n_actions,
-                scale_reward=scale_reward)
+                discount_rate=discount,
+                n_actions=n_actions, scale_reward=scale_reward)
 
         action_value_1 = np.random.randn(batch, n_actions)
         rewards = np.random.randn(batch,)

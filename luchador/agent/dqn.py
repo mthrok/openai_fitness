@@ -25,11 +25,10 @@ def _transpose(state):
     return state.transpose((0, 2, 3, 1))
 
 
-def _initialize_summary_writer(config):
+def _initialize_summary_writer(config, session):
     writer = nn.SummaryWriter(**config)
-    sess = nn.get_session()
-    if sess.graph:
-        writer.add_graph(sess.graph)
+    if session.graph:
+        writer.add_graph(session.graph)
     return writer
 
 
@@ -149,6 +148,7 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
 
         self._recorder = None
         self._saver = None
+        self._session = None
         self._ql = None
         self._eg = None
         self._summary_writer = None
@@ -165,11 +165,13 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         self._n_actions = env.n_actions
         self._recorder = PrioritizedQueue(**self.args['recorder_config'])
 
+        self._session = nn.get_session()
         self._init_network(n_actions=env.n_actions)
         self._eg = EGreedy(**self.args['action_config'])
         self._saver = nn.Saver(**self.args['saver_config'])
         self._summary_writer = _initialize_summary_writer(
             config=self.args['summary_writer_config'],
+            session=self._session
         )
         self._summarize_layer_params()
 
@@ -178,8 +180,12 @@ class DQNAgent(luchador.util.StoreMixin, BaseAgent):  # pylint: disable=R0902
         initial_parameter = self.args['model_config']['initial_parameter']
         _LG.info('\n%s', luchador.util.pprint_dict(model_def))
         self._ql = _get_q_network(config=self.args['q_network_config'])
-        self._ql.build(model_def)
-        self._ql.initialize(initial_parameter)
+        self._ql.build(model_def, self._session)
+        if initial_parameter:
+            _LG.info('Loading parameters from %s', initial_parameter)
+            self._session.load_from_file(initial_parameter)
+        else:
+            self._session.initialize()
         self._ql.sync_network()
 
     ###########################################################################

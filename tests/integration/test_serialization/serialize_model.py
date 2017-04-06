@@ -75,8 +75,13 @@ def _build_network(model_filepath, optimizer_filepath, parameter_filepath):
         optimizer_config=load_config(optimizer_filepath),
     )
     model_def = _gen_model_def(model_filepath)
-    dql.build(model_def)
-    dql.initialize(parameter_filepath)
+    session = nn.Session()
+    dql.build(model_def, session=session)
+    if parameter_filepath:
+        _LG.info('Loading parameters from %s', parameter_filepath)
+        session.load_from_file(parameter_filepath)
+    else:
+        session.initialize()
     _LG.info('Syncing models')
     dql.sync_network()
     return dql
