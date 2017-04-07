@@ -1,4 +1,4 @@
-"""Define elementwise ops which work on single tensor"""
+"""Implement elementwise math ops which work on single tensor"""
 from __future__ import absolute_import
 
 import tensorflow as tf
@@ -10,41 +10,41 @@ __all__ = ['abs', 'square', 'sqrt', 'exp', 'log', 'sin', 'cos']
 
 
 def abs(var, name=None):
-    """Element-wise absolute value"""
+    """Implement element-wise abs"""
     return var.__abs__(name=name)
 
 
 def square(var, name=None):
-    """Returns square of the given variable"""
+    """Implement element-wise square"""
     _tensor = tf.square(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def sqrt(var, name=None):
-    """Returns square root of the given variable"""
+    """Implement element-wise sqrt"""
     _tensor = tf.sqrt(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def exp(var, name=None):
-    """Returns exponential of the given variable"""
+    """Implement element-wise exp"""
     _tensor = tf.exp(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def log(var, name=None):
-    """Returns exponential of the given variable"""
+    """Implement element-wise log"""
     _tensor = tf.log(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def sin(var, name=None):
-    """Returns exponential of the given variable"""
+    """Implement element-wise sin"""
     _tensor = tf.sin(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)
 
 
 def cos(var, name=None):
-    """Returns exponential of the given variable"""
+    """Implement element-wise cos"""
     _tensor = tf.cos(var.unwrap())
     return Tensor(tensor=_tensor, shape=var.shape, name=name)

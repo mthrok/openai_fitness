@@ -1,4 +1,4 @@
-"""Define elementwise ops work on multiple tensors"""
+"""Implement elementwise ops work on multiple tensors"""
 from __future__ import absolute_import
 
 import theano.tensor as T
@@ -78,83 +78,26 @@ def _make_compatible(var1, var2):
 
 
 def add(var1, var2, name=None):
-    """Elementwise addition with broadcast support
-
-    Parameters
-    ----------
-    va1, va2 : Tensor
-        Tensors to add.
-
-    name : str
-        Name of new Tensor
-
-    Returns
-    -------
-    Tensor
-        The resulting Tensor
-    """
+    """Implement add"""
     var1_, var2_, shape = _make_compatible(var1, var2)
     return Tensor(tensor=var1_+var2_, shape=shape, name=name)
 
 
 def multiply(var1, var2, name=None):
-    """Elementwise multiplication with broadcast support
-
-    Parameters
-    ----------
-    va1, va2 : Tensor
-        Tensors to multiply.
-
-    name : str
-        Name of new Tensor
-
-    Returns
-    -------
-    Tensor
-        The resulting Tensor
-    """
+    """Implement multiply"""
     var1_, var2_, shape = _make_compatible(var1, var2)
     return Tensor(tensor=var1_*var2_, shape=shape, name=name)
 
 
 def maximum(var1, var2, name=None):
-    """Compute elementwise max among tensors
-
-    Parameters
-    ----------
-    other : Tensor
-        Tensor to compare
-
-    name : str
-        Name of new Tensor
-
-    Returns
-    -------
-    Tensor
-        The resulting Tensor
-    """
+    """Implement maximum"""
     var1_, var2_, shape = _make_compatible(var1, var2)
     _tensor = T.maximum(var1_, var2_)
     return Tensor(tensor=_tensor, shape=shape, name=name)
 
 
 def minimum(var1, var2, name=None):
-    """Compute elementwise min among tensors
-
-    Parameters
-    ----------
-    var1, var2: Tensor
-        Tensor to compare. Either one has to be
-        :class:`luchador.nn.theano.wrapper.Tensor` class
-
-    name : str
-        Name of new Tensor
-
-    Returns
-    -------
-    Tensor
-        The resulting Tensor
-    """
+    """Implement minimum"""
     var1_, var2_, shape = _make_compatible(var1, var2)
     _tensor = T.minimum(var1_, var2_)
     return Tensor(tensor=_tensor, shape=shape, name=name)

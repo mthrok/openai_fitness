@@ -15,22 +15,7 @@ def _compute_dot_shape(shape1, shape2):
 
 
 def dot(var1, var2, name=None):
-    """Compute dot product of input variables ``var1 * var2``
-
-    Parameters
-    ----------
-    var1, var2 : Variable
-        Variables to be multipled. The last dimension of var1 must match
-        the 2nd to thes last dimension of var2.
-
-    name : str
-        The name of the resulting tensor
-
-    Return
-    ------
-    Tensor
-        The resulting Tensor
-    """
+    """Implement dot opearation in Theano backend"""
     _tensor = T.dot(var1.unwrap(), var2.unwrap())
     shape = _compute_dot_shape(var1.shape, var2.shape)
     return Tensor(tensor=_tensor, shape=shape, name=name)
