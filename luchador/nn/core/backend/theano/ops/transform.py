@@ -2,7 +2,6 @@
 import numpy as np
 import theano.tensor as T
 
-import luchador.util
 from ..wrapper import Tensor
 
 __all__ = ['reshape', 'tile']
