@@ -45,36 +45,13 @@ def _build_error(target_q, action_value_0, action):
     return nn.ops.reduce_sum(mask * error, axis=1)
 
 
-def _clip_grads(grads_and_vars, clip_norm):
-    """Clip gradients by norm
-
-    Parameters
-    ----------
-    grads_and_vars : list
-        Gradient and Variable tuples. Return value from ``compute_gradients``.
-
-    clip_norm : Number or Tensor
-        Value to clip gradients
-
-    Returns
-    -------
-    list
-        Resulting gradients and vars pairs
-    """
-    ret = []
-    for grad, var in grads_and_vars:
-        name = '{}_clip'.format(grad.name)
-        grad = nn.ops.clip_by_norm(grad, clip_norm=clip_norm, name=name)
-        ret.append((grad, var))
-    return ret
-
-
 def _build_optimize_op(optimizer, loss, params, clip_grads):
     grads_and_vars = nn.ops.compute_gradient(loss=loss, wrt=params)
     # Remove untrainable variables
     grads_and_vars = [g_v for g_v in grads_and_vars if g_v[0] is not None]
     if clip_grads:
-        grads_and_vars = _clip_grads(grads_and_vars, **clip_grads)
+        grads_and_vars = nn.ops.clip_grads_by_norm(
+            grads_and_vars, **clip_grads)
     return optimizer.apply_gradients(grads_and_vars)
 
 

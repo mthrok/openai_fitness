@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from luchador.nn.core.base import BaseWrapper
 from ... import backend as be
 
-__all__ = ['clip_by_value', 'clip_by_norm']
+__all__ = ['clip_by_value', 'clip_by_norm', 'clip_grads_by_norm']
 
 
 def _is_wrapper(obj):
@@ -61,3 +61,28 @@ def clip_by_norm(tensor, clip_norm, axes=None, name=None):
     if _is_wrapper(clip_norm):
         clip_norm = clip_norm.unwrap()
     return be.ops.clip_by_norm(tensor, clip_norm, axes, name)
+
+
+def clip_grads_by_norm(grads_and_vars, clip_norm):
+    """Clip each gradient by norm
+
+    Parameters
+    ----------
+    grads_and_vars : list
+        Gradient and Variable tuples. Return value from
+        :func:`luchador.nn.ops.compute_gradients`.
+
+    clip_norm : Number or Tensor
+        Value to clip gradients
+
+    Returns
+    -------
+    list
+        Resulting gradients and vars pairs
+    """
+    ret = []
+    for grad, var in grads_and_vars:
+        name = '{}_clip'.format(grad.name)
+        grad = clip_by_norm(grad, clip_norm=clip_norm, name=name)
+        ret.append((grad, var))
+    return ret
