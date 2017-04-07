@@ -48,4 +48,4 @@ def tile(var, pattern, name=None):
     """
     if not is_iteratable(pattern):
         raise ValueError('`pattern` must be iteratable')
-    return be.ops.tile(var, pattern, name)
+    return be.ops.tile(var, tuple(pattern), name)
