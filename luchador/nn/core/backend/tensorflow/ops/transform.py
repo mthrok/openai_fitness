@@ -9,42 +9,19 @@ __all__ = ['reshape', 'tile']
 
 
 def reshape(var, new_shape, name=None):
-    """Reshape tensor.
+    """Implement ``reshape`` in Tensorflow backend.
 
-    Parameters
-    ----------
-    new_shape : tuple
-        new shape
-
-    name : str
-        Name of operation
-
-    Returns
-    -------
-    Tensor
-        Tensor with new shape
+    See :func:`luchador.nn.ops.reshape` for detail
     """
     _tensor = tf.reshape(var.unwrap(), shape=new_shape)
     return Tensor(tensor=_tensor, name=name)
 
 
 def tile(var, pattern, name=None):
-    """Tile tensor.
+    """Implement ``tile`` in Tensorflow backend.
 
-    Parameters
-    ----------
-    pattern : tuple
-        tile pattern
-
-    Notes
-    -----
-    Currently only constant pattern is allowed.
+    See :func:`luchador.nn.ops.tile` for detail
     """
-    try:
-        pattern = tuple(pattern)
-    except TypeError:
-        raise ValueError('`pattern` must be iteratable')
-
     if len(pattern) > var.n_dim:
         prepend = (1, ) * (len(pattern) - var.n_dim)
         tensor = reshape(var, prepend + var.shape).unwrap()

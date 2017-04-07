@@ -22,25 +22,9 @@ def _infere_new_shape(original_shape, new_shape):
 
 
 def reshape(var, new_shape, name=None):
-    """Reshape tensor.
+    """Implement ``reshape`` in Theano backend.
 
-    Parameters
-    ----------
-    new_shape : tuple
-        new shape
-
-    name : str
-        Name of operation
-
-    Returns
-    -------
-    Tensor
-        Tensor with new shape
-
-    Notes
-    -----
-    This function is for conveniently invoke underlying reshap function.
-    Shape-checking and inference is not carried out.
+    See :func:`luchador.nn.ops.reshape` for detail
     """
     _tensor = T.reshape(var.unwrap(), newshape=new_shape)
     new_shape = _infere_new_shape(var.shape, new_shape)
@@ -62,28 +46,10 @@ def _compute_tile_shape(shape, pattern):
 
 
 def tile(var, pattern, name=None):
-    """Tile tensor.
+    """Implement ``tile`` in Theano backend.
 
-    Parameters
-    ----------
-    pattern : tuple
-        tile pattern
-
-    name : str
-        Name of operation
-
-    Returns
-    -------
-    Tensor
-        Resulting tensor.
-
-    Notes
-    -----
-    Currently only constant pattern is allowed.
+    See :func:`luchador.nn.ops.tile` for detail
     """
-    if not luchador.util.is_iteratable(pattern):
-        raise ValueError('`pattern` must be iteratable')
-
     _shape = _compute_tile_shape(pattern, var.shape)
     _tensor = T.tile(var.unwrap(), pattern)
     return Tensor(tensor=_tensor, shape=_shape, name=name)

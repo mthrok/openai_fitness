@@ -5,7 +5,6 @@ import logging
 
 import theano
 
-from luchador.util import is_iteratable
 from ..wrapper import Tensor
 
 __all__ = ['compute_gradient']
@@ -13,37 +12,14 @@ _LG = logging.getLogger(__name__)
 
 
 def compute_gradient(loss, wrt, **kwargs):
-    """Compute gradient
+    """Implement ``compute_gradient`` in Theano backend.
 
-    Parameters
-    ----------
-    loss : Tensor
-        loss to be minimized
-
-    wrt : Variable or list of Variables
-        Term for which loss Tensor is differentiated.
-
-    kwargs
-        Other arguments passed to ``theano.gradient.grad``
-
-    Returns
-    -------
-    list
-        List of (gradient, variable) pairs
+    See :func:`luchador.nn.ops.compute_gradient` for detail
     """
-    _LG.info('Computing gradient for %s', loss)
-    wrt = wrt if is_iteratable(wrt) else [wrt]
-    for var in wrt:
-        _LG.info('    %20s', var)
-    wrt_ = [v.unwrap() for v in wrt if v.trainable]
-
-    if not wrt_:
-        raise ValueError('No variables to optimize.')
-
     # So as to match the behavior to that of Tensorflow, we return None
     # for disconnected inputs
     grads = theano.grad(
-        loss.unwrap(), wrt_, disconnected_inputs='warn',
+        loss.unwrap(), wrt, disconnected_inputs='warn',
         return_disconnected='None', **kwargs)
     ret, i = [], 0
     for var in wrt:
