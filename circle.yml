@@ -30,9 +30,6 @@ stages:
         command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --parallel-mode setup.py test
       # Integration Test
       - type: shell
-        name: Serialization Test
-        command: ./tests/integration/run_serialization_tests.sh
-      - type: shell
         name: Initializer Numerical Compatibility Test
         command: ./tests/integration/run_initializer_compatibility_test.sh
       - type: shell
