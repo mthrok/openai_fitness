@@ -42,24 +42,6 @@ stages:
         name: Optimizer Numerical Compatibility Test
         command: ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
       - type: shell
-        name: Server Client Test
-        command: ./tests/integration/test_server_client/run_server_client.sh
-      - type: shell
-        name: Manager Server Test
-        command: ./tests/integration/test_server_client/run_manager_server.sh
-      - type: shell
-        name: Environment Tests
-        command: ./tests/integration/run_envs.sh
-      - type: shell
-        name: DQN Theano 32 bit
-        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_dqn.sh
-      - type: shell
-        name: DQN Theano 64 bit
-        command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_dqn.sh
-      - type: shell
-        name: DQN TensorFlow
-        command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_dqn.sh
-      - type: shell
         name: AE Theano 32 bit
         command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_autoencoder.sh
       - type: shell
