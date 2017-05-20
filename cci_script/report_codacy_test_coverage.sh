@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-if [[ "${CIRCLE_PROJECT_USERNAME:-false}" = "mthrok" ]]; then
+if [[ -n "${CODACY_PROJECT_TOKEN}" ]]; then
     coverage combine
     coverage xml
     python-codacy-coverage -r coverage.xml
