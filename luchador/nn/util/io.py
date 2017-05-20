@@ -10,8 +10,8 @@ __all__ = ['get_model_config']
 _LG = logging.getLogger(__name__)
 
 
-def get_model_config(model_name, **parameters):
-    """Load model configurations from library or file
+def get_model_config(filepath, **parameters):
+    """Load model configurations from file
 
     Parameters
     ----------
@@ -26,12 +26,7 @@ def get_model_config(model_name, **parameters):
     JSON-compatible object
         Model configuration.
     """
-    file_name = model_name
-    if not file_name.endswith('.yml'):
-        file_name = '{}.yml'.format(file_name)
-
-    if not os.path.isfile(file_name):
+    if not os.path.isfile(filepath):
         raise ValueError(
-            'Model definition file ({}) was not found.'.format(file_name))
-
-    return load_config(file_name, **parameters)
+            'Model definition file ({}) was not found.'.format(filepath))
+    return load_config(filepath, **parameters)
