@@ -59,16 +59,16 @@ def _make_graph_model(
 
 
 def _make_container_model(
-        input_config, model_configs, output_config=None, name=None):
+        model_configs, input_config=None, output_config=None, name=None):
     """Make ``Container`` model from model configuration
 
     Parameters
     ----------
-    input_config : [list or dict of] dict
-        See :any::make_io_node
-
     model_config : list
         Model configuration.
+
+    input_config : [list or dict of] dict
+        See :any::make_io_node
 
     output_config : [list of dict of] dict
         See :any::make_io_node
@@ -79,7 +79,9 @@ def _make_container_model(
         Resulting model
     """
     model = Container(name=name)
-    model.input = make_io_node(input_config)
+    if input_config:
+        model.input = make_io_node(input_config)
+
     for conf in model_configs:
         _LG.info('Building Model: %s', conf.get('name', 'No name defined'))
         model.add_model(conf['name'], make_model(conf))

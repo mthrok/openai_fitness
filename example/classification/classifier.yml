@@ -75,14 +75,14 @@ error: &error
         args:
           name: label
           exp: one_hot(x, {n_classes})
-        input:
+        input_config:
           typename: Input
           reuse: True
           name: label
       - typename: SoftmaxCrossEntropy
         args:
           name: error
-        input:
+        input_config:
           target:
             typename: Tensor
             name: label/output
@@ -103,7 +103,7 @@ optimization: &optimization
         args:
           name: Adam
           learning_rate: 0.01
-        input:
+        input_config:
           loss:
             typename: Model
             name: error

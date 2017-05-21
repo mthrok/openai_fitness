@@ -55,7 +55,7 @@ variation: &variation
           strides: 2
           padding: valid
           name: layer5/mean
-        input:
+        input_config:
           typename: Tensor
           name: layer4/BN/output
       #====================
@@ -63,7 +63,7 @@ variation: &variation
         args:
           << : *conv2d_mean
           name: layer6/stddev
-        input:
+        input_config:
           typename: Tensor
           name: layer4/BN/output
       #====================
@@ -71,7 +71,7 @@ variation: &variation
         args:
           exp: x['mean'] + x['stddev'] * NormalRandom(std=0.1)
           name: layer7/merge
-        input:
+        input_config:
           mean:
             typename: Tensor
             name: layer5/mean/output
@@ -81,14 +81,14 @@ variation: &variation
       - typename: ReLU
         args:
           name: layer7/ReLU
-        input:
+        input_config:
           typename: Tensor
           name: layer7/merge/output
       #====================
       - typename: BatchNormalization
         args:
           name: layer8/BN
-        input:
+        input_config:
           typename: Tensor
           name: layer7/ReLU/output
       #====================
@@ -103,20 +103,20 @@ variation: &variation
           original_input:
             typename: Tensor
             name: layer4/BN/output
-        input:
+        input_config:
           typename: Tensor
           name: layer8/BN/output
       - typename: ReLU
         args:
           name: layer9/ReLU
-        input:
+        input_config:
           typename: Tensor
           name: layer9/conv2DTranspose/output
       #====================
       - typename: BatchNormalization
         args:
           name: layer10/BN
-        input:
+        input_config:
           typename: Tensor
           name: layer9/ReLU/output
       #====================
@@ -200,7 +200,7 @@ error: &error
       - typename: SSE
         args:
           name: reconstruction_error
-        input:
+        input_config:
           target:
             typename: Input
             reuse: True
@@ -216,7 +216,7 @@ error: &error
         args:
           name: latent_error
           exp: 0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3])  
-        input:
+        input_config:
           mean:
             typename: Tensor
             name: layer5/mean/output
@@ -230,7 +230,7 @@ error: &error
         args:
           exp: reduce_mean(x['recon'] + x['latent'])
           name: error
-        input:
+        input_config:
           recon:
             typename: Tensor
             name: reconstruction_error/output
@@ -247,7 +247,7 @@ optimization: &optimization
         args:
           name: Adam
           learning_rate: 0.01
-        input:
+        input_config:
           loss:
             typename: Model
             name: error
