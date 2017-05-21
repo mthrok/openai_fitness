@@ -86,27 +86,27 @@ class ModelMakerTest(fixture.TestCase):
     """Test make_model functions"""
     def test_make_layer_with_reuse(self):
         """make_layer sets parameter variables correctly"""
-        shape, scope, name = (3, 4), self.get_scope(), 'Dense'
+        shape, base_scope, scope = (3, 4), self.get_scope(), 'Dense'
         layer_config = {
             'typename': 'Dense',
             'args': {
                 'n_nodes': 5,
-                'name': 'Dense',
+                'scope': scope,
             },
             'parameters': {
                 'weight': {
                     'typename': 'Variable',
-                    'name': '{}/{}/weight'.format(scope, name)
+                    'name': '{}/{}/weight'.format(base_scope, scope)
                 },
                 'bias': {
                     'typename': 'Variable',
-                    'name': '{}/{}/bias'.format(scope, name)
+                    'name': '{}/{}/bias'.format(base_scope, scope)
                 },
             }
         }
 
-        with nn.variable_scope(scope):
-            layer1 = nn.layer.Dense(n_nodes=5, name=name)
+        with nn.variable_scope(base_scope):
+            layer1 = nn.layer.Dense(n_nodes=5, scope=scope)
             tensor = nn.Input(shape=shape)
             out1 = layer1(tensor)
 
@@ -133,27 +133,28 @@ class ModelMakerTest(fixture.TestCase):
 
     def test_make_layer_with_reuse_in_scope(self):
         """make_layer sets parameter variables correctly"""
-        shape, scope1, scope2, name = (3, 4), self.get_scope(), 'foo', 'dense'
+        shape, scope = (3, 4), 'Dense'
+        base_scope1, base_scope2 = self.get_scope(), 'foo'
         layer_config = {
             'typename': 'Dense',
             'args': {
                 'n_nodes': 5,
-                'name': name,
+                'scope': scope,
             },
             'parameters': {
                 'weight': {
                     'typename': 'Variable',
-                    'name': '{}/{}/weight'.format(scope2, name),
+                    'name': '{}/{}/weight'.format(base_scope2, scope),
                 },
                 'bias': {
                     'typename': 'Variable',
-                    'name': '{}/{}/bias'.format(scope2, name),
+                    'name': '{}/{}/bias'.format(base_scope2, scope),
                 },
             }
         }
-        with nn.variable_scope(scope1):
-            with nn.variable_scope(scope2):
-                layer1 = nn.layer.Dense(n_nodes=5, name=name)
+        with nn.variable_scope(base_scope1):
+            with nn.variable_scope(base_scope2):
+                layer1 = nn.layer.Dense(n_nodes=5, scope=scope)
                 tensor = nn.Input(shape=shape)
                 out1 = layer1(tensor)
 

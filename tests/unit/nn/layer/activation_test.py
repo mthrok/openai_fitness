@@ -59,10 +59,10 @@ class LeakyReLUTest(TestCase):
 
     def test_lrelu_parameter(self):
         """Parameter retrieval failes when train=False"""
-        scope, name, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
-        with nn.variable_scope(scope):
+        base_scope, scope, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
+        with nn.variable_scope(base_scope):
             in_var = nn.Input(shape=shape)
-            layer = nn.layer.LeakyReLU(alpha=alpha, train=False, name=name)
+            layer = nn.layer.LeakyReLU(alpha=alpha, train=False, scope=scope)
             layer(in_var)
 
         with self.assertRaises(KeyError):
@@ -70,15 +70,15 @@ class LeakyReLUTest(TestCase):
 
     def test_plrelu_parameter(self):
         """Parameter retrieval succeeds when train=True"""
-        scope, name, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
-        with nn.variable_scope(scope):
+        base_scope, scope, alpha, shape = self.get_scope(), 'foo', 0.1, (3, 4)
+        with nn.variable_scope(base_scope):
             in_var = nn.Input(shape=shape)
-            layer = nn.layer.LeakyReLU(alpha=alpha, train=True, name=name)
+            layer = nn.layer.LeakyReLU(alpha=alpha, train=True, scope=scope)
             layer(in_var)
 
         self.assertIs(
             layer.get_parameter_variable('alpha'),
-            nn.get_variable('{}/{}/alpha'.format(scope, name))
+            nn.get_variable('{}/{}/alpha'.format(base_scope, scope))
         )
 
 

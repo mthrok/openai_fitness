@@ -173,14 +173,14 @@ class AnonymousInterfaceTest(TestCase):
     """Test for fetching io"""
     def test_fetch_output(self):
         """Output of Anonymous layer is fetched"""
-        scope, name = self.get_scope(), 'anon'
-        with nn.variable_scope(scope):
-            layer = nn.layer.Anonymous(exp='x', name=name)
+        base_scope, scope = self.get_scope(), 'anon'
+        with nn.variable_scope(base_scope):
+            layer = nn.layer.Anonymous(exp='x', scope=scope)
             output_var = layer(nn.Input(shape=(3, 4)))
-            _tensor = nn.get_tensor('{}/output'.format(name))
+            _tensor = nn.get_tensor('{}/output'.format(scope))
             self.assertIs(output_var, _tensor)
 
-        _tensor = nn.get_tensor('{}/{}/output'.format(scope, name))
+        _tensor = nn.get_tensor('{}/{}/output'.format(base_scope, scope))
         self.assertIs(output_var, _tensor)
 
 

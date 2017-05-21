@@ -48,7 +48,7 @@ class BaseCost(luchador.util.StoreMixin, Node):
             'target': target,
             'prediction': prediction,
         }
-        with variable_scope(self.args['name']):
+        with variable_scope(self.args['scope']):
             self.output = self._build(target, prediction)
             return self.output
 

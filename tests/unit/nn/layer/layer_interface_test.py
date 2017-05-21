@@ -24,21 +24,20 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = '{}/{}'.format(self.get_scope(), layer_name)
         with nn.variable_scope(scope) as vs:
             input_ = nn.Input(shape=input_shape, name='input')
-            layer = nn.fetch_layer(layer_name)(name=layer_name)
+            layer = nn.fetch_layer(layer_name)(scope=layer_name)
             output = layer(input_)
 
         with nn.variable_scope(vs, reuse=True):
+            output_tensor_name = '{}/output'.format(layer_name)
             self.assertIs(input_, nn.get_input('input'))
-            self.assertIs(
-                output, nn.get_tensor('{}/output'.format(layer_name)))
+            self.assertIs(output, nn.get_tensor(output_tensor_name))
 
     def test_dense(self):
         """Compnents consisting Dense layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope) as vs:
+        with nn.variable_scope(self.get_scope()) as vs:
             input_ = nn.Input(shape=(32, 5), name='input')
             layer = nn.fetch_layer('Dense')(
-                n_nodes=4, with_bias=True, name='Dense')
+                n_nodes=4, with_bias=True, scope='Dense')
             output = layer(input_)
             weight = layer.get_parameter_variable('weight')
             bias = layer.get_parameter_variable('bias')
@@ -69,17 +68,16 @@ class LayerInterfaceTest(fixture.TestCase):
 
     def test_conv2dtranspose(self):
         """Compnents consisting Conv2DTranspose layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope) as vs:
+        with nn.variable_scope(self.get_scope()) as vs:
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
             layer = nn.fetch_layer('Conv2D')(
                 filter_height=4, filter_width=4, n_filters=4,
-                strides=1, with_bias=True, name='Conv2D')
+                strides=1, with_bias=True, scope='Conv2D')
             output = layer(input_)
             layer = nn.fetch_layer('Conv2DTranspose')(
                 filter_height=4, filter_width=4, n_filters=4,
                 strides=1, with_bias=True, output_shape=input_.shape,
-                name='Conv2DT')
+                scope='Conv2DT')
             output = layer(output)
             filters = layer.get_parameter_variable('filter')
             bias = layer.get_parameter_variable('bias')
@@ -95,7 +93,7 @@ class LayerInterfaceTest(fixture.TestCase):
         scope = self.get_scope()
         with nn.variable_scope(scope):
             input_ = nn.Input(shape=(32, 4, 8, 8), name='input')
-            layer = nn.fetch_layer('TrueDiv')(denom=1.0, name='TrueDiv')
+            layer = nn.fetch_layer('TrueDiv')(denom=1.0, scope='TrueDiv')
             output = layer(input_)
 
             self.assertIs(output, nn.get_tensor('TrueDiv/output'))
@@ -103,22 +101,20 @@ class LayerInterfaceTest(fixture.TestCase):
 
     def test_concat(self):
         """Compnents consisting Concat layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope):
-            input_ = [
-                nn.Input(shape=(32, 4), name='input'),
-                nn.Input(shape=(32, 5), name='input'),
-            ]
-            layer = nn.fetch_layer('Concat')(axis=1, name='Concat')
-            output = layer(input_)
+        with nn.variable_scope(self.get_scope()):
+            layer = nn.fetch_layer('Concat')(axis=1, scope='Concat')
+            output = layer([
+                nn.Input(shape=(32, 4), name='input_1'),
+                nn.Input(shape=(32, 5), name='input_2'),
+            ])
             self.assertIs(output, nn.get_tensor('Concat/output'))
 
     def test_bn(self):
         """Compnents consisting BatchNormalization layer are retrieved"""
-        scope = self.get_scope()
-        with nn.variable_scope(scope) as vs:
+        base_scope, scope = self.get_scope(), 'BN'
+        with nn.variable_scope(base_scope) as vs:
             input_ = nn.Input(shape=(32, 4), name='input')
-            layer = nn.fetch_layer('BatchNormalization')(name='BN')
+            layer = nn.fetch_layer('BatchNormalization')(scope=scope)
             output = layer(input_)
             mean = layer.get_parameter_variable('mean')
             var = layer.get_parameter_variable('var')
