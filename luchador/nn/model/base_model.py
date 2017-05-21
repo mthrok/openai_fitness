@@ -24,13 +24,9 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
         super(BaseModel, self).__init__()
         self.input = None
         self.output = None
-
-        if name:
-            scope = get_variable_scope().name
-            if scope:
-                name = '{}/{}'.format(scope, name)
-            _register(name, self)
         self.name = name
+        if name:
+            _register(name, self)
 
 
 def fetch_model(name):
