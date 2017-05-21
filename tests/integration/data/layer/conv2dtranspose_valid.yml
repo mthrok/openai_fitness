@@ -15,7 +15,7 @@ model:
           strides: 3
           padding: VALID
           with_bias: True
-          name: layer1
+          scope: layer1
       - typename: Conv2DTranspose
         args:
           filter_height: null
@@ -24,7 +24,7 @@ model:
           strides: 3
           padding: VALID
           with_bias: True
-          name: layer2
+          scope: layer2
         parameters:
           filter:
             typename: Variable
