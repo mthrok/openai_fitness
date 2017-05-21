@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 import logging
 
-from ..core import variable_scope
 from .graph import Graph
 
 _LG = logging.getLogger(__name__)
