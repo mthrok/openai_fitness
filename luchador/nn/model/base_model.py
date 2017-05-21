@@ -22,15 +22,15 @@ class BaseModel(object):  # pylint: disable=too-few-public-methods
     """Base Model class"""
     def __init__(self, name=None):
         super(BaseModel, self).__init__()
-        scope = get_variable_scope().name
-        if scope:
-            name = '{}/{}'.format(scope, name)
-        self.name = name
         self.input = None
         self.output = None
 
         if name:
+            scope = get_variable_scope().name
+            if scope:
+                name = '{}/{}'.format(scope, name)
             _register(name, self)
+        self.name = name
 
 
 def fetch_model(name):
