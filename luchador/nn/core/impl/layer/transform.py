@@ -10,11 +10,11 @@ __all__ = ['Flatten', 'Concat']
 
 class Flatten(layer.Flatten, BaseLayer):
     """Reshape 4D tensor into 2D tensor"""
-    def __init__(self, name='Flatten'):
-        super(Flatten, self).__init__(name=name)
+    def __init__(self, scope='Flatten'):
+        super(Flatten, self).__init__(scope=scope)
 
 
 class Concat(layer.Concat, BaseLayer):
     """Concatenate multiple Tensors"""
-    def __init__(self, axis=1, name='Concat'):
-        super(Concat, self).__init__(axis=axis, name=name)
+    def __init__(self, axis=1, scope='Concat'):
+        super(Concat, self).__init__(axis=axis, scope=scope)

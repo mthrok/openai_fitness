@@ -32,7 +32,7 @@ class SGD(optimizer.SGD, BaseOptimizer):
     ----------
     learning_rate : float
         The learning rate controlling the size of update steps
-    name : str
+    scope : str
         Used to create scope which contains parameter variables.
         Virtually has no effect in SGD
     kwargs
@@ -41,9 +41,9 @@ class SGD(optimizer.SGD, BaseOptimizer):
             [Tensorflow nly] passed to underlying TF native optimizer
     """
     def __init__(
-            self, learning_rate, name='SGD', **kwargs):
+            self, learning_rate, scope='SGD', **kwargs):
         super(SGD, self).__init__(
-            learning_rate=learning_rate, name=name, **kwargs)
+            learning_rate=learning_rate, scope=scope, **kwargs)
 
 
 class RMSProp(optimizer.RMSProp, BaseOptimizer):
@@ -73,7 +73,7 @@ class RMSProp(optimizer.RMSProp, BaseOptimizer):
         Momentum coefficient at which rate parameter update is accumurated.
     epsilon : float
         Small value added for numerical stability
-    name : str
+    scope : str
         Used to create scope which contains parameter variables
     kwargs
         Other accepted keyword arguments
@@ -88,10 +88,10 @@ class RMSProp(optimizer.RMSProp, BaseOptimizer):
     """
     def __init__(
             self, learning_rate, decay=0.95, momentum=0.0,
-            epsilon=1e-2, name='RMSProp', **kwargs):
+            epsilon=1e-2, scope='RMSProp', **kwargs):
         super(RMSProp, self).__init__(
             learning_rate=learning_rate, decay=decay,
-            momentum=momentum, epsilon=epsilon, name=name, **kwargs)
+            momentum=momentum, epsilon=epsilon, scope=scope, **kwargs)
 
 
 class NeonRMSProp(optimizer.NeonRMSProp, BaseOptimizer):
@@ -115,7 +115,7 @@ class NeonRMSProp(optimizer.NeonRMSProp, BaseOptimizer):
         Decay factor at which rate accumurated RMS decays.
     epsilon : float
         Small value added for numerical stability
-    name : str
+    scope : str
         Used to create scope which contains parameter variables
     kwargs
         Other accepted keyword arguments
@@ -130,10 +130,10 @@ class NeonRMSProp(optimizer.NeonRMSProp, BaseOptimizer):
     """
     def __init__(
             self, learning_rate, decay=0.95, epsilon=1e-6,
-            name='NeonRMSProp', **kwargs):
+            scope='NeonRMSProp', **kwargs):
         super(NeonRMSProp, self).__init__(
             learning_rate=learning_rate,
-            decay=decay, epsilon=epsilon, name=name, **kwargs)
+            decay=decay, epsilon=epsilon, scope=scope, **kwargs)
 
 
 class GravesRMSProp(optimizer.GravesRMSProp, BaseOptimizer):
@@ -154,10 +154,10 @@ class GravesRMSProp(optimizer.GravesRMSProp, BaseOptimizer):
     """
     def __init__(
             self, learning_rate, decay1=0.95, decay2=0.95, epsilon=1e-2,
-            name='GravesRMSProp', **kwargs):
+            scope='GravesRMSProp', **kwargs):
         super(GravesRMSProp, self).__init__(
             learning_rate=learning_rate, decay1=decay1, decay2=decay2,
-            epsilon=epsilon, name=name, **kwargs)
+            epsilon=epsilon, scope=scope, **kwargs)
 
 
 class Adam(optimizer.Adam, BaseOptimizer):
@@ -174,10 +174,10 @@ class Adam(optimizer.Adam, BaseOptimizer):
     """
     def __init__(
             self, learning_rate, beta1=0.9, beta2=0.999,
-            epsilon=1e-08, name='Adam', **kwargs):
+            epsilon=1e-08, scope='Adam', **kwargs):
         super(Adam, self).__init__(
             learning_rate=learning_rate, beta1=beta1, beta2=beta2,
-            epsilon=epsilon, name=name, **kwargs)
+            epsilon=epsilon, scope=scope, **kwargs)
 
 
 class Adamax(optimizer.Adamax, BaseOptimizer):
@@ -194,7 +194,7 @@ class Adamax(optimizer.Adamax, BaseOptimizer):
     """
     def __init__(
             self, learning_rate, beta1=0.9, beta2=0.999,
-            epsilon=1e-8, name='Adamax', **kwargs):
+            epsilon=1e-8, scope='Adamax', **kwargs):
         super(Adamax, self).__init__(
             learning_rate=learning_rate, beta1=beta1, beta2=beta2,
-            epsilon=epsilon, name=name, **kwargs)
+            epsilon=epsilon, scope=scope, **kwargs)

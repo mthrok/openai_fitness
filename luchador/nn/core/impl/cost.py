@@ -29,8 +29,8 @@ class SSE(cost.SSE, BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False, name='SSE'):
-        super(SSE, self).__init__(elementwise=elementwise, name=name)
+    def __init__(self, elementwise=False, scope='SSE'):
+        super(SSE, self).__init__(elementwise=elementwise, scope=scope)
 
 
 class SigmoidCrossEntropy(cost.SigmoidCrossEntropy, BaseCost):
@@ -48,9 +48,9 @@ class SigmoidCrossEntropy(cost.SigmoidCrossEntropy, BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False, name='SigmoidCrossEntropy'):
+    def __init__(self, elementwise=False, scope='SigmoidCrossEntropy'):
         super(SigmoidCrossEntropy, self).__init__(
-            elementwise=elementwise, name=name)
+            elementwise=elementwise, scope=scope)
 
 
 class SoftmaxCrossEntropy(cost.SoftmaxCrossEntropy, BaseCost):
@@ -64,9 +64,9 @@ class SoftmaxCrossEntropy(cost.SoftmaxCrossEntropy, BaseCost):
         scalar shape by taking average over batch and sum over feature.
         Defalut: False.
     """
-    def __init__(self, elementwise=False, name='SoftmaxCrossEntropy'):
+    def __init__(self, elementwise=False, scope='SoftmaxCrossEntropy'):
         super(SoftmaxCrossEntropy, self).__init__(
-            elementwise=elementwise, name=name)
+            elementwise=elementwise, scope=scope)
 
 
 class NormalKLDivergence(BaseCost):
@@ -128,10 +128,10 @@ class NormalKLDivergence(BaseCost):
     """
     def __init__(
             self, elementwise=False, clip_max=1e+10, clip_min=1e-10,
-            name='NormalKLDivergence'):
+            scope='NormalKLDivergence'):
         super(NormalKLDivergence, self).__init__(
             elementwise=elementwise, clip_max=clip_max, clip_min=clip_min,
-            name=name)
+            scope=scope)
 
     def __call__(self, mean, stddev):
         return self.build(mean, stddev)
@@ -154,7 +154,7 @@ class NormalKLDivergence(BaseCost):
             type(self).__name__, mean, stddev
         )
         self.input = {'mean': mean, 'stddev': stddev}
-        with variable_scope(self.args['name']):
+        with variable_scope(self.args['scope']):
             self.output = self._build(mean, stddev)
             return self.output
 

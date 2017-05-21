@@ -29,7 +29,7 @@ class Dense(layer.Dense, BaseLayer):
     with_bias : bool
         When True, bias term is added after multiplication.
 
-    name : str
+    scope : str
         Used as base scope when building parameters and output
 
     Notes
@@ -38,10 +38,10 @@ class Dense(layer.Dense, BaseLayer):
     ``weight`` and ``bias`` in the same scope as layer build.
     """
     def __init__(
-            self, n_nodes, initializers=None, with_bias=True, name='Dense'):
+            self, n_nodes, initializers=None, with_bias=True, scope='Dense'):
         super(Dense, self).__init__(
             n_nodes=n_nodes, initializers=initializers or {},
-            with_bias=with_bias, name=name)
+            with_bias=with_bias, scope=scope)
 
         self._create_parameter_slot(
             'weight', val=None, train=True, serialize=True)

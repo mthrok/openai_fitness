@@ -69,7 +69,7 @@ class Conv2D(layer.Conv2D, BaseLayer):
     with_bias : bool
         When True bias term is added after convolution
 
-    name : str
+    scope : str
         Used as base scope when building parameters and output
 
     kwargs
@@ -90,12 +90,12 @@ class Conv2D(layer.Conv2D, BaseLayer):
     def __init__(
             self, filter_height, filter_width, n_filters, strides,
             padding='VALID', initializers=None, with_bias=True,
-            name='Conv2D', **kwargs):
+            scope='Conv2D', **kwargs):
         super(Conv2D, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
-            name=name, **kwargs)
+            scope=scope, **kwargs)
 
         self._create_parameter_slot(
             'filter', val=None, train=True, serialize=True)
@@ -193,7 +193,7 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
         parameters:
             filter:
                 typename: Variable
-                name: convolution/filter
+                scope: convolution/filter
             original_input:
                 typename: Input
                 reuse: True
@@ -268,7 +268,7 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
         NCHW or NHWC. When output_shape is given, by supplying this format,
         output_shape is automatically converted to runtime format.
 
-    name : str
+    scope : str
         Used as base scope when building parameters and output
 
     kwargs
@@ -289,13 +289,13 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
             filter_height=None, filter_width=None, n_filters=None,
             strides=None, padding='VALID', initializers=None,
             with_bias=True, output_shape=None, output_shape_format=None,
-            name='Conv2DTranspose', **kwargs):
+            scope='Conv2DTranspose', **kwargs):
         super(Conv2DTranspose, self).__init__(
             filter_height=filter_height, filter_width=filter_width,
             n_filters=n_filters, strides=strides, padding=padding,
             initializers=initializers or {}, with_bias=with_bias,
             output_shape=output_shape, output_shape_format=output_shape_format,
-            name=name, **kwargs)
+            scope=scope, **kwargs)
 
         self._create_parameter_slot(
             'filter', val=None, train=True, serialize=True)

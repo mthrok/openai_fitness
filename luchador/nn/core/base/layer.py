@@ -42,7 +42,7 @@ class BaseLayer(luchador.util.StoreMixin, Node):
         _LG.info('  Building %s on %s', type(self).__name__, input_tensor)
 
         self.input = input_tensor
-        with variable_scope(self.args['name']):
+        with variable_scope(self.args['scope']):
             self.output = self._build(input_tensor)
             return self.output
 

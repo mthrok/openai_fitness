@@ -13,11 +13,11 @@ class ReLU(layer.ReLU, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='ReLU'):
-        super(ReLU, self).__init__(name=name)
+    def __init__(self, scope='ReLU'):
+        super(ReLU, self).__init__(scope=scope)
 
 
 class LeakyReLU(layer.LeakyReLU, BaseLayer):
@@ -31,11 +31,11 @@ class LeakyReLU(layer.LeakyReLU, BaseLayer):
     train : bool
         When True, ``alpha`` variable becomes trainable variable.
 
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, alpha, train=False, name='LeakyReLU'):
-        super(LeakyReLU, self).__init__(name=name, train=train, alpha=alpha)
+    def __init__(self, alpha, train=False, scope='LeakyReLU'):
+        super(LeakyReLU, self).__init__(scope=scope, train=train, alpha=alpha)
 
 
 class Sigmoid(layer.Sigmoid, BaseLayer):
@@ -43,11 +43,11 @@ class Sigmoid(layer.Sigmoid, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='Sigmoid'):
-        super(Sigmoid, self).__init__(name=name)
+    def __init__(self, scope='Sigmoid'):
+        super(Sigmoid, self).__init__(scope=scope)
 
 
 class Tanh(layer.Tanh, BaseLayer):
@@ -55,11 +55,11 @@ class Tanh(layer.Tanh, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='Tanh'):
-        super(Tanh, self).__init__(name=name)
+    def __init__(self, scope='Tanh'):
+        super(Tanh, self).__init__(scope=scope)
 
 
 class Softmax(layer.Softmax, BaseLayer):
@@ -67,11 +67,11 @@ class Softmax(layer.Softmax, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='Softmax'):
-        super(Softmax, self).__init__(name=name)
+    def __init__(self, scope='Softmax'):
+        super(Softmax, self).__init__(scope=scope)
 
 
 class Softplus(layer.Softplus, BaseLayer):
@@ -79,8 +79,8 @@ class Softplus(layer.Softplus, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='Softplus'):
-        super(Softplus, self).__init__(name=name)
+    def __init__(self, scope='Softplus'):
+        super(Softplus, self).__init__(scope=scope)

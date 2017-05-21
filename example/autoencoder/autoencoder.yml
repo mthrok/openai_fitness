@@ -14,14 +14,14 @@ encoder: &encoder
           filter_height: 5
           strides: 2
           padding: valid
-          name: layer1/conv2D
+          scope: layer1/conv2D
       - typename: ReLU
         args:
-          name: layer1/ReLU
+          scope: layer1/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer2/BN
+          scope: layer2/BN
       #====================
       - typename: Conv2D
         args: &conv2d_2
@@ -30,14 +30,14 @@ encoder: &encoder
           filter_height: 3
           strides: 2
           padding: valid
-          name: layer3/conv2D
+          scope: layer3/conv2D
       - typename: ReLU
         args:
-          name: layer3/ReLU
+          scope: layer3/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer4/BN
+          scope: layer4/BN
 
 noise: &noise
   typename: Sequential
@@ -51,7 +51,7 @@ noise: &noise
       - typename: Anonymous
         args:
           exp: x + NormalRandom()
-          name: layer5/noise
+          scope: layer5/noise
 
 decoder: &decoder
   typename: Sequential
@@ -65,7 +65,7 @@ decoder: &decoder
       - typename: Conv2DTranspose
         args:
           << : *conv2d_2
-          name: layer6/conv2DTranspose
+          scope: layer6/conv2DTranspose
         parameters:
           original_filter:
             typename: Variable
@@ -75,16 +75,16 @@ decoder: &decoder
             name: layer2/BN/output
       - typename: ReLU
         args:
-          name: layer6/ReLU
+          scope: layer6/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer7/BN
+          scope: layer7/BN
       #====================
       - typename: Conv2DTranspose
         args:
           << : *conv2d_1
-          name: layer8/conv2DTranspose
+          scope: layer8/conv2DTranspose
         parameters:
           original_filter:
             typename: Variable
@@ -95,7 +95,7 @@ decoder: &decoder
             name: input_image
       - typename: ReLU
         args:
-          name: layer8/ReLU
+          scope: layer8/ReLU
 
 autoencoder: &autoencoder
   typename: Container
@@ -120,7 +120,7 @@ error: &error
     node_configs:
       - typename: SSE
         args:
-          name: reconstruction_error
+          scope: reconstruction_error
         input_config:
           target:
             typename: Input
@@ -141,7 +141,6 @@ optimization: &optimization
     node_configs:
       - typename: Adam
         args:
-          name: Adam
           learning_rate: 0.01
         input_config:
           loss:

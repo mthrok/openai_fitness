@@ -82,7 +82,7 @@ class BaseOptimizer(luchador.util.StoreMixin, Node):
             (grad.unwrap(), var.unwrap())
             for grad, var in grads_and_vars if grad is not None]
         grads_and_vars = _remove_dup(grads_and_vars)
-        with variable_scope(self.args['name']):
+        with variable_scope(self.args['scope']):
             update = self._apply_gradients(grads_and_vars, **kwargs)
             self._update_operations.append(update)
             return update

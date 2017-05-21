@@ -14,16 +14,16 @@ classifier: &classifier
           filter_height: 5
           strides: 2
           padding: same
-          name: layer1/conv2D
+          scope: layer1/conv2D
       - typename: LeakyReLU
         args:
-          name: layer1/ReLU
+          scope: layer1/ReLU
           alpha: 0.2
           train: True
       #====================
       - typename: BatchNormalization
         args:
-          name: layer2/BN
+          scope: layer2/BN
       #====================
       - typename: Conv2D
         args: &conv2d_2
@@ -32,38 +32,38 @@ classifier: &classifier
           filter_height: 5
           strides: 2
           padding: same
-          name: layer3/conv2D
+          scope: layer3/conv2D
       - typename: LeakyReLU
         args:
-          name: layer3/ReLU
+          scope: layer3/ReLU
           alpha: 0.2
           train: True
       #====================
       - typename: BatchNormalization
         args:
-          name: layer4/BN
+          scope: layer4/BN
       #====================
       - typename: Conv2D
         args:
           << : *conv2d_2
-          name: layer5/conv2D
+          scope: layer5/conv2D
       - typename: LeakyReLU
         args:
-          name: layer5/ReLU
+          scope: layer5/ReLU
           alpha: 0.2
           train: True
       #====================
       - typename: BatchNormalization
         args:
-          name: layer6/BN
+          scope: layer6/BN
       #===================
       - typename: Flatten
         args:
-          name: layer7/Flatten
+          scope: layer7/Flatten
       #===================
       - typename: Dense
         args:
-          name: layer8/Dense
+          scope: layer8/Dense
           n_nodes: 10
           
 error: &error
@@ -73,7 +73,7 @@ error: &error
     node_configs:
       - typename: Anonymous
         args:
-          name: label
+          scope: label
           exp: one_hot(x, {n_classes})
         input_config:
           typename: Input
@@ -81,7 +81,7 @@ error: &error
           name: label
       - typename: SoftmaxCrossEntropy
         args:
-          name: error
+          scope: error
         input_config:
           target:
             typename: Tensor
@@ -101,7 +101,6 @@ optimization: &optimization
     node_configs:
       - typename: Adam
         args:
-          name: Adam
           learning_rate: 0.01
         input_config:
           loss:

@@ -34,10 +34,10 @@ class BatchNormalization(layer.BatchNormalization, BaseLayer):
     """
     def __init__(
             self, scale=1.0, offset=0.0, epsilon=1e-4, learn=True,
-            decay=0.999, name='BatchNormalization'):
+            decay=0.999, scope='BatchNormalization'):
         super(BatchNormalization, self).__init__(
             decay=decay, epsilon=epsilon,
-            scale=scale, offset=offset, learn=learn, name=name)
+            scale=scale, offset=offset, learn=learn, scope=scope)
 
         self._axes = self._pattern = None
         for key in ['mean', 'var']:

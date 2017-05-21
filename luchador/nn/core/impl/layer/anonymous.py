@@ -53,8 +53,8 @@ class Anonymous(BaseLayer):
         input arguments to ``build`` method. This ``exp`` is passed to ``eval``
         and the resulting value is returned.
     """
-    def __init__(self, exp, name='Anonymous'):
-        super(Anonymous, self).__init__(name=name, exp=exp)
+    def __init__(self, exp, scope='Anonymous'):
+        super(Anonymous, self).__init__(scope=scope, exp=exp)
 
     def __call__(self, input_tensor=None, *args, **kwargs):
         """Convenience method to call `build`"""
@@ -92,7 +92,7 @@ class Anonymous(BaseLayer):
         this arguments
 
         >>> x = Input(shape=(3, 4), name='in0')
-        >>> anon = Anonymous(exp='x', name='anon0')
+        >>> anon = Anonymous(exp='x', scope='anon0')
         >>> # This layer just returns the input Tensor as it is
         >>> y = anon(x)
         >>> # y == x
@@ -104,7 +104,7 @@ class Anonymous(BaseLayer):
         >>>     Input(shape=(3, 4), name='input_1'),
         >>>     Input(shape=(3, 4), name='input_2'),
         >>> ]
-        >>> anon = Anonymous(exp='x[0] + x[1]', name='anon1')
+        >>> anon = Anonymous(exp='x[0] + x[1]', scope='anon1')
         >>> # This layer just returns the input Tensor as it is
         >>> y = anon(*x)
         >>> # y represents `input_1` + `input_2`
@@ -116,13 +116,13 @@ class Anonymous(BaseLayer):
         >>>     'input_3': Input(shape=(3, 4), name='input_3'),
         >>>     'input_4': Input(shape=(3, 4), name='input_4'),
         >>> }
-        >>> anon = Anonymous(exp='x["input_3"] * x["input_4"]', name='anon2')
+        >>> anon = Anonymous(exp='x["input_3"] * x["input_4"]', scope='anon2')
         >>> # This layer just returns the input Tensor as it is
         >>> y = anon(**x)
         >>> # y represents `input_3` * `input_4`
         """
         self.input = input_tensor
-        with variable_scope(self.args['name']):
+        with variable_scope(self.args['scope']):
             self.output = self._build(input_tensor, *args, **kwargs)
             return self.output
 

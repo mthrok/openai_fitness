@@ -15,14 +15,14 @@ encoder: &encoder
           filter_height: 5
           strides: 2
           padding: valid
-          name: layer1/conv2D
+          scope: layer1/conv2D
       - typename: ReLU
         args:
-          name: layer1/ReLU
+          scope: layer1/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer2/BN
+          scope: layer2/BN
       #====================
       - typename: Conv2D
         args: &conv2d_2
@@ -31,14 +31,14 @@ encoder: &encoder
           filter_height: 3
           strides: 2
           padding: valid
-          name: layer3/conv2D
+          scope: layer3/conv2D
       - typename: ReLU
         args:
-          name: layer3/ReLU
+          scope: layer3/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer4/BN
+          scope: layer4/BN
       #====================
 
 variation: &variation
@@ -54,7 +54,7 @@ variation: &variation
           filter_height: 3
           strides: 2
           padding: valid
-          name: layer5/mean
+          scope: layer5/mean
         input_config:
           typename: Tensor
           name: layer4/BN/output
@@ -62,7 +62,7 @@ variation: &variation
       - typename: Conv2D
         args:
           << : *conv2d_mean
-          name: layer6/stddev
+          scope: layer6/stddev
         input_config:
           typename: Tensor
           name: layer4/BN/output
@@ -70,7 +70,7 @@ variation: &variation
       - typename: Anonymous
         args:
           exp: x['mean'] + x['stddev'] * NormalRandom(std=0.1)
-          name: layer7/merge
+          scope: layer7/merge
         input_config:
           mean:
             typename: Tensor
@@ -80,14 +80,14 @@ variation: &variation
             name: layer6/stddev/output
       - typename: ReLU
         args:
-          name: layer7/ReLU
+          scope: layer7/ReLU
         input_config:
           typename: Tensor
           name: layer7/merge/output
       #====================
       - typename: BatchNormalization
         args:
-          name: layer8/BN
+          scope: layer8/BN
         input_config:
           typename: Tensor
           name: layer7/ReLU/output
@@ -95,7 +95,7 @@ variation: &variation
       - typename: Conv2DTranspose
         args:
           << : *conv2d_mean
-          name: layer9/conv2DTranspose
+          scope: layer9/conv2DTranspose
         parameters:
           original_filter:
             typename: Variable
@@ -108,14 +108,14 @@ variation: &variation
           name: layer8/BN/output
       - typename: ReLU
         args:
-          name: layer9/ReLU
+          scope: layer9/ReLU
         input_config:
           typename: Tensor
           name: layer9/conv2DTranspose/output
       #====================
       - typename: BatchNormalization
         args:
-          name: layer10/BN
+          scope: layer10/BN
         input_config:
           typename: Tensor
           name: layer9/ReLU/output
@@ -133,7 +133,7 @@ decoder: &decoder
       - typename: Conv2DTranspose
         args:
           << : *conv2d_2
-          name: layer11/conv2DTranspose
+          scope: layer11/conv2DTranspose
         parameters:
           original_filter:
             typename: Variable
@@ -143,16 +143,16 @@ decoder: &decoder
             name: layer2/BN/output
       - typename: ReLU
         args:
-          name: layer11/ReLU
+          scope: layer11/ReLU
       #====================
       - typename: BatchNormalization
         args:
-          name: layer12/BN
+          scope: layer12/BN
       #====================
       - typename: Conv2DTranspose
         args:
           << : *conv2d_1
-          name: layer13/conv2DTranspose
+          scope: layer13/conv2DTranspose
         parameters:
           original_filter:
             typename: Variable
@@ -163,7 +163,7 @@ decoder: &decoder
             name: input_image
       - typename: ReLU
         args:
-          name: layer13/ReLU
+          scope: layer13/ReLU
       #====================
 
 autoencoder: &autoencoder
@@ -199,7 +199,7 @@ error: &error
       #--------------------
       - typename: SSE
         args:
-          name: reconstruction_error
+          scope: reconstruction_error
         input_config:
           target:
             typename: Input
@@ -214,7 +214,7 @@ error: &error
       #--------------------
       - typename: Anonymous
         args:
-          name: latent_error
+          scope: latent_error
           exp: 0.5 * reduce_sum(square(x['mean']) + square(x['stddev']) - log(square(x['stddev'])) - 1, [1, 2, 3])  
         input_config:
           mean:
@@ -229,7 +229,7 @@ error: &error
       - typename: Anonymous
         args:
           exp: reduce_mean(x['recon'] + x['latent'])
-          name: error
+          scope: error
         input_config:
           recon:
             typename: Tensor
@@ -245,7 +245,7 @@ optimization: &optimization
     node_configs:
       - typename: Adam
         args:
-          name: Adam
+          scope: Adam
           learning_rate: 0.01
         input_config:
           loss:

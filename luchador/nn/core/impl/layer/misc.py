@@ -16,11 +16,11 @@ class NHWC2NCHW(layer.NHWC2NCHW, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='NHWC2NCHW'):
-        super(NHWC2NCHW, self).__init__(name=name)
+    def __init__(self, scope='NHWC2NCHW'):
+        super(NHWC2NCHW, self).__init__(scope=scope)
 
 
 class NCHW2NHWC(layer.NCHW2NHWC, BaseLayer):
@@ -30,8 +30,8 @@ class NCHW2NHWC(layer.NCHW2NHWC, BaseLayer):
 
     Parameters
     ----------
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, name='NCHW2NHWC'):
-        super(NCHW2NHWC, self).__init__(name=name)
+    def __init__(self, scope='NCHW2NHWC'):
+        super(NCHW2NHWC, self).__init__(scope=scope)

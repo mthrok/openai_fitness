@@ -17,9 +17,9 @@ class TrueDiv(layer.TrueDiv, BaseLayer):
     denom : float
         The value of denominator
 
-    name : str
+    scope : str
         Used as base scope when building parameters and output
     """
-    def __init__(self, denom, name='TrueDiv'):
-        super(TrueDiv, self).__init__(denom=denom, name=name)
+    def __init__(self, denom, scope='TrueDiv'):
+        super(TrueDiv, self).__init__(denom=denom, scope=scope)
         self._denom = None
