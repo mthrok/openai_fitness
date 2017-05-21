@@ -137,7 +137,7 @@ class RMSProp(OptimizerMixin):
         self.optimizer = tf.train.RMSPropOptimizer(
             learning_rate=self.args['learning_rate'],
             decay=self.args['decay'], momentum=self.args['momentum'],
-            epsilon=self.args['epsilon'], name=self.args['name'],
+            epsilon=self.args['epsilon'], name=self.args['scope'],
             use_locking=self.args.get('use_locking', False))
 
 
@@ -203,7 +203,7 @@ class Adam(OptimizerMixin):
             beta1=self.args['beta1'], beta2=self.args['beta2'],
             epsilon=self.args['epsilon'],
             use_locking=self.args.get('use_locking', False),
-            name=self.args['name'])
+            name=self.args['scope'])
 
     def _apply_gradients(self, grads_and_vars, **kwargs):
         # pylint: disable=protected-access
