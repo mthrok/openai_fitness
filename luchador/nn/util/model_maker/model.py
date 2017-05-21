@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import logging
 from collections import OrderedDict
 
+from ...core import variable_scope
 from ...model import Sequential, Graph, Container
 from .common import ConfigDict, parse_config
 from .io import make_io_node
@@ -45,14 +46,11 @@ def _make_sequential_model(
 def _make_graph_model(
         node_configs, input_config=None, output_config=None, name=None):
     model = Graph(name=name)
-
     if input_config:
         model.input = make_io_node(input_config)
-
     for node_config in node_configs:
         node = make_node(node_config)
         model.add_node(node)
-
     if output_config:
         model.output = make_io_node(output_config)
     return model
@@ -81,25 +79,34 @@ def _make_container_model(
     model = Container(name=name)
     if input_config:
         model.input = make_io_node(input_config)
-
     for conf in model_configs:
         _LG.info('Building Model: %s', conf.get('name', 'No name defined'))
         model.add_model(conf['name'], make_model(conf))
-
     if output_config:
         model.output = make_io_node(output_config)
     return model
 
 
+_BUILD_FUNC = {
+    'Sequential': _make_sequential_model,
+    'Graph': _make_graph_model,
+    'Container': _make_container_model,
+}
+
+
 def _make_model(model_config):
-    _type = model_config.get('typename', 'No model type found')
-    if _type == 'Sequential':
-        return _make_sequential_model(**model_config.get('args', {}))
-    if _type == 'Graph':
-        return _make_graph_model(**model_config.get('args', {}))
-    if _type == 'Container':
-        return _make_container_model(**model_config.get('args', {}))
-    raise ValueError('Unexpected model type: {}'.format(_type))
+    if 'typename' not in model_config:
+        raise ValueError('No `typename` is given.')
+    _type = model_config.get('typename')
+    if _type not in _BUILD_FUNC:
+        raise ValueError('Unexpected model type: {}'.format(_type))
+    func = _BUILD_FUNC[_type]
+
+    _args = model_config.get('args', {})
+    if 'scope' not in model_config:
+        return func(**_args)
+    with variable_scope(model_config['scope']):
+        return func(**_args)
 
 
 def _make_model_recursively(model_config):

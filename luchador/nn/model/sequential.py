@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import logging
 
+from ..core import variable_scope
 from .graph import Graph
 
 _LG = logging.getLogger(__name__)
@@ -20,11 +21,11 @@ class Sequential(Graph):
     --------
     >>> from luchador import nn
     >>> cnn = nn.Sequential()
-    >>> cnn.add_layer(nn.Conv2D(8, 8, 4, 4, name='layer1'))
-    >>> cnn.add_layer(nn.Conv2D(4, 4, 16, 2, name='layer2'))
-    >>> cnn.add_layer(nn.Flatten(name='layer3'))
-    >>> cnn.add_layer(nn.Dense(256, name='layer4'))
-    >>> cnn.add_layer(nn.Dense(10, name='layer5'))
+    >>> cnn.add_layer(nn.Conv2D(8, 8, 4, 4, scope='layer1'))
+    >>> cnn.add_layer(nn.Conv2D(4, 4, 16, 2, scope='layer2'))
+    >>> cnn.add_layer(nn.Flatten(scope='layer3'))
+    >>> cnn.add_layer(nn.Dense(256, scope='layer4'))
+    >>> cnn.add_layer(nn.Dense(10, scope='layer5'))
 
     The above defines nerwork with two convolution layers followed by
     two affin transformation layers. You can use ``nn.Input`` to define
