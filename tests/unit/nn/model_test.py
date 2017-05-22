@@ -146,14 +146,14 @@ class ModelRetrievalTest(fixture.TestCase):
         scope1 = '{}/foo'.format(self.get_scope())
         scope2 = '{}/bar'.format(self.get_scope())
 
-        name1, name2 = 'baz1', 'baz2'
+        name = 'baz'
         with nn.variable_scope(scope1):
-            model1 = nn.model.Graph(name=name1)
-            self.assertIs(nn.get_model(name1), model1)
+            model1 = nn.model.Graph(name=name)
+            self.assertIs(nn.get_model(name), model1)
 
         with nn.variable_scope(scope2):
-            model2 = nn.model.Graph(name=name2)
-            self.assertIs(nn.get_model(name2), model2)
+            model2 = nn.model.Graph(name=name)
+            self.assertIs(nn.get_model(name), model2)
 
-        self.assertIs(nn.get_model(name1), model1)
-        self.assertIs(nn.get_model(name2), model2)
+        self.assertIs(nn.get_model('{}/{}'.format(scope1, name)), model1)
+        self.assertIs(nn.get_model('{}/{}'.format(scope2, name)), model2)
