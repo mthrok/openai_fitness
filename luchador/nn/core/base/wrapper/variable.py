@@ -14,7 +14,8 @@ class BaseVariable(BaseWrapper):
         super(BaseVariable, self).__init__(
             tensor=tensor, shape=shape, name=name,
             dtype=dtype, trainable=trainable)
-        register('variable', name, self)
+        if name:
+            register('variable', name, self)
 
 
 def get_variable(name):

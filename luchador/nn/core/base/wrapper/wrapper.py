@@ -41,7 +41,10 @@ class BaseWrapper(object):
         self._tensor = obj
 
     def __repr__(self):
-        return '<{}, {}, {}>'.format(self.name or '', self.dtype, self.shape)
+        class_name = self.__class__.__name__.split('.')[-1]
+        wrapper_name = self.name or 'No Name'
+        return '<{}:{}, {}, {}: {}>'.format(
+            class_name, id(self._tensor), self.dtype, self.shape, wrapper_name)
 
     @property
     def size(self):

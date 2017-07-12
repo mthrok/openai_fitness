@@ -13,7 +13,8 @@ class BaseInput(BaseWrapper):
     def __init__(self, tensor, shape, name, dtype):
         super(BaseInput, self).__init__(
             tensor=tensor, shape=shape, name=name, dtype=dtype)
-        register('input', name, self)
+        if name:
+            register('input', name, self)
 
 
 def get_input(name):

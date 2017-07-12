@@ -32,6 +32,7 @@ def _make_sequential_model(
     Model
         Resulting model
     """
+    _LG.info('  Constructing: Sequential: %s', name or 'No Name')
     model = Sequential(name=name)
     if input_config:
         tensor = make_io_node(input_config)
@@ -45,6 +46,7 @@ def _make_sequential_model(
 
 def _make_graph_model(
         node_configs, input_config=None, output_config=None, name=None):
+    _LG.info('  Constructing: Graph: %s', name or 'No Name')
     model = Graph(name=name)
     if input_config:
         model.input = make_io_node(input_config)
@@ -76,6 +78,7 @@ def _make_container_model(
     Model
         Resulting model
     """
+    _LG.info('  Constructing: Container: %s', name or 'No Name')
     model = Container(name=name)
     if input_config:
         model.input = make_io_node(input_config)

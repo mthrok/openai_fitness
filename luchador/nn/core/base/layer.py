@@ -39,12 +39,14 @@ class BaseLayer(luchador.util.StoreMixin, Node):
         Tensor
             Tensor which holds the output of built computation
         """
-        _LG.info('  Building %s on %s', type(self).__name__, input_tensor)
-
+        _LG.info(
+            '  Building %s(%s) on %s',
+            type(self).__name__, self.args['scope'], input_tensor)
         self.input = input_tensor
         with variable_scope(self.args['scope']):
             self.output = self._build(input_tensor)
-            return self.output
+        _LG.info('    Built %s', self.output)
+        return self.output
 
     @abc.abstractmethod
     def _build(self, input_tensor):
