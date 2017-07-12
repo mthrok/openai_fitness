@@ -50,76 +50,130 @@ class _CostTest(TestCase):
         np.testing.assert_almost_equal(out_val, expected, decimal=decimal)
         self.assertEqual(out_val.shape, out_var.shape)
 
+    def _test_cost_constant_target(
+            self, cost, target, prediction, expected, elementwise, decimal=5):
+        with nn.variable_scope(self.get_scope()):
+            pred_var = nn.Input(shape=prediction.shape)
+            out_var = cost(target, pred_var)
+
+        session = nn.Session()
+        out_val = session.run(
+            outputs=out_var,
+            inputs={
+                pred_var: prediction,
+            },
+        )
+
+        if not elementwise:
+            expected = np.sum(np.mean(expected, axis=0))
+
+        np.testing.assert_almost_equal(out_val, expected, decimal=decimal)
+        self.assertEqual(out_val.shape, out_var.shape)
+
 
 class SSETest(_CostTest):
     """Test Sum Squared Error"""
-    def _test_sse(self, elementwise):
-        shape = (32, 3)
-        target = np.random.randn(*shape)
-        prediction = np.random.randn(*shape)
-
+    def _test_sse(self, elementwise, batch=32, n_classes=3):
+        target = np.random.randn(batch, n_classes)
+        prediction = np.random.randn(batch, n_classes)
         expected = np.square(target - prediction)
-
         cost = luchador.nn.cost.SSE(elementwise=elementwise)
         self._test_cost(cost, target, prediction, expected, elementwise)
 
+    def _test_sse_constant_target(self, elementwise, shape=(32, 3)):
+        prediction = np.random.randn(*shape)
+        cost = luchador.nn.cost.SSE(elementwise=elementwise)
+
+        for target in np.arange(0.0, 1.0, 0.1):
+            expected = np.square(target - prediction)
+            self._test_cost_constant_target(
+                cost, target, prediction, expected, elementwise)
+
     def test_sse_element_wise(self):
-        """SSE output value is correct"""
+        """SSE output value is correct element-wise"""
         self._test_sse(elementwise=True)
+        self._test_sse_constant_target(elementwise=True)
 
     def test_sse_scalar(self):
         """SSE output value is correct"""
         self._test_sse(elementwise=False)
+        self._test_sse_constant_target(elementwise=False)
+
+
+def _expected_sigmoid_ce(logit, target):
+    x, z = logit, target
+    return np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
 
 
 class SigmoidCrossEntropyTest(_CostTest):
     """Test Sigmoid Cross Entropy"""
-    def _test_sce(self, elementwise):
-        batch, n_classes = 32, 3
-
-        shape = (batch, n_classes)
+    def _test_sce(self, elementwise, batch=32, n_classes=3):
         label = np.random.randint(0, n_classes, batch)
-        target = np.zeros(shape=shape)
+        target = np.zeros(shape=(batch, n_classes))
         target[np.arange(batch), label] = 1
-        logit = np.random.randn(*shape)
-
-        x, z = logit, target
-        expected = np.maximum(0, x) - x * z + np.log(1 + np.exp(-np.abs(x)))
+        logit = np.random.randn(batch, n_classes)
+        expected = _expected_sigmoid_ce(logit, target)
 
         cost = luchador.nn.cost.SigmoidCrossEntropy(elementwise=elementwise)
         self._test_cost(cost, target, logit, expected, elementwise)
 
-    def test_sce_elementwise(self):
+    def _test_sce_constant_target(self, elementwise, batch=32, n_classes=1):
+        logit = np.random.randn(batch, n_classes)
+        cost = luchador.nn.cost.SigmoidCrossEntropy(elementwise=elementwise)
+
+        for target in np.arange(0.0, 1.0, 0.1):
+            expected = _expected_sigmoid_ce(logit, target)
+            self._test_cost_constant_target(
+                cost, target, logit, expected, elementwise)
+
+    def test_sigmoid_ce_elementwise(self):
         """SigmoidCrossEntropy output value is correct"""
         self._test_sce(elementwise=True)
+        self._test_sce_constant_target(elementwise=True)
 
-    def test_sce_scalar(self):
+    def test_sigmoid_ce_scalar(self):
         """SigmoidCrossEntropy output value is correct"""
         self._test_sce(elementwise=False)
+        self._test_sce_constant_target(elementwise=False)
+
+
+def _normalize_rows(mat):
+    row_sums = (mat ** 2).sum(axis=1)
+    return mat / row_sums[:, np.newaxis]
+
+
+def _expected_softmax_ce(logit, target):
+    xdev = logit - np.max(logit, 1, keepdims=True)
+    log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
+    return np.sum(- target * log_sm, axis=1)
 
 
 class SoftmaxCrossEntropyTest(_CostTest):
     """Test SofmaxCrossEntropy"""
-    def _test_sce(self, elementwise):
-        shape = (32, 3)
-        target = np.random.randn(*shape)
-        prediction = np.random.randn(*shape)
-
-        xdev = prediction - np.max(prediction, 1, keepdims=True)
-        log_sm = xdev - np.log(np.sum(np.exp(xdev), axis=1, keepdims=True))
-        expected = - target * log_sm
-        expected = np.sum(expected, axis=1)
-
+    def _test_sce(self, elementwise, batch=32, n_classes=3):
+        target = _normalize_rows(np.random.randn(batch, n_classes))
+        prediction = np.random.randn(batch, n_classes)
+        expected = _expected_softmax_ce(prediction, target)
         cost = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=elementwise)
         self._test_cost(cost, target, prediction, expected, elementwise)
 
-    def test_sce_element_wise(self):
+    def _test_sce_constant_target(self, elementwise, batch=32, n_classes=3):
+        target = _normalize_rows(np.random.randn(batch, n_classes))
+        prediction = np.random.randn(batch, n_classes)
+        expected = _expected_softmax_ce(prediction, target)
+        cost = luchador.nn.cost.SoftmaxCrossEntropy(elementwise=elementwise)
+        self._test_cost_constant_target(
+            cost, target, prediction, expected, elementwise)
+
+    def test_softmax_ce_elementwise(self):
         """SoftmaxCrossEntropy output value is correct"""
         self._test_sce(elementwise=True)
+        self._test_sce_constant_target(elementwise=True)
 
-    def test_sce_scalar(self):
+    def test_softmax_ce_scalar(self):
         """SoftmaxCrossEntropy output value is correct"""
         self._test_sce(elementwise=False)
+        self._test_sce_constant_target(elementwise=False)
 
 
 def _kld(mean, stddev, clip_max=1e10, clip_min=1e-10):
@@ -130,7 +184,6 @@ def _kld(mean, stddev, clip_max=1e10, clip_min=1e-10):
 
 class NormalKLDivergenceTest(_CostTest):
     """Test NormalKMDivergence class"""
-
     def _test_kld(self, elementwise, clip_max=1e5, clip_min=1e-10):
         shape = (32, 3, 5)
         mean = np.random.randn(*shape)
