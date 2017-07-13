@@ -15,3 +15,6 @@ args:
       args:
         scope: gen_layer2/Dense
         n_nodes: 784
+    - typename: ReLU
+      args:
+        scope: gen_layer2/ReLU

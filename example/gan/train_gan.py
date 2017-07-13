@@ -3,14 +3,19 @@ import pickle
 import os.path
 import logging
 
+import numpy as np
+from tensorflow.examples.tutorials.mnist import input_data
+
 from luchador import nn
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 _LG = logging.getLogger(__name__)
 
 
 def _parse_command_line_args():
     import argparse
-    default_mnist_path = os.path.join('data', 'mnist.pkl.gz')
+    default_mnist_path = os.path.join(os.path.expanduser('~'), '.mnist')
     default_generator_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'generator.yml'
     )
@@ -65,25 +70,32 @@ def _build_model(model_file):
     return nn.make_model(model_def)
 
 
+
 def _load_data(filepath):
-    _LG.info('Loading data %s', filepath)
-    with gzip.open(filepath, 'rb') as file_:
-        train_set, test_set, valid_set = pickle.load(file_)
-        shape = [-1, 28 * 28]
-        return {
-            'train': {
-                'data': train_set[0].reshape(shape),
-                'label': train_set[1],
-            },
-            'test': {
-                'data': test_set[0].reshape(shape),
-                'label': test_set[1],
-            },
-            'valid': {
-                'data': valid_set[0].reshape(shape),
-                'label': valid_set[1],
-            },
-        }
+    return input_data.read_data_sets(filepath, one_hot=True)
+
+
+def _sample_seed(m, n):
+    return np.random.uniform(-1., 1., size=[m, n])
+
+
+def _train(optimize_disc, optimize_gen, generate_image):
+    def plot(block):
+        images = generate_image()
+        fig = plt.figure()
+        gs = gridspec.GridSpec(4, 4)
+        gs.update(wspace=0.05, hspace=0.05)
+        for i, sample in enumerate(images):
+            ax = fig.add_subplot(gs[i])
+            ax.imshow(sample, cmap='Greys_r')
+        plt.show(block=block)
+    for i in range(10):
+        plot(False)
+        for _ in range(1000):
+            disc_loss = optimize_disc()
+            gen_loss = optimize_gen()
+        print i, disc_loss, gen_loss
+    plot(True)
 
 
 def _main():
@@ -91,8 +103,8 @@ def _main():
     _initialize_logger(args.debug)
 
     generator = _build_model(args.generator)
-    seed_gen = nn.Input(shape=(None, 100))
-    in_gen = generator(seed_gen)
+    gen_seed = nn.Input(shape=(None, 100))
+    in_gen = generator(gen_seed)
     in_real = nn.Input(shape=(None, 784))
 
     discriminator = _build_model(args.discriminator)
@@ -100,22 +112,60 @@ def _main():
     logit_real = discriminator(in_real)
     logit_fake = discriminator(in_gen)
 
+    sce_gen = nn.cost.SigmoidCrossEntropy(scope='sce_gen')
     sce_real = nn.cost.SigmoidCrossEntropy(scope='sce_real')
     sce_fake = nn.cost.SigmoidCrossEntropy(scope='sce_fake')
+    gen_loss = sce_gen(prediction=logit_fake, target=1)
+
     disc_loss_real = sce_real(prediction=logit_real, target=1)
     disc_loss_fake = sce_fake(prediction=logit_fake, target=0)
     disc_loss = disc_loss_real + disc_loss_fake
-    sce_gen = nn.cost.SigmoidCrossEntropy(scope='sce_gen')
-    gen_loss = sce_gen(prediction=logit_fake, target=1)
 
-    print discriminator.__dict__
-    opt_disc = nn.optimizer.Adam(learning_rate=0.001, scope='TrainDiscriminator/Adam').minimize(
+    optimizer_disc = nn.optimizer.Adam(
+        learning_rate=0.001, scope='TrainDiscriminator/Adam')
+    optimizer_gen = nn.optimizer.Adam(
+        learning_rate=0.001, scope='TrainGenerator/Adam')
+
+    opt_disc = optimizer_disc.minimize(
         disc_loss, discriminator.get_parameters_to_train())
-
-    opt_gen = nn.optimizer.Adam(learning_rate=0.001, scope='TrainGenerator/Adam').minimize(
+    opt_gen = optimizer_gen.minimize(
         gen_loss, generator.get_parameters_to_train())
 
     dataset = _load_data(args.mnist)
+
+    batch_size = 32
+    sess = nn.Session()
+    sess.initialize()
+
+    def optimize_disc():
+        return sess.run(
+            inputs={
+                gen_seed: _sample_seed(batch_size, 100),
+                in_real: dataset.train.next_batch(batch_size)[0],
+            },
+            outputs=disc_loss,
+            updates=opt_disc,
+        )
+
+    def optimize_gen():
+        return sess.run(
+            inputs={
+                gen_seed: _sample_seed(batch_size, 100),
+            },
+            outputs=gen_loss,
+            updates=opt_gen,
+        )
+
+    def generate_image():
+        return sess.run(
+            inputs={
+                gen_seed: _sample_seed(16, 100),
+            },
+            outputs=in_gen,
+        ).reshape(-1, 28, 28)
+
+    _train(optimize_disc, optimize_gen, generate_image)
+
 
 if __name__ == '__main__':
     _main()
