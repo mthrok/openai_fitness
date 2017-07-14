@@ -73,11 +73,6 @@ def _build_model(model_file):
     return nn.make_model(model_def)
 
 
-
-def _sample_seed(m, n):
-    return np.random.uniform(-1., 1., size=[m, n])
-
-
 def _plot_images(images, output):
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
@@ -96,18 +91,47 @@ def _plot_images(images, output):
     plt.close(fig)
 
 
+def _build_loss(logit_real, logit_fake):
+    sce_gen = nn.cost.SigmoidCrossEntropy(scope='sce_gen')
+    sce_real = nn.cost.SigmoidCrossEntropy(scope='sce_real')
+    sce_fake = nn.cost.SigmoidCrossEntropy(scope='sce_fake')
+    gen_loss = sce_gen(prediction=logit_fake, target=1)
+
+    disc_loss_real = sce_real(prediction=logit_real, target=1)
+    disc_loss_fake = sce_fake(prediction=logit_fake, target=0)
+    disc_loss = disc_loss_real + disc_loss_fake
+    return gen_loss, disc_loss
+
+
+def _build_optimization(generator, gen_loss, discriminator, disc_loss):
+    optimizer_disc = nn.optimizer.Adam(
+        learning_rate=0.001, scope='TrainDiscriminator/Adam')
+    optimizer_gen = nn.optimizer.Adam(
+        learning_rate=0.001, scope='TrainGenerator/Adam')
+
+    opt_gen = optimizer_gen.minimize(
+        gen_loss, generator.get_parameters_to_train())
+    opt_disc = optimizer_disc.minimize(
+        disc_loss, discriminator.get_parameters_to_train())
+    return opt_gen, opt_disc
+
+
 def _train(optimize_disc, optimize_gen, generate_images, output=False):
+    if output:
+        images = generate_images()
+        _plot_images(images, os.path.join(output, '{:03d}.png'.format(0)))
     for i in range(10):
-        if output:
-            images = generate_images()
-            _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
         for _ in range(1000):
             disc_loss = optimize_disc()
             gen_loss = optimize_gen()
         print i, disc_loss, gen_loss
-    if output:
-        images = generate_images()
-        _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
+        if output:
+            images = generate_images()
+            _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
+
+
+def _sample_seed(m, n):
+    return np.random.uniform(-1., 1., size=[m, n])
 
 
 def _main():
@@ -118,33 +142,18 @@ def _main():
             os.makedirs(args.output)
 
     generator = _build_model(args.generator)
-    gen_seed = nn.Input(shape=(None, 100))
-    in_gen = generator(gen_seed)
-    in_real = nn.Input(shape=(None, 784))
-
     discriminator = _build_model(args.discriminator)
 
-    logit_real = discriminator(in_real)
-    logit_fake = discriminator(in_gen)
+    input_gen = nn.Input(shape=(None, 100))
+    data_real = nn.Input(shape=(None, 784))
+    data_fake = generator(input_gen)
 
-    sce_gen = nn.cost.SigmoidCrossEntropy(scope='sce_gen')
-    sce_real = nn.cost.SigmoidCrossEntropy(scope='sce_real')
-    sce_fake = nn.cost.SigmoidCrossEntropy(scope='sce_fake')
-    gen_loss = sce_gen(prediction=logit_fake, target=1)
+    logit_real = discriminator(data_real)
+    logit_fake = discriminator(data_fake)
 
-    disc_loss_real = sce_real(prediction=logit_real, target=1)
-    disc_loss_fake = sce_fake(prediction=logit_fake, target=0)
-    disc_loss = disc_loss_real + disc_loss_fake
-
-    optimizer_disc = nn.optimizer.Adam(
-        learning_rate=0.001, scope='TrainDiscriminator/Adam')
-    optimizer_gen = nn.optimizer.Adam(
-        learning_rate=0.001, scope='TrainGenerator/Adam')
-
-    opt_disc = optimizer_disc.minimize(
-        disc_loss, discriminator.get_parameters_to_train())
-    opt_gen = optimizer_gen.minimize(
-        gen_loss, generator.get_parameters_to_train())
+    gen_loss, disc_loss = _build_loss(logit_real, logit_fake)
+    opt_disc, opt_gen = _build_optimization(
+        generator, gen_loss, discriminator, disc_loss)
 
     dataset = load_mnist(args.mnist, flatten=True)
 
@@ -152,34 +161,34 @@ def _main():
     sess = nn.Session()
     sess.initialize()
 
-    def optimize_disc():
+    def _optimize_disc():
         return sess.run(
             inputs={
-                gen_seed: _sample_seed(batch_size, 100),
-                in_real: dataset.train.next_batch(batch_size).data
+                input_gen: _sample_seed(batch_size, 100),
+                data_real: dataset.train.next_batch(batch_size).data
             },
             outputs=disc_loss,
             updates=opt_disc,
         )
 
-    def optimize_gen():
+    def _optimize_gen():
         return sess.run(
             inputs={
-                gen_seed: _sample_seed(batch_size, 100),
+                input_gen: _sample_seed(batch_size, 100),
             },
             outputs=gen_loss,
             updates=opt_gen,
         )
 
-    def generate_image():
+    def _generate_image():
         return sess.run(
             inputs={
-                gen_seed: _sample_seed(16, 100),
+                input_gen: _sample_seed(16, 100),
             },
-            outputs=in_gen,
+            outputs=data_fake,
         ).reshape(-1, 28, 28)
 
-    _train(optimize_disc, optimize_gen, generate_image, args.output)
+    _train(_optimize_disc, _optimize_gen, _generate_image, args.output)
 
 
 if __name__ == '__main__':
