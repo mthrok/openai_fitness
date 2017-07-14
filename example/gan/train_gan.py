@@ -1,28 +1,27 @@
-import gzip
-import pickle
+from __future__ import absolute_import
+
 import os.path
 import logging
 
 import numpy as np
-from tensorflow.examples.tutorials.mnist import input_data
-
 from luchador import nn
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+from luchador.util import initialize_logger
+
+from example.utils.load_dataset import load_mnist
 
 _LG = logging.getLogger(__name__)
 
 
 def _parse_command_line_args():
     import argparse
-    default_mnist_path = os.path.join(os.path.expanduser('~'), '.mnist')
+    default_mnist_path = os.path.join(
+        os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
     default_generator_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'generator.yml'
     )
     default_discriminator_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'discriminator.yml'
     )
-
     parser = argparse.ArgumentParser(
         description='Test Generative Adversarial Network'
     )
@@ -49,12 +48,16 @@ def _parse_command_line_args():
         ),
     )
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--no-plot', action='store_true')
+    parser.add_argument(
+        '--output',
+        help=(
+            'When provided, plot generated data to this directory.'
+        )
+    )
     return parser.parse_args()
 
 
 def _initialize_logger(debug):
-    from luchador.util import initialize_logger
     message_format = (
         '%(asctime)s: %(levelname)5s: %(funcName)10s: %(message)s'
         if debug else '%(asctime)s: %(levelname)5s: %(message)s'
@@ -71,36 +74,48 @@ def _build_model(model_file):
 
 
 
-def _load_data(filepath):
-    return input_data.read_data_sets(filepath, one_hot=True)
-
-
 def _sample_seed(m, n):
     return np.random.uniform(-1., 1., size=[m, n])
 
 
-def _train(optimize_disc, optimize_gen, generate_image):
-    def plot(block):
-        images = generate_image()
-        fig = plt.figure()
-        gs = gridspec.GridSpec(4, 4)
-        gs.update(wspace=0.05, hspace=0.05)
-        for i, sample in enumerate(images):
-            ax = fig.add_subplot(gs[i])
-            ax.imshow(sample, cmap='Greys_r')
-        plt.show(block=block)
+def _plot_images(images, output):
+    import matplotlib.pyplot as plt
+    import matplotlib.gridspec as gridspec
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(4, 4)
+    gs.update(wspace=0.05, hspace=0.05)
+    for i, sample in enumerate(images):
+        ax = fig.add_subplot(gs[i])
+        plt.axis('off')
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_aspect('equal')
+        ax.imshow(sample, cmap='Greys_r')
+    plt.savefig(output, bbox_inches='tight')
+    plt.close(fig)
+
+
+def _train(optimize_disc, optimize_gen, generate_images, output=False):
     for i in range(10):
-        plot(False)
+        if output:
+            images = generate_images()
+            _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
         for _ in range(1000):
             disc_loss = optimize_disc()
             gen_loss = optimize_gen()
         print i, disc_loss, gen_loss
-    plot(True)
+    if output:
+        images = generate_images()
+        _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
 
 
 def _main():
     args = _parse_command_line_args()
     _initialize_logger(args.debug)
+    if args.output:
+        if not os.path.exists(args.output):
+            os.makedirs(args.output)
 
     generator = _build_model(args.generator)
     gen_seed = nn.Input(shape=(None, 100))
@@ -131,7 +146,7 @@ def _main():
     opt_gen = optimizer_gen.minimize(
         gen_loss, generator.get_parameters_to_train())
 
-    dataset = _load_data(args.mnist)
+    dataset = load_mnist(args.mnist, flatten=True)
 
     batch_size = 32
     sess = nn.Session()
@@ -141,7 +156,7 @@ def _main():
         return sess.run(
             inputs={
                 gen_seed: _sample_seed(batch_size, 100),
-                in_real: dataset.train.next_batch(batch_size)[0],
+                in_real: dataset.train.next_batch(batch_size).data
             },
             outputs=disc_loss,
             updates=opt_disc,
@@ -164,7 +179,7 @@ def _main():
             outputs=in_gen,
         ).reshape(-1, 28, 28)
 
-    _train(optimize_disc, optimize_gen, generate_image)
+    _train(optimize_disc, optimize_gen, generate_image, args.output)
 
 
 if __name__ == '__main__':

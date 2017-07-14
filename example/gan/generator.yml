@@ -15,6 +15,6 @@ args:
       args:
         scope: gen_layer2/Dense
         n_nodes: 784
-    - typename: ReLU
+    - typename: Sigmoid
       args:
-        scope: gen_layer2/ReLU
+        scope: gen_layer2/Sigmoid
