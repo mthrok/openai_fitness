@@ -5,9 +5,10 @@ import logging
 
 import numpy as np
 from luchador import nn
-from luchador.util import initialize_logger
 
-from example.utils.load_dataset import load_mnist
+from example.utils import (
+    initialize_logger, load_mnist, plot_images
+)
 
 _LG = logging.getLogger(__name__)
 
@@ -40,6 +41,10 @@ def _parse_command_line_args():
         )
     )
     parser.add_argument(
+        '--n-seed', default=100, type=int,
+        help='#Generator input dimensions.'
+    )
+    parser.add_argument(
         '--mnist', default=default_mnist_path,
         help=(
             'Path to MNIST dataset, downloaded from '
@@ -57,38 +62,10 @@ def _parse_command_line_args():
     return parser.parse_args()
 
 
-def _initialize_logger(debug):
-    message_format = (
-        '%(asctime)s: %(levelname)5s: %(funcName)10s: %(message)s'
-        if debug else '%(asctime)s: %(levelname)5s: %(message)s'
-    )
-    level = logging.DEBUG if debug else logging.INFO
-    initialize_logger(
-        name='luchador', message_format=message_format, level=level)
-
-
 def _build_model(model_file):
     _LG.info('Loading model %s', model_file)
     model_def = nn.get_model_config(model_file)
     return nn.make_model(model_def)
-
-
-def _plot_images(images, output):
-    import matplotlib.pyplot as plt
-    import matplotlib.gridspec as gridspec
-
-    fig = plt.figure()
-    gs = gridspec.GridSpec(4, 4)
-    gs.update(wspace=0.05, hspace=0.05)
-    for i, sample in enumerate(images):
-        ax = fig.add_subplot(gs[i])
-        plt.axis('off')
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
-        ax.set_aspect('equal')
-        ax.imshow(sample, cmap='Greys_r')
-    plt.savefig(output, bbox_inches='tight')
-    plt.close(fig)
 
 
 def _build_loss(logit_real, logit_fake):
@@ -118,16 +95,17 @@ def _build_optimization(generator, gen_loss, discriminator, disc_loss):
 
 def _train(optimize_disc, optimize_gen, generate_images, output=False):
     if output:
-        images = generate_images()
-        _plot_images(images, os.path.join(output, '{:03d}.png'.format(0)))
+        path = os.path.join(output, '{:03d}.png'.format(0))
+        plot_images(generate_images(), path)
+    _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
     for i in range(10):
         for _ in range(1000):
             disc_loss = optimize_disc()
             gen_loss = optimize_gen()
-        print i, disc_loss, gen_loss
+        _LG.info('%5s: %10.3e, %10.3e', i, disc_loss, gen_loss)
         if output:
-            images = generate_images()
-            _plot_images(images, os.path.join(output, '{:03d}.png'.format(i)))
+            path = os.path.join(output, '{:03d}.png'.format(i))
+            plot_images(generate_images(), path)
 
 
 def _sample_seed(m, n):
@@ -136,35 +114,34 @@ def _sample_seed(m, n):
 
 def _main():
     args = _parse_command_line_args()
-    _initialize_logger(args.debug)
-    if args.output:
-        if not os.path.exists(args.output):
-            os.makedirs(args.output)
+    initialize_logger(args.debug)
+    if args.output and not os.path.exists(args.output):
+        os.makedirs(args.output)
+
+    batch_size = 32
+    dataset = load_mnist(args.mnist, flatten=True)
 
     generator = _build_model(args.generator)
     discriminator = _build_model(args.discriminator)
 
-    input_gen = nn.Input(shape=(None, 100))
-    data_real = nn.Input(shape=(None, 784))
+    input_gen = nn.Input(shape=(None, args.n_seed), name='GeneratorInput')
+    data_real = nn.Input(shape=dataset.train.shape, name='InputData')
     data_fake = generator(input_gen)
 
-    logit_real = discriminator(data_real)
     logit_fake = discriminator(data_fake)
+    logit_real = discriminator(data_real)
 
     gen_loss, disc_loss = _build_loss(logit_real, logit_fake)
-    opt_disc, opt_gen = _build_optimization(
+    opt_gen, opt_disc = _build_optimization(
         generator, gen_loss, discriminator, disc_loss)
 
-    dataset = load_mnist(args.mnist, flatten=True)
-
-    batch_size = 32
     sess = nn.Session()
     sess.initialize()
 
     def _optimize_disc():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(batch_size, 100),
+                input_gen: _sample_seed(batch_size, args.n_seed),
                 data_real: dataset.train.next_batch(batch_size).data
             },
             outputs=disc_loss,
@@ -174,7 +151,7 @@ def _main():
     def _optimize_gen():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(batch_size, 100),
+                input_gen: _sample_seed(batch_size, args.n_seed),
             },
             outputs=gen_loss,
             updates=opt_gen,
@@ -183,7 +160,7 @@ def _main():
     def _generate_image():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(16, 100),
+                input_gen: _sample_seed(16, args.n_seed),
             },
             outputs=data_fake,
         ).reshape(-1, 28, 28)
