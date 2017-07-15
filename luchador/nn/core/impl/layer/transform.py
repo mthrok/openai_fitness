@@ -4,7 +4,8 @@ from __future__ import absolute_import
 
 from ...base import BaseLayer
 from ...backend import layer
-__all__ = ['Flatten', 'Concat']
+from ...backend import ops
+__all__ = ['Flatten', 'Concat', 'Reshape']
 # pylint: disable=abstract-method
 
 
@@ -18,3 +19,12 @@ class Concat(layer.Concat, BaseLayer):
     """Concatenate multiple Tensors"""
     def __init__(self, axis=1, scope='Concat'):
         super(Concat, self).__init__(axis=axis, scope=scope)
+
+
+class Reshape(BaseLayer):
+    """Reshape variable"""
+    def __init__(self, shape, scope='Reshape'):
+        super(Reshape, self).__init__(shape=shape, scope=scope)
+
+    def _build(self, tensor):
+        return ops.reshape(tensor, self.args['shape'], name=self.args['scope'])

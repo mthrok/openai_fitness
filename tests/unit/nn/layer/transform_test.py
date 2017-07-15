@@ -19,19 +19,39 @@ class TestFlatten(TestCase):
     def test_flatten(self):
         """4D input tensor is flattened to 2D tensor"""
         input_shape = (32, 4, 77, 84)
-        input_value = np.random.rand(*input_shape)
-        scope = self.get_scope()
-        with nn.variable_scope(scope, reuse=False):
+        with nn.variable_scope(self.get_scope(), reuse=False):
             input_tensor = nn.Input(shape=input_shape)
             flatten = nn.layer.Flatten()
             output_tensor = flatten(input_tensor)
 
         session = nn.Session()
+        input_value = np.random.rand(*input_shape)
         output_value = session.run(
             outputs=output_tensor, inputs={input_tensor: input_value})
 
         self.assertEqual(output_value.shape, output_tensor.shape)
         expected = input_value.reshape(input_value.shape[0], -1)
+        np.testing.assert_almost_equal(expected, output_value)
+
+
+class TestReshape(TestCase):
+    """Test Reshape layer"""
+    def test_reshape(self):
+        """2D input tensor is reshaped to 4D tensor"""
+        input_shape = (32, 60)
+        output_shape = (32, 3, 4, 5)
+        with nn.variable_scope(self.get_scope(), reuse=False):
+            input_tensor = nn.Input(shape=input_shape)
+            reshape = nn.layer.Reshape(shape=output_shape)
+            output_tensor = reshape(input_tensor)
+
+        session = nn.Session()
+        input_value = np.random.rand(*input_shape)
+        output_value = session.run(
+            outputs=output_tensor, inputs={input_tensor: input_value})
+
+        self.assertEqual(output_value.shape, output_tensor.shape)
+        expected = input_value.reshape(*output_shape)
         np.testing.assert_almost_equal(expected, output_value)
 
 
