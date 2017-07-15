@@ -59,7 +59,7 @@ class Dataset(object):
         return Batch(self.data[start:end, ...], self.label[start:end, ...])
 
 
-def load_mnist(filepath, reshape=None):
+def load_mnist(filepath, flatten=None, data_format=None):
     """Load U of Montreal MNIST data
     http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz
 
@@ -74,8 +74,23 @@ def load_mnist(filepath, reshape=None):
     _LG.info('Loading %s', filepath)
     with gzip.open(filepath, 'rb') as file_:
         datasets = pickle.load(file_)
+    reshape = None
+    if flatten:
+        reshape = (-1, 784)
+    elif data_format == 'NCHW':
+        reshape = (-1, 1, 28, 28)
+    elif data_format == 'NHWC':
+        reshape = (-1, 28, 28, 1)
+
     if reshape:
         datasets = [(data.reshape(*reshape), lbl) for data, lbl in datasets]
+
+    for (data, _), key in zip(datasets, ['Train', 'Test', 'Validation']):
+        _LG.info('  %s Data Statistics', key)
+        _LG.info('    Dtype: %s', data.dtype)
+        _LG.info('    Mean: %s', data.mean())
+        _LG.info('    Max:  %s', data.max())
+        _LG.info('    Min:  %s', data.min())
     return Datasets(
         Dataset(*datasets[0]), Dataset(*datasets[1]), Dataset(*datasets[2])
     )

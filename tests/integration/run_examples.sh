@@ -11,3 +11,4 @@ python example/classification/classify_mnist.py --mnist "${DATA}" --model exampl
 python example/autoencoder/train_ae.py          --mnist "${DATA}" --model example/autoencoder/autoencoder.yml
 python example/autoencoder/train_vae.py         --mnist "${DATA}" --model example/autoencoder/variational_autoencoder.yml
 python example/gan/train_gan.py                 --mnist "${DATA}" --model example/gan/gan.yml
+python example/gan/train_dcgan.py               --mnist "${DATA}" --model example/gan/dcgan.yml --n-iterations 100

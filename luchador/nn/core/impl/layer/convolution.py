@@ -237,11 +237,11 @@ class Conv2DTranspose(layer.Conv2DTranspose, BaseLayer):
         layer.
 
     strides : (int, tuple of two ints, or tuple of four ints)
-        Not optional. See :any:`Conv2D`. This has to consistent with input
+        Not optional. See :any:`Conv2D`. This has to be consistent with input
         shape and output shape.
 
     padding : (str or int or tuple of two ints)
-        Not optional. See :any:`Conv2D`. This has to consistent with input
+        Not optional. See :any:`Conv2D`. This has to be consistent with input
         shape and output shape.
 
     initializers: dict

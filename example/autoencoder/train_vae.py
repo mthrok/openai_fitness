@@ -92,8 +92,7 @@ def _main():
     batch_size = 32
     data_format = luchador.get_nn_conv_format()
     autoencoder = _build_model(args.model, data_format, batch_size)
-    shape = [-1, 28, 28, 1] if data_format == 'NHWC' else [-1, 1, 28, 28]
-    mnist = load_mnist(args.mnist, reshape=shape)
+    mnist = load_mnist(args.mnist, data_format=data_format)
 
     sess = nn.Session()
     sess.initialize()

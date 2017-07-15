@@ -20,7 +20,7 @@ def _parse_command_line_args():
     default_mnist_path = os.path.join(
         os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
     default_model_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'gan.yml'
+        os.path.dirname(os.path.abspath(__file__)), 'dcgan.yml'
     )
     parser = argparse.ArgumentParser(
         description='Test Generative Adversarial Network'
@@ -28,7 +28,7 @@ def _parse_command_line_args():
     parser.add_argument(
         '--model', default=default_model_file,
         help=(
-            'Model configuration file. '
+            'Generator model configuration file. '
             'Default: {}'.format(default_model_file)
         )
     )
@@ -82,9 +82,9 @@ def _build_loss(logit_real, logit_fake):
 
 def _build_optimization(generator, gen_loss, discriminator, disc_loss):
     optimizer_disc = nn.optimizer.Adam(
-        learning_rate=0.001, scope='TrainDiscriminator/Adam')
+        learning_rate=0.0002, beta1=0.5, scope='TrainDiscriminator/Adam')
     optimizer_gen = nn.optimizer.Adam(
-        learning_rate=0.001, scope='TrainGenerator/Adam')
+        learning_rate=0.0002, beta1=0.5, scope='TrainGenerator/Adam')
 
     opt_gen = optimizer_gen.minimize(
         gen_loss, generator.get_parameters_to_train())
@@ -107,7 +107,7 @@ def _train(
 
 
 def _sample_seed(*size):
-    return np.random.uniform(-1., 1., size=size).astype('float32')
+    return np.random.normal(size=size).astype('float32')
 
 
 def _main():
@@ -115,17 +115,21 @@ def _main():
     initialize_logger(args.debug)
 
     batch_size = 32
-    data_format = luchador.get_nn_conv_format()
-    dataset = load_mnist(args.mnist, data_format=data_format)
+    format_ = luchador.get_nn_conv_format()
+    dataset = load_mnist(args.mnist, data_format=format_)
 
     model = _build_models(args.model)
     discriminator, generator = model['discriminator'], model['generator']
 
     input_gen = nn.Input(shape=(None, args.n_seeds), name='GeneratorInput')
-    data_real = nn.Input(shape=dataset.train.shape, name='InputData')
+    data_shape = (None, 28, 28, 1) if format_ == 'NHWC' else (None, 1, 28, 28)
+    data_real = nn.Input(shape=data_shape, name='InputData')
+    _LG.info('Building Generator')
     data_fake = generator(input_gen)
 
+    _LG.info('Building fake discriminator')
     logit_fake = discriminator(data_fake)
+    _LG.info('Building real discriminator')
     logit_real = discriminator(data_real)
 
     gen_loss, disc_loss = _build_loss(logit_real, logit_fake)
@@ -147,7 +151,7 @@ def _main():
                 data_real: dataset.train.next_batch(batch_size).data
             },
             outputs=disc_loss,
-            updates=opt_disc,
+            updates=discriminator.get_update_operations() + [opt_disc],
             name='train_discriminator',
         )
 
@@ -157,7 +161,7 @@ def _main():
                 input_gen: _sample_seed(batch_size, args.n_seeds),
             },
             outputs=gen_loss,
-            updates=opt_gen,
+            updates=generator.get_update_operations() + [opt_gen],
             name='train_generator',
         )
 
@@ -166,13 +170,13 @@ def _main():
             return
         images = sess.run(
             inputs={
-                input_gen: _sample_seed(16, args.n_seeds),
+                input_gen: _sample_seed(batch_size, args.n_seeds),
             },
             outputs=data_fake,
             name='generate_samples',
         ).reshape(-1, 28, 28)
         path = os.path.join(args.output, '{:03d}.png'.format(epoch))
-        plot_images(images, path)
+        plot_images(images[:16, ...], path)
 
     _train(
         _train_disc, _train_gen, _plot_samples,

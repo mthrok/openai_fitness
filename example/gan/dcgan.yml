@@ -1,0 +1,126 @@
+discriminator: &discriminator
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Conv2D
+        args:
+          scope: disc_layer1/Conv2D
+          filter_width: 5
+          filter_height: 5
+          n_filters: 16
+          strides: 2
+          padding: same
+      - typename: LeakyReLU
+        args:
+          scope: disc_layer1/LeakyReLU
+          alpha: 0.2
+      #----------------------------------------
+      - typename: BatchNormalization
+        args:
+          scope: disc_layer1/BN
+      #----------------------------------------
+      - typename: Conv2D
+        args:
+          scope: disc_layer2/Conv2D
+          filter_width: 5
+          filter_height: 5
+          n_filters: 32
+          strides: 2
+          padding: same
+      - typename: LeakyReLU
+        args:
+          scope: disc_layer2/LeakyReLU
+          alpha: 0.2
+      #----------------------------------------
+      - typename: BatchNormalization
+        args:
+          scope: disc_layer2/BN
+      #----------------------------------------
+      - typename: Conv2D
+        args:
+          scope: disc_layer3/Conv2D
+          filter_width: 5
+          filter_height: 5
+          n_filters: 64
+          strides: 2
+          padding: same
+      - typename: LeakyReLU
+        args:
+          scope: disc_layer3/LeakyReLU
+          alpha: 0.2
+      #----------------------------------------
+      - typename: BatchNormalization
+        args:
+          scope: disc_layer3/BN
+      #----------------------------------------
+      - typename: Conv2D
+        args:
+          scope: disc_layer4/Conv2D
+          filter_width: 4
+          filter_height: 4
+          n_filters: 1
+          strides: 1
+          padding: valid
+
+generator: &generator
+  typename: Sequential
+  args:
+    layer_configs:
+      - typename: Dense
+        args:
+          scope: gen_layer0/Dense
+          n_nodes: 6272
+      - typename: Reshape
+        args:
+          scope: gen_layer0/Reshape
+          shape: [32, 7, 7, 128]
+          shape_format: NHWC
+      - typename: LeakyReLU
+        args:
+          scope: gen_layer0/LeakyReLU
+          alpha: 0.2
+      #----------------------------------------
+      - typename: BatchNormalization
+        args:
+          scope: gen_layer0/BN
+      #----------------------------------------
+      - typename: Conv2DTranspose
+        args:
+          scope: gen_layer1/Conv2DTranspose
+          filter_width: 5
+          filter_height: 5
+          n_filters: 128
+          strides: 2
+          padding: same
+          output_shape: [32, 14, 14, 64]
+          output_shape_format: NHWC
+      - typename: LeakyReLU
+        args:
+          scope: gen_layer1/LeakyReLU
+          alpha: 0.2
+      #----------------------------------------
+      - typename: BatchNormalization
+        args:
+          scope: gen_layer1/BN
+      #----------------------------------------
+      - typename: Conv2DTranspose
+        args:
+          scope: gen_layer3/Conv2DTranspose
+          filter_width: 5
+          filter_height: 5
+          n_filters: 64
+          strides: 2
+          padding: same
+          output_shape: [32, 28, 28, 1]
+          output_shape_format: NHWC
+      - typename: Sigmoid
+        args:
+          scope: gen_layer3/Sigmoid
+  
+typename: Container
+args:
+  model_configs:
+    - << : *discriminator
+      name: discriminator
+    - << : *generator
+      name: generator
