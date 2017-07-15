@@ -1,3 +1,4 @@
+"""Train vanilla GAN on MNIST"""
 from __future__ import absolute_import
 
 import os
@@ -117,8 +118,8 @@ def _train(
         plot_samples(epoch)
 
 
-def _sample_seed(m, n):
-    return np.random.uniform(-1., 1., size=[m, n]).astype('float32')
+def _sample_seed(*size):
+    return np.random.uniform(-1., 1., size=size).astype('float32')
 
 
 def _main():

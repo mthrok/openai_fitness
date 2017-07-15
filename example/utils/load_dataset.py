@@ -7,6 +7,7 @@ from collections import namedtuple
 import numpy as np
 
 _LG = logging.getLogger(__name__)
+# pylint:disable=invalid-name
 
 
 Datasets = namedtuple(

@@ -5,6 +5,16 @@ import numpy as np
 
 
 def plot_images(images, output):
+    """Plot the given images in grid and save
+
+    Parameters
+    ----------
+    images : NumPy NDArray
+        3D array containing images.
+
+    output : str
+        Output image path
+    """
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
 
