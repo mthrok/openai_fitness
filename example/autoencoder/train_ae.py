@@ -41,7 +41,7 @@ def _parase_command_line_args():
         )
     )
     parser.add_argument(
-        '--n-iterations', default=1000, type=int,
+        '--n-iterations', default=100, type=int,
         help='#Trainingss par epoch.'
     )
     parser.add_argument(
