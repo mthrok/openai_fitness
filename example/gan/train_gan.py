@@ -41,7 +41,15 @@ def _parse_command_line_args():
         )
     )
     parser.add_argument(
-        '--n-seed', default=100, type=int,
+        '--n-iterations', default=1000, type=int,
+        help='#optimizatitons par epoch.'
+    )
+    parser.add_argument(
+        '--n-epochs', default=10, type=int,
+        help='#Epochs to run.'
+    )
+    parser.add_argument(
+        '--n-seeds', default=100, type=int,
         help='#Generator input dimensions.'
     )
     parser.add_argument(
@@ -93,13 +101,15 @@ def _build_optimization(generator, gen_loss, discriminator, disc_loss):
     return opt_gen, opt_disc
 
 
-def _train(optimize_disc, optimize_gen, generate_images, output=False):
+def _train(
+        optimize_disc, optimize_gen, generate_images,
+        n_iterations, n_epochs, output=False):
     if output:
         path = os.path.join(output, '{:03d}.png'.format(0))
         plot_images(generate_images(), path)
     _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
-    for i in range(10):
-        for _ in range(1000):
+    for i in range(n_epochs):
+        for _ in range(n_iterations):
             disc_loss = optimize_disc()
             gen_loss = optimize_gen()
         _LG.info('%5s: %10.3e, %10.3e', i, disc_loss, gen_loss)
@@ -124,7 +134,7 @@ def _main():
     generator = _build_model(args.generator)
     discriminator = _build_model(args.discriminator)
 
-    input_gen = nn.Input(shape=(None, args.n_seed), name='GeneratorInput')
+    input_gen = nn.Input(shape=(None, args.n_seeds), name='GeneratorInput')
     data_real = nn.Input(shape=dataset.train.shape, name='InputData')
     data_fake = generator(input_gen)
 
@@ -141,7 +151,7 @@ def _main():
     def _optimize_disc():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(batch_size, args.n_seed),
+                input_gen: _sample_seed(batch_size, args.n_seeds),
                 data_real: dataset.train.next_batch(batch_size).data
             },
             outputs=disc_loss,
@@ -151,7 +161,7 @@ def _main():
     def _optimize_gen():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(batch_size, args.n_seed),
+                input_gen: _sample_seed(batch_size, args.n_seeds),
             },
             outputs=gen_loss,
             updates=opt_gen,
@@ -160,12 +170,14 @@ def _main():
     def _generate_image():
         return sess.run(
             inputs={
-                input_gen: _sample_seed(16, args.n_seed),
+                input_gen: _sample_seed(16, args.n_seeds),
             },
             outputs=data_fake,
         ).reshape(-1, 28, 28)
 
-    _train(_optimize_disc, _optimize_gen, _generate_image, args.output)
+    _train(
+        _optimize_disc, _optimize_gen, _generate_image,
+        args.n_iterations, args.n_epochs, args.output)
 
 
 if __name__ == '__main__':
