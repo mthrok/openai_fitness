@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-import os.path
+import os
 import logging
 
 import numpy as np
@@ -70,10 +70,13 @@ def _parse_command_line_args():
     return parser.parse_args()
 
 
-def _build_model(model_file):
-    _LG.info('Loading model %s', model_file)
-    model_def = nn.get_model_config(model_file)
-    return nn.make_model(model_def)
+def _build_models(*model_files):
+    models = []
+    for model_file in model_files:
+        _LG.info('Loading model %s', model_file)
+        model_def = nn.get_model_config(model_file)
+        models.append(nn.make_model(model_def))
+    return models
 
 
 def _build_loss(logit_real, logit_fake):
@@ -102,20 +105,16 @@ def _build_optimization(generator, gen_loss, discriminator, disc_loss):
 
 
 def _train(
-        optimize_disc, optimize_gen, generate_images,
-        n_iterations, n_epochs, output=False):
-    if output:
-        path = os.path.join(output, '{:03d}.png'.format(0))
-        plot_images(generate_images(), path)
+        optimize_disc, optimize_gen, plot_samples,
+        n_iterations, n_epochs):
+    plot_samples(0)
     _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
-    for i in range(n_epochs):
+    for epoch in range(1, n_epochs+1):
         for _ in range(n_iterations):
             disc_loss = optimize_disc()
             gen_loss = optimize_gen()
-        _LG.info('%5s: %10.3e, %10.3e', i, disc_loss, gen_loss)
-        if output:
-            path = os.path.join(output, '{:03d}.png'.format(i))
-            plot_images(generate_images(), path)
+        _LG.info('%5s: %10.3e, %10.3e', epoch, disc_loss, gen_loss)
+        plot_samples(epoch)
 
 
 def _sample_seed(m, n):
@@ -129,10 +128,10 @@ def _main():
         os.makedirs(args.output)
 
     batch_size = 32
-    dataset = load_mnist(args.mnist, flatten=True)
+    dataset = load_mnist(args.mnist, reshape=(-1, 784))
 
-    generator = _build_model(args.generator)
-    discriminator = _build_model(args.discriminator)
+    generator, discriminator = _build_models(
+        args.generator, args.discriminator)
 
     input_gen = nn.Input(shape=(None, args.n_seeds), name='GeneratorInput')
     data_real = nn.Input(shape=dataset.train.shape, name='InputData')
@@ -148,6 +147,11 @@ def _main():
     sess = nn.Session()
     sess.initialize()
 
+    if args.output:
+        summary = nn.SummaryWriter(output_dir=args.output)
+        if sess.graph is not None:
+            summary.add_graph(sess.graph)
+
     def _optimize_disc():
         return sess.run(
             inputs={
@@ -156,6 +160,7 @@ def _main():
             },
             outputs=disc_loss,
             updates=opt_disc,
+            name='optimize_discriminator',
         )
 
     def _optimize_gen():
@@ -165,19 +170,25 @@ def _main():
             },
             outputs=gen_loss,
             updates=opt_gen,
+            name='optimize_generator',
         )
 
-    def _generate_image():
-        return sess.run(
+    def _plot_samples(epoch):
+        if not args.output:
+            return
+        images = sess.run(
             inputs={
                 input_gen: _sample_seed(16, args.n_seeds),
             },
             outputs=data_fake,
+            name='generate_samples',
         ).reshape(-1, 28, 28)
+        path = os.path.join(args.output, '{:03d}.png'.format(epoch))
+        plot_images(images, path)
 
     _train(
-        _optimize_disc, _optimize_gen, _generate_image,
-        args.n_iterations, args.n_epochs, args.output)
+        _optimize_disc, _optimize_gen, _plot_samples,
+        args.n_iterations, args.n_epochs)
 
 
 if __name__ == '__main__':

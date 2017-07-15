@@ -58,7 +58,7 @@ class Dataset(object):
         return Batch(self.data[start:end, ...], self.label[start:end, ...])
 
 
-def load_mnist(filepath, flatten):
+def load_mnist(filepath, reshape=None):
     """Load U of Montreal MNIST data
     http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz
 
@@ -70,11 +70,11 @@ def load_mnist(filepath, flatten):
     flatten : Boolean
         If True each image is flattened to 1D vector.
     """
-    _LG.info('Loading data %s', filepath)
+    _LG.info('Loading %s', filepath)
     with gzip.open(filepath, 'rb') as file_:
         datasets = pickle.load(file_)
-    if flatten:
-        datasets = [(data.reshape(-1, 784), label) for data, label in datasets]
+    if reshape:
+        datasets = [(data.reshape(*reshape), lbl) for data, lbl in datasets]
     return Datasets(
         Dataset(*datasets[0]), Dataset(*datasets[1]), Dataset(*datasets[2])
     )
