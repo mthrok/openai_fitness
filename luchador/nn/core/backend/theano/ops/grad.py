@@ -17,10 +17,10 @@ def compute_gradient(loss, wrt, **kwargs):
 
     See :func:`luchador.nn.ops.compute_gradient` for detail
     """
-    _LG.info('Computing gradient for %s', loss)
+    _LG.info('Computing gradient of %s w.r.t.', loss)
     wrt = wrt if is_iteratable(wrt) else [wrt]
     for var in wrt:
-        _LG.info('    %20s', var)
+        _LG.info('  %s', var)
     wrt_ = [v.unwrap() for v in wrt if v.trainable]
 
     if not wrt_:
