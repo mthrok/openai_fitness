@@ -308,7 +308,6 @@ Luchador has `luchador.nn.summary.SummaryWriter` class which wraps Tensorflow's 
 ### Dependencies
 
 - Luchador uses Thensorflow or Theano as neural network backend, so you need to install them. Refer to the installation instruction for each project.
-- [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) is required to run Atari environments.
 
 The following dependencies are automatically installed during the installation.
 
@@ -323,7 +322,7 @@ The following dependencies are automatically installed during the installation.
 
 
 ### Update
-`pip install --upgrade --no-deps git+git://github.com/mthrokr/luchador.git`
+`pip install --upgrade --no-deps git+git://github.com/mthrok/luchador.git`
 
 
 ### Setting backend
