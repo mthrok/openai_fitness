@@ -109,7 +109,7 @@ def _train(optimize_disc, optimize_gen, generate_images, output=False):
 
 
 def _sample_seed(m, n):
-    return np.random.uniform(-1., 1., size=[m, n])
+    return np.random.uniform(-1., 1., size=[m, n]).astype('float32')
 
 
 def _main():
