@@ -102,7 +102,14 @@ class Session(object):
         else:
             function = _construct_function(inputs, outputs, updates, givens)
 
-        if name and name not in self._cached_functions:
+        if name is None:
+            _LG.warning(
+                'You are running un-named operation which is not cached. '
+                'If this is repeated operation, provide a name at '
+                '`Session.run` method so that function is not re-compiled '
+                'everytime operation is run.'
+            )
+        elif name not in self._cached_functions:
             self._cached_functions[name] = function
 
         values = function(*inputs.values())
