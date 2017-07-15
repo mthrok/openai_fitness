@@ -105,14 +105,14 @@ def _build_optimization(generator, gen_loss, discriminator, disc_loss):
 
 
 def _train(
-        optimize_disc, optimize_gen, plot_samples,
+        train_disc, train_gen, plot_samples,
         n_iterations, n_epochs):
     plot_samples(0)
     _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
     for epoch in range(1, n_epochs+1):
         for _ in range(n_iterations):
-            disc_loss = optimize_disc()
-            gen_loss = optimize_gen()
+            disc_loss = train_disc()
+            gen_loss = train_gen()
         _LG.info('%5s: %10.3e, %10.3e', epoch, disc_loss, gen_loss)
         plot_samples(epoch)
 
@@ -124,8 +124,6 @@ def _sample_seed(m, n):
 def _main():
     args = _parse_command_line_args()
     initialize_logger(args.debug)
-    if args.output and not os.path.exists(args.output):
-        os.makedirs(args.output)
 
     batch_size = 32
     dataset = load_mnist(args.mnist, reshape=(-1, 784))
@@ -152,7 +150,7 @@ def _main():
         if sess.graph is not None:
             summary.add_graph(sess.graph)
 
-    def _optimize_disc():
+    def _train_disc():
         return sess.run(
             inputs={
                 input_gen: _sample_seed(batch_size, args.n_seeds),
@@ -160,17 +158,17 @@ def _main():
             },
             outputs=disc_loss,
             updates=opt_disc,
-            name='optimize_discriminator',
+            name='train_discriminator',
         )
 
-    def _optimize_gen():
+    def _train_gen():
         return sess.run(
             inputs={
                 input_gen: _sample_seed(batch_size, args.n_seeds),
             },
             outputs=gen_loss,
             updates=opt_gen,
-            name='optimize_generator',
+            name='train_generator',
         )
 
     def _plot_samples(epoch):
@@ -187,8 +185,9 @@ def _main():
         plot_images(images, path)
 
     _train(
-        _optimize_disc, _optimize_gen, _plot_samples,
-        args.n_iterations, args.n_epochs)
+        _train_disc, _train_gen, _plot_samples,
+        args.n_iterations, args.n_epochs
+    )
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ def _parase_command_line_args():
     )
     parser.add_argument(
         '--n-iterations', default=1000, type=int,
-        help='#optimizatitons par epoch.'
+        help='#Trainingss par epoch.'
     )
     parser.add_argument(
         '--n-epochs', default=10, type=int,
@@ -69,15 +69,15 @@ def _build_model(model_file, data_format, batch_size):
     return nn.make_model(model_def)
 
 
-def _train(optimize_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
-    _LG.info('%5s: %8s', 'EPOCH', 'LOSS')
+def _train(train_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
     plot_reconstruction(0)
+    _LG.info('%5s: %10s', 'EPOCH', 'LOSS')
     for epoch in range(1, n_epochs+1):
         cost = 0
         for _ in range(n_iterations):
-            cost += optimize_ae()
-        _LG.info('%5d: %8.3e', epoch, cost / n_iterations)
+            cost += train_ae()
         plot_reconstruction(epoch)
+        _LG.info('%5d: %10.2e', epoch, cost / n_iterations)
 
 
 def _main():
@@ -98,13 +98,13 @@ def _main():
         if sess.graph is not None:
             summary.add_graph(sess.graph)
 
-    def _optimize_ae():
+    def _train_ae():
         batch = mnist.train.next_batch(batch_size).data
         return sess.run(
             inputs={autoencoder.input: batch},
             outputs=autoencoder.output['error'],
             updates=autoencoder.get_update_operations(),
-            name='optimize_autoencoder',
+            name='train_autoencoder',
         )
 
     def _plot_reconstruction(epoch):
@@ -124,7 +124,11 @@ def _main():
         plot_images(orig, base_path + 'orign.png')
         plot_images(recon, base_path + 'recon.png')
 
-    _train(_optimize_ae, _plot_reconstruction)
+    _train(
+        _train_ae, _plot_reconstruction,
+        n_iterations=args.n_iterations, n_epochs=args.n_epochs
+    )
+
 
 if __name__ == '__main__':
     _main()

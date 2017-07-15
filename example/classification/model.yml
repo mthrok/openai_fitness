@@ -124,7 +124,7 @@ args:
       typename: Input
       args:
         name: label
-        shape: [{batch_size}]
+        shape: [null]
         dtype: int64
   output_config:
     error:
