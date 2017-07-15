@@ -2,7 +2,7 @@
 set -eu
 
 mkdir -p data
-DATA="${HOME}/.mnist/mnist.pkl.gz"
+DATA='data/mnist.pkl.gz'
 
 if [ ! -f "${DATA}" ]; then
     echo "Downloading MNIST"
