@@ -26,5 +26,6 @@ class Reshape(BaseLayer):
     def __init__(self, shape, scope='Reshape'):
         super(Reshape, self).__init__(shape=shape, scope=scope)
 
-    def _build(self, tensor):
-        return ops.reshape(tensor, self.args['shape'], name=self.args['scope'])
+    def _build(self, input_tensor):
+        shape, scope = self.args['shape'], self.args['scope']
+        return ops.reshape(input_tensor, shape, name=scope)
