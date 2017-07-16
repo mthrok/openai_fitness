@@ -2,31 +2,32 @@
 from __future__ import division
 
 import os
-import gzip
-import pickle
 import logging
-import argparse
 
 import numpy as np
-
-# import theano
-# theano.config.optimizer = 'None'
-# theano.config.exception_verbosity = 'high'
-
 import luchador
 import luchador.nn as nn
+
+from example.utils import (
+    plot_images, initialize_logger, load_mnist
+)
 
 _LG = logging.getLogger('luchador')
 
 
 def _parase_command_line_args():
-    default_mnist_path = os.path.join('data', 'mnist.pkl.gz')
+    import argparse
+    default_mnist_path = os.path.join(
+        os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
     default_model_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'autoencoder.yml'
+        os.path.dirname(os.path.abspath(__file__)),
+        'variational_autoencoder.yml'
     )
 
     parser = argparse.ArgumentParser(
-        description='Test autoencoder'
+        description=(
+            'Train variational autoencoder on MNIST and reconstruct images.'
+        )
     )
     parser.add_argument(
         '--model', default=default_model_file,
@@ -34,6 +35,20 @@ def _parase_command_line_args():
             'Model configuration file which contains Autoencoder. '
             'Default: {}'.format(default_model_file)
         )
+    )
+    parser.add_argument(
+        '--output',
+        help=(
+            'When provided, plot generated data to this directory.'
+        )
+    )
+    parser.add_argument(
+        '--n-iterations', default=100, type=int,
+        help='#Trainingss par epoch.'
+    )
+    parser.add_argument(
+        '--n-epochs', default=10, type=int,
+        help='#Epochs to run.'
     )
     parser.add_argument(
         '--mnist', default=default_mnist_path,
@@ -44,125 +59,87 @@ def _parase_command_line_args():
         ),
     )
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--no-plot', action='store_true')
     return parser.parse_args()
 
 
-def _load_data(filepath, data_format):
-    with gzip.open(filepath, 'rb') as file_:
-        train_set, test_set, valid_set = pickle.load(file_)
-        shape = [-1, 28, 28, 1] if data_format == 'NHWC' else [-1, 1, 28, 28]
-        return {
-            'train': train_set[0].reshape(shape),
-            'test': test_set[0].reshape(shape),
-            'valid': valid_set[0].reshape(shape),
-        }
-
-
-def _initialize_logger(debug):
-    from luchador.util import initialize_logger
-    message_format = (
-        '%(asctime)s: %(levelname)5s: %(funcName)10s: %(message)s'
-        if debug else '%(asctime)s: %(levelname)5s: %(message)s'
+def _build_model(model_file, data_format, batch_size):
+    input_shape = (
+        [batch_size, 28, 28, 1] if data_format == 'NHWC' else
+        [batch_size, 1, 28, 28]
     )
-    level = logging.DEBUG if debug else logging.INFO
-    initialize_logger(
-        name='luchador', message_format=message_format, level=level)
-
-
-def _build_model(model_file, input_shape):
     model_def = nn.get_model_config(model_file, input_shape=input_shape)
     return nn.make_model(model_def)
 
 
-def _train(session, autoencoder, images, batch_size):
-    n_images = len(images)
-    n_batch = n_images//batch_size
-    train_data = images[:batch_size * n_batch]
-
+def _train(train_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
+    plot_reconstruction(0)
     _LG.info(
-        '%6s: %12s, %12s, %12s',
-        'Batch', 'TotalError', 'ReconError', 'LatentError')
-    total_cost_, latent_cost_, recon_cost_ = 0, 0, 0
-    for i in range(n_batch):
-        batch = train_data[i*batch_size:(i+1)*batch_size, ...]
-        cost_ = session.run(
+        '%5s: %10s %10s %10s',
+        'EPOCH', 'RECON_LOSS', 'LATENT_LOSS', 'TOTAL_LOSS')
+    for epoch in range(1, n_epochs+1):
+        total_loss, recon_loss, latent_loss = 0, 0, 0
+        for _ in range(n_iterations):
+            loss = train_ae()
+            total_loss += loss[0].to_list()
+            recon_loss += loss[1].to_list()
+            latent_loss += loss[2].to_list()
+        plot_reconstruction(epoch)
+        total_loss /= n_iterations
+        recon_loss /= n_iterations
+        latent_loss /= n_iterations
+        _LG.info(
+            '%5d: %10.2e %10.2e %10.2e',
+            epoch, recon_loss, latent_loss, total_loss)
+
+
+def _main():
+    args = _parase_command_line_args()
+    initialize_logger(args.debug)
+
+    batch_size = 32
+    data_format = luchador.get_nn_conv_format()
+    autoencoder = _build_model(args.model, data_format, batch_size)
+    shape = [-1, 28, 28, 1] if data_format == 'NHWC' else [-1, 1, 28, 28]
+    mnist = load_mnist(args.mnist, reshape=shape)
+
+    sess = nn.Session()
+    sess.initialize()
+
+    if args.output:
+        summary = nn.SummaryWriter(output_dir=args.output)
+        if sess.graph is not None:
+            summary.add_graph(sess.graph)
+
+    def _train_ae():
+        batch = mnist.train.next_batch(batch_size).data
+        return sess.run(
             inputs={autoencoder.input: batch},
             outputs=autoencoder.output['error'],
             updates=autoencoder.get_update_operations(),
             name='opt',
         )
-        total_cost_ += cost_[0].tolist() / 100
-        recon_cost_ += cost_[1].tolist() / 100
-        latent_cost_ += cost_[2].tolist() / 100
-        if i and i % 100 == 0:
-            _LG.info(
-                '%6d: %12.3f, %12.3f, %12.3f',
-                i, total_cost_, recon_cost_, latent_cost_)
-            total_cost_, latent_cost_, recon_cost_ = 0, 0, 0
 
+    def _plot_reconstruction(epoch):
+        if not args.output:
+            return
+        orig = mnist.test.next_batch(batch_size).data
+        recon = sess.run(
+            inputs={autoencoder.input: orig},
+            outputs=autoencoder.output['reconstruction'],
+            name='reconstruct_images',
+        )
+        axis = 3 if data_format == 'NHWC' else 1
+        orig = np.squeeze(orig, axis=axis)
+        recon = np.squeeze(recon, axis=axis)
 
-def _tile(image):
-    n_img, h, w = image.shape[:3]
-    n_tile = int(np.ceil(np.sqrt(n_img)))
-    img = np.zeros((n_tile * h, n_tile * w), dtype='uint8')
-    for i in range(n_img):
-        row, col = i // n_tile, i % n_tile
-        img[h*row:h*(row+1), w*col:w*(col+1)] = image[i]
-    return img
+        base_path = os.path.join(args.output, '{:03}_'.format(epoch))
+        plot_images(orig, base_path + 'orign.png')
+        plot_images(recon, base_path + 'recon.png')
 
-
-def _plot(original, recon):
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    axis = fig.add_subplot(1, 2, 1)
-    axis.imshow(_tile(original), cmap='gray')
-    axis.set_title('Original Images')
-    axis = fig.add_subplot(1, 2, 2)
-    axis.imshow(_tile(recon), cmap='gray')
-    axis.set_title('Reconstructed Images')
-    _LG.info('Plot ready')
-    plt.show()
-
-
-def _main():
-    args = _parase_command_line_args()
-    _initialize_logger(args.debug)
-
-    data_format = luchador.get_nn_conv_format()
-    batch_size = 32
-    input_shape = (
-        [batch_size, 28, 28, 1] if data_format == 'NHWC' else
-        [batch_size, 1, 28, 28]
+    _train(
+        _train_ae, _plot_reconstruction,
+        n_iterations=args.n_iterations, n_epochs=args.n_epochs
     )
-
-    autoencoder = _build_model(args.model, input_shape)
-    images = _load_data(args.mnist, data_format)
-
-    session = nn.Session()
-    session.initialize()
-
-    summary = nn.SummaryWriter(output_dir='tmp')
-    if session.graph:
-        summary.add_graph(session.graph)
-
-    try:
-        _train(session, autoencoder, images['train'], batch_size)
-    except KeyboardInterrupt:
-        pass
-
-    orig = images['test'][:batch_size, ...]
-    recon = session.run(
-        outputs=autoencoder.output['reconstruction'],
-        inputs={autoencoder.input: orig}
-    )
-
-    axis = 3 if data_format == 'NHWC' else 1
-    original = 255 * np.squeeze(orig, axis=axis)
-    recon = 255 * np.squeeze(recon, axis=axis)
-
-    if not args.no_plot:
-        _plot(original.astype('uint8'), recon.astype('uint8'))
 
 
 if __name__ == '__main__':
