@@ -1,5 +1,6 @@
 """Train Autoencoder on MNIST dataset"""
 from __future__ import division
+from __future__ import absolute_import
 
 import os
 import logging
@@ -12,7 +13,7 @@ from example.utils import (
     plot_images, initialize_logger, load_mnist
 )
 
-_LG = logging.getLogger('luchador')
+_LG = logging.getLogger(__name__)
 
 
 def _parase_command_line_args():
