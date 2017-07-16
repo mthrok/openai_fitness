@@ -25,9 +25,7 @@ def _parase_command_line_args():
     )
 
     parser = argparse.ArgumentParser(
-        description=(
-            'Train variational autoencoder on MNIST and reconstruct images.'
-        )
+        description='Train autoencoder on MNIST and reconstruct images.'
     )
     parser.add_argument(
         '--model', default=default_model_file,
@@ -74,22 +72,16 @@ def _build_model(model_file, data_format, batch_size):
 def _train(train_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
     plot_reconstruction(0)
     _LG.info(
-        '%5s: %10s %10s %10s',
+        '%5s: %12s %12s %12s',
         'EPOCH', 'RECON_LOSS', 'LATENT_LOSS', 'TOTAL_LOSS')
     for epoch in range(1, n_epochs+1):
-        total_loss, recon_loss, latent_loss = 0, 0, 0
+        loss = np.asarray([0.0, 0.0, 0.0])
         for _ in range(n_iterations):
-            loss = train_ae()
-            total_loss += loss[0].to_list()
-            recon_loss += loss[1].to_list()
-            latent_loss += loss[2].to_list()
+            loss += train_ae()
         plot_reconstruction(epoch)
-        total_loss /= n_iterations
-        recon_loss /= n_iterations
-        latent_loss /= n_iterations
+        loss /= n_iterations
         _LG.info(
-            '%5d: %10.2e %10.2e %10.2e',
-            epoch, recon_loss, latent_loss, total_loss)
+            '%5d: %12.2e %12.2e %12.2e', epoch, loss[0], loss[1], loss[2])
 
 
 def _main():
@@ -116,7 +108,7 @@ def _main():
             inputs={autoencoder.input: batch},
             outputs=autoencoder.output['error'],
             updates=autoencoder.get_update_operations(),
-            name='opt',
+            name='train_autoencoder',
         )
 
     def _plot_reconstruction(epoch):
