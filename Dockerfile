@@ -19,5 +19,5 @@ RUN git clone https://github.com/mgbellemare/Arcade-Learning-Environment && \
 RUN conda install libgcc numpy scipy mkl coverage flake8 && \
     pip install codacy-coverage Sphinx sphinx_rtd_theme && \
     pip install git+git://github.com/Theano/Theano.git && \
-    pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.0.0-cp27-none-linux_x86_64.whl
+    pip install tensorflow==1.2.1
 CMD ["bash"]
