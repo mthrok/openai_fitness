@@ -38,8 +38,24 @@ def _convert_to_running_format(shape, given_format):
 
 
 class Reshape(BaseLayer):
-    """Reshape variable"""
-    def __init__(self, shape, scope='Reshape', shape_format=None):
+    """Reshape variable
+
+    Parameters
+    ----------
+    shape : tuple
+        New shape
+
+    shape_format : None or str
+        If you are providing ``shape`` constructor argument in YAML file, and
+        reshaping variable to feed it ro convolution layer, you cannot tell in
+        which convolution format luchador will use at runtime. So by adding
+        ``shape_format`` which describes which convolution format it adopts,
+        the layer shuffle the ``shape`` automatically.
+
+    scope : str
+        Scope of layer.
+    """
+    def __init__(self, shape, shape_format=None, scope='Reshape'):
         super(Reshape, self).__init__(
             shape=shape, scope=scope, shape_format=shape_format)
 
