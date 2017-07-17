@@ -116,7 +116,7 @@ def _main():
 
     batch_size = 32
     data_format = luchador.get_nn_conv_format()
-    dataset = load_mnist(args.mnist, data_format=data_format)
+    dataset = load_mnist(args.mnist, flatten=True)
 
     model = _build_models(args.model)
     discriminator, generator = model['discriminator'], model['generator']
