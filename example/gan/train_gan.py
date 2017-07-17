@@ -18,27 +18,17 @@ def _parse_command_line_args():
     import argparse
     default_mnist_path = os.path.join(
         os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
-    default_generator_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'generator.yml'
-    )
-    default_discriminator_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'discriminator.yml'
+    default_model_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'gan.yml'
     )
     parser = argparse.ArgumentParser(
         description='Test Generative Adversarial Network'
     )
     parser.add_argument(
-        '--generator', default=default_generator_file,
+        '--model', default=default_model_file,
         help=(
-            'Generator model configuration file. '
-            'Default: {}'.format(default_generator_file)
-        )
-    )
-    parser.add_argument(
-        '--discriminator', default=default_discriminator_file,
-        help=(
-            'Generator model configuration file. '
-            'Default: {}'.format(default_discriminator_file)
+            'Model configuration file. '
+            'Default: {}'.format(default_model_file)
         )
     )
     parser.add_argument(
@@ -71,13 +61,10 @@ def _parse_command_line_args():
     return parser.parse_args()
 
 
-def _build_models(*model_files):
-    models = []
-    for model_file in model_files:
-        _LG.info('Loading model %s', model_file)
-        model_def = nn.get_model_config(model_file)
-        models.append(nn.make_model(model_def))
-    return models
+def _build_models(model_file):
+    _LG.info('Loading model %s', model_file)
+    model_def = nn.get_model_config(model_file)
+    return nn.make_model(model_def)
 
 
 def _build_loss(logit_real, logit_fake):
@@ -129,8 +116,8 @@ def _main():
     batch_size = 32
     dataset = load_mnist(args.mnist, reshape=(-1, 784))
 
-    generator, discriminator = _build_models(
-        args.generator, args.discriminator)
+    model = _build_models(args.model)
+    discriminator, generator = model['discriminator'], model['generator']
 
     input_gen = nn.Input(shape=(None, args.n_seeds), name='GeneratorInput')
     data_real = nn.Input(shape=dataset.train.shape, name='InputData')

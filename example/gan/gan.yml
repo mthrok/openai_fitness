@@ -1,0 +1,49 @@
+discriminator: &discriminator
+  typename: Sequential
+  args:
+    name: discriminator
+    layer_configs:
+      #====================
+      - typename: Dense
+        args:
+          scope: desc_layer1/Dense
+          n_nodes: 128
+      - typename: ReLU
+        args:
+          scope: desc_layer1/ReLU
+      #====================
+      - typename: Dense
+        args:
+          scope: desc_layer2/Dense
+          n_nodes: 1
+
+generator: &generator
+  typename: Sequential
+  args:
+    name: generator
+    layer_configs:
+      #====================
+      - typename: Dense
+        args:
+          scope: gen_layer1/Dense
+          n_nodes: 128
+      - typename: ReLU
+        args:
+          scope: gen_layer1/ReLU
+      #====================
+      - typename: Dense
+        args:
+          scope: gen_layer2/Dense
+          n_nodes: 784
+      - typename: Sigmoid
+        args:
+          scope: gen_layer2/Sigmoid
+
+
+typename: Container
+args:
+  model_configs:
+    - << : *discriminator
+      name: discriminator
+    - << : *generator
+      name: generator
