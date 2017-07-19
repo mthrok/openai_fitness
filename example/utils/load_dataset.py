@@ -1,4 +1,7 @@
 """Dataset loading utilities"""
+from __future__ import division
+from __future__ import absolute_import
+
 import gzip
 import pickle
 import logging
@@ -87,10 +90,53 @@ def load_mnist(filepath, flatten=None, data_format=None):
 
     for (data, _), key in zip(datasets, ['Train', 'Test', 'Validation']):
         _LG.info('  %s Data Statistics', key)
-        _LG.info('    Dtype: %s', data.dtype)
+        _LG.info('    Shape: %s', data.shape)
+        _LG.info('    DType: %s', data.dtype)
         _LG.info('    Mean: %s', data.mean())
         _LG.info('    Max:  %s', data.max())
         _LG.info('    Min:  %s', data.min())
     return Datasets(
         Dataset(*datasets[0]), Dataset(*datasets[1]), Dataset(*datasets[2])
+    )
+
+
+def _prod(numbers):
+    ret = 1
+    for num in numbers:
+        ret *= num
+    return ret
+
+
+def load_celeba_face(filepath, flatten=False, data_format=None):
+    _LG.info('Loading %s', filepath)
+    with gzip.open(filepath, 'rb') as file_:
+        datasets = pickle.load(file_)
+    shape = datasets['train'].shape
+    if flatten:
+        datasets = {
+            key: data.reshape(shape[0], -1)
+            for key, data in datasets.items()
+        }
+    elif data_format == 'NCHW':
+        datasets = {
+            key: data.transpose(0, 2, 3, 1)
+            for key, data in datasets.items()
+        }
+
+    datasets = {
+        key: data.astype(np.float32) / 255
+        for key, data in datasets.items()
+    }
+
+    for key, data in datasets.items():
+        _LG.info('  %s Data Statistics', key)
+        _LG.info('    Shape: %s', data.shape)
+        _LG.info('    DType: %s', data.dtype)
+        _LG.info('    Mean: %s', data.mean())
+        _LG.info('    Max:  %s', data.max())
+        _LG.info('    Min:  %s', data.min())
+    return Datasets(
+        Dataset(datasets['train'], None),
+        Dataset(datasets['test'], None),
+        Dataset(datasets['valid'], None),
     )
