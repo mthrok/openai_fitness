@@ -9,7 +9,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import gzip
 import pickle
 
 import cv2
@@ -18,7 +17,7 @@ import numpy as np
 
 def _parse_command_line_args():
     import argparse
-    default_output = 'celeba_faces.pkl.gz'
+    default_output = 'celeba_faces.pkl'
 
     parser = argparse.ArgumentParser(
         description='Create dataset from CelebA face images. '
@@ -103,7 +102,7 @@ def _main():
         args.n_train, args.n_test, args.n_valid
     )
     print('Saving data to', args.output)
-    with gzip.open(args.output, 'wb') as file_:
+    with open(args.output, 'wb') as file_:
         pickle.dump(datasets, file_)
 
 

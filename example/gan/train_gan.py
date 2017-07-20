@@ -5,7 +5,6 @@ import os
 import logging
 
 import numpy as np
-import luchador
 from luchador import nn
 
 from example.utils import (
@@ -115,7 +114,6 @@ def _main():
     initialize_logger(args.debug)
 
     batch_size = 32
-    data_format = luchador.get_nn_conv_format()
     dataset = load_mnist(args.mnist, flatten=True)
 
     model = _build_models(args.model)
