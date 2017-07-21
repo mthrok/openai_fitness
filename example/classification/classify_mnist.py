@@ -75,10 +75,9 @@ def _build_model(model_file, data_format):
 def _train(train_classifier, test_classifier, n_iterations=100, n_epochs=10):
     _LG.info('%5s: %10s %10s', 'EPOCH', 'TRAIN_LOSS', 'TEST_LOSS')
     for epoch in range(1, n_epochs+1):
-        train_cost = 0
+        train_cost = 0.0
         for _ in range(n_iterations):
-            train_cost += train_classifier()
-        train_cost /= n_iterations
+            train_cost += train_classifier() / n_iterations
         test_cost = test_classifier()
         _LG.info('%5d: %10.2e %10.2e', epoch, train_cost, test_cost)
 

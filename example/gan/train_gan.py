@@ -1,4 +1,5 @@
 """Train vanilla GAN on MNIST"""
+from __future__ import division
 from __future__ import absolute_import
 
 import os
@@ -105,9 +106,10 @@ def _train(
     plot_samples(0)
     _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
     for epoch in range(1, n_epochs+1):
+        disc_loss, gen_loss = 0.0, 0.0
         for _ in range(n_iterations):
-            disc_loss = train_disc()
-            gen_loss = train_gen()
+            disc_loss += train_disc() / n_iterations
+            gen_loss += train_gen() / n_iterations
         _LG.info('%5s: %10.3e, %10.3e', epoch, disc_loss, gen_loss)
         plot_samples(epoch)
 

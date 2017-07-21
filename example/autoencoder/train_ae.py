@@ -79,11 +79,11 @@ def _train(train_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
     plot_reconstruction(0)
     _LG.info('%5s: %10s', 'EPOCH', 'LOSS')
     for epoch in range(1, n_epochs+1):
-        cost = 0
+        cost = 0.0
         for _ in range(n_iterations):
-            cost += train_ae()
+            cost += train_ae() / n_iterations
         plot_reconstruction(epoch)
-        _LG.info('%5d: %10.2e', epoch, cost / n_iterations)
+        _LG.info('%5d: %10.2e', epoch, cost)
 
 
 def _main():
