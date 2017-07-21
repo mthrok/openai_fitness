@@ -19,11 +19,10 @@ _LG = logging.getLogger(__name__)
 def _parase_command_line_args():
     import argparse
     default_mnist_path = os.path.join(
-        os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
+        os.path.expanduser('~'), '.dataset', 'mnist.pkl.gz')
     default_model_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'model.yml'
     )
-
     parser = argparse.ArgumentParser(
         description='Train MNIST classifier and test'
     )
@@ -49,12 +48,16 @@ def _parase_command_line_args():
         help='#Epochs to run.'
     )
     parser.add_argument(
-        '--mnist', default=default_mnist_path,
+        '--dataset', default=default_mnist_path,
         help=(
             'Path to MNIST dataset, downloaded from '
             'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz '
             'Default: {}'.format(default_mnist_path)
         ),
+    )
+    parser.add_argument(
+        '--mock', action='store_true',
+        help='Mock test data to run the script without data for testing.'
     )
     parser.add_argument('--debug', action='store_true')
     return parser.parse_args()
@@ -87,7 +90,7 @@ def _main():
     batch_size = 32
     data_format = luchador.get_nn_conv_format()
     classifier = _build_model(args.model, data_format)
-    mnist = load_mnist(args.mnist, data_format=data_format)
+    dataset = load_mnist(args.dataset, data_format=data_format, mock=args.mock)
 
     sess = nn.Session()
     sess.initialize()
@@ -98,7 +101,7 @@ def _main():
             summary.add_graph(sess.graph)
 
     def _train_classifier():
-        batch = mnist.train.next_batch(batch_size)
+        batch = dataset.train.next_batch(batch_size)
         return sess.run(
             inputs={
                 classifier.input['data']: batch.data,
@@ -110,7 +113,7 @@ def _main():
         )
 
     def _test_classifier():
-        batch = mnist.test.next_batch(batch_size)
+        batch = dataset.test.next_batch(batch_size)
         return sess.run(
             inputs={
                 classifier.input['data']: batch.data,

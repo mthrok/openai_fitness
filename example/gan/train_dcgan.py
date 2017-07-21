@@ -18,7 +18,7 @@ _LG = logging.getLogger(__name__)
 def _parse_command_line_args():
     import argparse
     default_mnist_path = os.path.join(
-        os.path.expanduser('~'), '.mnist', 'mnist.pkl.gz')
+        os.path.expanduser('~'), '.dataset', 'mnist.pkl.gz')
     default_model_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'dcgan.yml'
     )
@@ -45,20 +45,24 @@ def _parse_command_line_args():
         help='#Generator input dimensions.'
     )
     parser.add_argument(
-        '--mnist', default=default_mnist_path,
+        '--dataset', default=default_mnist_path,
         help=(
             'Path to MNIST dataset, downloaded from '
             'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz '
             'Default: {}'.format(default_mnist_path)
         ),
     )
-    parser.add_argument('--debug', action='store_true')
     parser.add_argument(
         '--output',
         help=(
             'When provided, plot generated data to this directory.'
         )
     )
+    parser.add_argument(
+        '--mock', action='store_true',
+        help='Mock test data to run the script without data for testing.'
+    )
+    parser.add_argument('--debug', action='store_true')
     return parser.parse_args()
 
 
@@ -116,7 +120,8 @@ def _main():
 
     batch_size = 32
     format_ = luchador.get_nn_conv_format()
-    dataset = load_celeba_face(args.mnist, data_format=format_)
+    dataset = load_celeba_face(
+        args.dataset, data_format=format_, mock=args.mock)
 
     model = _build_models(args.model)
     discriminator, generator = model['discriminator'], model['generator']

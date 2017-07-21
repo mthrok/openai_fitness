@@ -14,7 +14,7 @@ _LG = logging.getLogger(__name__)
 
 
 Datasets = namedtuple(
-    'Datasets', field_names=('train', 'test', 'validation')
+    'Datasets', field_names=('train', 'valid', 'test')
 )
 
 Batch = namedtuple(
@@ -64,7 +64,49 @@ class Dataset(object):
         return Batch(self.data[start:end, ...], label)
 
 
-def load_mnist(filepath, flatten=None, data_format=None):
+def _format_dataset(datasets, flatten, data_format):
+    shape = datasets[0][0].shape
+    if flatten:
+        datasets = [
+            (data.reshape(shape[0], -1), label)
+            for data, label in datasets
+        ]
+    elif data_format == 'NHWC':
+        datasets = [
+            (data.transpose(0, 2, 3, 1), label)
+            for data, label in datasets
+        ]
+    for key, (data, _) in zip(['Train', 'Valid', 'Test'], datasets):
+        _LG.info('  %s Data Statistics', key)
+        _LG.info('    Shape: %s', data.shape)
+        _LG.info('    DType: %s', data.dtype)
+        _LG.info('    Mean: %s', data.mean())
+        _LG.info('    Max:  %s', data.max())
+        _LG.info('    Min:  %s', data.min())
+    return Datasets(
+        Dataset(*datasets[0]), Dataset(*datasets[1]), Dataset(*datasets[2])
+    )
+
+
+def _load_mnist(filepath, mock):
+    if mock:
+        return [
+            (
+                np.random.uniform(size=[n, 1, 28, 28]).astype(np.float32),
+                np.random.randint(10, size=[n, 1, 28, 28]),
+            )
+            for n in [1000, 100, 100]
+        ]
+
+    _LG.info('Loading %s', filepath)
+    with gzip.open(filepath, 'rb') as file_:
+        return [
+            (data.reshape(-1, 1, 28, 28), label)
+            for data, label in pickle.load(file_)
+        ]
+
+
+def load_mnist(filepath, flatten=None, data_format=None, mock=False):
     """Load U of Montreal MNIST data
     http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz
 
@@ -80,40 +122,28 @@ def load_mnist(filepath, flatten=None, data_format=None):
     -------
     Datasets
     """
+    datasets = _load_mnist(filepath, mock)
+    return _format_dataset(datasets, flatten, data_format)
+
+
+def _load_celeba_face(filepath, mock):
+    if mock:
+        return [
+            (
+                np.random.uniform(size=[n, 3, 64, 64]).astype(np.float32),
+                None
+            )
+            for n in [1000, 100, 100]
+        ]
     _LG.info('Loading %s', filepath)
     with gzip.open(filepath, 'rb') as file_:
-        datasets = pickle.load(file_)
-    reshape = None
-    if flatten:
-        reshape = (-1, 784)
-    elif data_format == 'NCHW':
-        reshape = (-1, 1, 28, 28)
-    elif data_format == 'NHWC':
-        reshape = (-1, 28, 28, 1)
-
-    if reshape:
-        datasets = [(data.reshape(*reshape), lbl) for data, lbl in datasets]
-
-    for (data, _), key in zip(datasets, ['Train', 'Test', 'Validation']):
-        _LG.info('  %s Data Statistics', key)
-        _LG.info('    Shape: %s', data.shape)
-        _LG.info('    DType: %s', data.dtype)
-        _LG.info('    Mean: %s', data.mean())
-        _LG.info('    Max:  %s', data.max())
-        _LG.info('    Min:  %s', data.min())
-    return Datasets(
-        Dataset(*datasets[0]), Dataset(*datasets[1]), Dataset(*datasets[2])
-    )
+        return [
+            (data.astype(np.float32) / 255, label)
+            for data, label in pickle.load(file_)
+        ]
 
 
-def _prod(numbers):
-    ret = 1
-    for num in numbers:
-        ret *= num
-    return ret
-
-
-def load_celeba_face(filepath, flatten=False, data_format=None):
+def load_celeba_face(filepath, flatten=False, data_format=None, mock=False):
     """Load preprocessed CelebA dataset
 
     To prepare dataset, follow the steps.
@@ -138,35 +168,5 @@ def load_celeba_face(filepath, flatten=False, data_format=None):
     -------
     Datasets
     """
-    _LG.info('Loading %s', filepath)
-    with gzip.open(filepath, 'rb') as file_:
-        datasets = pickle.load(file_)
-    shape = datasets['train'].shape
-    if flatten:
-        datasets = {
-            key: data.reshape(shape[0], -1)
-            for key, data in datasets.items()
-        }
-    elif data_format == 'NCHW':
-        datasets = {
-            key: data.transpose(0, 3, 1, 2)
-            for key, data in datasets.items()
-        }
-
-    datasets = {
-        key: data.astype(np.float32) / 255
-        for key, data in datasets.items()
-    }
-
-    for key, data in datasets.items():
-        _LG.info('  %s Data Statistics', key)
-        _LG.info('    Shape: %s', data.shape)
-        _LG.info('    DType: %s', data.dtype)
-        _LG.info('    Mean: %s', data.mean())
-        _LG.info('    Max:  %s', data.max())
-        _LG.info('    Min:  %s', data.min())
-    return Datasets(
-        Dataset(datasets['train'], None),
-        Dataset(datasets['test'], None),
-        Dataset(datasets['valid'], None),
-    )
+    datasets = _load_celeba_face(filepath, mock)
+    return _format_dataset(datasets, flatten, data_format)
