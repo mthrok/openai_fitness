@@ -39,7 +39,7 @@ class Dataset(object):
         perm = np.arange(self.n_data)
         np.random.shuffle(perm)
         self.data = self.data[perm]
-        if self.label:
+        if self.label is not None:
             self.label = self.label[perm]
 
     def next_batch(self, batch_size):
