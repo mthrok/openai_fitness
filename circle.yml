@@ -4,7 +4,6 @@ containerInfo:
   - image: mthrok/luchador-base:20170717
     env:
       - COUNT_INTEGRATION_COVERAGE=true
-      - MOCK_DATASET=true
 stages:
   build:
     workDir: /src
