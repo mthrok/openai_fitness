@@ -2,8 +2,7 @@
 set -eux
 
 MOCK='';
-echo "${CIRCLECI+}"
-if [ ! -z "${CIRCLECI+}" ];
+if [ ! -z "${MOCK_DATASET+}" ];
 then
     MOCK='--mock';
 fi

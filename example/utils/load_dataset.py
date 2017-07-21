@@ -60,7 +60,7 @@ class Dataset(object):
             self.index = 0
         start, end = self.index, self.index + batch_size
         self.index += batch_size
-        label = self.label[start:end, ...] if self.label else None
+        label = None if self.label is None else self.label[start:end, ...]
         return Batch(self.data[start:end, ...], label)
 
 
