@@ -75,6 +75,10 @@ def load_mnist(filepath, flatten=None, data_format=None):
 
     flatten : Boolean
         If True each image is flattened to 1D vector.
+
+    Returns
+    -------
+    Datasets
     """
     _LG.info('Loading %s', filepath)
     with gzip.open(filepath, 'rb') as file_:
@@ -110,6 +114,30 @@ def _prod(numbers):
 
 
 def load_celeba_face(filepath, flatten=False, data_format=None):
+    """Load preprocessed CelebA dataset
+
+    To prepare dataset, follow the steps.
+    1. Download aligned & cropped face images from CelebA project.
+    http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
+    2. Use the following to preprocess the images and pickle them.
+    https://s3.amazonaws.com/luchador/dataset/celeba/create_celeba_face_dataset.py
+    3. Provide the resulting filepath to this function.
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the pickled CelebA dataset.
+
+    flatten : Boolean
+        If True each image is flattened to 1D vector.
+
+    data_format : str
+        Either 'NCHW' or 'NHWC'.
+
+    Returns
+    -------
+    Datasets
+    """
     _LG.info('Loading %s', filepath)
     with gzip.open(filepath, 'rb') as file_:
         datasets = pickle.load(file_)
