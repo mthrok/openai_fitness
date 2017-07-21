@@ -17,8 +17,8 @@ _LG = logging.getLogger(__name__)
 
 def _parse_command_line_args():
     import argparse
-    default_mnist_path = os.path.join(
-        os.path.expanduser('~'), '.dataset', 'mnist.pkl.gz')
+    default_data_path = os.path.join(
+        os.path.expanduser('~'), '.dataset', 'celeba_faces.pkl.gz')
     default_model_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'dcgan.yml'
     )
@@ -45,11 +45,10 @@ def _parse_command_line_args():
         help='#Generator input dimensions.'
     )
     parser.add_argument(
-        '--dataset', default=default_mnist_path,
+        '--dataset', default=default_data_path,
         help=(
-            'Path to MNIST dataset, downloaded from '
-            'http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz '
-            'Default: {}'.format(default_mnist_path)
+            'Path to pickled CelebA face dataset.'
+            'Default: {}'.format(default_data_path)
         ),
     )
     parser.add_argument(

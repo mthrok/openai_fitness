@@ -90,6 +90,7 @@ def _format_dataset(datasets, flatten, data_format):
 
 def _load_mnist(filepath, mock):
     if mock:
+        _LG.info('Creating mock data')
         return [
             (
                 np.random.uniform(size=[n, 1, 28, 28]).astype(np.float32),
@@ -128,6 +129,7 @@ def load_mnist(filepath, flatten=None, data_format=None, mock=False):
 
 def _load_celeba_face(filepath, mock):
     if mock:
+        _LG.info('Creating mock data')
         return [
             (
                 np.random.uniform(size=[n, 3, 64, 64]).astype(np.float32),
