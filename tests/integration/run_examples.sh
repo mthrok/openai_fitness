@@ -1,7 +1,9 @@
 #!/bin/bash
 set -eux
 
-if [ -z "${CIRCLECI+x}" ];
+MOCK='';
+echo "${CIRCLECI+}"
+if [ ! -z "${CIRCLECI+}" ];
 then
     MOCK='--mock';
 fi
