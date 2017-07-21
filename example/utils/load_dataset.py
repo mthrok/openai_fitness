@@ -94,7 +94,7 @@ def _load_mnist(filepath, mock):
         return [
             (
                 np.random.uniform(size=[n, 1, 28, 28]).astype(np.float32),
-                np.random.randint(10, size=[n, 1, 28, 28]),
+                np.random.randint(10, size=[n]),
             )
             for n in [1000, 100, 100]
         ]
