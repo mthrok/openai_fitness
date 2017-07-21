@@ -9,7 +9,7 @@ import luchador
 from luchador import nn
 
 from example.utils import (
-    initialize_logger, load_mnist, plot_images
+    initialize_logger, load_celeba_face, plot_images
 )
 
 _LG = logging.getLogger(__name__)
@@ -116,13 +116,13 @@ def _main():
 
     batch_size = 32
     format_ = luchador.get_nn_conv_format()
-    dataset = load_mnist(args.mnist, data_format=format_)
+    dataset = load_celeba_face(args.mnist, data_format=format_)
 
     model = _build_models(args.model)
     discriminator, generator = model['discriminator'], model['generator']
 
     input_gen = nn.Input(shape=(None, args.n_seeds), name='GeneratorInput')
-    data_shape = (None, 28, 28, 1) if format_ == 'NHWC' else (None, 1, 28, 28)
+    data_shape = (None,) + dataset.train.shape[1:]
     data_real = nn.Input(shape=data_shape, name='InputData')
     _LG.info('Building Generator')
     data_fake = generator(input_gen)
@@ -174,7 +174,10 @@ def _main():
             },
             outputs=data_fake,
             name='generate_samples',
-        ).reshape(-1, 28, 28)
+        )
+        if format_ == 'NCHW':
+            images = images.transpose(0, 2, 3, 1)
+        images = images[:, :, :, ::-1]
         path = os.path.join(args.output, '{:03d}.png'.format(epoch))
         plot_images(images[:16, ...], path)
 

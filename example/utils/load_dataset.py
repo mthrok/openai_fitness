@@ -39,7 +39,8 @@ class Dataset(object):
         perm = np.arange(self.n_data)
         np.random.shuffle(perm)
         self.data = self.data[perm]
-        self.label = self.label[perm]
+        if self.label:
+            self.label = self.label[perm]
 
     def next_batch(self, batch_size):
         """Get mini batch.
@@ -59,7 +60,8 @@ class Dataset(object):
             self.index = 0
         start, end = self.index, self.index + batch_size
         self.index += batch_size
-        return Batch(self.data[start:end, ...], self.label[start:end, ...])
+        label = self.label[start:end, ...] if self.label else None
+        return Batch(self.data[start:end, ...], label)
 
 
 def load_mnist(filepath, flatten=None, data_format=None):
@@ -119,7 +121,7 @@ def load_celeba_face(filepath, flatten=False, data_format=None):
         }
     elif data_format == 'NCHW':
         datasets = {
-            key: data.transpose(0, 2, 3, 1)
+            key: data.transpose(0, 3, 1, 2)
             for key, data in datasets.items()
         }
 
