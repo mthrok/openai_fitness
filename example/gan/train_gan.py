@@ -22,7 +22,10 @@ def _parse_command_line_args():
         os.path.dirname(os.path.abspath(__file__)), 'gan.yml'
     )
     parser = argparse.ArgumentParser(
-        description='Test Generative Adversarial Network'
+        description=(
+            'Train simple Generative Adversarial Network '
+            'on MNIST dataset.'
+        )
     )
     parser.add_argument(
         '--model', default=default_model_file,

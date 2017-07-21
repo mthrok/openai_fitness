@@ -25,7 +25,9 @@ def _parase_command_line_args():
     )
 
     parser = argparse.ArgumentParser(
-        description='Train autoencoder on MNIST and reconstruct images.'
+        description=(
+            'Train autoencoder on MNIST and reconstruct images.'
+        )
     )
     parser.add_argument(
         '--model', default=default_model_file,

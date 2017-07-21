@@ -1,4 +1,4 @@
-"""Train vanilla GAN on MNIST"""
+"""Train DCGAN on Face dataset"""
 from __future__ import absolute_import
 
 import os
@@ -23,7 +23,10 @@ def _parse_command_line_args():
         os.path.dirname(os.path.abspath(__file__)), 'dcgan.yml'
     )
     parser = argparse.ArgumentParser(
-        description='Test Generative Adversarial Network'
+        description=(
+            'Run Deep Conovolutional Generative Adversarial Network '
+            'on face dataset.'
+        )
     )
     parser.add_argument(
         '--model', default=default_model_file,
