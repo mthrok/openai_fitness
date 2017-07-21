@@ -10,7 +10,7 @@ fi
 FACE_DATA="${HOME}/.dataset/celeba_faces_test.pkl.gz"
 if [ ! -f "${FACE_DATA}" ]; then
     echo "Downloading Face dataset"
-    curl --create-dirs -o "${FACE_DATA}" https://s3.amazonaws.com/luchador/dataset/celeba/celeba_faces.pkl.gz
+    curl --create-dirs -o "${FACE_DATA}" https://s3.amazonaws.com/luchador/dataset/celeba/celeba_faces_test.pkl.gz
 fi
 
 python example/classification/classify_mnist.py --mnist "${MNIST_DATA}" --model example/classification/model.yml
