@@ -65,10 +65,9 @@ class Dataset(object):
 
 
 def _format_dataset(datasets, flatten, data_format):
-    shape = datasets[0][0].shape
     if flatten:
         datasets = [
-            (data.reshape(shape[0], -1), label)
+            (data.reshape(data.shape[0], -1), label)
             for data, label in datasets
         ]
     elif data_format == 'NHWC':
