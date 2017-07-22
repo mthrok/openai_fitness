@@ -175,6 +175,7 @@ def _main():
             name='train_generator',
         )
 
+    random_seed = _sample_seed(batch_size, args.n_seeds)
     def _summarize(epoch, losses=None):
         if not args.output:
             return
@@ -191,7 +192,7 @@ def _main():
 
         images = sess.run(
             inputs={
-                input_gen: _sample_seed(batch_size, args.n_seeds),
+                input_gen: random_seed,
             },
             outputs=data_fake,
             name='generate_samples',
@@ -205,7 +206,7 @@ def _main():
             dataset={
                 'Genearated/epoch_{:02d}'.format(epoch): images
             },
-            max_outputs=16,
+            max_outputs=10,
         )
 
     _train(
