@@ -64,13 +64,13 @@ def _get_image_files(directory):
 
 
 def _create_dataset(image_filenames, size):
-    shape = (len(image_filenames),) + size + (3, )
+    shape = (len(image_filenames), 3,) + size
     data = np.empty(shape, dtype=np.uint8)
     for i, filename in enumerate(image_filenames):
         img = cv2.imread(filename, cv2.IMREAD_COLOR)
         res = cv2.resize(img, dsize=size, interpolation=cv2.INTER_LINEAR)
-        data[i, ...] = res
-    data = data.transpose(0, 3, 1, 2)  # Transpose to NCHW
+        res = res[:, :, ::-1]  # BGR -> RGB
+        data[i, ...] = res.transpose(2, 0, 1)  # HWC -> CHW
     print('  Created dataset;')
     print('    Shape:', data.shape)
     print('    DType:', data.dtype)

@@ -199,7 +199,7 @@ def _main():
         )
         if format_ == 'NCHW':
             images = images.transpose(0, 2, 3, 1)
-        images = (255 * images[:, :, :, ::-1]).astype(np.uint8)
+        images = (255 * images).astype(np.uint8)
         _summary_writer.summarize(
             summary_type='image',
             global_step=epoch,
