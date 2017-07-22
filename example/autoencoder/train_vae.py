@@ -85,7 +85,8 @@ def _train(train_ae, plot_reconstruction, n_iterations=100, n_epochs=10):
     for epoch in range(1, n_epochs+1):
         loss = np.asarray([0.0, 0.0, 0.0])
         for _ in range(n_iterations):
-            loss += train_ae() / n_iterations
+            loss += train_ae()
+            loss /= n_iterations
         plot_reconstruction(epoch)
         _LG.info(
             '%5d: %12.2e %12.2e %12.2e', epoch, loss[0], loss[1], loss[2])
