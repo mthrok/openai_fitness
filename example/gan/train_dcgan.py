@@ -10,7 +10,7 @@ import luchador
 from luchador import nn
 
 from example.utils import (
-    initialize_logger, load_celeba_face, plot_images
+    initialize_logger, load_celeba_face,
 )
 
 _LG = logging.getLogger(__name__)
@@ -101,17 +101,17 @@ def _build_optimization(generator, gen_loss, discriminator, disc_loss):
 
 
 def _train(
-        train_disc, train_gen, plot_samples,
+        train_disc, train_gen, summarize,
         n_iterations, n_epochs):
-    plot_samples(0)
     _LG.info('%5s: %10s, %10s', 'EPOCH', 'DISC_LOSS', 'GEN_LOSS')
+    summarize(0)
     for epoch in range(1, n_epochs+1):
         disc_loss, gen_loss = 0.0, 0.0
         for _ in range(n_iterations):
             disc_loss += train_disc() / n_iterations
             gen_loss += train_gen() / n_iterations
         _LG.info('%5s: %10.3e, %10.3e', epoch, disc_loss, gen_loss)
-        plot_samples(epoch)
+        summarize(epoch, (disc_loss, gen_loss))
 
 
 def _sample_seed(*size):
@@ -148,10 +148,11 @@ def _main():
     sess = nn.Session()
     sess.initialize()
 
+    _summary_writer = None
     if args.output:
-        summary = nn.SummaryWriter(output_dir=args.output)
+        _summary_writer = nn.SummaryWriter(output_dir=args.output)
         if sess.graph is not None:
-            summary.add_graph(sess.graph)
+            _summary_writer.add_graph(sess.graph)
 
     def _train_disc():
         return sess.run(
@@ -174,9 +175,20 @@ def _main():
             name='train_generator',
         )
 
-    def _plot_samples(epoch):
+    def _summarize(epoch, losses=None):
         if not args.output:
             return
+
+        if losses:
+            _summary_writer.summarize(
+                summary_type='scalar',
+                global_step=epoch,
+                dataset={
+                    'Generator/Loss': losses[0],
+                    'Discriminator/Loss': losses[1],
+                },
+            )
+
         images = sess.run(
             inputs={
                 input_gen: _sample_seed(batch_size, args.n_seeds),
@@ -186,13 +198,19 @@ def _main():
         )
         if format_ == 'NCHW':
             images = images.transpose(0, 2, 3, 1)
-        images = images[:, :, :, ::-1]
-        path = os.path.join(args.output, '{:03d}.png'.format(epoch))
-        plot_images(images[:16, ...], path)
+        images = (255 * images[:, :, :, ::-1]).astype(np.uint8)
+        _summary_writer.summarize(
+            summary_type='image',
+            global_step=epoch,
+            dataset={
+                'Genearated/epoch_{:02d}'.format(epoch): images
+            },
+            max_outputs=16,
+        )
 
     _train(
-        _train_disc, _train_gen, _plot_samples,
-        args.n_iterations, args.n_epochs
+        _train_disc, _train_gen, _summarize,
+        args.n_iterations, args.n_epochs,
     )
 
 
