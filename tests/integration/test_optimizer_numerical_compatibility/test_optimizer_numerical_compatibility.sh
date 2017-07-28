@@ -7,7 +7,7 @@
 # --optimizer: Name of optimizer configurations. See optimizer directory for the list of valid configurations.
 # --iterations: #parameter updates to execute before comparing the parameters. Default: 1000
 # --threshold: Maximum relative diff to allow
-set -eu
+set -eux
 
 while [[ $# -gt 0 ]]
 do
