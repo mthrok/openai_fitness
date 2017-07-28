@@ -94,5 +94,5 @@ workflows:
       - test-python27
       - post-process:
           requires:
-            test-python27
+            - test-python27
 
