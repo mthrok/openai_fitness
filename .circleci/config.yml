@@ -63,13 +63,13 @@ jobs:
       # Report coverage
       - run:
           name: Report Coverage
-          command: ./cci_script/report_codacy_test_coverage.sh
+          command: ./.ciecleci/report_codacy_test_coverage.sh
       # Build doc and push to gh-pages
       - run:
           name: Build Doc
           command: |
-            xvfb-run -s "-screen 0 1400x900x24" ./cci_script/build_docs.sh
-            # ./cci_script/push_docs.sh
+            xvfb-run -s "-screen 0 1400x900x24" ./.ciecleci/build_docs.sh
+            # ./.ciecleci/push_docs.sh
 
 workflows:
   version: 2
