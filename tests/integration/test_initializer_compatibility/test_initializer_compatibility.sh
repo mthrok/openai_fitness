@@ -10,7 +10,7 @@ if [[ ! -f "${CONFIG}" ]]; then
 fi
 
 if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
-    TEST_COMMAND="coverage run --parallel-mode"
+    TEST_COMMAND="coverage run"
 else
     TEST_COMMAND="python"
 fi

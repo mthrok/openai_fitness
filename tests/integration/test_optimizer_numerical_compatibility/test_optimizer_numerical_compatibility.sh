@@ -49,7 +49,7 @@ FILE1="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/
 FILE2="tmp/test_optimizer_numerical_comparitbility/${FORMULA}_${OPTIMIZER_NAME}/tensorflow.csv"
 
 if [ "${COUNT_INTEGRATION_COVERAGE:-false}" = true ]; then
-    TEST_COMMAND="coverage run --parallel-mode"
+    TEST_COMMAND="coverage run"
 else
     TEST_COMMAND="python"
 fi

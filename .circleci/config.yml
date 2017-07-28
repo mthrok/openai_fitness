@@ -1,3 +1,55 @@
+test-steps: &test-steps
+  - checkout
+  - run:
+      name: Install Luchador
+      command: pip install -e .
+  - run:
+      name: Print Version
+      command: |
+        g++ --version
+        python -c "import numpy;print('NumPy:', numpy.__version__)"
+        python -c "import scipy;print('SciPy:', scipy.__version__)"
+        python -c "import theano;print('Theano:', theano.__version__)"
+        python -c "import tensorflow;print('Tensorflow:', tensorflow.__version__)"
+        python -c "import luchador;print('luchador:', luchador.__version__)"
+  # Unit Test
+  - run:
+      name: Theano Unit Test
+      command: LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run setup.py test
+  - run:
+      name: Tensorflow Unit Test
+      command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run setup.py test
+  # Integration Test
+  - run:
+      name: Initializer Numerical Compatibility Test
+      command: ./tests/integration/run_initializer_compatibility_test.sh
+  - run:
+      name: Layer Numerical Compatibility Test
+      command: ./tests/integration/run_layer_numerical_compatibility_tests.sh
+  - run:
+      name: Optimizer Numerical Compatibility Test
+      command: ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
+  - run:
+      name: Examples Theano 32 bit
+      command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_examples.sh
+  - run:
+      name: Examples Theano 64 bit
+      command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_examples.sh
+  - run:
+      name: Examples Tensorflow
+      command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_examples.sh
+  # Report coverage
+  - run:
+      name: Report Coverage
+      command: ./.ciecleci/report_codacy_test_coverage.sh
+  # Build doc and push to gh-pages
+  - run:
+      name: Build Doc
+      command: |
+        xvfb-run -s "-screen 0 1400x900x24" ./.ciecleci/build_docs.sh
+        # ./.ciecleci/push_docs.sh
+
+
 version: 2
 jobs:
   style-check:
@@ -21,55 +73,7 @@ jobs:
           - COUNT_INTEGRATION_COVERAGE=true
     working_directory: ~/luchador
     steps:
-      - checkout
-      - run:
-          name: Install Luchador
-          command: pip install -e .
-      - run:
-          name: Print Version
-          command: |
-            g++ --version
-            python -c "import numpy;print('NumPy:', numpy.__version__)"
-            python -c "import scipy;print('SciPy:', scipy.__version__)"
-            python -c "import theano;print('Theano:', theano.__version__)"
-            python -c "import tensorflow;print('Tensorflow:', tensorflow.__version__)"
-            python -c "import luchador;print('luchador:', luchador.__version__)"
-      # Unit Test
-      - run:
-          name: Theano Unit Test
-          command: LUCHADOR_NN_BACKEND=theano     LUCHADOR_NN_CONV_FORMAT=NCHW coverage run --parallel-mode setup.py test
-      - run:
-          name: Tensorflow Unit Test
-          command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC coverage run --parallel-mode setup.py test
-      # Integration Test
-      - run:
-          name: Initializer Numerical Compatibility Test
-          command: ./tests/integration/run_initializer_compatibility_test.sh
-      - run:
-          name: Layer Numerical Compatibility Test
-          command: ./tests/integration/run_layer_numerical_compatibility_tests.sh
-      - run:
-          name: Optimizer Numerical Compatibility Test
-          command: ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
-      - run:
-          name: Examples Theano 32 bit
-          command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_examples.sh
-      - run:
-          name: Examples Theano 64 bit
-          command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_examples.sh
-      - run:
-          name: Examples Tensorflow
-          command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_examples.sh
-      # Report coverage
-      - run:
-          name: Report Coverage
-          command: ./.ciecleci/report_codacy_test_coverage.sh
-      # Build doc and push to gh-pages
-      - run:
-          name: Build Doc
-          command: |
-            xvfb-run -s "-screen 0 1400x900x24" ./.ciecleci/build_docs.sh
-            # ./.ciecleci/push_docs.sh
+      *test-steps
 
 workflows:
   version: 2
