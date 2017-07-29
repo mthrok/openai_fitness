@@ -80,12 +80,38 @@ example3-steps: &example3-steps
       paths:
         - .coverage.*
 
-version: 2
-jobs:
-  style-check:
+python27_config: &python27_config
     docker:
       - image: mthrok/luchador-base:20170717
+        env:
+          - COUNT_INTEGRATION_COVERAGE=true
     working_directory: ~/luchador
+        
+        
+version: 2
+jobs:
+  python27-test:
+    << : *python27_config
+    steps:
+      *test-steps
+
+  python27-example1:
+    << : *python27_config
+    steps:
+      *example1-steps
+
+  python27-example2:
+    << : *python27_config
+    steps:
+      *example2-steps
+
+  python27-example3:
+    << : *python27_config
+    steps:
+      *example3-steps
+
+  style-check:
+    <<: *python27_config
     steps:
       - checkout
       - run:
@@ -94,46 +120,8 @@ jobs:
             flake8 luchador
             flake8 tests
     
-  python27-test:
-    docker:
-      - image: mthrok/luchador-base:20170717
-        env:
-          - COUNT_INTEGRATION_COVERAGE=true
-    working_directory: ~/luchador
-    steps:
-      *test-steps
-
-  python27-example1:
-    docker:
-      - image: mthrok/luchador-base:20170717
-        env:
-          - COUNT_INTEGRATION_COVERAGE=true
-    working_directory: ~/luchador
-    steps:
-      *example1-steps
-
-  python27-example2:
-    docker:
-      - image: mthrok/luchador-base:20170717
-        env:
-          - COUNT_INTEGRATION_COVERAGE=true
-    working_directory: ~/luchador
-    steps:
-      *example2-steps
-
-  python27-example3:
-    docker:
-      - image: mthrok/luchador-base:20170717
-        env:
-          - COUNT_INTEGRATION_COVERAGE=true
-    working_directory: ~/luchador
-    steps:
-      *example3-steps
-
   post-process:
-    docker:
-      - image: mthrok/luchador-base:20170717
-    working_directory: ~/luchador
+    << : *python27_config
     steps:
       - checkout
       # Get coverage files
