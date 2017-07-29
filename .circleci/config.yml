@@ -29,13 +29,48 @@ test-steps: &test-steps
   - run:
       name: Optimizer Numerical Compatibility Test
       command: ./tests/integration/run_optimizer_numerical_compatibility_tests.sh
+  # Save coverage files
+  - persist_to_workspace:
+      root: ./
+      paths:
+        - .coverage.*
+
+example1-steps: &example1-steps
+  - checkout
+  - run:
+      name: Install Luchador
+      command: pip install -e .
   # Run examples
   - run:
       name: Examples Theano 32 bit
       command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float32' ./tests/integration/run_examples.sh
+  # Save coverage files
+  - persist_to_workspace:
+      root: ./
+      paths:
+        - .coverage.*
+
+example2-steps: &example2-steps
+  - checkout
+  - run:
+      name: Install Luchador
+      command: pip install -e .
+  # Run examples
   - run:
       name: Examples Theano 64 bit
       command: LUCHADOR_NN_BACKEND=theano THEANO_FLAGS='floatX=float64' ./tests/integration/run_examples.sh
+  # Save coverage files
+  - persist_to_workspace:
+      root: ./
+      paths:
+        - .coverage.*
+
+example3-steps: &example3-steps
+  - checkout
+  - run:
+      name: Install Luchador
+      command: pip install -e .
+  # Run examples
   - run:
       name: Examples Tensorflow
       command: LUCHADOR_NN_BACKEND=tensorflow LUCHADOR_NN_CONV_FORMAT=NHWC LUCHADOR_NN_DTYPE=float32 ./tests/integration/run_examples.sh
@@ -59,7 +94,7 @@ jobs:
             flake8 luchador
             flake8 tests
     
-  test-python27:
+  python27-test:
     docker:
       - image: mthrok/luchador-base:20170717
         env:
@@ -67,6 +102,33 @@ jobs:
     working_directory: ~/luchador
     steps:
       *test-steps
+
+  python27-example1:
+    docker:
+      - image: mthrok/luchador-base:20170717
+        env:
+          - COUNT_INTEGRATION_COVERAGE=true
+    working_directory: ~/luchador
+    steps:
+      *example1-steps
+
+  python27-example2:
+    docker:
+      - image: mthrok/luchador-base:20170717
+        env:
+          - COUNT_INTEGRATION_COVERAGE=true
+    working_directory: ~/luchador
+    steps:
+      *example2-steps
+
+  python27-example3:
+    docker:
+      - image: mthrok/luchador-base:20170717
+        env:
+          - COUNT_INTEGRATION_COVERAGE=true
+    working_directory: ~/luchador
+    steps:
+      *example3-steps
 
   post-process:
     docker:
@@ -93,8 +155,19 @@ workflows:
   build:
     jobs:
       - style-check
-      - test-python27
+      - python27-test
+      - python27-example1:
+          requires:
+            - python27-test
+      - python27-example2:
+          requires:
+            - python27-test
+      - python27-example3:
+          requires:
+            - python27-test
       - post-process:
           requires:
-            - test-python27
+            - python27-example1
+            - python27-example2
+            - python27-example3
 
