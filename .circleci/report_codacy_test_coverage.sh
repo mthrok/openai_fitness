@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+set -eux
 
 if [[ -n "${CODACY_PROJECT_TOKEN}" ]]; then
     coverage combine
