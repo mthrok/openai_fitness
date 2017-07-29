@@ -47,6 +47,7 @@ def _run_forward_prop(layer, input_value, parameter_file, iteration=1):
         ret = sess.run(
             outputs=layer.output, updates=layer.get_update_operations(),
             inputs={layer.input: input_value.astype(layer.input.dtype)},
+            name='test',
         )
     _LG.info('Run forward path. Output shape: %s', ret.shape)
     return ret

@@ -57,7 +57,7 @@ def _run_initializer(initializer, shape):
         shape=shape, name='input', initializer=initializer)
     session = nn.Session()
     session.initialize()
-    value = session.run(outputs=variable)
+    value = session.run(outputs=variable, name='test')
 
     if _transpose_needed(initializer, shape):
         # So as to make the output comarison easy, we revert the oreder.
