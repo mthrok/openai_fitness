@@ -10,6 +10,13 @@ __all__ = ['Flatten', 'Concat']
 # pylint: disable=no-self-use,no-member
 
 
+def _prod(vals):
+    ret = 1
+    for val in vals:
+        ret *= val
+    return ret
+
+
 class Flatten(object):
     """Implement Flatten in Tensorflow.
 
@@ -17,7 +24,7 @@ class Flatten(object):
     """
     def _build(self, input_tensor):
         in_shape = input_tensor.shape
-        n_nodes = reduce(lambda prod, dim: prod*dim, in_shape[1:], 1)
+        n_nodes = int(_prod(in_shape[1:]))
         out_shape = (-1, n_nodes)
         output = tf.reshape(input_tensor.unwrap(), out_shape, 'output')
         return Tensor(output, name='output')

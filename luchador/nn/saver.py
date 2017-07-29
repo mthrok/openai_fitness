@@ -92,7 +92,7 @@ class Saver(object):
         now : int
             unix time. only used for test
         """
-        filename = '{}_{}.h5'.format(self.prefix, global_step)
+        filename = '{}_{}.h5'.format(self.prefix, int(global_step))
         filepath = os.path.join(self.output_dir, filename)
 
         _LG.info('Saving data to %s', filepath)

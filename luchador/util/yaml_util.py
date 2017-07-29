@@ -65,7 +65,7 @@ def load_config(filepath, **parameters):
             for key, val in parameters.items()
         })
 
-    model_text = StringIO.StringIO(model_text)
+    model_text = StringIO(model_text)
     return yaml.safe_load(model_text)
 
 

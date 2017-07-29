@@ -13,6 +13,13 @@ _LG = logging.getLogger(__name__)
 # pylint:disable=no-member,no-self-use
 
 
+def _prod(vals):
+    ret = 1
+    for val in vals:
+        ret *= val
+    return ret
+
+
 class Flatten(object):
     """Implement Flatten layer in Theano
 
@@ -20,7 +27,7 @@ class Flatten(object):
     """
     def _build(self, input_tensor):
         input_shape = input_tensor.shape
-        n_nodes = int(reduce(lambda r, d: r*d, input_shape[1:], 1))
+        n_nodes = int(_prod(input_shape[1:]))
 
         _LG.debug('    Input shape: %s', input_shape)
         _LG.debug('    #Nodes     : %s', n_nodes)
