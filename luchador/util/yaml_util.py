@@ -1,7 +1,7 @@
 """Utility functions related to YAML, used throughout luchador"""
 from __future__ import absolute_import
 
-import StringIO
+from six import StringIO
 import ruamel.yaml as yaml
 
 from .misc import is_iteratable

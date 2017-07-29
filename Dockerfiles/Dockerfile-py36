@@ -1,4 +1,4 @@
-FROM continuumio/anaconda:4.4.0
+FROM continuumio/anaconda3:4.4.0
 
 RUN apt-get update && \
     apt-get -y install \
