@@ -73,6 +73,8 @@ jobs:
       - image: mthrok/luchador-base:20170717
     working_directory: ~/luchador
     steps:
+      - checkout
+      # Get coverage files
       - attach_workspace:
           at: ./
       # Report coverage
