@@ -88,6 +88,14 @@ python27_config: &python27_config
     working_directory: ~/luchador
         
         
+python36_config: &python36_config
+    docker:
+      - image: mthrok/luchador-base-py36:latest
+        env:
+          - COUNT_INTEGRATION_COVERAGE=true
+    working_directory: ~/luchador
+        
+        
 version: 2
 jobs:
   python27-test:
@@ -107,6 +115,26 @@ jobs:
 
   python27-example3:
     << : *python27_config
+    steps:
+      *example3-steps
+
+  python36-test:
+    << : *python36_config
+    steps:
+      *test-steps
+
+  python36-example1:
+    << : *python36_config
+    steps:
+      *example1-steps
+
+  python36-example2:
+    << : *python36_config
+    steps:
+      *example2-steps
+
+  python36-example3:
+    << : *python36_config
     steps:
       *example3-steps
 
@@ -162,3 +190,13 @@ workflows:
             - python27-example2
             - python27-example3
 
+      - python36-test
+      - python36-example1:
+          requires:
+            - python36-test
+      - python36-example2:
+          requires:
+            - python36-test
+      - python36-example3:
+          requires:
+            - python36-test
