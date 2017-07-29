@@ -133,6 +133,9 @@ jobs:
           command: ./.circleci/report_codacy_test_coverage.sh
       # Build doc and push to gh-pages
       - run:
+          name: Install Luchador
+          command: pip install -e .
+      - run:
           name: Build Doc
           command: |
             xvfb-run -s "-screen 0 1400x900x24" ./.circleci/build_docs.sh
