@@ -291,12 +291,16 @@ $ python
 
 ## Example
 
-You can run simple AutoEncoder and MNIST classification examples as follow. Use `--help` for how to run.
+You can run examples in example directory, such as MNIST classification, (Variational) AutoEncoder, GAN and DCGAN as follow. Use `--help` for how to run.
 
 ```bash
-python example/autoencoder/run_autoencoder.py
 python example/classification/classify_mnist.py
+python example/autoencoder/train_vae.py
+python example/gan/train_dcgan.py
 ```
+
+The following is the network built using [DCGAN example](./example/gan/dcgan.yml).
+<img src="assets/gan_network.png" width="512">
 
 
 ## Installation
