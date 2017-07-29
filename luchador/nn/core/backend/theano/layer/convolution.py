@@ -2,6 +2,7 @@
 from __future__ import division
 from __future__ import absolute_import
 
+import numbers
 import logging
 import warnings
 
@@ -241,7 +242,9 @@ class Conv2DTranspose(_Conv2DMixin):
     def _build(self, input_tensor):
         # In Theano, the notation of input and output is flipped because
         # they are re-using the terminology from gradient computation.
-        output_shape = self._get_output_shape()
+        output_shape = [
+            int(val) if isinstance(val, numbers.Number) else val
+            for val in self._get_output_shape()]
 
         filter_shape = self._get_filter_shape(output_shape[1])
         bias_shape = (filter_shape[1],)
